@@ -1,0 +1,6 @@
+[submodule "qhull"]
+	path = qhull
+	url = https://github.com/qhull/qhull.git
+[submodule "ext/nanogui"]
+	path = ext/nanogui
+	url = https://github.com/wjakob/nanogui.git
