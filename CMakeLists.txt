@@ -36,10 +36,10 @@ if (MSVC)
 
   # Static build
   set(CompilerFlags
-        CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
-        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-        CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+    CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+    CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+    CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+    CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
   foreach(CompilerFlag ${CompilerFlags})
     string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
   endforeach()
@@ -52,8 +52,8 @@ elseif(APPLE)
 endif()
 
 # Build qhull
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull ext_build/qhull)
-# set_property(TARGET qhull PROPERTY FOLDER "dependencies")
 
 # Enable C++14 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -67,7 +67,6 @@ set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui ext_build/nanogui)
-set_property(TARGET nanogui glfw glfw_objects PROPERTY FOLDER "dependencies")
 
 # Compile BSDF visualizer with various compiler warnings turned on
 if(MSVC)
@@ -99,31 +98,9 @@ include_directories(
 add_executable(BSDFVisualizer MACOSX_BUNDLE
   src/main.cpp
   src/test.cpp include/test.h
-  )
+)
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
 target_link_libraries(BSDFVisualizer nanogui ${NANOGUI_EXTRA_LIBS})
 
 set_target_properties(BSDFVisualizer PROPERTIES OUTPUT_NAME "BSDF Visualizer")
-
-if (WIN32)
-  # Quench some warnings on MSVC
-  if (MSVC)
-    set_source_files_properties(ext/rply/rply.c PROPERTIES COMPILE_FLAGS "/wd4127")
-  endif()
-elseif (APPLE)
-  # Build an application bundle on OSX
-  set_target_properties(BSDFVisualizer PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "BSDF Visualizer")
-  set_target_properties(BSDFVisualizer PROPERTIES MACOSX_BUNDLE_BUNDLE_GUI_IDENTIFIER "com.im.BSDFVisualizer")
-  set_target_properties(BSDFVisualizer PROPERTIES MACOSX_BUNDLE_ICON_FILE im.icns)
-  set_target_properties(BSDFVisualizer PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/MacOSXBundleInfo.plist.in)
-  set_source_files_properties(resources/im.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-else()
-  # Insulate from a few types of ABI changes by statically linking against libgcc and libstdc++
-  set_target_properties(BSDFVisualizer PROPERTIES LINK_FLAGS "-static-libgcc")
-  #set_target_properties(BSDFVisualizer PROPERTIES LINK_FLAGS "-static-libgcc -static-libstdc++")
-endif()
-
-if (UNIX AND NOT ${U_CMAKE_BUILD_TYPE} MATCHES DEBUG)
-  add_custom_command(TARGET BSDFVisualizer POST_BUILD COMMAND strip $<TARGET_FILE:BSDFVisualizer>)
-endif()
