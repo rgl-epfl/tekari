@@ -11,29 +11,7 @@
     BSD-style license that can be found in the LICENSE.txt file.
 */
 
-#include <nanogui/opengl.h>
-#include <nanogui/glutil.h>
-#include <nanogui/screen.h>
-#include <nanogui/window.h>
-#include <nanogui/layout.h>
-#include <nanogui/label.h>
-#include <nanogui/checkbox.h>
-#include <nanogui/button.h>
-#include <nanogui/toolbutton.h>
-#include <nanogui/popupbutton.h>
-#include <nanogui/combobox.h>
-#include <nanogui/progressbar.h>
-#include <nanogui/entypo.h>
-#include <nanogui/messagedialog.h>
-#include <nanogui/textbox.h>
-#include <nanogui/slider.h>
-#include <nanogui/imagepanel.h>
-#include <nanogui/imageview.h>
-#include <nanogui/vscrollpanel.h>
-#include <nanogui/colorwheel.h>
-#include <nanogui/graph.h>
-#include <nanogui/tabwidget.h>
-#include <nanogui/glcanvas.h>
+#include <nanogui/nanogui.h>
 #include <iostream>
 #include <string>
 
@@ -71,7 +49,7 @@ using std::to_string;
 
 class MyGLCanvas : public nanogui::GLCanvas {
 public:
-    MyGLCanvas(Widget *parent) : nanogui::GLCanvas(parent), mRotation(nanogui::Vector3f(0.0f, 1.0f, 0.0f)) {
+    MyGLCanvas(Widget *parent) : nanogui::GLCanvas(parent), mRotation(nanogui::Vector3f(1.0f, 1.0f, 1.0f)) {
         using namespace nanogui;
 
         mShader.init(
@@ -177,28 +155,55 @@ private:
 };
 
 
-class ExampleApplication : public nanogui::Screen {
+class BsdfApplication : public nanogui::Screen {
 public:
-    ExampleApplication() : nanogui::Screen(Eigen::Vector2i(800, 600), "NanoGUI Test", false) {
+    BsdfApplication() : nanogui::Screen(Eigen::Vector2i(800, 600), "BSDF Visualizer", false) {
         using namespace nanogui;
+
+        fileName = "path/to/file";
+        imageName = "path/to/image";
 
         mCanvas = new MyGLCanvas(this);
         mCanvas->setBackgroundColor({100, 100, 100, 255});
         mCanvas->setSize({this->width(), this->height()});
 
-        Window *window = new Window(this, "GLCanvas Demo");
-        window->setPosition(Vector2i(400, 300));
-        window->setLayout(new GroupLayout());
+        FormHelper *options = new FormHelper(this);
 
-        Widget *tools = new Widget(window);
-        tools->setLayout(new BoxLayout(Orientation::Horizontal,
-                                       Alignment::Middle, 0, 5));
+        ref<Window> openFileWindow = options->addWindow(Eigen::Vector2i(10, 10), "Open file");
+        options->addVariable("File name", fileName);
+        options->addButton("Open", [openFileWindow, this]() mutable {
+            std::cout << "Opened file " << fileName << std::endl;
+            openFileWindow->setVisible(false);
+        });
+        openFileWindow->center();
+        openFileWindow->setVisible(false);
 
-        Button *b0 = new Button(tools, "Random Color");
-        b0->setCallback([this]() { mCanvas->setBackgroundColor(Vector4i(rand() % 256, rand() % 256, rand() % 256, 255)); });
+        ref<Window> saveImageWindow = options->addWindow(Eigen::Vector2i(0, 0), "Save image");
+        options->addVariable("Image name", imageName);
+        options->addButton("Open", [saveImageWindow, this]() mutable {
+            std::cout << "Saved image " << fileName << std::endl;
+            saveImageWindow->setVisible(false);
+        });
+        saveImageWindow->center();
+        saveImageWindow->setVisible(false);
 
-        Button *b1 = new Button(tools, "Random Rotation");
+        ref<Window> optionsWindow = options->addWindow(Eigen::Vector2i(0, 0), "Options");
+        options->addGroup("Additional Info");
+        options->addVariable("Show logarithmic view", showLog);
+        options->addVariable("Show sensor path", showSensorPath);
+        options->addVariable("Show point heights", showPointHeights);
 
+        options->addGroup("File");
+        options->addButton("Open", [openFileWindow]() mutable {
+            openFileWindow->setVisible(true);
+            openFileWindow->requestFocus();
+        });
+        options->addButton("Save image", [saveImageWindow]() mutable {
+            saveImageWindow->setVisible(true);
+            saveImageWindow->requestFocus();
+        });
+
+        setVisible(true);
         performLayout();
     }
 
@@ -218,6 +223,13 @@ public:
     }
 private:
     MyGLCanvas *mCanvas;
+
+    bool showLog;
+    bool showSensorPath;
+    bool showPointHeights;
+
+    std::string fileName;
+    std::string imageName;
 };
 
 int main(int /* argc */, char ** /* argv */) {
@@ -225,7 +237,7 @@ int main(int /* argc */, char ** /* argv */) {
         nanogui::init();
 
         /* scoped variables */ {
-            nanogui::ref<ExampleApplication> app = new ExampleApplication();
+            nanogui::ref<BsdfApplication> app = new BsdfApplication();
             app->drawAll();
             app->setVisible(true);
             nanogui::mainloop();

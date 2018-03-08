@@ -51,6 +51,10 @@ elseif(APPLE)
   #string(REGEX REPLACE "^.*X([0-9.]*).sdk$" "\\1" CMAKE_OSX_DEPLOYMENT_TARGET "${CMAKE_OSX_SYSROOT}")
 endif()
 
+# Build qhull
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull ext_build/qhull)
+# set_property(TARGET qhull PROPERTY FOLDER "dependencies")
+
 # Enable C++14 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
@@ -64,10 +68,6 @@ set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui ext_build/nanogui)
 set_property(TARGET nanogui glfw glfw_objects PROPERTY FOLDER "dependencies")
-
-# Build qhull
-# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull ext_build/qhull)
-# set_property(TARGET qhull PROPERTY FOLDER "dependencies")
 
 # Compile BSDF visualizer with various compiler warnings turned on
 if(MSVC)
