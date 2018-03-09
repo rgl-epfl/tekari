@@ -3,7 +3,7 @@
 
 SampleData::SampleData(const std::string& sampleDataPath)
 :   m_DisplayNormalView(true)
-,   m_DisplayPath(true)
+,   m_DisplayPath(false)
 ,   m_DisplayLogView(false)
 {
     SampleDataParser os(sampleDataPath);

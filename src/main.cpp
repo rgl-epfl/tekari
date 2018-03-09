@@ -62,9 +62,9 @@ public:
     :   nanogui::GLCanvas(parent)
     ,   m_SampleData("../resources/golden_paper.txt")
     {
-        using namespace nanogui;
+    using namespace nanogui;
 
-// TODO: Change this
+    // TODO: Change this
         m_arcball.setSize(parent->size());
     }
 
@@ -98,6 +98,10 @@ public:
         m_SampleData.draw(m_arcball.matrix(), view, proj);
     }
 
+    void setShowNormalView(bool value) { m_SampleData.displayNormalView(value); }
+    void setShowPath(bool value) { m_SampleData.displayPath(value); }
+    void setShowLogView(bool value) { m_SampleData.displayLogView(value); }
+
 private:
     SampleData m_SampleData;
     unsigned int mFacesCount;
@@ -108,7 +112,13 @@ private:
 
 class BsdfApplication : public nanogui::Screen {
 public:
-    BsdfApplication() : nanogui::Screen(Eigen::Vector2i(800, 600), "BSDF Visualizer", false) {
+    BsdfApplication()
+    :   nanogui::Screen(Eigen::Vector2i(800, 600), "BSDF Visualizer", false)
+    ,   showNormal(true)
+    ,   showLog(false)
+    ,   showSensorPath(false)
+    ,   showPointHeights(false)
+    {
         using namespace nanogui;
 
         fileName = "path/to/file";
@@ -140,8 +150,15 @@ public:
 
         ref<Window> optionsWindow = options->addWindow(Eigen::Vector2i(0, 0), "Options");
         options->addGroup("Additional Info");
-        options->addVariable("Show logarithmic view", showLog);
-        options->addVariable("Show sensor path", showSensorPath);
+        options->addVariable("Show normal view", showNormal)->setCallback(
+            [this](bool checked) { mCanvas->setShowNormalView(checked); }
+        );
+        options->addVariable("Show logarithmic view", showLog)->setCallback(
+            [this](bool checked) { mCanvas->setShowLogView(checked); }
+        );
+        options->addVariable("Show sensor path", showSensorPath)->setCallback(
+            [this](bool checked) {  mCanvas->setShowPath(checked); }
+        );
         options->addVariable("Show point heights", showPointHeights);
 
         options->addGroup("File");
@@ -175,6 +192,7 @@ public:
 private:
     MyGLCanvas *mCanvas;
 
+    bool showNormal;
     bool showLog;
     bool showSensorPath;
     bool showPointHeights;

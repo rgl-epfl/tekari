@@ -27,4 +27,5 @@ public:
 
     void displayNormalView(bool value) { m_DisplayNormalView = value; }
     void displayLogView(bool value) { m_DisplayLogView = value; }
+    void displayPath(bool value) { m_DisplayPath = value; }
 };
