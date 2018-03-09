@@ -76,7 +76,7 @@ bool SampleDataParser::readDataset(const std::string &filePath)
 
         m_Vertices.push_back({x, z});
         m_Heights.push_back(intensity);
-        m_LogHeights.push_back(log(intensity));
+        m_LogHeights.push_back(intensity);
 
         min_intensity = std::min(min_intensity, intensity);
         max_intensity = std::max(max_intensity, intensity);
@@ -84,12 +84,11 @@ bool SampleDataParser::readDataset(const std::string &filePath)
     fclose(datasetFile);
 
     // intensity normalization
-    float min_log_intensity = log(min_intensity);
-    float max_log_intensity = log(max_intensity);
+    float max_log_intensity = log(max_intensity / min_intensity);
     for(size_t i = 0; i < m_Heights.size(); ++i)
     {
-        m_Heights[i] = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
-        m_LogHeights[i] = (m_LogHeights[i] - min_log_intensity) / (max_log_intensity - min_log_intensity);
+        m_Heights[i]    = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
+        m_LogHeights[i] = log(m_LogHeights[i] / min_intensity) / max_log_intensity;
     }
 
     return true;
