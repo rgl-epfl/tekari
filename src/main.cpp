@@ -87,7 +87,7 @@ public:
             "in float height;\n"
             "out vec4 color;\n"
             "void main() {\n"
-            "    color = vec4(height, 0.1f, 0.1f, 1.0f);\n"
+            "    color = vec4(height, 1 - abs((height - 0.5)*2), 1-height, 1.0f);\n"
             "}"
         );
 
@@ -97,7 +97,12 @@ public:
         std::string dataSetPath("../resources/golden_paper.txt");
         std::string filePath("../resources/output.txt");
         std::vector<unsigned int> indices;
-        readDataset(dataSetPath, positions3D, positions2D);
+
+        if (!readDataset(dataSetPath, positions3D, positions2D))
+        {
+            std::cout << "Failed reading file " << dataSetPath << std::endl;
+            exit(1);
+        }
         triangulatePoints(positions2D, 2, positions2D.size()/2, filePath);
         recoverIndicesFromFile(filePath, indices);
 
@@ -314,18 +319,18 @@ bool readDataset(const std::string &filePath, std::vector<double> &data3D, std::
     data3D.clear();
     std::string line;
 
+    // min and max values for normalization
     double min_intensity = std::numeric_limits<double>::max();
     double max_intensity = std::numeric_limits<double>::min();
-    while (!dataset.eof() && !dataset.fail())
+    while (std::getline(dataset, line))
     {
-        getline(dataset, line);
-        if (line[0] == '#') {} /* skip comment lines */
+        if (line.size() == 0 || line[0] == '#' || line[0] == '\n') {} /* skip comment/empty lines */
         else {
             std::stringstream ss(line);
             ss >> theta >> phi >> intensity;
 
-            double x = sin(theta * PI / 180.0f) - 0.5;
-            double z = cos(phi * PI / 180.0f) / 2;
+            double x = theta * cos(phi * PI / 180.0f) / 90;
+            double z = theta * sin(phi * PI / 180.0f) / 90;
 
             data2D.push_back(x);
             data2D.push_back(z);
@@ -338,9 +343,8 @@ bool readDataset(const std::string &filePath, std::vector<double> &data3D, std::
             max_intensity = std::max(max_intensity, intensity);
         }
     }
-    if (dataset.fail())
-        return false;
 
+    // intensity normalization
     for(unsigned int i = 1; i < data3D.size(); i += 3)
     {
         data3D[i] = (data3D[i] - min_intensity) / (max_intensity - min_intensity);
