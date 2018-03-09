@@ -53,10 +53,8 @@ endif()
 
 # Build qhull
 set(qhull_STATIC ON CACHE BOOL " " FORCE)
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/ ext_build/qhull)
-#set_property(TARGET qhullstatic PROPERTY FOLDER "dependencies")
 
 # Enable C++14 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
