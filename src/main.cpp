@@ -97,12 +97,14 @@ public:
         std::string dataSetPath("../resources/golden_paper.txt");
         std::string filePath("../resources/output.txt");
         std::vector<unsigned int> indices;
-
+        /*
         if (!readDataset(dataSetPath, positions3D, positions2D))
         {
             std::cout << "Failed reading file " << dataSetPath << std::endl;
             exit(1);
         }
+        */
+        createRandomPlane(positions3D, positions2D, 10);
         triangulatePoints(positions2D, 2, positions2D.size()/2, filePath);
         recoverIndicesFromFile(filePath, indices);
 
@@ -113,7 +115,7 @@ public:
         mShader.uploadAttrib("position", positions3D.size() / 3, 3, 3 * sizeof(double), GL_DOUBLE, GL_FALSE, positions3D.data());
         mShader.uploadAttrib("indices", mFacesCount, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, indices.data());
 
-        m_arcball.setSize(mSize);
+        m_arcball.setSize(parent->size());
     }
 
     ~MyGLCanvas() {
@@ -137,6 +139,8 @@ public:
     virtual void drawGL() override {
         using namespace nanogui;
 
+        // std::cout << m_arcball.matrix() << '\n' << std::endl;
+
         mShader.bind();
 
         Matrix4f view, proj;
@@ -146,6 +150,10 @@ public:
         float fW = fH * (float) mSize.x() / (float) mSize.y();
         proj = frustum(-fW, fW, -fH, fH, near, far);
 
+        Matrix4f model;
+        model.setIdentity();
+        model = model * translate(Vector3f(-0.5f, -0.5f, 0.0f));
+        model = m_arcball.matrix() * model;
         Matrix4f mvp = proj * view * m_arcball.matrix();
         mShader.setUniform("modelViewProj", mvp);
 
@@ -358,6 +366,9 @@ bool readDataset(const std::string &filePath, std::vector<double> &data3D, std::
  */
 void createRandomPlane(std::vector<double> &positions3D, std::vector<double> &positions2D, const size_t N)
 {
+    positions3D.resize(3*N*N);
+    positions2D.resize(2*N*N);
+
     srand(0);
     for (size_t z = 0; z < N; ++z)
     {
