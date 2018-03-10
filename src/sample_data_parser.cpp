@@ -8,30 +8,90 @@
 #include <libqhullcpp/Qhull.h>
 
 #include <iostream>
+#include "stop_watch.h"
 
 #define PI 3.14159
 
 SampleDataParser::SampleDataParser(const std::string& sampleDataPath)
 :   std::ostream(this)
+,   m_VertexCount(0)
+,   m_FaceCount(0)
 ,   m_State(SKIP_FIRST_LINE)
+,   m_CurrentWord("")
 ,   m_CurrentVertexCount(0)
+,   m_AlreadyLoaded(false)
 {
+    loadFromFile(sampleDataPath);
+}
+
+SampleDataParser::SampleDataParser()
+:   std::ostream(this)
+,   m_VertexCount(0)
+,   m_FaceCount(0)
+,   m_State(SKIP_FIRST_LINE)
+,   m_CurrentWord("")
+,   m_CurrentVertexCount(0)
+,   m_AlreadyLoaded(false)
+{}
+
+SampleDataParser::SampleDataParser(const SampleDataParser&& other)
+:   std::ostream(this)
+,   m_Vertices(std::move(other.m_Vertices))
+,   m_Heights(std::move(other.m_Heights))
+,   m_LogHeights(std::move(other.m_LogHeights))
+,   m_Normals(std::move(other.m_Normals))
+,   m_LogNormals(std::move(other.m_LogNormals))
+,   m_Indices(std::move(other.m_Indices))
+,   m_VertexCount(other.m_VertexCount)
+,   m_FaceCount(other.m_FaceCount)
+,   m_State(other.m_State)
+,   m_CurrentWord("")
+,   m_CurrentVertexCount(other.m_CurrentVertexCount)
+,   m_NormalPerVertexCount(std::move(other.m_NormalPerVertexCount))
+,   m_AlreadyLoaded(other.m_AlreadyLoaded)
+{
+    std::cout <<"used move constructor" << std::endl;
+}
+
+
+bool SampleDataParser::loadFromFile(const std::string& sampleDataPath)
+{
+    if (m_AlreadyLoaded)
+    {
+        throw std::runtime_error("ERROR: cannot load sample data twice!");
+    }
+    double readDataElapsed;
+    double runQhullElapsed;
+    double outputQhullElapsed;
+
     // load vertex data
-    readDataset(sampleDataPath);
+    PROFILE(readDataset(sampleDataPath), readDataElapsed);
 
     // triangulate it !
     const char* input_comment = "testing";
     const char* command = "-d -Qt";
     orgQhull::Qhull qhull;
     qhull.setOutputStream(&(*this));
-    qhull.runQhull(input_comment, 2, m_Vertices.size(), (float*)m_Vertices.data(), command);
-    qhull.outputQhull("-o");
+    PROFILE(qhull.runQhull(input_comment, 2, m_Vertices.size(), (float*)m_Vertices.data(), command), runQhullElapsed);
+    PROFILE(qhull.outputQhull("-o"), outputQhullElapsed);
+
+    double totalElapsed = readDataElapsed + runQhullElapsed + outputQhullElapsed;
+    std::cout << "Read data percentage " << (100 * readDataElapsed / totalElapsed) << "%" << std::endl;
+    std::cout << "Run qhull percentage " << (100 * runQhullElapsed / totalElapsed) << "%" << std::endl;
+    std::cout << "Output qhull percentage " << (100 * outputQhullElapsed / totalElapsed) << "%" << std::endl;
+
+    m_AlreadyLoaded = true;
 }
 
 void SampleDataParser::linkDataToShaders(   nanogui::GLShader &normalShader,
                                             nanogui::GLShader &logShader,
                                             nanogui::GLShader &pathShader)
 {
+    if (!m_AlreadyLoaded)
+    {
+        throw std::runtime_error("ERROR: cannot link data to shader before loading.");
+    }
+    // TODO: not really efficient or pretty, but how to do better it using nanogui
     normalShader.bind();
     normalShader.uploadAttrib("in_normal", m_VertexCount, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
     normalShader.uploadAttrib("in_pos2d", m_VertexCount, 2, sizeof(nanogui::Vector2f), GL_FLOAT, GL_FALSE, (const void*)m_Vertices.data());
@@ -40,14 +100,14 @@ void SampleDataParser::linkDataToShaders(   nanogui::GLShader &normalShader,
 
     logShader.bind();
     logShader.uploadAttrib("in_normal", m_VertexCount, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
-    logShader.uploadAttrib("in_pos2d", m_VertexCount, 2, sizeof(nanogui::Vector2f), GL_FLOAT, GL_FALSE, (const void*)m_Vertices.data());
+    logShader.shareAttrib(normalShader, "in_pos2d");
     logShader.uploadAttrib("in_height", m_VertexCount, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_LogHeights.data());
-    logShader.uploadAttrib("indices", m_FaceCount, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, m_Indices.data());
+    logShader.shareAttrib(normalShader, "indices");
 
     pathShader.bind();
-    pathShader.uploadAttrib("in_pos2d", m_VertexCount, 2, sizeof(nanogui::Vector2f), GL_FLOAT, GL_FALSE, (const void*)m_Vertices.data());
-    pathShader.uploadAttrib("in_height", m_VertexCount, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
-    pathShader.uploadAttrib("indices", m_FaceCount, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, m_Indices.data());
+    pathShader.shareAttrib(normalShader, "in_pos2d");
+    pathShader.shareAttrib(normalShader, "in_height");
+    pathShader.shareAttrib(normalShader, "indices");
 }
 
 bool SampleDataParser::readDataset(const std::string &filePath)
@@ -84,11 +144,12 @@ bool SampleDataParser::readDataset(const std::string &filePath)
     fclose(datasetFile);
 
     // intensity normalization
-    float max_log_intensity = log(max_intensity / min_intensity);
+    float min_log_intensity = log(min_intensity + 1);
+    float max_log_intensity = log(max_intensity + 1);
     for(size_t i = 0; i < m_Heights.size(); ++i)
     {
         m_Heights[i]    = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
-        m_LogHeights[i] = log(m_LogHeights[i] / min_intensity) / max_log_intensity;
+        m_LogHeights[i] = (log(m_LogHeights[i] + 1) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
 
     return true;
@@ -97,16 +158,18 @@ bool SampleDataParser::readDataset(const std::string &filePath)
 int SampleDataParser::overflow(int ch)
 {
     char c = ch;
-    switch (m_State)
+    m_CurrentWord << c;
+    if (c == '\n')
     {
-        case SKIP_FIRST_LINE:
-            if (c == '\n')
+        switch (m_State)
+        {
+            case SKIP_FIRST_LINE:
             {
-                changeState(READ_INFO);
+                m_CurrentWord.str(std::string());
+                m_State = READ_INFO;
             }
-            break;
-        case READ_INFO:
-            if (c == '\n')
+                break;
+            case READ_INFO:
             {
                 unsigned int dummy;
                 const std::string& tmpCurrWord = m_CurrentWord.str();
@@ -117,40 +180,30 @@ int SampleDataParser::overflow(int ch)
                     m_Normals.resize(m_VertexCount, {0, 0, 0});
                     m_LogNormals.resize(m_VertexCount, {0, 0, 0});
                     m_CurrentWord.str(std::string());
-                    changeState(READ_POINTS);
+                    m_State = READ_POINTS;
                 }
                 else
                 {
-                    changeState(UNDEFINED);
+                    m_State = UNDEFINED;
                 }
             }
-            else
-            {
-                m_CurrentWord << c;
-            }
-            break;
-        case READ_POINTS:
-            if (c == '\n')
+                break;
+            case READ_POINTS:
             {
                 ++m_CurrentVertexCount;
+                m_CurrentWord.str(std::string());
                 if (m_CurrentVertexCount == m_VertexCount)
                 {
-                    changeState(READ_FACES);
+                    m_State = READ_FACES;
                 }
             }
-            break;
-        case READ_FACES:
-            if (c == '\n')
-            {
+                break;
+            case READ_FACES:
                 extractIndicesFromCurrentWord();
-            }
-            else
-            {
-                m_CurrentWord << c;
-            }
-            break;
-        case UNDEFINED:
-            throw new std::runtime_error("ERROR: unvalid OFF format");
+                break;
+            case UNDEFINED:
+                throw new std::runtime_error("ERROR: unvalid OFF format");
+        }
     }
     return 0;
 }
@@ -177,9 +230,9 @@ void SampleDataParser::extractIndicesFromCurrentWord()
         m_Normals[i1] += faceNormal;
         m_Normals[i2] += faceNormal;
 
-        m_LogNormals[i0] += faceNormal;
-        m_LogNormals[i1] += faceNormal;
-        m_LogNormals[i2] += faceNormal;
+        m_LogNormals[i0] += logFaceNormal;
+        m_LogNormals[i1] += logFaceNormal;
+        m_LogNormals[i2] += logFaceNormal;
 
         // if we reached end of faces
         if (m_Indices.size() == m_FaceCount*3)
@@ -190,12 +243,12 @@ void SampleDataParser::extractIndicesFromCurrentWord()
                 m_Normals[i] /= m_NormalPerVertexCount[i];
                 m_LogNormals[i] /= m_NormalPerVertexCount[i];
             }
-            changeState(UNDEFINED);
+            m_State = UNDEFINED;
         }
     }
     else
     {
-        changeState(UNDEFINED);
+        m_State = UNDEFINED;
     }
 }
 

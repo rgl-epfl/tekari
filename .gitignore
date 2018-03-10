@@ -6,6 +6,7 @@ build
 Release
 Debug
 CMakeCache.txt
+TODO.md
 CMakeFiles
 .ninja_deps
 .ninja_log

@@ -101,6 +101,7 @@ add_executable(BSDFVisualizer
   src/main.cpp
   src/sample_data_parser.cpp
   src/sample_data.cpp
+  src/bsdf_application.cpp
   )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})

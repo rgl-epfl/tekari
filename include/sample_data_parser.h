@@ -18,8 +18,16 @@ private:
     } SampleDataParserState;
     
 public:
+    SampleDataParser();
     SampleDataParser(const std::string& sampleDataPath);
 
+    SampleDataParser(const SampleDataParser&) = delete;
+    SampleDataParser(const SampleDataParser&& other);
+
+    const SampleDataParser& operator=(const SampleDataParser&) = delete;
+    const SampleDataParser& operator=(const SampleDataParser&& other) = delete;
+
+    bool loadFromFile(const std::string& sampleDataPath);
     void linkDataToShaders( nanogui::GLShader &normalShader,
                             nanogui::GLShader &logShader,
                             nanogui::GLShader &pathShader);
@@ -27,12 +35,9 @@ public:
 
 private:
     bool readDataset(const std::string &filePath);
-    
     int overflow(int ch);
     void extractIndicesFromCurrentWord();
     void printInfo();
-    inline void changeState(SampleDataParserState newState) { m_State = newState; }
-
 
     inline nanogui::Vector3f getVertex(unsigned int i) const { return {m_Vertices[i][0], m_Heights[i], m_Vertices[i][1]}; }
     inline nanogui::Vector3f computeNormal(unsigned int i0, unsigned int i1, unsigned int i2) const
@@ -43,7 +48,7 @@ private:
     inline nanogui::Vector3f getLogVertex(unsigned int i) const { return {m_Vertices[i][0], m_LogHeights[i], m_Vertices[i][1]}; }
     inline nanogui::Vector3f computeLogNormal(unsigned int i0, unsigned int i1, unsigned int i2) const
     {
-        return (getVertex(i2)-getVertex(i0)).cross(getVertex(i1)-getVertex(i0)).normalized();
+        return (getLogVertex(i2)-getLogVertex(i0)).cross(getLogVertex(i1)-getLogVertex(i0)).normalized();
     }
 
 private:
@@ -62,4 +67,6 @@ private:
     std::stringstream m_CurrentWord;
     unsigned int m_CurrentVertexCount;
     std::vector<unsigned int> m_NormalPerVertexCount;
+
+    bool m_AlreadyLoaded;
 };

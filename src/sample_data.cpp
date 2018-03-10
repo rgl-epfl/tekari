@@ -1,6 +1,5 @@
 #include "sample_data.h"
 
-
 SampleData::SampleData(const std::string& sampleDataPath)
 :   m_DisplayNormalView(true)
 ,   m_DisplayPath(false)
