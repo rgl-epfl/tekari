@@ -11,10 +11,7 @@ public:
     ,   m_ViewOrigin(0, 2, 4)
     ,   m_ViewTarget(0, 0, 0)
     ,   m_ViewUp(0, 1, 0)
-    {
-    // TODO: Change this
-        m_Arcball.setSize(parent->size());
-    }
+    {}
 
     virtual bool mouseMotionEvent(const nanogui::Vector2i &p,
                                   const nanogui::Vector2i &rel,
@@ -75,6 +72,12 @@ public:
     void setShowLogView(bool value) { m_SampleData.displayLogView(value); }
 
     void openFile(const std::string& sampleDataPath) { m_SampleData.loadFromFile(sampleDataPath); }
+
+    void setFixedSize(const nanogui::Vector2i &fixedSize)
+    {
+        GLCanvas::setFixedSize(fixedSize);
+        m_Arcball.setSize(fixedSize);
+    }
 
 private:
     SampleData m_SampleData;

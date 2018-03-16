@@ -8,10 +8,24 @@ public:
     BSDFApplication();
 
     virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
-    virtual void draw(NVGcontext *ctx) override;
+
+    void drawContents() override;
+    void requestLayoutUpdate() { m_RequiresLayoutUpdate = true; }
 
 private:
-    BSDFCanvas *mCanvas;
+    void updateLayout();
+
+    bool m_RequiresLayoutUpdate = false;
+
+
+    nanogui::Widget* m_VerticalScreenSplit;
+
+    nanogui::Widget* m_Sidebar;
+    nanogui::Button* m_HelpButton;
+    nanogui::Widget* m_SidebarLayout;
+
+    BSDFCanvas *m_BSDFCanvas;
+
 
     bool showNormal;
     bool showLog;
