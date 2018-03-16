@@ -4,10 +4,7 @@ SampleData::SampleData(const std::string& sampleDataPath)
 :   m_DisplayNormalView(true)
 ,   m_DisplayPath(false)
 ,   m_DisplayLogView(false)
-{
-    SampleDataParser os(sampleDataPath);
-    m_NFaces = os.getNFaces();
-
+{   
     m_NormalShader.initFromFiles(
         "height_map",
         "../resources/shaders/height_map.vert",
@@ -23,7 +20,7 @@ SampleData::SampleData(const std::string& sampleDataPath)
         "../resources/shaders/path.vert",
         "../resources/shaders/path.frag"
     );
-    os.linkDataToShaders(m_NormalShader, m_LogShader, m_PathShader);
+    loadFromFile(sampleDataPath);
 }
 
 SampleData::~SampleData()
@@ -31,6 +28,15 @@ SampleData::~SampleData()
     m_NormalShader.free();
     m_LogShader.free();
 }
+
+void SampleData::loadFromFile(const std::string& sampleDataPath)
+{
+    SampleDataParser os(sampleDataPath);
+    m_NFaces = os.getNFaces();
+
+    os.linkDataToShaders(m_NormalShader, m_LogShader, m_PathShader);
+}
+
 
 void SampleData::draw( 
     const nanogui::Matrix4f& model,

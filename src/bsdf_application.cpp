@@ -19,9 +19,11 @@ BSDFApplication::BSDFApplication()
     FormHelper *options = new FormHelper(this);
 
     ref<Window> openFileWindow = options->addWindow(Eigen::Vector2i(10, 10), "Open file");
-    options->addVariable("File name", fileName);
+    auto fileNameWidget = options->addVariable("File name", fileName);
+    fileNameWidget->setSize({200, 20});
+    fileNameWidget->setFontSize(20);
     options->addButton("Open", [openFileWindow, this]() mutable {
-        std::cout << "Opened file " << fileName << std::endl;
+        mCanvas->openFile(fileName);
         openFileWindow->setVisible(false);
     });
     openFileWindow->center();

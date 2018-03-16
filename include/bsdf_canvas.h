@@ -12,8 +12,6 @@ public:
     ,   m_ViewTarget(0, 0, 0)
     ,   m_ViewUp(0, 1, 0)
     {
-    using namespace nanogui;
-
     // TODO: Change this
         m_Arcball.setSize(parent->size());
     }
@@ -75,6 +73,8 @@ public:
     void setShowNormalView(bool value) { m_SampleData.displayNormalView(value); }
     void setShowPath(bool value) { m_SampleData.displayPath(value); }
     void setShowLogView(bool value) { m_SampleData.displayLogView(value); }
+
+    void openFile(const std::string& sampleDataPath) { m_SampleData.loadFromFile(sampleDataPath); }
 
 private:
     SampleData m_SampleData;

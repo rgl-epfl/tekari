@@ -13,13 +13,7 @@
 #define PI 3.14159
 
 SampleDataParser::SampleDataParser(const std::string& sampleDataPath)
-:   std::ostream(this)
-,   m_VertexCount(0)
-,   m_FaceCount(0)
-,   m_State(SKIP_FIRST_LINE)
-,   m_CurrentWord("")
-,   m_CurrentVertexCount(0)
-,   m_AlreadyLoaded(false)
+:   SampleDataParser()
 {
     loadFromFile(sampleDataPath);
 }
@@ -91,7 +85,6 @@ void SampleDataParser::linkDataToShaders(   nanogui::GLShader &normalShader,
     {
         throw std::runtime_error("ERROR: cannot link data to shader before loading.");
     }
-    // TODO: not really efficient or pretty, but how to do better it using nanogui
     normalShader.bind();
     normalShader.uploadAttrib("in_normal", m_VertexCount, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
     normalShader.uploadAttrib("in_pos2d", m_VertexCount, 2, sizeof(nanogui::Vector2f), GL_FLOAT, GL_FALSE, (const void*)m_Vertices.data());
