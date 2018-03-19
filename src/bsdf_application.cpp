@@ -9,26 +9,21 @@ BSDFApplication::BSDFApplication()
 ,   showSensorPath(false)
 ,   showPointHeights(false)
 {
-    m_VerticalScreenSplit = new Widget{this};
-    m_VerticalScreenSplit->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill});
+	m_BSDFCanvas = new BSDFCanvas(this);
+	m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
 
-    auto horizontalScreenSplit = new Widget(m_VerticalScreenSplit);
-    horizontalScreenSplit->setLayout(new BoxLayout{Orientation::Horizontal, Alignment::Fill});
+	m_ToolWindow = new Window(this, "Tools");
+	m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 0, 0});
+	m_ToolWindow->setVisible(true);
 
-    m_Sidebar = new Widget{horizontalScreenSplit};
-    m_Sidebar->setFixedWidth(200);
-
-    m_HelpButton = new Button(m_Sidebar, "", ENTYPO_ICON_HELP);
+    m_HelpButton = new Button(m_ToolWindow, "", ENTYPO_ICON_HELP);
     m_HelpButton->setCallback([this]() { std::cout << "Help button triggered." << std::endl; });
     m_HelpButton->setFontSize(15);
     m_HelpButton->setTooltip("Information about using BSDFV.");
 
-    m_SidebarLayout = new Widget(m_Sidebar);
-    m_SidebarLayout->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
-
     // Different view options
     {
-        auto panel = new Widget(m_SidebarLayout);
+        auto panel = new Widget(m_ToolWindow);
         panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5));
         new Label(panel, "View Options", "sans-bold", 25);
         panel->setTooltip(
@@ -36,7 +31,7 @@ BSDFApplication::BSDFApplication()
             );
 
         // sample data view options
-        panel = new Widget(m_SidebarLayout);
+        panel = new Widget(m_ToolWindow);
         panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5, 5));
 
         auto normalViewToggle = new Button(panel, "Normal");
@@ -58,7 +53,7 @@ BSDFApplication::BSDFApplication()
         pathViewToggle->setPushed(false);
 
         // grid view otpions
-        panel = new Widget(m_SidebarLayout);
+        panel = new Widget(m_ToolWindow);
         panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5, 5));
 
         auto gridViewToggle = new Button(panel, "Grid");
@@ -68,7 +63,7 @@ BSDFApplication::BSDFApplication()
         gridViewToggle->setPushed(true);
 
 // TODO: this doesn't work for some reason
-/*
+
         auto gridColorPopupButton = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
 
         gridColorPopupButton->setFontSize(15);
@@ -108,13 +103,13 @@ BSDFApplication::BSDFApplication()
                 });
             });
         }
-*/
+
     }
 
     // Save, refresh, load, close
     {
-        new Label(m_SidebarLayout, "File", "sans-bold", 25);
-        auto tools = new Widget{m_SidebarLayout};
+        new Label(m_ToolWindow, "File", "sans-bold", 25);
+        auto tools = new Widget{ m_ToolWindow };
         tools->setLayout(new GridLayout{Orientation::Horizontal, 5, Alignment::Fill, 5, 1});
 
         auto makeImageButton = [&](const std::string& name, bool enabled, std::function<void()> callback, int icon = 0, std::string tooltip = "") {
@@ -138,15 +133,11 @@ BSDFApplication::BSDFApplication()
             closeSelectedDataSample();
         }, ENTYPO_ICON_CROSS, "Close (CTRL+W)");
 
-        auto spacer = new Widget{m_SidebarLayout};
+        auto spacer = new Widget{ m_ToolWindow };
         spacer->setHeight(3);
     }
 
-    m_BSDFCanvas = new BSDFCanvas(horizontalScreenSplit);
-    m_BSDFCanvas->setBackgroundColor({50, 50, 50, 255});
-
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
-
     this->setSize(Vector2i(1024, 800));
 }
 
@@ -170,13 +161,9 @@ void BSDFApplication::drawContents() {
 
 void BSDFApplication::updateLayout()
 {
-    m_BSDFCanvas->setFixedSize(mSize - Vector2i{m_Sidebar->fixedWidth() - 1, -1});
-    m_Sidebar->setFixedHeight(mSize.y());
-
-    m_HelpButton->setPosition(Vector2i{m_Sidebar->fixedWidth() - 38, 5});
-    m_SidebarLayout->setFixedWidth(m_Sidebar->fixedWidth());
-
-    m_VerticalScreenSplit->setFixedSize(mSize);
+    m_BSDFCanvas->setFixedSize(mSize);
+	m_ToolWindow->setFixedSize({ 200, 400 });
+	m_ToolWindow->setPosition({ 0, 0 });
 
     performLayout();
 

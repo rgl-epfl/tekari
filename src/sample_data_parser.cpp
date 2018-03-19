@@ -6,11 +6,10 @@
 #include <cstdio>
 #include <cmath>
 #include <libqhullcpp/Qhull.h>
-
 #include <iostream>
-#include "stop_watch.h"
 
-#define PI 3.14159
+#include "common.h"
+#include "stop_watch.h"
 
 SampleDataParser::SampleDataParser(const std::string& sampleDataPath)
 :   SampleDataParser()
@@ -124,8 +123,8 @@ bool SampleDataParser::readDataset(const std::string &filePath)
 
     while (fscanf(datasetFile, "%f %f %f", &theta, &phi, &intensity) == 3)
     {
-        float x = theta * cos(phi * PI / 180.0f) / 90;
-        float z = theta * sin(phi * PI / 180.0f) / 90;
+        float x = theta * cos(phi * M_PI / 180.0f) / 90;
+        float z = theta * sin(phi * M_PI / 180.0f) / 90;
 
         m_Vertices.push_back({x, z});
         m_Heights.push_back(intensity);

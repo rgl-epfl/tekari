@@ -22,11 +22,8 @@ private:
     bool m_RequiresLayoutUpdate = false;
 
 
-    nanogui::Widget* m_VerticalScreenSplit;
-
-    nanogui::Widget* m_Sidebar;
+    nanogui::Window* m_ToolWindow;
     nanogui::Button* m_HelpButton;
-    nanogui::Widget* m_SidebarLayout;
 
     BSDFCanvas *m_BSDFCanvas;
 

@@ -8,7 +8,6 @@ class BSDFCanvas : public nanogui::GLCanvas {
 public:
     BSDFCanvas(Widget *parent)
     :   nanogui::GLCanvas(parent)
-    ,   m_SampleData("../resources/green_pvc.txt")
     ,   m_ViewOrigin(0, 2, 4)
     ,   m_ViewTarget(0, 0, 0)
     ,   m_ViewUp(0, 1, 0)

@@ -29,7 +29,7 @@
         sw.start();         \
         f;                  \
         sw.stop();          \
-        (dt) = sw.elapsed();  \
+        (dt) = sw.elapsed();\
         std::cout << #f " took : " << (dt) << std::endl; \
     } while(0)
 

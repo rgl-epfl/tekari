@@ -2,6 +2,7 @@
 
 #include <nanogui/nanogui.h>
 #include <vector>
+#include "common.h"
 
 class RadialGrid
 {
@@ -56,7 +57,9 @@ public:
         if (m_Visible)
         {
             nanogui::Matrix4f mvp = proj * view * model;
-            glEnable(GL_DEPTH_TEST);
+			glEnable(GL_DEPTH_TEST);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glPointSize(2);
             m_Shader.bind();
             m_Shader.setUniform("mvp", mvp);

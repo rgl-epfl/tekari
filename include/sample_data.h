@@ -17,8 +17,11 @@ private:
     bool m_DisplayPath;
     bool m_DisplayLogView;
 
+	bool m_Initialized;
+
 public:
-    SampleData(const std::string& sampleDataPath);
+	SampleData();
+	SampleData(const std::string& sampleDataPath);
     ~SampleData();
 
     void draw(  const nanogui::Matrix4f& model,
