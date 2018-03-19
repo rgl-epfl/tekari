@@ -2,6 +2,7 @@
 
 #include <nanogui/nanogui.h>
 #include "sample_data.h"
+#include "radial_grid.h"
 
 class BSDFCanvas : public nanogui::GLCanvas {
 public:
@@ -65,11 +66,14 @@ public:
         proj = frustum(-fW, fW, -fH, fH, near, far);
 
         m_SampleData.draw(m_Arcball.matrix(), view, proj);
+        m_Grid.draw(m_Arcball.matrix(), view, proj);
     }
 
-    void setShowNormalView(bool value) { m_SampleData.displayNormalView(value); }
-    void setShowPath(bool value) { m_SampleData.displayPath(value); }
-    void setShowLogView(bool value) { m_SampleData.displayLogView(value); }
+    const SampleData& sampleData() const { return m_SampleData; }
+    SampleData& sampleData() { return m_SampleData; }
+    
+    const RadialGrid& grid() const { return m_Grid; }
+    RadialGrid& grid() { return m_Grid; }
 
     void openFile(const std::string& sampleDataPath) { m_SampleData.loadFromFile(sampleDataPath); }
 
@@ -81,6 +85,7 @@ public:
 
 private:
     SampleData m_SampleData;
+    RadialGrid m_Grid;
     nanogui::Arcball m_Arcball;
 
     nanogui::Vector3f m_ViewOrigin;

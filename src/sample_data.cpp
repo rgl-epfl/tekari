@@ -49,7 +49,7 @@ void SampleData::draw(
 
     glEnable(GL_DEPTH_TEST);
     glPointSize(2);
-    /* Draw 12 triangles starting at index 0 */
+    
     if (m_DisplayNormalView)
     {
         m_NormalShader.bind();

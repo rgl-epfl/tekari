@@ -12,6 +12,10 @@ public:
     void drawContents() override;
     void requestLayoutUpdate() { m_RequiresLayoutUpdate = true; }
 
+    void openDataSampleDialog();
+    void saveScreenShot();
+    void closeSelectedDataSample();
+
 private:
     void updateLayout();
 
