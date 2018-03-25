@@ -76,10 +76,9 @@ public:
 
     void openFile(const std::string& sampleDataPath) { m_SampleData.loadFromFile(sampleDataPath); }
 
-    void setFixedSize(const nanogui::Vector2i &fixedSize)
+    virtual void performLayout(NVGcontext *ctx) override
     {
-        GLCanvas::setFixedSize(fixedSize);
-        m_Arcball.setSize(fixedSize);
+        m_Arcball.setSize(mSize);
     }
 
 private:

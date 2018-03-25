@@ -1,28 +1,3 @@
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <vector>
-#include <string>
-
-/*
-    src/example4.cpp -- C++ version of an example application that shows
-    how to use the OpenGL widget. For a Python implementation, see
-    '../python/example4.py'.
-
-    NanoGUI was developed by Wenzel Jakob <wenzel.jakob@epfl.ch>.
-    The widget drawing code is based on the NanoVG demo application
-    by Mikko Mononen.
-
-    All rights reserved. Use of this source code is governed by a
-    BSD-style license that can be found in the LICENSE.txt file.
-*/
-
-// Includes for the GLTexture class.
-#include <cstdint>
-#include <limits>
-#include <memory>
-#include <utility>
-
 #include "bsdf_application.h"
 
 #if defined(__GNUC__)
@@ -43,13 +18,7 @@
 #  include <windows.h>
 #endif
 
-using std::cout;
-using std::cerr;
-using std::endl;
-using std::string;
-using std::vector;
-using std::pair;
-using std::to_string;
+#include "delaunay.h"
 
 int main(int /* argc */, char ** /* argv */) {
     

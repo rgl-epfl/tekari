@@ -11,6 +11,8 @@
 #include "common.h"
 #include "stop_watch.h"
 
+#include <delaunay.h>
+
 SampleDataParser::SampleDataParser(const std::string& sampleDataPath)
 :   SampleDataParser()
 {
@@ -61,12 +63,26 @@ bool SampleDataParser::loadFromFile(const std::string& sampleDataPath)
     PROFILE(readDataset(sampleDataPath), readDataElapsed);
 
     // triangulate it !
+	/*
     const char* input_comment = "testing";
     const char* command = "-d -Qt";
     orgQhull::Qhull qhull;
     qhull.setOutputStream(&(*this));
     PROFILE(qhull.runQhull(input_comment, 2, m_Vertices.size(), (float*)m_Vertices.data(), command), runQhullElapsed);
-    PROFILE(qhull.outputQhull("-o"), outputQhullElapsed);
+	PROFILE(qhull.outputQhull("-o"), outputQhullElapsed);
+	*/
+
+	delaunay2d_t *delaunay;
+	tri_delaunay2d_t *tri_delaunay;
+	PROFILE(delaunay = delaunay2d_from((del_point2d_t*)m_Vertices.data(), m_Vertices.size()), runQhullElapsed);
+	PROFILE(tri_delaunay = tri_delaunay2d_from(delaunay), outputQhullElapsed);
+
+	m_FaceCount = tri_delaunay->num_triangles;
+	m_Indices.resize(tri_delaunay->num_triangles);
+	for (unsigned int i = 0; i < tri_delaunay->num_triangles; i++)
+	{
+		m_Indices[i] = tri_delaunay->tris[i];
+	}
 
     double totalElapsed = readDataElapsed + runQhullElapsed + outputQhullElapsed;
     std::cout << "Read data percentage " << (100 * readDataElapsed / totalElapsed) << "%" << std::endl;
@@ -135,6 +151,9 @@ bool SampleDataParser::readDataset(const std::string &filePath)
     }
     fclose(datasetFile);
 
+	// init vertices count
+	m_VertexCount = m_Vertices.size();
+
     // intensity normalization
     float min_log_intensity = log(min_intensity + 1);
     float max_log_intensity = log(max_intensity + 1);
@@ -145,6 +164,33 @@ bool SampleDataParser::readDataset(const std::string &filePath)
     }
 
     return true;
+}
+
+void SampleDataParser::computeNormals()
+{
+	for (unsigned int i = 0; i < m_Indices.size(); i += 3)
+	{
+		unsigned int i0 = m_Indices[i];
+		unsigned int i1 = m_Indices[i+1];
+		unsigned int i2 = m_Indices[i+2];
+
+		nanogui::Vector3f faceNormal = computeNormal(i0, i1, i2);
+		nanogui::Vector3f logFaceNormal = computeLogNormal(i0, i1, i2);
+
+		m_Normals[i0] += faceNormal;
+		m_Normals[i1] += faceNormal;
+		m_Normals[i2] += faceNormal;
+
+		m_LogNormals[i0] += logFaceNormal;
+		m_LogNormals[i1] += logFaceNormal;
+		m_LogNormals[i2] += logFaceNormal;
+	}
+
+	for (size_t i = 0; i < m_Normals.size(); ++i)
+	{
+		m_Normals[i].normalize();
+		m_LogNormals[i].normalize();
+	}
 }
 
 int SampleDataParser::overflow(int ch)
@@ -232,9 +278,11 @@ void SampleDataParser::extractIndicesFromCurrentWord()
             // normalize m_Normals
             for(size_t i = 0; i < m_Normals.size(); ++i)
             {
-                m_Normals[i] /= m_NormalPerVertexCount[i];
-                m_LogNormals[i] /= m_NormalPerVertexCount[i];
-            }
+				//m_Normals[i] /= m_NormalPerVertexCount[i];
+				//m_LogNormals[i] /= m_NormalPerVertexCount[i];
+				m_Normals[i].normalize();
+				m_LogNormals[i].normalize();
+			}
             m_State = UNDEFINED;
         }
     }

@@ -31,13 +31,16 @@ public:
     void linkDataToShaders( nanogui::GLShader &normalShader,
                             nanogui::GLShader &logShader,
                             nanogui::GLShader &pathShader);
-    unsigned int getNFaces() const { return m_FaceCount; }
+	unsigned int getNFaces() const { return m_FaceCount; }
+	unsigned int getNPoints() const { return m_VertexCount; }
 
 private:
     bool readDataset(const std::string &filePath);
     int overflow(int ch);
     void extractIndicesFromCurrentWord();
     void printInfo();
+
+	void computeNormals();
 
     inline nanogui::Vector3f getVertex(unsigned int i) const { return {m_Vertices[i][0], m_Heights[i], m_Vertices[i][1]}; }
     inline nanogui::Vector3f computeNormal(unsigned int i0, unsigned int i1, unsigned int i2) const
@@ -58,7 +61,7 @@ private:
     std::vector<float>              m_LogHeights;
     std::vector<nanogui::Vector3f>  m_Normals;
     std::vector<nanogui::Vector3f>  m_LogNormals;
-    std::vector<unsigned int>       m_Indices;
+    std::vector<unsigned int>		m_Indices;
 
     unsigned int m_VertexCount;
     unsigned int m_FaceCount;

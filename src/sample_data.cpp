@@ -54,6 +54,7 @@ void SampleData::loadFromFile(const std::string& sampleDataPath)
 {
     SampleDataParser os(sampleDataPath);
     m_NFaces = os.getNFaces();
+	m_NSamplePoints = os.getNPoints();
 
     os.linkDataToShaders(m_NormalShader, m_LogShader, m_PathShader);
 	m_Initialized = true;
@@ -93,7 +94,7 @@ void SampleData::draw(
 		{
 			m_PathShader.bind();
 			m_PathShader.setUniform("modelViewProj", mvp);
-			m_PathShader.drawIndexed(GL_POINTS, 0, m_NFaces);    
+			m_PathShader.drawArray(GL_LINE_STRIP, 0, m_NSamplePoints);    
 		}
 		glDisable(GL_DEPTH_TEST);
 	}

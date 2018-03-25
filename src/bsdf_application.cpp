@@ -3,7 +3,7 @@
 using namespace nanogui;
 
 BSDFApplication::BSDFApplication()
-:   nanogui::Screen(Eigen::Vector2i(1000, 800), "BSDF Visualizer", false)
+:   nanogui::Screen(Eigen::Vector2i(1000, 800), "BSDF Visualizer", true)
 ,   showNormal(true)
 ,   showLog(false)
 ,   showSensorPath(false)
@@ -16,10 +16,11 @@ BSDFApplication::BSDFApplication()
 	m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 0, 0});
 	m_ToolWindow->setVisible(true);
 
-    m_HelpButton = new Button(m_ToolWindow, "", ENTYPO_ICON_HELP);
+    m_HelpButton = new Button(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
     m_HelpButton->setCallback([this]() { std::cout << "Help button triggered." << std::endl; });
     m_HelpButton->setFontSize(15);
     m_HelpButton->setTooltip("Information about using BSDFV.");
+	m_HelpButton->setPosition({20, 0});
 
     // Different view options
     {

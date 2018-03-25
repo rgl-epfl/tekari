@@ -4,3 +4,6 @@
 [submodule "nanogui"]
 	path = ext/nanogui
 	url = https://github.com/wjakob/nanogui.git
+[submodule "ext/delaunay"]
+	path = ext/delaunay
+	url = git@github.com:eloraiby/delaunay.git

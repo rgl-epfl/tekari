@@ -12,6 +12,7 @@ private:
     nanogui::GLShader m_LogShader;
     nanogui::GLShader m_PathShader;
     unsigned int m_NFaces;
+	unsigned int m_NSamplePoints;
 
     bool m_DisplayNormalView;
     bool m_DisplayPath;

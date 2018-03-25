@@ -56,6 +56,10 @@ set(qhull_STATIC ON CACHE BOOL " " FORCE)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/ ext_build/qhull)
 
+# Build delaunay
+# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext/delaunay)
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/delaunay/ ext_build/delaunay)
+
 # Enable C++14 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
@@ -94,14 +98,22 @@ include_directories(
   # qhull
   ${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src
 
+  # delaunay
+  #${CMAKE_CURRENT_SOURCE_DIR}/ext/delaunay
+
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 add_executable(BSDFVisualizer
-  src/main.cpp
-  src/sample_data_parser.cpp
-  src/sample_data.cpp
-  src/bsdf_application.cpp
+  "src/main.cpp"
+  "src/sample_data.cpp" "include/sample_data.h"
+  "src/sample_data_parser.cpp" "include/sample_data_parser.h"
+  "src/bsdf_application.cpp" "include/bsdf_application.h"
+  "src/delaunay.c" "include/delaunay.h"
+  "include/bsdf_canvas.h"
+  "include/common.h"
+  "include/radial_grid.h"
+  "include/stop_watch.h"
   )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
