@@ -8,9 +8,9 @@ class RadialGrid
 {
 public:
     RadialGrid()
-    :   m_CircleCount(5)
-    ,   m_VertexPerCircleCount(50)
-    ,   m_LinesCount(10)
+    :   m_CircleCount(10)
+    ,   m_VertexPerCircleCount(100)
+    ,   m_LinesCount(18)
     ,   m_VertexPerLineCount(2)
     ,   m_Color(200, 200, 200, 200)
     ,   m_Visible(true)
@@ -24,7 +24,7 @@ public:
 
         for (unsigned int i = 0; i < m_CircleCount; ++i)
         {
-            float radius = (i+1) / m_CircleCount;
+            float radius = (float)(i+1) / m_CircleCount;
             for (unsigned int j = 0; j < m_VertexPerCircleCount; ++j)
             {
                 vertices[i*m_VertexPerCircleCount + j] = {
@@ -60,16 +60,29 @@ public:
 			glEnable(GL_DEPTH_TEST);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glPointSize(2);
             m_Shader.bind();
             m_Shader.setUniform("mvp", mvp);
             m_Shader.setUniform("in_color", m_Color);
+
             for (unsigned int i = 0; i < m_CircleCount; ++i)
             {
                 m_Shader.drawArray(GL_LINE_LOOP, i*m_VertexPerCircleCount, m_VertexPerCircleCount);
             }
             m_Shader.drawArray(GL_LINES, m_CircleCount*m_VertexPerCircleCount, m_LinesCount*m_VertexPerLineCount);
-            glDisable(GL_DEPTH_TEST);
+
+			// This doesn't give really nice results
+			glDepthFunc(GL_GREATER);
+			m_Shader.setUniform("in_color", (nanogui::Color)(m_Color / 2));
+			for (unsigned int i = 0; i < m_CircleCount; ++i)
+			{
+				m_Shader.drawArray(GL_LINE_LOOP, i*m_VertexPerCircleCount, m_VertexPerCircleCount);
+			}
+			m_Shader.drawArray(GL_LINES, m_CircleCount*m_VertexPerCircleCount, m_LinesCount*m_VertexPerLineCount);
+
+			// Restore opengl settings
+			glDepthFunc(GL_LESS);
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_BLEND);
         }
     }
 

@@ -12,5 +12,5 @@ void main() {
     float brightness = abs(dot(normalize(view - position), normal));
     vec3 color = vec3(height, 1 - abs((height - 0.5)*2), 1-height);
 
-    out_color = vec4((0.2 + brightness*.8) * color, 1.0f);
+    out_color = vec4((normal + vec3(1.0)) / 2, 1.0); //vec4((0.2 + brightness*.8) * color, 1.0f);
 }

@@ -19,35 +19,19 @@ SampleDataParser::SampleDataParser(const std::string& sampleDataPath)
     loadFromFile(sampleDataPath);
 }
 
-SampleDataParser::SampleDataParser()
-:   std::ostream(this)
-,   m_VertexCount(0)
-,   m_FaceCount(0)
-,   m_State(SKIP_FIRST_LINE)
-,   m_CurrentWord("")
-,   m_CurrentVertexCount(0)
-,   m_AlreadyLoaded(false)
+SampleDataParser::SampleDataParser(const SampleDataParser && other)
+:	tri_delaunay2d(other.tri_delaunay2d)
+,	m_Heights(std::move(other.m_Heights))
+,	m_LogHeights(std::move(other.m_LogHeights))
+,	m_Normals(std::move(other.m_Normals))
+,	m_LogNormals(std::move(other.m_LogNormals))
+,	m_AlreadyLoaded(other.m_AlreadyLoaded)
 {}
 
-SampleDataParser::SampleDataParser(const SampleDataParser&& other)
-:   std::ostream(this)
-,   m_Vertices(std::move(other.m_Vertices))
-,   m_Heights(std::move(other.m_Heights))
-,   m_LogHeights(std::move(other.m_LogHeights))
-,   m_Normals(std::move(other.m_Normals))
-,   m_LogNormals(std::move(other.m_LogNormals))
-,   m_Indices(std::move(other.m_Indices))
-,   m_VertexCount(other.m_VertexCount)
-,   m_FaceCount(other.m_FaceCount)
-,   m_State(other.m_State)
-,   m_CurrentWord("")
-,   m_CurrentVertexCount(other.m_CurrentVertexCount)
-,   m_NormalPerVertexCount(std::move(other.m_NormalPerVertexCount))
-,   m_AlreadyLoaded(other.m_AlreadyLoaded)
-{
-    std::cout <<"used move constructor" << std::endl;
-}
-
+SampleDataParser::SampleDataParser()
+:   tri_delaunay2d(nullptr)
+,	m_AlreadyLoaded(false)
+{}
 
 bool SampleDataParser::loadFromFile(const std::string& sampleDataPath)
 {
@@ -56,39 +40,26 @@ bool SampleDataParser::loadFromFile(const std::string& sampleDataPath)
         throw std::runtime_error("ERROR: cannot load sample data twice!");
     }
     double readDataElapsed;
-    double runQhullElapsed;
-    double outputQhullElapsed;
-
+    double runDelaunayElapsed;
+	double triangulateDelaunayElapsed;
+	double computeNormalsElapsed;
+	
     // load vertex data
-    PROFILE(readDataset(sampleDataPath), readDataElapsed);
-
-    // triangulate it !
-	/*
-    const char* input_comment = "testing";
-    const char* command = "-d -Qt";
-    orgQhull::Qhull qhull;
-    qhull.setOutputStream(&(*this));
-    PROFILE(qhull.runQhull(input_comment, 2, m_Vertices.size(), (float*)m_Vertices.data(), command), runQhullElapsed);
-	PROFILE(qhull.outputQhull("-o"), outputQhullElapsed);
-	*/
+	std::vector<del_point2d_t> points;
+    PROFILE(readDataset(sampleDataPath, points), readDataElapsed);
 
 	delaunay2d_t *delaunay;
-	tri_delaunay2d_t *tri_delaunay;
-	PROFILE(delaunay = delaunay2d_from((del_point2d_t*)m_Vertices.data(), m_Vertices.size()), runQhullElapsed);
-	PROFILE(tri_delaunay = tri_delaunay2d_from(delaunay), outputQhullElapsed);
+	PROFILE(delaunay = delaunay2d_from((del_point2d_t*)points.data(), points.size()), runDelaunayElapsed);
+	PROFILE(tri_delaunay2d = tri_delaunay2d_from(delaunay), triangulateDelaunayElapsed);
+	delaunay2d_release(delaunay);
+	PROFILE(computeNormals(), computeNormalsElapsed);
 
-	m_FaceCount = tri_delaunay->num_triangles;
-	m_Indices.resize(tri_delaunay->num_triangles);
-	for (unsigned int i = 0; i < tri_delaunay->num_triangles; i++)
-	{
-		m_Indices[i] = tri_delaunay->tris[i];
-	}
-
-    double totalElapsed = readDataElapsed + runQhullElapsed + outputQhullElapsed;
+    double totalElapsed = readDataElapsed + runDelaunayElapsed + triangulateDelaunayElapsed + computeNormalsElapsed;
     std::cout << "Read data percentage " << (100 * readDataElapsed / totalElapsed) << "%" << std::endl;
-    std::cout << "Run qhull percentage " << (100 * runQhullElapsed / totalElapsed) << "%" << std::endl;
-    std::cout << "Output qhull percentage " << (100 * outputQhullElapsed / totalElapsed) << "%" << std::endl;
-
+    std::cout << "Run delaunay percentage " << (100 * runDelaunayElapsed / totalElapsed) << "%" << std::endl;
+	std::cout << "Triangulate delaunay percentage " << (100 * triangulateDelaunayElapsed / totalElapsed) << "%" << std::endl;
+	std::cout << "Compute normals percentage " << (100 * computeNormalsElapsed / totalElapsed) << "%" << std::endl;
+	
     m_AlreadyLoaded = true;
 }
 
@@ -101,24 +72,26 @@ void SampleDataParser::linkDataToShaders(   nanogui::GLShader &normalShader,
         throw std::runtime_error("ERROR: cannot link data to shader before loading.");
     }
     normalShader.bind();
-    normalShader.uploadAttrib("in_normal", m_VertexCount, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
-    normalShader.uploadAttrib("in_pos2d", m_VertexCount, 2, sizeof(nanogui::Vector2f), GL_FLOAT, GL_FALSE, (const void*)m_Vertices.data());
-    normalShader.uploadAttrib("in_height", m_VertexCount, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
-    normalShader.uploadAttrib("indices", m_FaceCount, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, m_Indices.data());
+    normalShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
+    normalShader.uploadAttrib("in_pos2d", tri_delaunay2d->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)tri_delaunay2d->points);
+    normalShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
+    normalShader.uploadAttrib("indices", tri_delaunay2d->num_triangles, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, tri_delaunay2d->tris);
 
     logShader.bind();
-    logShader.uploadAttrib("in_normal", m_VertexCount, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
+    logShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
     logShader.shareAttrib(normalShader, "in_pos2d");
-    logShader.uploadAttrib("in_height", m_VertexCount, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_LogHeights.data());
+    logShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_LogHeights.data());
     logShader.shareAttrib(normalShader, "indices");
 
     pathShader.bind();
     pathShader.shareAttrib(normalShader, "in_pos2d");
     pathShader.shareAttrib(normalShader, "in_height");
     pathShader.shareAttrib(normalShader, "indices");
+
+	tri_delaunay2d_release(tri_delaunay2d);
 }
 
-bool SampleDataParser::readDataset(const std::string &filePath)
+bool SampleDataParser::readDataset(const std::string &filePath, std::vector<del_point2d_t> &points)
 {
     // read file
     float phi, theta, intensity;
@@ -142,7 +115,7 @@ bool SampleDataParser::readDataset(const std::string &filePath)
         float x = theta * cos(phi * M_PI / 180.0f) / 90;
         float z = theta * sin(phi * M_PI / 180.0f) / 90;
 
-        m_Vertices.push_back({x, z});
+        points.push_back({x, z});
         m_Heights.push_back(intensity);
         m_LogHeights.push_back(intensity);
 
@@ -150,9 +123,6 @@ bool SampleDataParser::readDataset(const std::string &filePath)
         max_intensity = std::max(max_intensity, intensity);
     }
     fclose(datasetFile);
-
-	// init vertices count
-	m_VertexCount = m_Vertices.size();
 
     // intensity normalization
     float min_log_intensity = log(min_intensity + 1);
@@ -166,24 +136,66 @@ bool SampleDataParser::readDataset(const std::string &filePath)
     return true;
 }
 
+void SampleDataParser::angleWeights(unsigned int i0, unsigned int i1, unsigned int i2,
+	float &w0, float &w1, float &w2) const {
+	// compute angle weights
+	const nanogui::Vector3f e01 = (getVertex(i1) - getVertex(i0)).normalized();
+	const nanogui::Vector3f e12 = (getVertex(i2) - getVertex(i1)).normalized();
+	const nanogui::Vector3f e20 = (getVertex(i0) - getVertex(i2)).normalized();
+	w0 = (float)acos(std::max(-1.0f, std::min(1.0f, e01.dot(-e20))));
+	w1 = (float)acos(std::max(-1.0f, std::min(1.0f, e12.dot(-e01))));
+	w2 = (float)acos(std::max(-1.0f, std::min(1.0f, e20.dot(-e12))));
+}
+void SampleDataParser::angleLogWeights(unsigned int i0, unsigned int i1, unsigned int i2,
+	float &w0, float &w1, float &w2) const {
+	// compute angle weights
+	const nanogui::Vector3f e01 = (getLogVertex(i1) - getLogVertex(i0)).normalized();
+	const nanogui::Vector3f e12 = (getLogVertex(i2) - getLogVertex(i1)).normalized();
+	const nanogui::Vector3f e20 = (getLogVertex(i0) - getLogVertex(i2)).normalized();
+	w0 = (float)acos(std::max(-1.0f, std::min(1.0f, e01.dot(-e20))));
+	w1 = (float)acos(std::max(-1.0f, std::min(1.0f, e12.dot(-e01))));
+	w2 = (float)acos(std::max(-1.0f, std::min(1.0f, e20.dot(-e12))));
+}
+
+nanogui::Vector3f SampleDataParser::computeNormal(unsigned int i0, unsigned int i1, unsigned int i2) const
+{
+	nanogui::Vector3f e01 = (getVertex(i1) - getVertex(i0));
+	nanogui::Vector3f e12 = (getVertex(i2) - getVertex(i1));
+	nanogui::Vector3f e20 = (getVertex(i0) - getVertex(i2));
+	return ((-e20).cross(e01).normalized() +
+			(e20).cross(-e12).normalized() +
+			(e12).cross(-e01).normalized()).normalized();
+}
+
+nanogui::Vector3f SampleDataParser::computeLogNormal(unsigned int i0, unsigned int i1, unsigned int i2) const
+{
+	return (getLogVertex(i2) - getLogVertex(i0)).cross(getLogVertex(i1) - getLogVertex(i0)).normalized();
+}
+
 void SampleDataParser::computeNormals()
 {
-	for (unsigned int i = 0; i < m_Indices.size(); i += 3)
+	m_Normals.resize(tri_delaunay2d->num_triangles * 3, { 0,0,0 });
+	m_LogNormals.resize(tri_delaunay2d->num_triangles * 3, { 0,0,0 });
+
+	for (unsigned int i = 0; i < tri_delaunay2d->num_triangles; i += 3)
 	{
-		unsigned int i0 = m_Indices[i];
-		unsigned int i1 = m_Indices[i+1];
-		unsigned int i2 = m_Indices[i+2];
+		const unsigned int &i0 = tri_delaunay2d->tris[3*i];
+		const unsigned int &i1 = tri_delaunay2d->tris[3*i+1];
+		const unsigned int &i2 = tri_delaunay2d->tris[3*i+2];
 
 		nanogui::Vector3f faceNormal = computeNormal(i0, i1, i2);
 		nanogui::Vector3f logFaceNormal = computeLogNormal(i0, i1, i2);
+		float w0, w1, w2, lw0, lw1, lw2;
+		angleWeights(i0, i1, i2, w0, w1, w2);
+		angleLogWeights(i0, i1, i2, lw0, lw1, lw2);
 
-		m_Normals[i0] += faceNormal;
-		m_Normals[i1] += faceNormal;
-		m_Normals[i2] += faceNormal;
+		m_Normals[i0] += w0 * faceNormal;
+		m_Normals[i1] += w1 * faceNormal;
+		m_Normals[i2] += w2 * faceNormal;
 
-		m_LogNormals[i0] += logFaceNormal;
-		m_LogNormals[i1] += logFaceNormal;
-		m_LogNormals[i2] += logFaceNormal;
+		m_LogNormals[i0] += lw0 * logFaceNormal;
+		m_LogNormals[i1] += lw1 * logFaceNormal;
+		m_LogNormals[i2] += lw2 * logFaceNormal;
 	}
 
 	for (size_t i = 0; i < m_Normals.size(); ++i)
@@ -191,117 +203,4 @@ void SampleDataParser::computeNormals()
 		m_Normals[i].normalize();
 		m_LogNormals[i].normalize();
 	}
-}
-
-int SampleDataParser::overflow(int ch)
-{
-    char c = ch;
-    m_CurrentWord << c;
-    if (c == '\n')
-    {
-        switch (m_State)
-        {
-            case SKIP_FIRST_LINE:
-            {
-                m_CurrentWord.str(std::string());
-                m_State = READ_INFO;
-            }
-                break;
-            case READ_INFO:
-            {
-                unsigned int dummy;
-                const std::string& tmpCurrWord = m_CurrentWord.str();
-                if (sscanf(tmpCurrWord.c_str(), "%u %u %u", &m_VertexCount, &m_FaceCount, &dummy) == 3)
-                {
-                    m_Indices.reserve(3 * m_FaceCount);
-                    m_NormalPerVertexCount.resize(m_VertexCount, 0);
-                    m_Normals.resize(m_VertexCount, {0, 0, 0});
-                    m_LogNormals.resize(m_VertexCount, {0, 0, 0});
-                    m_CurrentWord.str(std::string());
-                    m_State = READ_POINTS;
-                }
-                else
-                {
-                    m_State = UNDEFINED;
-                }
-            }
-                break;
-            case READ_POINTS:
-            {
-                ++m_CurrentVertexCount;
-                m_CurrentWord.str(std::string());
-                if (m_CurrentVertexCount == m_VertexCount)
-                {
-                    m_State = READ_FACES;
-                }
-            }
-                break;
-            case READ_FACES:
-                extractIndicesFromCurrentWord();
-                break;
-            case UNDEFINED:
-                throw new std::runtime_error("ERROR: unvalid OFF format");
-        }
-    }
-    return 0;
-}
-
-void SampleDataParser::extractIndicesFromCurrentWord()
-{
-    unsigned int dummy, i0, i1, i2;
-    const std::string& tmpCurrWord = m_CurrentWord.str();
-    if (sscanf(tmpCurrWord.c_str(), "%u %u %u %u", &dummy, &i0, &i1, &i2) == 4)
-    {
-        m_Indices.push_back(i0);
-        m_Indices.push_back(i1);
-        m_Indices.push_back(i2);
-        m_CurrentWord.str(std::string());
-
-        // Compute normal
-        nanogui::Vector3f faceNormal = computeNormal(i0, i1, i2);
-        nanogui::Vector3f logFaceNormal = computeLogNormal(i0, i1, i2);
-
-        ++m_NormalPerVertexCount[i0];
-        ++m_NormalPerVertexCount[i1];
-        ++m_NormalPerVertexCount[i2];
-        m_Normals[i0] += faceNormal;
-        m_Normals[i1] += faceNormal;
-        m_Normals[i2] += faceNormal;
-
-        m_LogNormals[i0] += logFaceNormal;
-        m_LogNormals[i1] += logFaceNormal;
-        m_LogNormals[i2] += logFaceNormal;
-
-        // if we reached end of faces
-        if (m_Indices.size() == m_FaceCount*3)
-        {
-            // normalize m_Normals
-            for(size_t i = 0; i < m_Normals.size(); ++i)
-            {
-				//m_Normals[i] /= m_NormalPerVertexCount[i];
-				//m_LogNormals[i] /= m_NormalPerVertexCount[i];
-				m_Normals[i].normalize();
-				m_LogNormals[i].normalize();
-			}
-            m_State = UNDEFINED;
-        }
-    }
-    else
-    {
-        m_State = UNDEFINED;
-    }
-}
-
-void SampleDataParser::printInfo()
-{
-    std::cout << "Number of m_Vertices : " << m_VertexCount << std::endl;
-    for (int i = 0; i < m_VertexCount; ++i)
-    {
-        std::cout << m_Vertices[i][0] << " " << m_Vertices[i][1] << " " << m_Vertices[i][2] << std::endl;
-    }
-    std::cout << "Number of faces : " << m_FaceCount << std::endl;
-    for (int i = 0; i < m_FaceCount; ++i)
-    {
-        std::cout << m_Indices[3*i + 0] << " " << m_Indices[3*i + 1] << " " << m_Indices[3*i + 2] << std::endl;
-    }
 }

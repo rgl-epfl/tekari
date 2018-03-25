@@ -9,9 +9,7 @@ TODO:
 
 
 // problems
-- setSize() not overridable (GLCanvas) perform layout
 - GLFrameBuffer: how to write to it
-- nanogui c++ exception not writing to console
 
 - offset path + draw 2 grids (depth testing)
 - change gui (floating window)
@@ -23,3 +21,6 @@ TODO:
 --> catch throw
 --> run
 --> bt
+
+// Issues:
+- delaunay crashes for too big inputs
