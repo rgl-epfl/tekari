@@ -8,9 +8,11 @@ class BSDFCanvas : public nanogui::GLCanvas {
 public:
     BSDFCanvas(Widget *parent)
     :   nanogui::GLCanvas(parent)
-    ,   m_ViewOrigin(0, 2, 4)
+    ,   m_ViewOrigin(0, 0, 4)
     ,   m_ViewTarget(0, 0, 0)
     ,   m_ViewUp(0, 1, 0)
+	,	m_Zoom(0)
+	,	m_OrthoMode(false)
     {}
 
     virtual bool mouseMotionEvent(const nanogui::Vector2i &p,
@@ -43,13 +45,29 @@ public:
             }
             return false;
         }
+		return true;
     }
+
+	virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override
+	{
+		if (!GLCanvas::keyboardEvent(key, scancode, action, modifiers))
+		{
+			if (key == GLFW_KEY_X)
+			{
+				m_Arcball.setState(nanogui::Quaternionf::Identity());
+				return true;
+			}
+			return false;
+		}
+		return true;
+	}
 
     virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override
     {
         if (!GLCanvas::scrollEvent(p, rel))
         {
-            m_ViewOrigin += (m_ViewTarget-m_ViewOrigin) * rel[1] / 10.0f;
+			m_Zoom += rel[1] * 0.2f;
+			m_Zoom = std::min(10.0f, std::max(-10.0f, m_Zoom));
         }
         return true;
     }
@@ -58,11 +76,23 @@ public:
         using namespace nanogui;
 
         Matrix4f view, proj;
-        view = lookAt(m_ViewOrigin, m_ViewTarget, m_ViewUp);
-        const float viewAngle = 30, near = 0.01, far = 100;
-        float fH = std::tan(viewAngle / 360.0f * M_PI) * near;
-        float fW = fH * (float) mSize.x() / (float) mSize.y();
-        proj = frustum(-fW, fW, -fH, fH, near, far);
+		view = lookAt(m_ViewOrigin, m_ViewTarget, m_ViewUp);
+		float near = 0.01f, far = 100.0f;
+		float zoomFactor = (m_Zoom + 10.0f) / 20.0f + 0.01f;
+		float sizeRatio = (float)mSize.x() / (float)mSize.y();
+		if (m_OrthoMode)
+		{
+			zoomFactor = (1.02f - zoomFactor) * 2.0f;
+			proj = ortho(-zoomFactor * sizeRatio, zoomFactor * sizeRatio,
+						 -zoomFactor, zoomFactor,
+						 near, far);
+		}
+		else {
+			const float viewAngle = 81.0f - zoomFactor * 80.0f;
+			float fH = std::tan(viewAngle / 360.0f * M_PI) * near;
+			float fW = fH * sizeRatio;
+			proj = frustum(-fW, fW, -fH, fH, near, far);
+		}
 
         m_SampleData.draw(m_Arcball.matrix(), view, proj);
         m_Grid.draw(m_Arcball.matrix(), view, proj);
@@ -73,6 +103,8 @@ public:
     
     const RadialGrid& grid() const { return m_Grid; }
     RadialGrid& grid() { return m_Grid; }
+
+	void setOrthoMode(bool orthoMode) { m_OrthoMode = orthoMode; }
 
     void openFile(const std::string& sampleDataPath) { m_SampleData.loadFromFile(sampleDataPath); }
 
@@ -89,4 +121,8 @@ private:
     nanogui::Vector3f m_ViewOrigin;
     nanogui::Vector3f m_ViewTarget;
     nanogui::Vector3f m_ViewUp;
+
+	float m_Zoom;
+
+	bool m_OrthoMode;
 };

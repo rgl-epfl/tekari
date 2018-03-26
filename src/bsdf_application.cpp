@@ -63,6 +63,12 @@ BSDFApplication::BSDFApplication()
         gridViewToggle->setChangeCallback( [this] (bool checked) { m_BSDFCanvas->grid().setVisible(checked); });
         gridViewToggle->setPushed(true);
 
+		auto orthoViewToggle = new Button(panel, "Ortho");
+		orthoViewToggle->setFlags(Button::Flags::ToggleButton);
+		orthoViewToggle->setTooltip("Enable/Disable orthogonal projection.");
+		orthoViewToggle->setChangeCallback([this](bool checked) { m_BSDFCanvas->setOrthoMode(checked); });
+		orthoViewToggle->setPushed(false);
+
 // TODO: this doesn't work for some reason
 
         auto gridColorPopupButton = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
