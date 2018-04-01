@@ -187,9 +187,12 @@ void BSDFApplication::openDataSampleDialog()
     std::string dataSamplePath = file_dialog(
     {
         {"txt",  "Data samples"},
-    }, true);
+    }, false);
     
-    m_BSDFCanvas->openFile(dataSamplePath);
+	if (!dataSamplePath.empty())
+	{
+		m_BSDFCanvas->openFile(dataSamplePath);
+	}
     // Make sure we gain focus after seleting a file to be loaded.
     glfwFocusWindow(mGLFWWindow);
 }

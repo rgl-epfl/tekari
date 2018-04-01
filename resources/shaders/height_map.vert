@@ -16,5 +16,5 @@ void main() {
     gl_Position = modelViewProj * vec4(pos, 1.0);
     height = in_height;
     position = (model * vec4(pos, 1.0)).xyz;
-    normal = in_normal;//(model * vec4(in_normal, 0.0)).xyz;
+    normal = (model * vec4(in_normal, 0.0)).xyz;
 }

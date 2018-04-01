@@ -8,7 +8,7 @@ class BSDFCanvas : public nanogui::GLCanvas {
 public:
     BSDFCanvas(Widget *parent)
     :   nanogui::GLCanvas(parent)
-    ,   m_ViewOrigin(0, 0, 4)
+    ,   m_ViewOrigin(0, 2, 4)
     ,   m_ViewTarget(0, 0, 0)
     ,   m_ViewUp(0, 1, 0)
 	,	m_Zoom(0)
@@ -52,11 +52,29 @@ public:
 	{
 		if (!GLCanvas::keyboardEvent(key, scancode, action, modifiers))
 		{
-			if (key == GLFW_KEY_X)
-			{
-				m_Arcball.setState(nanogui::Quaternionf::Identity());
-				return true;
-			}
+			//if (action == GLFW_KEY_DOWN)
+			//{
+				switch (key)
+				{
+				case GLFW_KEY_KP_5:
+					m_OrthoMode = !m_OrthoMode;
+					return true;
+				case GLFW_KEY_KP_1:
+				case GLFW_KEY_KP_3:
+					m_Arcball.setState(nanogui::Quaternionf::Identity());
+					m_ViewOrigin = key == GLFW_KEY_KP_1 ?	nanogui::Vector3f(0, 0, modifiers == GLFW_MOD_CONTROL ? -4 : 4) :
+															nanogui::Vector3f(modifiers == GLFW_MOD_CONTROL ? -4 : 4, 0, 0);
+					m_ViewTarget = nanogui::Vector3f(0, 0, 0);
+					m_ViewUp = nanogui::Vector3f(0, 1, 0);
+					return true;
+				case GLFW_KEY_KP_7:
+					m_Arcball.setState(nanogui::Quaternionf::Identity());
+					m_ViewOrigin = nanogui::Vector3f(0, modifiers == GLFW_MOD_CONTROL ? -4 : 4, 0);
+					m_ViewTarget = nanogui::Vector3f(0, 0, 0);
+					m_ViewUp = nanogui::Vector3f(0, 0, 1);
+					return true;
+				}
+			//}
 			return false;
 		}
 		return true;
