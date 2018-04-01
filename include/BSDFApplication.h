@@ -1,7 +1,9 @@
 #pragma once
 
 #include <nanogui/nanogui.h>
-#include "bsdf_canvas.h"
+#include <memory>
+
+#include "BSDFCanvas.h"
 
 class BSDFApplication : public nanogui::Screen {
 public:
@@ -14,24 +16,23 @@ public:
 
     void openDataSampleDialog();
     void saveScreenShot();
-    void closeSelectedDataSample();
+	void deleteDataSample(int index);
+	void selectDataSample(int index);
 
 private:
     void updateLayout();
+	void addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample);
 
     bool m_RequiresLayoutUpdate = false;
 
-
     nanogui::Window* m_ToolWindow;
-    nanogui::Button* m_HelpButton;
+	nanogui::VScrollPanel* m_DataSamplesScrollPanel;
+	nanogui::Widget* m_DataSamplesScrollContent;
 
     BSDFCanvas *m_BSDFCanvas;
 
-
-    bool showNormal;
-    bool showLog;
-    bool showSensorPath;
-    bool showPointHeights;
+	std::shared_ptr<DataSample> m_CurrentDataSample;
+	std::vector<std::shared_ptr<DataSample>> m_DataSamples;
 
     std::string fileName;
     std::string imageName;

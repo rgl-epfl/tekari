@@ -1,13 +1,14 @@
-#include "bsdf_application.h"
+#include "BSDFApplication.h"
+
+#include <algorithm>
+#include <string>
+#include "DataSampleButton.h"
 
 using namespace nanogui;
 
 BSDFApplication::BSDFApplication()
 :   nanogui::Screen(Eigen::Vector2i(1000, 800), "BSDF Visualizer", true)
-,   showNormal(true)
-,   showLog(false)
-,   showSensorPath(false)
-,   showPointHeights(false)
+,	m_CurrentDataSample(nullptr)
 {
 	m_BSDFCanvas = new BSDFCanvas(this);
 	m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
@@ -16,41 +17,50 @@ BSDFApplication::BSDFApplication()
 	m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 0, 0});
 	m_ToolWindow->setVisible(true);
 
-    m_HelpButton = new Button(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
-    m_HelpButton->setCallback([this]() { std::cout << "Help button triggered." << std::endl; });
-    m_HelpButton->setFontSize(15);
-    m_HelpButton->setTooltip("Information about using BSDFV.");
-	m_HelpButton->setPosition({20, 0});
+    auto helpButton = new Button(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
+    helpButton->setCallback([this]() { std::cout << "Help button triggered." << std::endl; });
+    helpButton->setFontSize(15);
+    helpButton->setTooltip("Information about using BSDFV.");
+	helpButton->setPosition({20, 0});
 
     // Different view options
-    {
-        auto panel = new Widget(m_ToolWindow);
-        panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5));
-        new Label(panel, "View Options", "sans-bold", 25);
-        panel->setTooltip(
-                "Various view modes. Hover on them to learn what they do."
-            );
+	{
+		auto panel = new Widget(m_ToolWindow);
+		panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5));
+		new Label(panel, "View Options", "sans-bold", 25);
+		panel->setTooltip(
+			"Various view modes. Hover on them to learn what they do."
+		);
 
-        // sample data view options
-        panel = new Widget(m_ToolWindow);
-        panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5, 5));
+		// sample data view options
+		panel = new Widget(m_ToolWindow);
+		panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5, 5));
 
-        auto normalViewToggle = new Button(panel, "Normal");
-        normalViewToggle->setFlags(Button::Flags::ToggleButton);
-        normalViewToggle->setTooltip("Display/Hide normal view.");
-        normalViewToggle->setChangeCallback( [this] (bool checked) { m_BSDFCanvas->sampleData().displayNormalView(checked); });
-        normalViewToggle->setPushed(true);
+		auto normalViewToggle = new Button(panel, "Normal");
+		normalViewToggle->setFlags(Button::Flags::ToggleButton);
+		normalViewToggle->setTooltip("Display/Hide normal view.");
+		normalViewToggle->setChangeCallback([this](bool checked) {
+			if (m_CurrentDataSample)
+				m_CurrentDataSample->displayNormalView(checked);
+		});
+		normalViewToggle->setPushed(true);
 
-        auto logViewToggle = new Button(panel, "Log");
-        logViewToggle->setFlags(Button::Flags::ToggleButton);
-        logViewToggle->setTooltip("Display/Hide log view.");
-        logViewToggle->setChangeCallback( [this] (bool checked) { m_BSDFCanvas->sampleData().displayLogView(checked); });
+		auto logViewToggle = new Button(panel, "Log");
+		logViewToggle->setFlags(Button::Flags::ToggleButton);
+		logViewToggle->setTooltip("Display/Hide log view.");
+		logViewToggle->setChangeCallback([this](bool checked) {
+			if (m_CurrentDataSample)
+				m_CurrentDataSample->displayLogView(checked);
+		});
         logViewToggle->setPushed(false);
 
         auto pathViewToggle = new Button(panel, "Path");
         pathViewToggle->setFlags(Button::Flags::ToggleButton);
         pathViewToggle->setTooltip("Display/Hide path view.");
-        pathViewToggle->setChangeCallback( [this] (bool checked) { m_BSDFCanvas->sampleData().displayPath(checked); });
+        pathViewToggle->setChangeCallback( [this] (bool checked) {
+			if (m_CurrentDataSample)
+				m_CurrentDataSample->displayPath(checked);
+		});
         pathViewToggle->setPushed(false);
 
         // grid view otpions
@@ -60,7 +70,9 @@ BSDFApplication::BSDFApplication()
         auto gridViewToggle = new Button(panel, "Grid");
         gridViewToggle->setFlags(Button::Flags::ToggleButton);
         gridViewToggle->setTooltip("Display/Hide grid.");
-        gridViewToggle->setChangeCallback( [this] (bool checked) { m_BSDFCanvas->grid().setVisible(checked); });
+        gridViewToggle->setChangeCallback( [this] (bool checked) {
+			m_BSDFCanvas->grid().setVisible(checked);
+		});
         gridViewToggle->setPushed(true);
 
 		auto orthoViewToggle = new Button(panel, "Ortho");
@@ -68,8 +80,6 @@ BSDFApplication::BSDFApplication()
 		orthoViewToggle->setTooltip("Enable/Disable orthogonal projection.");
 		orthoViewToggle->setChangeCallback([this](bool checked) { m_BSDFCanvas->setOrthoMode(checked); });
 		orthoViewToggle->setPushed(false);
-
-// TODO: this doesn't work for some reason
 
         auto gridColorPopupButton = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
 
@@ -111,6 +121,21 @@ BSDFApplication::BSDFApplication()
             });
         }
 
+		panel = new Widget(m_ToolWindow);
+		panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5, 5));
+
+		auto metadataPopupButton = new Button(panel, "", ENTYPO_ICON_INFO);
+
+		metadataPopupButton->setTooltip("Show dataset metadata.");
+		metadataPopupButton->setCallback([this]()
+		{
+			std::string metadataInfo = m_CurrentDataSample ?
+				m_CurrentDataSample->metadata().getInfos() :
+				"No sample data selected.";
+			new MessageDialog(this, MessageDialog::Type::Information, "Metadata",
+				metadataInfo, "close");
+		});
+
     }
 
     // Save, refresh, load, close
@@ -136,13 +161,18 @@ BSDFApplication::BSDFApplication()
             saveScreenShot();
         }, ENTYPO_ICON_SAVE, "Save image (CTRL+S)");
 
-        makeImageButton("", true, [this] {
-            closeSelectedDataSample();
-        }, ENTYPO_ICON_CROSS, "Close (CTRL+W)");
-
         auto spacer = new Widget{ m_ToolWindow };
         spacer->setHeight(3);
     }
+
+	// Data sample selection
+	{
+		m_DataSamplesScrollPanel = new VScrollPanel(m_ToolWindow);
+		m_DataSamplesScrollPanel->setFixedWidth(m_ToolWindow->width());
+
+		m_DataSamplesScrollContent = new Widget(m_DataSamplesScrollPanel);
+		m_DataSamplesScrollContent->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 5, 5));
+	}
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
     this->setSize(Vector2i(1024, 800));
@@ -155,6 +185,16 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
         setVisible(false);
         return true;
     }
+	if (key >= GLFW_KEY_1 && key <= GLFW_KEY_9)
+	{
+		if (!m_DataSamples.empty())
+		{
+			int datasetIndex = (key - GLFW_KEY_1) % m_DataSamples.size();
+			std::cout << "Select dataset " << datasetIndex << std::endl;
+			m_CurrentDataSample = m_DataSamples[datasetIndex];
+			m_BSDFCanvas->setDataSample(m_CurrentDataSample);
+		}
+	}
     return false;
 }
 
@@ -171,6 +211,10 @@ void BSDFApplication::updateLayout()
     m_BSDFCanvas->setFixedSize(mSize);
 	m_ToolWindow->setFixedSize({ 200, 400 });
 	m_ToolWindow->setPosition({ 0, 0 });
+
+	m_DataSamplesScrollPanel->setFixedHeight(
+		m_ToolWindow->height() - m_DataSamplesScrollPanel->position().y()
+	);
 
     performLayout();
 
@@ -191,7 +235,22 @@ void BSDFApplication::openDataSampleDialog()
     
 	if (!dataSamplePath.empty())
 	{
-		m_BSDFCanvas->openFile(dataSamplePath);
+		try
+		{
+			std::shared_ptr<DataSample> newDataSample = std::make_shared<DataSample>(dataSamplePath);
+			m_DataSamples.push_back(newDataSample);
+			selectDataSample(m_DataSamples.size() - 1);
+			addDataSampleButton(m_DataSamples.size() - 1, newDataSample);
+		}
+		catch (std::exception e)
+		{
+			auto errorMsgDialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error loading data",
+				e.what(), "Retry", "Cancel", true);
+			errorMsgDialog->setCallback([this](int index)
+			{
+				if (index == 0) { openDataSampleDialog(); }
+			});
+		}
 	}
     // Make sure we gain focus after seleting a file to be loaded.
     glfwFocusWindow(mGLFWWindow);
@@ -210,10 +269,57 @@ void BSDFApplication::saveScreenShot()
 
     offscreenBuffer.downloadTGA("test.tga");
     offscreenBuffer.free();
-
 }
 
-void BSDFApplication::closeSelectedDataSample()
+void BSDFApplication::selectDataSample(int index)
 {
-    std::cout << "Close current data sample." << std::endl;
+	std::shared_ptr<DataSample> dataSample = nullptr;
+	if (index >= 0 && index < m_DataSamples.size())
+		dataSample = m_DataSamples[index];
+		
+	m_CurrentDataSample = dataSample;
+	m_BSDFCanvas->setDataSample(dataSample);
+}
+
+void BSDFApplication::deleteDataSample(int index)
+{
+	if (index < 0 && index >= m_DataSamples.size())
+		return;
+
+	// erase data sample and corresponding button
+	m_DataSamples.erase(m_DataSamples.begin() + index);
+	m_DataSamplesScrollContent->removeChild(index);
+	requestLayoutUpdate();
+
+	// update button indices
+	int i = 0;
+	for (auto& widget : m_DataSamplesScrollContent->children())
+	{
+		DataSampleButton* button = dynamic_cast<DataSampleButton*>(widget);
+		button->setId(i++);
+	}
+
+	// select next valid one
+	if (index >= m_DataSamples.size())
+		--index;
+	selectDataSample(index);
+}
+
+void BSDFApplication::addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample)
+{
+	std::string cleanName = dataSample->metadata().sampleName;
+	std::replace(cleanName.begin(), cleanName.end(), '_', ' ');
+	auto dataSampleButton = new DataSampleButton(nullptr, cleanName, index);
+	m_DataSamplesScrollContent->addChild(index, dataSampleButton);
+	dataSampleButton->setParent(m_DataSamplesScrollContent);
+	dataSampleButton->setFixedSize({ m_DataSamplesScrollContent->width(), 30 });
+
+	dataSampleButton->setSelectedCallback([this](int index) {
+		selectDataSample(index);
+	});
+	dataSampleButton->setDeleteCallback([this, dataSampleButton](int index) {
+		deleteDataSample(index);
+	});
+
+	requestLayoutUpdate();
 }

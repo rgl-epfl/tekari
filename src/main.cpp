@@ -1,4 +1,4 @@
-#include "bsdf_application.h"
+#include "BSDFApplication.h"
 
 #if defined(__GNUC__)
 #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"

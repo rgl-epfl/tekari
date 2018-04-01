@@ -106,13 +106,13 @@ include_directories(
 
 add_executable(BSDFVisualizer
   "src/main.cpp"
-  "src/sample_data.cpp" "include/sample_data.h"
-  "src/sample_data_parser.cpp" "include/sample_data_parser.h"
-  "src/bsdf_application.cpp" "include/bsdf_application.h"
+  "src/BSDFApplication.cpp" "include/BSDFApplication.h"
+  "src/BSDFCanvas.cpp" "include/BSDFCanvas.h"
+  "src/DataSample.cpp" "include/DataSample.h"
+  "src/RadialGrid.cpp" "include/RadialGrid.h"
+  "src/DataSampleButton.cpp" "include/DataSampleButton.h"
   "src/delaunay.c" "include/delaunay.h"
-  "include/bsdf_canvas.h"
   "include/common.h"
-  "include/radial_grid.h"
   "include/stop_watch.h"
   )
 

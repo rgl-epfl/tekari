@@ -22,7 +22,6 @@ TODO:
 - offset path
 - draw lines instead of points for samples (do smarter stuff)
 - look at instant meshes for framebuffers
-- seg fault when close without opening
 
 // Debug tool:
 --> gdb myApp

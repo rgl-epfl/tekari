@@ -23,14 +23,13 @@
 #include <iostream>
 
 //== USEFULL MACRO FOR PROFILING ==============================================
-#define PROFILE(f, dt)      \
+#define PROFILE(f)      \
     do {                    \
         StopWatch sw;       \
         sw.start();         \
         f;                  \
         sw.stop();          \
-        (dt) = sw.elapsed();\
-        std::cout << #f " took : " << (dt) << std::endl; \
+        std::cout << #f " took : " << sw.elapsed() << std::endl; \
     } while(0)
 
 
