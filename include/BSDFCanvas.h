@@ -18,7 +18,9 @@ public:
 
     virtual void drawGL() override;
 
-    void setDataSample(std::shared_ptr<DataSample> sampleData) { m_DataSample = sampleData; }
+	void addDataSample(std::shared_ptr<DataSample> dataSample);
+	void removeDataSample(std::shared_ptr<DataSample> dataSample);
+
 	void setOrthoMode(bool orthoMode) { m_OrthoMode = orthoMode; }
     
     const RadialGrid& grid() const { return m_Grid; }
@@ -27,7 +29,7 @@ public:
     virtual void performLayout(NVGcontext *ctx) override { m_Arcball.setSize(mSize); }
 
 private:
-    std::shared_ptr<DataSample> m_DataSample;
+    std::vector<std::shared_ptr<DataSample>> m_DataSamplesToDraw;
     RadialGrid m_Grid;
     nanogui::Arcball m_Arcball;
 

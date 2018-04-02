@@ -7,7 +7,7 @@
 class DataSampleButton : public nanogui::Widget
 {
 public:
-	DataSampleButton(nanogui::Widget* parent, const std::string &label, int id);
+	DataSampleButton(nanogui::Widget* parent, const std::string &label);
 
 	virtual bool mouseButtonEvent(const Eigen::Vector2i &p, int button, bool down, int modifiers) override;
 	virtual void draw(NVGcontext *ctx) override;
@@ -20,21 +20,23 @@ public:
 		return nanogui::Vector2i(static_cast<int>(labelSize) + 15, mFontSize + 6);
 	}
 
+	void toggleView();
+
 	bool isSelected() const { return m_IsSelected; }
 	void setIsSelected(bool isSelected) { m_IsSelected = isSelected; }
 
-	int id() const { return m_Id; }
-	void setId(int id) { m_Id = id; }
-
-	void setSelectedCallback(std::function<void(int)> callback) { m_SelectedCallback = callback; }
-	void setDeleteCallback(std::function<void(int)> callback) { m_DeleteCallback = callback; }
+	void setCallback(std::function<void(DataSampleButton*)> callback) { m_Callback = callback; }
+	void setDeleteCallback(std::function<void(DataSampleButton*)> callback) { m_DeleteCallback = callback; }
+	void setToggleViewCallback(std::function<void(bool, DataSampleButton*)> callback) { m_ToggleViewCallback = callback; }
 
 private:
-
 	std::string m_Label;
-	int m_Id;
 	bool m_IsSelected;
 	bool m_IsVisible;
-	std::function<void(int)> m_SelectedCallback;
-	std::function<void(int)> m_DeleteCallback;
+
+	nanogui::ToolButton* m_ToogleViewButton;
+
+	std::function<void(DataSampleButton*)> m_Callback;
+	std::function<void(bool, DataSampleButton*)> m_ToggleViewCallback;
+	std::function<void(DataSampleButton*)> m_DeleteCallback;
 };

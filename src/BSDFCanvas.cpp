@@ -2,7 +2,6 @@
 
 BSDFCanvas::BSDFCanvas(Widget *parent)
 :   nanogui::GLCanvas(parent)
-,	m_DataSample(nullptr)
 ,   m_ViewOrigin(0, 2, 4)
 ,   m_ViewTarget(0, 0, 0)
 ,   m_ViewUp(0, 1, 0)
@@ -47,8 +46,8 @@ bool BSDFCanvas::keyboardEvent(int key, int scancode, int action, int modifiers)
 {
 	if (!GLCanvas::keyboardEvent(key, scancode, action, modifiers))
 	{
-		//if (action == GLFW_KEY_DOWN)
-		//{
+		if (action == GLFW_PRESS)
+		{
 			switch (key)
 			{
 			case GLFW_KEY_KP_5:
@@ -69,7 +68,7 @@ bool BSDFCanvas::keyboardEvent(int key, int scancode, int action, int modifiers)
 				m_ViewUp = nanogui::Vector3f(0.0f, 0.0f, 1.0f);
 				return true;
 			}
-		//}
+		}
 		return false;
 	}
 	return true;
@@ -107,9 +106,25 @@ void BSDFCanvas::drawGL() {
 		proj = frustum(-fW, fW, -fH, fH, near, far);
 	}
 
-	if (m_DataSample)
+	for (const auto& dataSample: m_DataSamplesToDraw)
 	{
-		m_DataSample->draw(m_Arcball.matrix(), view, proj);
+		dataSample->draw(m_Arcball.matrix(), view, proj);
 	}
     m_Grid.draw(m_Arcball.matrix(), view, proj);
+}
+
+void BSDFCanvas::addDataSample(std::shared_ptr<DataSample> dataSample)
+{
+	if (std::find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample) == m_DataSamplesToDraw.end())
+	{
+		m_DataSamplesToDraw.push_back(dataSample);
+	}
+}
+void BSDFCanvas::removeDataSample(std::shared_ptr<DataSample> dataSample)
+{
+	auto dataSampleToErase = std::find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample);
+	if (dataSampleToErase != m_DataSamplesToDraw.end())
+	{
+		m_DataSamplesToDraw.erase(dataSampleToErase);
+	}
 }

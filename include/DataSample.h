@@ -22,9 +22,13 @@ public:
                 const nanogui::Matrix4f& view,
                 const nanogui::Matrix4f& proj);
 
-    void displayNormalView(bool value)	{ m_DisplayNormalView = value; }
-    void displayLogView(bool value)		{ m_DisplayLogView = value; }
-    void displayPath(bool value)		{ m_DisplayPath = value; }
+    void setDisplayNormalView(bool value)	{ m_DisplayNormalView = value; }
+    void setDisplayLogView(bool value)		{ m_DisplayLogView = value; }
+    void setDisplayPath(bool value)		{ m_DisplayPath = value; }
+
+	bool displayNormalView()	const { return m_DisplayNormalView; }
+	bool displayLogView()		const { return m_DisplayLogView; }
+	bool displayPath()			const { return m_DisplayPath; }
 
     void loadFromFile(const std::string& sampleDataPath);
 
