@@ -84,6 +84,7 @@ private:
 	nanogui::GLShader m_NormalShader;
 	nanogui::GLShader m_LogShader;
 	nanogui::GLShader m_PathShader;
+	std::vector<unsigned int> m_PathSegments;
 
 	// display options
 	bool m_DisplayNormalView;

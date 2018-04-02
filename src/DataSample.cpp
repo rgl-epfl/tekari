@@ -13,6 +13,8 @@
 #include "common.h"
 #include "stop_watch.h"
 
+#define MAX_SAMPLING_DISTANCE 0.05f
+
 DataSample::DataSample()
 :	m_DisplayNormalView(true)
 ,	m_DisplayPath(false)
@@ -69,13 +71,11 @@ void DataSample::draw(
     
 		if (m_DisplayNormalView)
 		{
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			m_NormalShader.bind();
 			m_NormalShader.setUniform("modelViewProj", mvp);
 			m_NormalShader.setUniform("model", model);
 			m_NormalShader.setUniform("view", Vector3f(0, 0, 4));
 			m_NormalShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 		if (m_DisplayLogView)
 		{
@@ -89,10 +89,16 @@ void DataSample::draw(
 		{
 			glEnable(GL_POLYGON_OFFSET_LINE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glPolygonOffset(-2.0, -2.0);
+			glPolygonOffset(2.0, 2.0);
 			m_PathShader.bind();
 			m_PathShader.setUniform("modelViewProj", mvp);
-			m_PathShader.drawArray(GL_LINE_STRIP, 0, tri_delaunay2d->num_points);
+			for (unsigned int i = 0; i < m_PathSegments.size()-1; ++i)
+			{
+				int offset = m_PathSegments[i];
+				int count = m_PathSegments[i+1] - m_PathSegments[i] - 1;
+				m_PathShader.drawArray(GL_LINE_STRIP, offset, count);
+			}
+
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			glDisable(GL_POLYGON_OFFSET_LINE);
 		}
@@ -179,13 +185,16 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 		} },
 	};
 
+	// path segments must always contain the first point...
+	m_PathSegments.push_back(0);
+
 	unsigned int lineNumber = 0;
 	while (!feof(datasetFile) && !ferror(datasetFile) && fgets(line, MAX_LENGTH, datasetFile))
 	{
 		++lineNumber;
 		if (strlen(line) <= 1)
 		{
-			// skip empty line
+			// skip empty lines
 		}
 		else if (line[0] == '#')
 		{
@@ -197,7 +206,6 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 					line[strlen(line) - 1] = '\0';
 					// parse rest of line
 					metaDataElem.parse(line + metaDataElem.name.size() + 2);
-					std::cout << line + metaDataElem.name.size() + 2 << std::endl;
 				}
 			}
 		}
@@ -214,6 +222,16 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 			float x = theta * cos(phi * M_PI / 180.0f) / 90.0f;
 			float z = theta * sin(phi * M_PI / 180.0f) / 90.0f;
 
+			// if two last points are too far appart, a new path segments begins
+			if (!points.empty())
+			{
+				const del_point2d_t& prev = points.back();
+				if ((x - prev.x)*(x - prev.x) + (z - prev.y)*(z - prev.y) > MAX_SAMPLING_DISTANCE)
+				{
+					m_PathSegments.push_back(points.size());
+				}
+			}
+
 			points.push_back({ x, z });
 			m_Heights.push_back(intensity);
 			m_LogHeights.push_back(intensity);
@@ -223,11 +241,11 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 		}
 	}
 	fclose(datasetFile);
+	
+	// and the last one
+	m_PathSegments.push_back(points.size());
 
-	std::cout << "data points in file " << m_Metadata.datapointsInFile << std::endl;
-	std::cout << "data points in file " << points.size() << std::endl;
-
-	// intensity normalization
+	// normalize intensities
 	float min_log_intensity = log(min_intensity + 1);
 	float max_log_intensity = log(max_intensity + 1);
 	for (size_t i = 0; i < m_Heights.size(); ++i)
