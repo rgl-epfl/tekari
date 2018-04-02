@@ -5,6 +5,8 @@
 
 #include "BSDFCanvas.h"
 #include "DataSampleButton.h"
+#include "MetadataWindow.h"
+#include "HelpWindow.h"
 
 class BSDFApplication : public nanogui::Screen {
 public:
@@ -17,14 +19,18 @@ public:
 
     void openDataSampleDialog();
     void saveScreenShot();
+	void toggleMetadataWindow();
+	void toggleHelpWindow();
 	void deleteDataSample(DataSampleButton* button);
 	void selectDataSample(DataSampleButton* button);
 	void selectDataSample(int index, bool clamped = true);
 
 private:
+	void toggleView(DataSample::Views view);
+
     void updateLayout();
 	void addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample);
-	void updateToolButtons();
+	void refreshToolButtons();
 
 	void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
 
@@ -42,12 +48,13 @@ private:
 
 	// tool buttons
 	nanogui::Button* m_HelpButton;
-	nanogui::Button* m_NormalViewToggle;
-	nanogui::Button* m_LogViewToggle;
-	nanogui::Button* m_PathViewToggle;
+	nanogui::Widget* m_ViewButtonsContainer;
 	nanogui::Button* m_GridViewToggle;
 	nanogui::Button* m_OrthoViewToggle;
-	nanogui::Button* m_InfoButton;
+
+	// dialog windows
+	MetadataWindow* m_MetadataWindow;
+	HelpWindow* m_HelpWindow;
 
     BSDFCanvas *m_BSDFCanvas;
 

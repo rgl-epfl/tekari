@@ -16,9 +16,7 @@
 #define MAX_SAMPLING_DISTANCE 0.05f
 
 DataSample::DataSample()
-:	m_DisplayNormalView(true)
-,	m_DisplayPath(false)
-,	m_DisplayLogView(false)
+:	m_DisplayViews{ true, false, false }
 ,	tri_delaunay2d(nullptr)
 {
 	m_NormalShader.initFromFiles(
@@ -69,7 +67,7 @@ void DataSample::draw(
 		glEnable(GL_DEPTH_TEST);
 		glPointSize(2);
     
-		if (m_DisplayNormalView)
+		if (m_DisplayViews[NORMAL])
 		{
 			m_NormalShader.bind();
 			m_NormalShader.setUniform("modelViewProj", mvp);
@@ -77,7 +75,7 @@ void DataSample::draw(
 			m_NormalShader.setUniform("view", Vector3f(0, 0, 4));
 			m_NormalShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
 		}
-		if (m_DisplayLogView)
+		if (m_DisplayViews[LOG])
 		{
 			m_LogShader.bind();
 			m_LogShader.setUniform("modelViewProj", mvp);
@@ -85,7 +83,7 @@ void DataSample::draw(
 			m_LogShader.setUniform("view", Vector3f(0, 0, 4));
 			m_LogShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
 		}
-		if (m_DisplayPath)
+		if (m_DisplayViews[PATH])
 		{
 			glEnable(GL_POLYGON_OFFSET_LINE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

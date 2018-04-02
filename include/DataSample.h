@@ -6,6 +6,13 @@
 
 struct DataSample
 {
+	enum Views
+	{
+		NORMAL = 0,
+		LOG,
+		PATH,
+		VIEW_COUNT
+	};
 
 public:
 	DataSample();
@@ -22,13 +29,8 @@ public:
                 const nanogui::Matrix4f& view,
                 const nanogui::Matrix4f& proj);
 
-    void setDisplayNormalView(bool value)	{ m_DisplayNormalView = value; }
-    void setDisplayLogView(bool value)		{ m_DisplayLogView = value; }
-    void setDisplayPath(bool value)		{ m_DisplayPath = value; }
-
-	bool displayNormalView()	const { return m_DisplayNormalView; }
-	bool displayLogView()		const { return m_DisplayLogView; }
-	bool displayPath()			const { return m_DisplayPath; }
+	void toggleView(Views view) { m_DisplayViews[view] = !m_DisplayViews[view]; }
+	bool displayView(Views view) const { return m_DisplayViews[view]; }
 
     void loadFromFile(const std::string& sampleDataPath);
 
@@ -91,9 +93,7 @@ private:
 	std::vector<unsigned int> m_PathSegments;
 
 	// display options
-	bool m_DisplayNormalView;
-	bool m_DisplayPath;
-	bool m_DisplayLogView;
+	bool m_DisplayViews[VIEW_COUNT];
 
 	// metadata
 	Metadata m_Metadata;
