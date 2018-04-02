@@ -54,7 +54,7 @@ DataSample::~DataSample()
 	}
 }
 
-void DataSample::draw( 
+void DataSample::draw(
     const nanogui::Matrix4f& model,
     const nanogui::Matrix4f& view,
     const nanogui::Matrix4f& proj)
@@ -129,22 +129,14 @@ void DataSample::loadFromFile(const std::string& sampleDataPath)
 
 void DataSample::readDataset(const std::string &filePath, std::vector<del_point2d_t> &points)
 {
-	// read file
-	float phi, theta, intensity;
-
+	// try open file
 	FILE* datasetFile = fopen(filePath.c_str(), "r");
 	if (!datasetFile)
-	{
 		throw std::runtime_error("Unable to open file " +filePath);
-	}
 
 	// min and max values for normalization
 	float min_intensity = std::numeric_limits<float>::max();
 	float max_intensity = std::numeric_limits<float>::min();
-
-	// TODO change this to some smarter stuff
-	const size_t MAX_LENGTH = 512;
-	char line[MAX_LENGTH];
 
 	struct MetaDataElem
 	{
@@ -156,7 +148,7 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 	{
 		{ "mountain-version",		[this](const std::string& rest_of_line) { m_Metadata.mountainVersion = rest_of_line; } },
 		{ "database-host",			[this](const std::string& rest_of_line) { m_Metadata.databaseHost = rest_of_line; } },
-		{ "database-name",			[this](const std::string& rest_of_line) { m_Metadata.databaseHost = rest_of_line; } },
+		{ "database-name",			[this](const std::string& rest_of_line) { m_Metadata.databaseName = rest_of_line; } },
 		{ "measured_at",			[this](const std::string& rest_of_line) { m_Metadata.measuredAt = rest_of_line; } },
 		{ "data_read_from_db",		[this](const std::string& rest_of_line) { m_Metadata.dataReadFromDatabaseAt = rest_of_line; } },
 		{ "database_id",			[this](const std::string& rest_of_line) { m_Metadata.databaseId = stoi(rest_of_line); } },
@@ -187,6 +179,8 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 	m_PathSegments.push_back(0);
 
 	unsigned int lineNumber = 0;
+	const size_t MAX_LENGTH = 512;
+	char line[MAX_LENGTH];
 	while (!feof(datasetFile) && !ferror(datasetFile) && fgets(line, MAX_LENGTH, datasetFile))
 	{
 		++lineNumber;
@@ -209,6 +203,7 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 		}
 		else
 		{
+			float phi, theta, intensity;
 			if (sscanf(line, "%f %f %f", &theta, &phi, &intensity) != 3)
 			{
 				fclose(datasetFile);
@@ -240,7 +235,7 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 	}
 	fclose(datasetFile);
 	
-	// and the last one
+	// ...and the last one
 	m_PathSegments.push_back(points.size());
 
 	// normalize intensities
@@ -286,8 +281,6 @@ nanogui::Vector3f DataSample::getVertex(unsigned int i, bool logged) const
 
 void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged)
 {
-	std::vector<nanogui::Vector3f> &normals = logged ? m_LogNormals : m_Normals;
-
 	const nanogui::Vector3f e01 = (getVertex(i1, logged) - getVertex(i0, logged)).normalized();
 	const nanogui::Vector3f e12 = (getVertex(i2, logged) - getVertex(i1, logged)).normalized();
 	const nanogui::Vector3f e20 = (getVertex(i0, logged) - getVertex(i2, logged)).normalized();
@@ -298,6 +291,7 @@ void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigne
 	float w1 = (float)acos(std::max(-1.0f, std::min(1.0f, e12.dot(-e01))));
 	float w2 = (float)acos(std::max(-1.0f, std::min(1.0f, e20.dot(-e12))));
 
+	std::vector<nanogui::Vector3f> &normals = logged ? m_LogNormals : m_Normals;
 	normals[i0] += w0 * faceNormal;
 	normals[i1] += w1 * faceNormal;
 	normals[i2] += w2 * faceNormal;
@@ -323,25 +317,4 @@ void DataSample::computeNormals()
 		m_Normals[i].normalize();
 		m_LogNormals[i].normalize();
 	}
-}
-
-std::string DataSample::Metadata::getInfos() const
-{
-	std::ostringstream infos;
-	infos << "Mountain version : " << mountainVersion << std::endl;
-	infos << "Database host : " << databaseHost << std::endl;
-	infos << "Database name : " << databaseName << std::endl;
-	infos << "Database id : " << databaseId << std::endl;
-	infos << "Datapoints in database : " << datapointsInDatabase << std::endl;
-	infos << "Measured at : " << measuredAt << std::endl;
-	infos << "Data read from database at : " << dataReadFromDatabaseAt << std::endl;
-	infos << "Sample label : " << sampleLabel << std::endl;
-	infos << "Sample name : " << sampleName << std::endl;
-	infos << "Lamp : " << lamp << std::endl;
-	infos << "Incident theta : " << incidentTheta << std::endl;
-	infos << "Incident phi : " << incidentPhi << std::endl;
-	infos << "Front integral : " << frontIntegral << std::endl;
-	infos << "Datapoints in file : " << datapointsInFile << std::endl;
-
-	return infos.str();
 }

@@ -53,7 +53,7 @@ private:
 	nanogui::Button* m_OrthoViewToggle;
 
 	// dialog windows
-	MetadataWindow* m_MetadataWindow;
+	nanogui::Window* m_MetadataWindow;
 	HelpWindow* m_HelpWindow;
 
     BSDFCanvas *m_BSDFCanvas;

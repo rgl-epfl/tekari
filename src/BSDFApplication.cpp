@@ -317,13 +317,13 @@ void BSDFApplication::toggleMetadataWindow()
 	{
 		if (hasSelectedDataSample())
 		{
-			m_MetadataWindow = new MetadataWindow(this, getSelectedDataSample()->metadata(), [this]() { toggleMetadataWindow(); });
+			m_MetadataWindow = new MetadataWindow(this, &getSelectedDataSample()->metadata(), [this]() { toggleMetadataWindow(); });
 			m_MetadataWindow->center();
 			m_MetadataWindow->requestFocus();
 		}
 		else
 		{
-			new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
+			m_MetadataWindow = new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
 				"No data sample selected.", "close");
 		}
 	}
