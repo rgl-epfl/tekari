@@ -10,7 +10,13 @@ public:
     RadialGrid();
     ~RadialGrid();
 
-    void draw(const nanogui::Matrix4f& model,
+    void drawGL(const nanogui::Matrix4f& model,
+        const nanogui::Matrix4f& view,
+        const nanogui::Matrix4f& proj);
+
+    void draw(NVGcontext *ctx,
+        const nanogui::Vector2i& canvasSize,
+        const nanogui::Matrix4f& model,
         const nanogui::Matrix4f& view,
         const nanogui::Matrix4f& proj);
 
@@ -21,12 +27,13 @@ public:
     void setColor(const nanogui::Color& newColor) { m_Color = newColor; }
     
 private:
-    nanogui::GLShader m_Shader;
-    unsigned int m_CircleCount;
-    unsigned int m_VertexPerCircleCount;
-    unsigned int m_LinesCount;
-    unsigned int m_VertexPerLineCount;
-    nanogui::Color m_Color;
+    static constexpr unsigned int CIRCLE_COUNT = 10;
+    static constexpr unsigned int VERTEX_PER_CIRCLE_COUNT = 100;
+    static constexpr unsigned int LINE_COUNT = 18;
+    static constexpr unsigned int VERTEX_PER_LINE_COUNT = 2;
 
+    nanogui::GLShader m_Shader;
+    nanogui::Color m_Color;
+    std::vector<std::pair<std::string, nanogui::Vector3f>> m_DegreesLabel;
     bool m_Visible;
 };

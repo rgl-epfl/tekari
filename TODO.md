@@ -26,3 +26,6 @@ TODO:
 
 // Issues:
 - delaunay crashes for too big inputs
+
+// Questions:
+- Delete buttons lead to many errors (fixed but fishy)

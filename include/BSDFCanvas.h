@@ -1,6 +1,5 @@
 #pragma once
 
-//#include <nanogui/common.h>
 #include <nanogui/glcanvas.h>
 #include <nanogui/widget.h>
 #include <memory>
@@ -19,6 +18,7 @@ public:
     virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
 
     virtual void drawGL() override;
+    virtual void draw(NVGcontext* ctx) override;
 
     void addDataSample(std::shared_ptr<DataSample> dataSample);
     void removeDataSample(std::shared_ptr<DataSample> dataSample);
@@ -31,6 +31,8 @@ public:
     virtual void performLayout(NVGcontext *ctx) override { m_Arcball.setSize(mSize); }
 
 private:
+    void getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const;
+
     std::vector<std::shared_ptr<DataSample>> m_DataSamplesToDraw;
     RadialGrid m_Grid;
     nanogui::Arcball m_Arcball;

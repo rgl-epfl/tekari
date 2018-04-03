@@ -88,30 +88,24 @@ bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
 void BSDFCanvas::drawGL() {
     using namespace nanogui;
 
-    Matrix4f view, proj;
-    view = lookAt(m_ViewOrigin, m_ViewTarget, m_ViewUp);
-    float near = 0.01f, far = 100.0f;
-    float zoomFactor = (m_Zoom + 10.0f) / 20.0f + 0.01f;
-    float sizeRatio = (float)mSize.x() / (float)mSize.y();
-    if (m_OrthoMode)
-    {
-        zoomFactor = (1.02f - zoomFactor) * 2.0f;
-        proj = ortho(-zoomFactor * sizeRatio, zoomFactor * sizeRatio,
-                     -zoomFactor, zoomFactor,
-                     near, far);
-    }
-    else {
-        const float viewAngle = 81.0f - zoomFactor * 80.0f;
-        float fH = std::tan(viewAngle / 360.0f * M_PI) * near;
-        float fW = fH * sizeRatio;
-        proj = frustum(-fW, fW, -fH, fH, near, far);
-    }
+    Matrix4f model, view, proj;
+    getMVPMatrices(model, view, proj);
 
     for (const auto& dataSample: m_DataSamplesToDraw)
     {
-        dataSample->draw(m_Arcball.matrix(), view, proj);
+        dataSample->drawGL(m_ViewOrigin, model, view, proj);
     }
-    m_Grid.draw(m_Arcball.matrix(), view, proj);
+    m_Grid.drawGL(model, view, proj);
+}
+
+void BSDFCanvas::draw(NVGcontext* ctx)
+{
+    GLCanvas::draw(ctx);
+
+    Matrix4f model, view, proj;
+    getMVPMatrices(model, view, proj);
+
+    m_Grid.draw(ctx, mSize, model, view, proj);
 }
 
 void BSDFCanvas::addDataSample(std::shared_ptr<DataSample> dataSample)
@@ -128,4 +122,26 @@ void BSDFCanvas::removeDataSample(std::shared_ptr<DataSample> dataSample)
     {
         m_DataSamplesToDraw.erase(dataSampleToErase);
     }
+}
+
+void BSDFCanvas::getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const
+{
+    view = lookAt(m_ViewOrigin, m_ViewTarget, m_ViewUp);
+    float near = 0.01f, far = 100.0f;
+    float zoomFactor = (m_Zoom + 10.0f) / 20.0f + 0.01f;
+    float sizeRatio = (float)mSize.x() / (float)mSize.y();
+    if (m_OrthoMode)
+    {
+        zoomFactor = (1.02f - zoomFactor) * 2.0f;
+        proj = ortho(-zoomFactor * sizeRatio, zoomFactor * sizeRatio,
+            -zoomFactor, zoomFactor,
+            near, far);
+    }
+    else {
+        const float viewAngle = 81.0f - zoomFactor * 80.0f;
+        float fH = std::tan(viewAngle / 360.0f * M_PI) * near;
+        float fW = fH * sizeRatio;
+        proj = frustum(-fW, fW, -fH, fH, near, far);
+    }
+    model = m_Arcball.matrix();
 }

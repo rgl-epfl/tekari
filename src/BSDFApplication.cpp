@@ -16,7 +16,7 @@
 using namespace nanogui;
 
 BSDFApplication::BSDFApplication()
-:   nanogui::Screen(Eigen::Vector2i(1000, 800), "BSDF Visualizer", true)
+:   nanogui::Screen(Eigen::Vector2i(1000, 600), "BSDF Visualizer", true)
 ,	m_SelectedDataSampleIndex(-1)
 ,	m_MetadataWindow(nullptr)
 ,	m_HelpWindow(nullptr)
@@ -25,7 +25,7 @@ BSDFApplication::BSDFApplication()
     m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
 
     m_ToolWindow = new Window(this, "Tools");
-    m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 0, 0});
+    m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
     m_ToolWindow->setVisible(true);
 
     m_HelpButton = new Button(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
@@ -36,16 +36,14 @@ BSDFApplication::BSDFApplication()
 
     // Different view options for the selected data sample
     {
-        auto panel = new Widget(m_ToolWindow);
-        panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5));
-        new Label(panel, "View Options", "sans-bold", 25);
-        panel->setTooltip(
+        auto label = new Label(m_ToolWindow, "View Options", "sans-bold", 25);
+        label->setTooltip(
             "Various view modes. Hover on them to learn what they do."
         );
 
         // sample data view options
         m_ViewButtonsContainer = new Widget(m_ToolWindow);
-        m_ViewButtonsContainer->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5, 5));
+        m_ViewButtonsContainer->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
 
         auto makeViewButton = [this](const std::string& label, const std::string& tooltip,
             std::function<void(bool)> changeCallback)
@@ -64,7 +62,7 @@ BSDFApplication::BSDFApplication()
     // grid view otpions
     {
         auto panel = new Widget(m_ToolWindow);
-        panel->setLayout(new BoxLayout(Orientation::Horizontal, Alignment::Fill, 5, 5));
+        panel->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
 
         m_GridViewToggle = new Button(panel, "Grid");
         m_GridViewToggle->setFlags(Button::Flags::ToggleButton);
@@ -121,7 +119,7 @@ BSDFApplication::BSDFApplication()
 
     // Open, save screenshot, save data
     {
-        new Label(m_ToolWindow, "File", "sans-bold", 25);
+        new Label(m_ToolWindow, "Data Samples", "sans-bold", 25);
         auto tools = new Widget{ m_ToolWindow };
         tools->setLayout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
 
@@ -142,11 +140,13 @@ BSDFApplication::BSDFApplication()
 
     // Data sample selection
     {
-        m_DataSamplesScrollPanel = new VScrollPanel(m_ToolWindow);
-        m_DataSamplesScrollPanel->setFixedWidth(m_ToolWindow->width());
+        m_DataSamplesScrollPanel = new VScrollPanel{ m_ToolWindow };
 
-        m_DataSamplesScrollContent = new Widget(m_DataSamplesScrollPanel);
-        m_DataSamplesScrollContent->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 5, 5));
+        m_ScrollContent = new Widget{ m_DataSamplesScrollPanel };
+        m_ScrollContent->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill));
+
+        m_DataSampleButtonContainer = new Widget{ m_ScrollContent };
+        m_DataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
     refreshToolButtons();
@@ -154,7 +154,7 @@ BSDFApplication::BSDFApplication()
     m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/inferno.png"));
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
-    this->setSize(Vector2i(1024, 800));
+    //this->setSize(Vector2i(1024, 800));
 }
 
 bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modifiers) {
@@ -187,32 +187,25 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 return true;
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
             case GLFW_KEY_6: case GLFW_KEY_7: case GLFW_KEY_8: case GLFW_KEY_9:
-                if (!m_DataSamples.empty())
-                {
-                    selectDataSample(key - GLFW_KEY_1);
-                    return true;
-                }
-                break;
+                selectDataSample(key - GLFW_KEY_1);
+                return true;
             case GLFW_KEY_DELETE:
                 if (hasSelectedDataSample())
                 {
-                    auto buttonToDelete = m_DataSamplesScrollContent->childAt(m_SelectedDataSampleIndex);
+                    auto buttonToDelete = m_DataSampleButtonContainer->childAt(m_SelectedDataSampleIndex);
                     deleteDataSample(dynamic_cast<DataSampleButton*>(buttonToDelete));
                     return true;
                 }
                 break;
             case GLFW_KEY_UP:
             case GLFW_KEY_DOWN:
-                if (!m_DataSamples.empty())
-                {
-                    selectDataSample(m_SelectedDataSampleIndex + (key == GLFW_KEY_UP ? -1 : 1));
-                    return true;
-                }
+                selectDataSample(m_SelectedDataSampleIndex + (key == GLFW_KEY_UP ? -1 : 1), false);
+                return true;
                 break;
             case GLFW_KEY_ENTER:
                 if (hasSelectedDataSample())
                 {
-                    auto w = m_DataSamplesScrollContent->childAt(m_SelectedDataSampleIndex);
+                    auto w = m_DataSampleButtonContainer->childAt(m_SelectedDataSampleIndex);
                     DataSampleButton* button = dynamic_cast<DataSampleButton*>(w);
                     button->toggleView();
                     return true;
@@ -307,15 +300,14 @@ void BSDFApplication::saveScreenShot()
 {
     std::cout << "Save screenshot." << std::endl;
 
-    // TODO ask how this is suppose to work
     nanogui::GLFramebuffer offscreenBuffer;
     offscreenBuffer.init(m_BSDFCanvas->size(), 1);
     offscreenBuffer.bind();
 
-    m_BSDFCanvas->drawGL();
+    m_BSDFCanvas->draw(nvgContext());
 
     offscreenBuffer.downloadTGA("test.tga");
-    offscreenBuffer.free();
+    offscreenBuffer.release();
 }
 
 void BSDFApplication::toggleMetadataWindow()
@@ -360,31 +352,42 @@ void BSDFApplication::toggleHelpWindow()
 
 void BSDFApplication::selectDataSample(int index, bool clamped)
 {
+    if (m_DataSamples.empty())
+        return;
+
     if (clamped)
         index = std::max(0, std::min(static_cast<int>(m_DataSamples.size()-1), index));
     else if (index < 0 || index >= m_DataSamples.size())
         return;
 
-    auto buttonToSelect = m_DataSamplesScrollContent->childAt(index);
+    auto buttonToSelect = m_DataSampleButtonContainer->childAt(index);
     selectDataSample(dynamic_cast<DataSampleButton*>(buttonToSelect));
 }
 
 void BSDFApplication::selectDataSample(DataSampleButton* button)
 {
     // de-select previously selected button
+    Widget* oldButton = nullptr;
     if (hasSelectedDataSample())
     {
-        auto oldButton = m_DataSamplesScrollContent->childAt(m_SelectedDataSampleIndex);
+        oldButton = m_DataSampleButtonContainer->childAt(m_SelectedDataSampleIndex);
         dynamic_cast<DataSampleButton*>(oldButton)->setIsSelected(false);
     }
 
-    // get button index
-    m_SelectedDataSampleIndex = m_DataSamplesScrollContent->childIndex(button);
-    // if the button gave a valid index
-    if (hasSelectedDataSample())
+    if (oldButton == button)
     {
-        // select button
-        button->setIsSelected(true);
+        m_SelectedDataSampleIndex = -1;
+    }
+    else
+    {
+        // get button index
+        m_SelectedDataSampleIndex = m_DataSampleButtonContainer->childIndex(button);
+        // if the button gave a valid index
+        if (hasSelectedDataSample())
+        {
+            // select button
+            button->setIsSelected(true);
+        }
     }
 
     refreshToolButtons();
@@ -393,15 +396,17 @@ void BSDFApplication::selectDataSample(DataSampleButton* button)
 
 void BSDFApplication::deleteDataSample(DataSampleButton* button)
 {
-    int index = m_DataSamplesScrollContent->childIndex(button);
+    int index = m_DataSampleButtonContainer->childIndex(button);
     if (index < 0 && index >= m_DataSamples.size())
         return;
 
     // erase data sample and corresponding button
     m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
     m_DataSamples.erase(m_DataSamples.begin() + index);
-    m_DataSamplesScrollContent->removeChild(button);
-    // clear focus path, since it may contain reference to deleted button
+    m_DataSampleButtonContainer->removeChild(button);
+    // clear focus path and drag widget pointer, since it may refer to deleted button
+    mDragWidget = nullptr;
+    mDragActive = false;
     mFocusPath.clear();
 
     // select next valid one
@@ -409,8 +414,10 @@ void BSDFApplication::deleteDataSample(DataSampleButton* button)
     if (index >= m_DataSamples.size()) --index;
     if (index >= 0)
     {
-        buttonToSelect = dynamic_cast<DataSampleButton*>(m_DataSamplesScrollContent->childAt(index));
+        buttonToSelect = dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
     }
+    // Make sure no button is selected
+    m_SelectedDataSampleIndex = -1;
     selectDataSample(buttonToSelect);
 }
 
@@ -418,15 +425,13 @@ void BSDFApplication::addDataSampleButton(int index, std::shared_ptr<DataSample>
 {
     std::string cleanName = dataSample->metadata().sampleName;
     std::replace(cleanName.begin(), cleanName.end(), '_', ' ');
-    auto dataSampleButton = new DataSampleButton(nullptr, cleanName);
-    m_DataSamplesScrollContent->addChild(index, dataSampleButton);
-    dataSampleButton->setParent(m_DataSamplesScrollContent);
-    dataSampleButton->setFixedSize({ m_DataSamplesScrollContent->width(), 30 });
+    auto dataSampleButton = new DataSampleButton(m_DataSampleButtonContainer, cleanName);
+    dataSampleButton->setFixedHeight(30);
 
     dataSampleButton->setCallback([this](DataSampleButton* w) { selectDataSample(w); });
-    dataSampleButton->setDeleteCallback([this, dataSampleButton](DataSampleButton* w) { deleteDataSample(w); });
+    dataSampleButton->setDeleteCallback([this](DataSampleButton* w) { deleteDataSample(w); });
     dataSampleButton->setToggleViewCallback([this](bool checked, DataSampleButton* w) {
-        int index = m_DataSamplesScrollContent->childIndex(w);
+        int index = m_DataSampleButtonContainer->childIndex(w);
         if (checked)
             m_BSDFCanvas->addDataSample(m_DataSamples[index]);
         else

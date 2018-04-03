@@ -29,7 +29,8 @@ public:
     DataSample& operator=(const DataSample&) = delete;
     DataSample& operator=(DataSample&&) = default;
 
-    void draw(  const nanogui::Matrix4f& model,
+    void drawGL(const nanogui::Vector3f& viewOrigin,
+                const nanogui::Matrix4f& model,
                 const nanogui::Matrix4f& view,
                 const nanogui::Matrix4f& proj);
 

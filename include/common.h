@@ -4,6 +4,8 @@
 #	define NOMINMAX  // Remove min/max macros when building on windows
 #	include <Windows.h>
 #	undef NOMINMAX
+#   undef near      // also cleanup some macros conflicting with variable names
+#   undef far
 #	pragma warning(disable : 4127) // warning C4127: conditional expression is constant
 #	pragma warning(disable : 4244) // warning C4244: conversion from X to Y, possible loss of data
 #	pragma warning(disable : 4251) // warning C4251: class X needs to have dll-interface to be used by clients of class Y

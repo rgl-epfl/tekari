@@ -58,7 +58,8 @@ DataSample::~DataSample()
     }
 }
 
-void DataSample::draw(
+void DataSample::drawGL(
+    const nanogui::Vector3f& viewOrigin,
     const nanogui::Matrix4f& model,
     const nanogui::Matrix4f& view,
     const nanogui::Matrix4f& proj)
@@ -77,7 +78,7 @@ void DataSample::draw(
             m_ColorMap->bind();
             m_NormalShader.setUniform("modelViewProj", mvp);
             m_NormalShader.setUniform("model", model);
-            m_NormalShader.setUniform("view", Vector3f(0, 0, 4));
+            m_NormalShader.setUniform("view", viewOrigin);
             m_NormalShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
         }
         if (m_DisplayViews[LOG])
@@ -86,7 +87,7 @@ void DataSample::draw(
             m_ColorMap->bind();
             m_LogShader.setUniform("modelViewProj", mvp);
             m_LogShader.setUniform("model", model);
-            m_LogShader.setUniform("view", Vector3f(0, 0, 4));
+            m_LogShader.setUniform("view", viewOrigin);
             m_LogShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
         }
         if (m_DisplayViews[PATH])
@@ -118,7 +119,6 @@ void DataSample::loadFromFile(const std::string& sampleDataPath)
     }
     // load vertex data
     std::vector<del_point2d_t> points;
-    bool readingSucceded;
     PROFILE(readDataset(sampleDataPath, points));
 
     // triangulate vertx data

@@ -45,7 +45,8 @@ private:
 
     // data sample scroll panel
     nanogui::VScrollPanel* m_DataSamplesScrollPanel;
-    nanogui::Widget* m_DataSamplesScrollContent;
+    nanogui::Widget* m_ScrollContent;
+    nanogui::Widget* m_DataSampleButtonContainer;
 
     // tool buttons
     nanogui::Button* m_HelpButton;
