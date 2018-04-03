@@ -20,48 +20,48 @@ public:
 
     void openDataSampleDialog();
     void saveScreenShot();
-	void toggleMetadataWindow();
-	void toggleHelpWindow();
-	void deleteDataSample(DataSampleButton* button);
-	void selectDataSample(DataSampleButton* button);
-	void selectDataSample(int index, bool clamped = true);
+    void toggleMetadataWindow();
+    void toggleHelpWindow();
+    void deleteDataSample(DataSampleButton* button);
+    void selectDataSample(DataSampleButton* button);
+    void selectDataSample(int index, bool clamped = true);
 
 private:
-	void toggleView(DataSample::Views view);
+    void toggleView(DataSample::Views view);
 
     void updateLayout();
-	void addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample);
-	void refreshToolButtons();
+    void addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample);
+    void refreshToolButtons();
 
-	void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
+    void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
 
-	bool hasSelectedDataSample() const { return m_SelectedDataSampleIndex >= 0; }
-	std::shared_ptr<DataSample> getSelectedDataSample() { return m_DataSamples[m_SelectedDataSampleIndex]; }
-	const std::shared_ptr<const DataSample> getSelectedDataSample() const { return m_DataSamples[m_SelectedDataSampleIndex]; }
+    bool hasSelectedDataSample() const { return m_SelectedDataSampleIndex >= 0; }
+    std::shared_ptr<DataSample> getSelectedDataSample() { return m_DataSamples[m_SelectedDataSampleIndex]; }
+    const std::shared_ptr<const DataSample> getSelectedDataSample() const { return m_DataSamples[m_SelectedDataSampleIndex]; }
 
     bool m_RequiresLayoutUpdate = false;
 
     nanogui::Window* m_ToolWindow;
 
-	// data sample scroll panel
-	nanogui::VScrollPanel* m_DataSamplesScrollPanel;
-	nanogui::Widget* m_DataSamplesScrollContent;
+    // data sample scroll panel
+    nanogui::VScrollPanel* m_DataSamplesScrollPanel;
+    nanogui::Widget* m_DataSamplesScrollContent;
 
-	// tool buttons
-	nanogui::Button* m_HelpButton;
-	nanogui::Widget* m_ViewButtonsContainer;
-	nanogui::Button* m_GridViewToggle;
-	nanogui::Button* m_OrthoViewToggle;
+    // tool buttons
+    nanogui::Button* m_HelpButton;
+    nanogui::Widget* m_ViewButtonsContainer;
+    nanogui::Button* m_GridViewToggle;
+    nanogui::Button* m_OrthoViewToggle;
 
-	// dialog windows
-	nanogui::Window* m_MetadataWindow;
-	HelpWindow* m_HelpWindow;
+    // dialog windows
+    nanogui::Window* m_MetadataWindow;
+    HelpWindow* m_HelpWindow;
 
     BSDFCanvas *m_BSDFCanvas;
 
-	int m_SelectedDataSampleIndex;
-	std::vector<std::shared_ptr<DataSample>> m_DataSamples;
-	std::vector<std::shared_ptr<ColorMap>> m_ColorMaps;
+    int m_SelectedDataSampleIndex;
+    std::vector<std::shared_ptr<DataSample>> m_DataSamples;
+    std::vector<std::shared_ptr<ColorMap>> m_ColorMaps;
 
     std::string fileName;
     std::string imageName;

@@ -28,22 +28,22 @@ extern "C" {
 typedef float real;
 
 typedef struct {
-	real	x, y;
+    real	x, y;
 } del_point2d_t;
 
 typedef struct {
-	/** input points count */
-	unsigned int	num_points;
+    /** input points count */
+    unsigned int	num_points;
 
-	/** the input points */
-	del_point2d_t*	points;
+    /** the input points */
+    del_point2d_t*	points;
 
-	/** number of returned faces */
-	unsigned int	num_faces;
+    /** number of returned faces */
+    unsigned int	num_faces;
 
-	/** the faces are given as a sequence: num verts, verts indices, num verts, verts indices...
-	 * the first face is the external face */
-	unsigned int*	faces;
+    /** the faces are given as a sequence: num verts, verts indices, num verts, verts indices...
+     * the first face is the external face */
+    unsigned int*	faces;
 } delaunay2d_t;
 
 /*
@@ -65,17 +65,17 @@ void				delaunay2d_release(delaunay2d_t* del);
 
 
 typedef struct {
-	/** input points count */
-	unsigned int	num_points;
+    /** input points count */
+    unsigned int	num_points;
 
-	/** input points */
-	del_point2d_t*	points;
+    /** input points */
+    del_point2d_t*	points;
 
-	/** number of triangles */
-	unsigned int	num_triangles;
+    /** number of triangles */
+    unsigned int	num_triangles;
 
-	/** the triangles indices v0,v1,v2, v0,v1,v2 .... */
-	unsigned int*	tris;
+    /** the triangles indices v0,v1,v2, v0,v1,v2 .... */
+    unsigned int*	tris;
 } tri_delaunay2d_t;
 
 /**

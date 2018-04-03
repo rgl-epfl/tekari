@@ -7,12 +7,12 @@
 class RadialGrid
 {
 public:
-	RadialGrid();
-	~RadialGrid();
+    RadialGrid();
+    ~RadialGrid();
 
-	void draw(const nanogui::Matrix4f& model,
-		const nanogui::Matrix4f& view,
-		const nanogui::Matrix4f& proj);
+    void draw(const nanogui::Matrix4f& model,
+        const nanogui::Matrix4f& view,
+        const nanogui::Matrix4f& proj);
 
     void setVisible(bool visible) { m_Visible = visible; }
     bool visible() const { return m_Visible; }

@@ -15,15 +15,15 @@ public:
                                   const nanogui::Vector2i &rel,
                                   int button, int modifiers) override;
     virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
-	virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
+    virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
     virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
 
     virtual void drawGL() override;
 
-	void addDataSample(std::shared_ptr<DataSample> dataSample);
-	void removeDataSample(std::shared_ptr<DataSample> dataSample);
+    void addDataSample(std::shared_ptr<DataSample> dataSample);
+    void removeDataSample(std::shared_ptr<DataSample> dataSample);
 
-	void setOrthoMode(bool orthoMode) { m_OrthoMode = orthoMode; }
+    void setOrthoMode(bool orthoMode) { m_OrthoMode = orthoMode; }
     
     const RadialGrid& grid() const { return m_Grid; }
     RadialGrid& grid() { return m_Grid; }
@@ -39,7 +39,7 @@ private:
     nanogui::Vector3f m_ViewTarget;
     nanogui::Vector3f m_ViewUp;
 
-	float m_Zoom;
+    float m_Zoom;
 
-	bool m_OrthoMode;
+    bool m_OrthoMode;
 };
