@@ -16,11 +16,6 @@
 #  pragma warning(disable : 4127) // warning C4127: conditional expression is constant
 #endif
 
-// #include <Eigen/Core>
-// #include <stdint.h>
-// #include <array>
-// #include <vector>
-
 // Define command key for windows/mac/linux
 #if defined(__APPLE__) || defined(DOXYGEN_DOCUMENTATION_BUILD)
     /// If on OSX, maps to ``GLFW_MOD_SUPER``.  Otherwise, maps to ``GLFW_MOD_CONTROL``.

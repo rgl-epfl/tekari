@@ -1,6 +1,8 @@
 #pragma once
 
-#include <nanogui/nanogui.h>
+//#include <nanogui/common.h>
+#include <nanogui/glcanvas.h>
+#include <nanogui/widget.h>
 #include <memory>
 #include "DataSample.h"
 #include "RadialGrid.h"

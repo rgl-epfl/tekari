@@ -138,43 +138,6 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 	float min_intensity = std::numeric_limits<float>::max();
 	float max_intensity = std::numeric_limits<float>::min();
 
-	struct MetaDataElem
-	{
-		std::string name;
-		std::function<void(const std::string&)> parse;
-	};
-
-	std::vector<MetaDataElem> metaDataElems =
-	{
-		{ "mountain-version",		[this](const std::string& rest_of_line) { m_Metadata.mountainVersion = rest_of_line; } },
-		{ "database-host",			[this](const std::string& rest_of_line) { m_Metadata.databaseHost = rest_of_line; } },
-		{ "database-name",			[this](const std::string& rest_of_line) { m_Metadata.databaseName = rest_of_line; } },
-		{ "measured_at",			[this](const std::string& rest_of_line) { m_Metadata.measuredAt = rest_of_line; } },
-		{ "data_read_from_db",		[this](const std::string& rest_of_line) { m_Metadata.dataReadFromDatabaseAt = rest_of_line; } },
-		{ "database_id",			[this](const std::string& rest_of_line) { m_Metadata.databaseId = stoi(rest_of_line); } },
-		{ "datapoints_in_db",		[this](const std::string& rest_of_line) { m_Metadata.datapointsInDatabase = stoi(rest_of_line); } },
-		{ "database_reference_id",	[this](const std::string& rest_of_line) {} },
-		{ "integrated_value",		[this](const std::string& rest_of_line) {} },
-		{ "sample_label",			[this](const std::string& rest_of_line) { m_Metadata.sampleLabel = rest_of_line; } },
-		{ "sample_name",			[this](const std::string& rest_of_line) { m_Metadata.sampleName = rest_of_line; } },
-		{ "lamp",					[this](const std::string& rest_of_line) { m_Metadata.lamp = rest_of_line; } },
-		{ "beamshape",				[this](const std::string& rest_of_line) {} },
-		{ "filterlamp",				[this](const std::string& rest_of_line) {} },
-		{ "filterdet",				[this](const std::string& rest_of_line) {} },
-		{ "dump-host",				[this](const std::string& rest_of_line) { m_Metadata.dumpHost = rest_of_line; } },
-		{ "intheta",				[this](const std::string& rest_of_line) { m_Metadata.incidentTheta = stof(rest_of_line); } },
-		{ "inphi",					[this](const std::string& rest_of_line) { m_Metadata.incidentPhi = stof(rest_of_line); } },
-		{ "front_integral",			[this](const std::string& rest_of_line) { m_Metadata.frontIntegral = stof(rest_of_line); } },
-		{ "mountain_minimum_angle", [this](const std::string& rest_of_line) { m_Metadata.mountainMinimumAngle = stof(rest_of_line); } },
-		{ "datapoints_in_file",		[this, &points](const std::string& rest_of_line) {
-			m_Metadata.datapointsInFile = stoi(rest_of_line);
-			// as soon as we know the total size of the dataset, reserve enough space for it
-			points.reserve(m_Metadata.datapointsInFile);
-			m_Heights.reserve(m_Metadata.datapointsInFile);
-			m_LogHeights.reserve(m_Metadata.datapointsInFile);
-		} },
-	};
-
 	// path segments must always contain the first point...
 	m_PathSegments.push_back(0);
 
@@ -190,15 +153,13 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 		}
 		else if (line[0] == '#')
 		{
-			for (auto& metaDataElem : metaDataElems)
+			m_Metadata.parse(line);
+			if (m_Metadata.datapointsInFile >= 0)
 			{
-				if (!strncmp(line+1, metaDataElem.name.c_str(), metaDataElem.name.size()))
-				{
-					// remove end of line character
-					line[strlen(line) - 1] = '\0';
-					// parse rest of line
-					metaDataElem.parse(line + metaDataElem.name.size() + 2);
-				}
+				// as soon as we know the total size of the dataset, reserve enough space for it
+				points.reserve(m_Metadata.datapointsInFile);
+				m_Heights.reserve(m_Metadata.datapointsInFile);
+				m_LogHeights.reserve(m_Metadata.datapointsInFile);
 			}
 		}
 		else

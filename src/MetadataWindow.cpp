@@ -1,11 +1,14 @@
 #include "MetadataWindow.h"
 
 #include <nanogui\button.h>
+#include <nanogui\entypo.h>
+#include <nanogui\layout.h>
+#include <nanogui\label.h>
 #include <functional>
 
 using namespace nanogui;
 
-MetadataWindow::MetadataWindow(Widget* parent, const DataSample::Metadata* metadata, std::function<void(void)> closeCallback)
+MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::function<void(void)> closeCallback)
 	: Window(parent, "Metadata")
 	, m_CloseCallback(closeCallback)
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nanogui/nanogui.h>
+#include <nanogui/screen.h>
 #include <memory>
 
 #include "BSDFCanvas.h"

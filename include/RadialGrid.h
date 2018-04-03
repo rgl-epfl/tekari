@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nanogui/nanogui.h>
+#include <nanogui\glutil.h>
 #include <vector>
 #include "common.h"
 

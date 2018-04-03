@@ -1,5 +1,15 @@
 #include "BSDFApplication.h"
 
+#include <nanogui\layout.h>
+#include <nanogui\button.h>
+#include <nanogui\entypo.h>
+#include <nanogui\popupbutton.h>
+#include <nanogui\colorwheel.h>
+#include <nanogui\slider.h>
+#include <nanogui\vscrollpanel.h>
+#include <nanogui\messagedialog.h>
+#include <nanogui\label.h>
+
 #include <algorithm>
 #include <string>
 
@@ -323,8 +333,10 @@ void BSDFApplication::toggleMetadataWindow()
 		}
 		else
 		{
-			m_MetadataWindow = new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
+			auto errorWindow = new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
 				"No data sample selected.", "close");
+			errorWindow->setCallback([this](int index) { m_MetadataWindow = nullptr; });
+			m_MetadataWindow = errorWindow;
 		}
 	}
 }

@@ -1,8 +1,10 @@
 #pragma once
 
-#include <nanogui/nanogui.h>
+#include <nanogui/common.h>
+#include <nanogui/glutil.h>
 #include <vector>
 #include "delaunay.h"
+#include "Metadata.h"
 
 struct DataSample
 {
@@ -42,40 +44,7 @@ private:
 	void computeNormals();
 	void linkDataToShaders();
 
-public:
-	template<typename T>
-	struct MetadataElem
-	{
-		std::string nameInFile;
-		std::string name;
-		T value;
-	};
-	struct Metadata
-	{
-		std::string mountainVersion;
-		std::string databaseHost;
-		std::string databaseName;
-		std::string dumpHost;
-		unsigned int databaseId;
-		unsigned int datapointsInDatabase;
-
-		std::string measuredAt;
-		std::string dataReadFromDatabaseAt;
-
-		std::string sampleLabel;
-		std::string sampleName;
-		std::string lamp;
-
-		float incidentTheta;
-		float incidentPhi;
-		float frontIntegral;
-
-		float mountainMinimumAngle;
-		unsigned int datapointsInFile;
-
-		std::string getInfos() const;
-	};
-	
+public:	
 	const Metadata& metadata() const { return m_Metadata; }
 
 private:
