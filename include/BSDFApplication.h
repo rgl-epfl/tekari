@@ -12,6 +12,7 @@
 class BSDFApplication : public nanogui::Screen {
 public:
     BSDFApplication();
+    ~BSDFApplication();
 
     virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
 
@@ -58,12 +59,13 @@ private:
     nanogui::Window* m_MetadataWindow;
     HelpWindow* m_HelpWindow;
 
+    // canvas
     BSDFCanvas *m_BSDFCanvas;
 
     int m_SelectedDataSampleIndex;
     std::vector<std::shared_ptr<DataSample>> m_DataSamples;
     std::vector<std::shared_ptr<ColorMap>> m_ColorMaps;
 
-    std::string fileName;
-    std::string imageName;
+    // offscreen buffer
+    nanogui::GLFramebuffer m_Framebuffer;
 };

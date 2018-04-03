@@ -152,9 +152,14 @@ BSDFApplication::BSDFApplication()
     refreshToolButtons();
 
     m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/inferno.png"));
+    m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/jet.png"));
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
-    //this->setSize(Vector2i(1024, 800));
+}
+
+BSDFApplication::~BSDFApplication()
+{
+    m_Framebuffer.free();
 }
 
 bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modifiers) {
@@ -163,7 +168,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
     if (action == GLFW_PRESS)
     {
         // control options
-        if (modifiers == GLFW_MOD_CONTROL)
+        if (modifiers & SYSTEM_COMMAND_MOD)
         {
             switch (key)
             {
@@ -278,7 +283,7 @@ void BSDFApplication::openDataSampleDialog()
     {
         try
         {
-            std::shared_ptr<DataSample> newDataSample = std::make_shared<DataSample>(m_ColorMaps[0], dataSamplePath);
+            std::shared_ptr<DataSample> newDataSample = std::make_shared<DataSample>(m_ColorMaps[1], dataSamplePath);
             m_DataSamples.push_back(newDataSample);
             addDataSampleButton(m_DataSamples.size() - 1, newDataSample);
         }
@@ -298,16 +303,14 @@ void BSDFApplication::openDataSampleDialog()
 
 void BSDFApplication::saveScreenShot()
 {
-    std::cout << "Save screenshot." << std::endl;
-
-    nanogui::GLFramebuffer offscreenBuffer;
-    offscreenBuffer.init(m_BSDFCanvas->size(), 1);
-    offscreenBuffer.bind();
-
+    if (!m_Framebuffer.ready())
+    {
+        m_Framebuffer.init(m_BSDFCanvas->size(), 1);
+    }
+    m_Framebuffer.bind();
     m_BSDFCanvas->draw(nvgContext());
-
-    offscreenBuffer.downloadTGA("test.tga");
-    offscreenBuffer.release();
+    m_Framebuffer.downloadTGA("test.tga");
+    m_Framebuffer.release();
 }
 
 void BSDFApplication::toggleMetadataWindow()

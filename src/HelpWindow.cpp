@@ -6,6 +6,7 @@
 #include <nanogui/layout.h>
 #include <nanogui/opengl.h>
 #include <nanogui/tabwidget.h>
+#include <nanogui/vscrollpanel.h>
 #include <nanogui/window.h>
 
 using namespace nanogui;
@@ -25,12 +26,10 @@ string HelpWindow::ALT = "Alt";
 
 HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
     : Window{ parent, "Help" }, m_CloseCallback{ closeCallback } {
-
+    setFixedWidth(600);
     auto closeButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
     closeButton->setCallback(m_CloseCallback);
-
     setLayout(new GroupLayout{});
-    setFixedWidth(600);
 
     TabWidget* tabWidget = new TabWidget{ this };
 
@@ -39,9 +38,13 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         Widget* shortcuts = tabWidget->createTab("Keybindings");
         shortcuts->setLayout(new GroupLayout{});
 
-        auto addShortcutSection = [&shortcuts](const std::string& label) {
-            new Label{ shortcuts, label, "sans-bold", 18 };
-            auto section = new Widget{ shortcuts };
+        m_ScrollPanel = new VScrollPanel{ shortcuts };
+        auto scrollContent = new Widget{ m_ScrollPanel };
+        scrollContent->setLayout(new GroupLayout{});
+
+        auto addShortcutSection = [&scrollContent](const std::string& label) {
+            new Label{ scrollContent, label, "sans-bold", 18 };
+            auto section = new Widget{ scrollContent };
             section->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 0, 0 });
             return section;
         };
@@ -148,4 +151,11 @@ bool HelpWindow::keyboardEvent(int key, int scancode, int action, int modifiers)
     }
 
     return false;
+}
+
+void HelpWindow::performLayout(NVGcontext *ctx)
+{
+    nanogui::Window::performLayout(ctx);
+    //m_ScrollPanel->setFixedHeight(mParent->height() / 2);
+    center();
 }
