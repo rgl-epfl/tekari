@@ -151,6 +151,8 @@ BSDFApplication::BSDFApplication()
 
 	refreshToolButtons();
 
+	m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/inferno.png"));
+
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
     this->setSize(Vector2i(1024, 800));
 }
@@ -207,36 +209,36 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
 					return true;
 				}
 				break;
-
 			case GLFW_KEY_ENTER:
 				if (hasSelectedDataSample())
 				{
 					auto w = m_DataSamplesScrollContent->childAt(m_SelectedDataSampleIndex);
 					DataSampleButton* button = dynamic_cast<DataSampleButton*>(w);
 					button->toggleView();
+					return true;
 				}
 				break;
 			case GLFW_KEY_N:
 				toggleView(DataSample::Views::NORMAL);
-				break;
+				return true;
 			case GLFW_KEY_L:
 				toggleView(DataSample::Views::LOG);
-				break;
+				return true;
 			case GLFW_KEY_P:
 				toggleView(DataSample::Views::PATH);
-				break;
+				return true;
 			case GLFW_KEY_G:
 				toggleToolButton(m_GridViewToggle, false);
-				break;
+				return true;
 			case GLFW_KEY_O:
 				toggleToolButton(m_OrthoViewToggle, false);
-				break;
+				return true;
 			case GLFW_KEY_I:
 				toggleMetadataWindow();
-				break;
+				return true;
 			case GLFW_KEY_H:
 				toggleHelpWindow();
-				break;
+				return true;
 			default:
 				break;
 			}
@@ -283,7 +285,7 @@ void BSDFApplication::openDataSampleDialog()
 	{
 		try
 		{
-			std::shared_ptr<DataSample> newDataSample = std::make_shared<DataSample>(dataSamplePath);
+			std::shared_ptr<DataSample> newDataSample = std::make_shared<DataSample>(m_ColorMaps[0], dataSamplePath);
 			m_DataSamples.push_back(newDataSample);
 			addDataSampleButton(m_DataSamples.size() - 1, newDataSample);
 		}

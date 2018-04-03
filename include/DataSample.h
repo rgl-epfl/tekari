@@ -3,8 +3,10 @@
 #include <nanogui/common.h>
 #include <nanogui/glutil.h>
 #include <vector>
+#include <memory>
 #include "delaunay.h"
 #include "Metadata.h"
+#include "ColorMap.h"
 
 struct DataSample
 {
@@ -17,8 +19,8 @@ struct DataSample
 	};
 
 public:
-	DataSample();
-	DataSample(const std::string& sampleDataPath);
+	DataSample(std::shared_ptr<ColorMap> colorMap);
+	DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sampleDataPath);
 	DataSample(const DataSample&) = delete;
 	DataSample(DataSample&&) = default;
 
@@ -33,6 +35,8 @@ public:
 
 	void toggleView(Views view) { m_DisplayViews[view] = !m_DisplayViews[view]; }
 	bool displayView(Views view) const { return m_DisplayViews[view]; }
+
+	void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
 
     void loadFromFile(const std::string& sampleDataPath);
 
@@ -59,6 +63,7 @@ private:
 	nanogui::GLShader m_NormalShader;
 	nanogui::GLShader m_LogShader;
 	nanogui::GLShader m_PathShader;
+	std::shared_ptr<ColorMap> m_ColorMap;
 	std::vector<unsigned int> m_PathSegments;
 
 	// display options

@@ -7,6 +7,7 @@
 #include "DataSampleButton.h"
 #include "MetadataWindow.h"
 #include "HelpWindow.h"
+#include "ColorMap.h"
 
 class BSDFApplication : public nanogui::Screen {
 public:
@@ -60,6 +61,7 @@ private:
 
 	int m_SelectedDataSampleIndex;
 	std::vector<std::shared_ptr<DataSample>> m_DataSamples;
+	std::vector<std::shared_ptr<ColorMap>> m_ColorMaps;
 
     std::string fileName;
     std::string imageName;

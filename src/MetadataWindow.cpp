@@ -4,6 +4,7 @@
 #include <nanogui\entypo.h>
 #include <nanogui\layout.h>
 #include <nanogui\label.h>
+#include <nanogui\glutil.h>
 #include <functional>
 
 using namespace nanogui;
@@ -67,4 +68,17 @@ MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::fu
 	addInfo(dbSection, "Database Id", std::to_string(metadata->databaseId));
 	addInfo(dbSection, "Datapoints In Database", std::to_string(metadata->datapointsInDatabase));
 	addInfo(techInfo, "Front Integral", std::to_string(metadata->frontIntegral));
+}
+
+bool MetadataWindow::keyboardEvent(int key, int scancode, int action, int modifiers) {
+	if (Window::keyboardEvent(key, scancode, action, modifiers)) {
+		return true;
+	}
+
+	if (key == GLFW_KEY_ESCAPE) {
+		m_CloseCallback();
+		return true;
+	}
+
+	return false;
 }

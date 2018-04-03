@@ -15,20 +15,24 @@
 
 #define MAX_SAMPLING_DISTANCE 0.05f
 
-DataSample::DataSample()
+DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
 :	m_DisplayViews{ true, false, false }
 ,	tri_delaunay2d(nullptr)
+,	m_ColorMap(colorMap)
 {
 	m_NormalShader.initFromFiles(
 		"height_map",
 		"../resources/shaders/height_map.vert",
 		"../resources/shaders/height_map.frag"
 	);
+	m_NormalShader.setUniform("color_map", 0);
 	m_LogShader.initFromFiles(
 		"log_map",
 		"../resources/shaders/height_map.vert",
 		"../resources/shaders/height_map.frag"
 	);
+	m_LogShader.setUniform("color_map", 0);
+
 	m_PathShader.initFromFiles(
 		"path_drawer",
 		"../resources/shaders/path.vert",
@@ -36,8 +40,8 @@ DataSample::DataSample()
 	);
 }
 
-DataSample::DataSample(const std::string& sampleDataPath)
-:	DataSample()
+DataSample::DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sampleDataPath)
+:	DataSample(colorMap)
 {
 	loadFromFile(sampleDataPath);
 }
@@ -70,6 +74,7 @@ void DataSample::draw(
 		if (m_DisplayViews[NORMAL])
 		{
 			m_NormalShader.bind();
+			m_ColorMap->bind();
 			m_NormalShader.setUniform("modelViewProj", mvp);
 			m_NormalShader.setUniform("model", model);
 			m_NormalShader.setUniform("view", Vector3f(0, 0, 4));
@@ -78,6 +83,7 @@ void DataSample::draw(
 		if (m_DisplayViews[LOG])
 		{
 			m_LogShader.bind();
+			m_ColorMap->bind();
 			m_LogShader.setUniform("modelViewProj", mvp);
 			m_LogShader.setUniform("model", model);
 			m_LogShader.setUniform("view", Vector3f(0, 0, 4));
