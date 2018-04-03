@@ -2,15 +2,11 @@ TODO:
 - profile libraries
 - make faster where possible                                        <<---- always
 - text rendering (2h) : what to display?
-	- text on grid (degrees, axes)
-	- 2d teext for metadata (- option: read all metadata)
+	- text on grid (axes)
+	- 2d teext for metadata
 - log view                                                          <<----
 - use terminal input for files (options) (look at thread to open file)
 - data interaction (click on point, delete points???)
-
-
-// option
-- add color mappings
 
 // problems
 - GLFrameBuffer: how to write to it

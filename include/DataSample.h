@@ -41,6 +41,9 @@ public:
 
     void loadFromFile(const std::string& sampleDataPath);
 
+    float minHeight() const { return m_MinMaxHeights.first; }
+    float maxHeight() const { return m_MinMaxHeights.second; }
+
 private:
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
@@ -59,6 +62,7 @@ private:
     std::vector<float>              m_LogHeights;
     std::vector<nanogui::Vector3f>  m_Normals;
     std::vector<nanogui::Vector3f>  m_LogNormals;
+    std::pair<float, float>         m_MinMaxHeights;
 
     // display Shaders
     nanogui::GLShader m_NormalShader;

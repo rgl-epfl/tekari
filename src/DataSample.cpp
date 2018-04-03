@@ -206,13 +206,17 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
     m_PathSegments.push_back(points.size());
 
     // normalize intensities
-    float min_log_intensity = log(min_intensity + 1);
-    float max_log_intensity = log(max_intensity + 1);
+    float correction_factor = 0.0f;
+    if (min_intensity <= 0.0f)
+        correction_factor = -min_intensity + 1e-10f;
+    float min_log_intensity = log(min_intensity + correction_factor);
+    float max_log_intensity = log(max_intensity);
     for (size_t i = 0; i < m_Heights.size(); ++i)
     {
         m_Heights[i] = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
-        m_LogHeights[i] = (log(m_LogHeights[i] + 1) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+        m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
+    m_MinMaxHeights = std::make_pair(min_intensity, max_intensity);
 }
 
 void DataSample::linkDataToShaders()

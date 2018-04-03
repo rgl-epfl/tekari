@@ -16,7 +16,7 @@
 using namespace nanogui;
 
 BSDFApplication::BSDFApplication()
-:   nanogui::Screen(Eigen::Vector2i(1000, 600), "BSDF Visualizer", true)
+:   nanogui::Screen(Eigen::Vector2i(1200, 750), "BSDF Visualizer", true)
 ,	m_SelectedDataSampleIndex(-1)
 ,	m_MetadataWindow(nullptr)
 ,	m_HelpWindow(nullptr)
