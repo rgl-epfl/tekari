@@ -15,4 +15,5 @@ void main() {
     vec3 color = texture(color_map, height).rgb;//vec3(height, 1 - abs((height - 0.5)*2), 1-height);
 
     out_color = vec4((0.2 + brightness*.8) * color, 1.0f);
+    // out_color = vec4(color, 1.0f);
 }

@@ -4,12 +4,14 @@ using namespace nanogui;
 
 BSDFCanvas::BSDFCanvas(Widget *parent)
 :   GLCanvas(parent)
-,   m_ViewOrigin(0, 2, 4)
+,   m_ViewOrigin(0, 0, 4)
 ,   m_ViewTarget(0, 0, 0)
 ,   m_ViewUp(0, 1, 0)
 ,	m_Zoom(0)
 ,	m_OrthoMode(false)
-{}
+{
+    m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
+}
 
 bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
                               const Vector2i &rel,
@@ -23,7 +25,10 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
         }
         else if (button == GLFW_MOUSE_BUTTON_5)
         {
-            m_ViewTarget += Vector3f(-rel[0] * 0.01f, 0, -rel[1] * 0.01f);
+            float moveSpeed = 0.04f / (m_Zoom + 10.1f);
+            Vector3f translation = Vector3f(-rel[0] * moveSpeed, rel[1] * moveSpeed, 0.0f);
+            m_ViewTarget += translation;
+            m_ViewOrigin += translation;
             return true;
         }
         return false;
@@ -57,15 +62,12 @@ bool BSDFCanvas::keyboardEvent(int key, int scancode, int action, int modifiers)
                 m_OrthoMode = !m_OrthoMode;
                 return true;
             case GLFW_KEY_KP_1:
-                m_ViewOrigin = Vector3f(0.0f, 0.0f, 4.0f);
                 m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(cmd ? M_PI : 0.0f, Vector3f::UnitY())));
                 return true;
             case GLFW_KEY_KP_3:
-                m_ViewOrigin = Vector3f(0.0f, 0.0f, 4.0f);
                 m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI * (cmd ? 0.5f : -0.5f), Vector3f::UnitY())));
                 return true;
             case GLFW_KEY_KP_7:
-                m_ViewOrigin = Vector3f(0.0f, 0.0f, 4.0f);
                 m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI * (cmd ? -0.5f : 0.5f), Vector3f::UnitX())));
                 return true;
             }
