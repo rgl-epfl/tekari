@@ -153,13 +153,18 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
     while (!feof(datasetFile) && !ferror(datasetFile) && fgets(line, MAX_LENGTH, datasetFile))
     {
         ++lineNumber;
-        if (strlen(line) <= 1)
+        
+        // remove any trailing spaces (this will detect full of spaces lines)
+        const char* head = line;
+        while (isspace(*head)) ++head;
+
+        if (*head == '\0')
         {
             // skip empty lines
         }
-        else if (line[0] == '#')
+        else if (*head == '#')
         {
-            m_Metadata.parse(line);
+            m_Metadata.parse(head);
             if (m_Metadata.datapointsInFile >= 0)
             {
                 // as soon as we know the total size of the dataset, reserve enough space for it
@@ -171,11 +176,11 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
         else
         {
             float phi, theta, intensity;
-            if (sscanf(line, "%f %f %f", &theta, &phi, &intensity) != 3)
+            if (sscanf(head, "%f %f %f", &theta, &phi, &intensity) != 3)
             {
                 fclose(datasetFile);
                 std::ostringstream errorMsg;
-                errorMsg << "Invalid file format: " << line << " (line " << lineNumber << ")";
+                errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
                 throw std::runtime_error(errorMsg.str());
             }
 
