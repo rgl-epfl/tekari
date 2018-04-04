@@ -5,6 +5,7 @@
 
 #include <nanogui/opengl.h>
 #include <nanogui/common.h>
+#include <nanogui/popup.h>
 #include <nanogui/entypo.h>
 
 using namespace nanogui;
@@ -21,6 +22,10 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
 ,   m_DeleteButtonHovered(false)
 {
     setTooltip(m_Label);
+
+    Window *parentWindow = window();
+    m_Popup = new Popup{ parentWindow->parent(), window() };
+    m_Popup->setVisible(false);
 }
 
 //nanogui::Vector2i DataSampleButton::preferredSize(NVGcontext *ctx) const
@@ -57,6 +62,14 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
         else if (m_Callback)
         {
             m_Callback(this);
+            return true;
+        }
+    }
+    else if (button == GLFW_MOUSE_BUTTON_2)
+    {
+        if (!InDeleteButton(p) && !InToggleViewButton(p))
+        {
+            m_Popup->setVisible(!m_Popup->visible());
             return true;
         }
     }
@@ -135,6 +148,19 @@ void DataSampleButton::draw(NVGcontext * ctx)
     makeToolButton(toggleViewButtonFillOpacity, m_IsVisible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, m_ToggleViewButtonPos);
 
     nvgRestore(ctx);
+}
+
+void DataSampleButton::performLayout(NVGcontext * ctx)
+{
+    Widget::performLayout(ctx);
+
+    const Window *parentWindow = window();
+
+    int posY = absolutePosition().y() - parentWindow->position().y() + mSize.y() / 2;
+    if (m_Popup->side() == Popup::Right)
+        m_Popup->setAnchorPos(Vector2i(parentWindow->width() + 15, posY));
+    else
+        m_Popup->setAnchorPos(Vector2i(0 - 15, posY));
 }
 
 void DataSampleButton::toggleView()

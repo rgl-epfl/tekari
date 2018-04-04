@@ -35,32 +35,38 @@ BSDFApplication::BSDFApplication()
     m_HelpButton->setPosition({20, 0});
 
     // Different view options for the selected data sample
+    //{
+    //    auto label = new Label(m_ToolWindow, "View Options", "sans-bold", 25);
+    //    label->setTooltip(
+    //        "Various view modes. Hover on them to learn what they do."
+    //    );
+
+    //    // sample data view options
+    //    m_ViewButtonsContainer = new Widget(m_ToolWindow);
+    //    m_ViewButtonsContainer->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
+
+    //    auto makeViewButton = [this](const std::string& label, const std::string& tooltip,
+    //        std::function<void(bool)> changeCallback)
+    //    {
+    //        auto button = new Button(m_ViewButtonsContainer, label);
+    //        button->setFlags(Button::Flags::ToggleButton);
+    //        button->setTooltip(tooltip);
+    //        button->setChangeCallback(changeCallback);
+    //    };
+
+    //    makeViewButton("Normal", "Display/Hide normal view (N)", [this](bool) { toggleView(DataSample::NORMAL); });
+    //    makeViewButton("Log", "Display/Hide logarithmic view (L)", [this](bool) { toggleView(DataSample::LOG); });
+    //    makeViewButton("Path", "Display/Hide path (P)", [this](bool) { toggleView(DataSample::PATH); });
+
+    //}
+
+    // grid view otpions
     {
         auto label = new Label(m_ToolWindow, "View Options", "sans-bold", 25);
         label->setTooltip(
             "Various view modes. Hover on them to learn what they do."
         );
 
-        // sample data view options
-        m_ViewButtonsContainer = new Widget(m_ToolWindow);
-        m_ViewButtonsContainer->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
-
-        auto makeViewButton = [this](const std::string& label, const std::string& tooltip,
-            std::function<void(bool)> changeCallback)
-        {
-            auto button = new Button(m_ViewButtonsContainer, label);
-            button->setFlags(Button::Flags::ToggleButton);
-            button->setTooltip(tooltip);
-            button->setChangeCallback(changeCallback);
-        };
-
-        makeViewButton("Normal", "Display/Hide normal view (N)", [this](bool) { toggleView(DataSample::NORMAL); });
-        makeViewButton("Log", "Display/Hide logarithmic view (L)", [this](bool) { toggleView(DataSample::LOG); });
-        makeViewButton("Path", "Display/Hide path (P)", [this](bool) { toggleView(DataSample::PATH); });
-
-    }
-    // grid view otpions
-    {
         auto panel = new Widget(m_ToolWindow);
         panel->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
 
@@ -149,8 +155,6 @@ BSDFApplication::BSDFApplication()
         m_DataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
-    refreshToolButtons();
-
     m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/inferno.png"));
     m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/jet.png"));
 
@@ -218,13 +222,13 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 }
                 break;
             case GLFW_KEY_N:
-                toggleView(DataSample::Views::NORMAL);
+                toggleView(DataSample::Views::NORMAL, selectedDataSample());
                 return true;
             case GLFW_KEY_L:
-                toggleView(DataSample::Views::LOG);
+                toggleView(DataSample::Views::LOG, selectedDataSample());
                 return true;
             case GLFW_KEY_P:
-                toggleView(DataSample::Views::PATH);
+                toggleView(DataSample::Views::PATH, selectedDataSample());
                 return true;
             case GLFW_KEY_G:
                 toggleToolButton(m_GridViewToggle, false);
@@ -325,7 +329,7 @@ void BSDFApplication::toggleMetadataWindow()
     {
         if (hasSelectedDataSample())
         {
-            m_MetadataWindow = new MetadataWindow(this, &getSelectedDataSample()->metadata(), [this]() { toggleMetadataWindow(); });
+            m_MetadataWindow = new MetadataWindow(this, &selectedDataSample()->metadata(), [this]() { toggleMetadataWindow(); });
             m_MetadataWindow->center();
             m_MetadataWindow->requestFocus();
         }
@@ -394,7 +398,6 @@ void BSDFApplication::selectDataSample(DataSampleButton* button)
         }
     }
 
-    refreshToolButtons();
     requestLayoutUpdate();
 }
 
@@ -436,25 +439,30 @@ void BSDFApplication::addDataSampleButton(int index, std::shared_ptr<DataSample>
     dataSampleButton->setDeleteCallback([this](DataSampleButton* w) { deleteDataSample(w); });
     dataSampleButton->setToggleViewCallback([this](bool checked, DataSampleButton* w) {
         int index = m_DataSampleButtonContainer->childIndex(w);
-        if (checked)
-            m_BSDFCanvas->addDataSample(m_DataSamples[index]);
-        else
-            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
+        if (checked)    m_BSDFCanvas->addDataSample(m_DataSamples[index]);
+        else            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
     });
+
+    dataSampleButton->popup()->setLayout(new GridLayout{Orientation::Horizontal, 3, Alignment::Fill, 5});
+    auto makeViewButton = [this, &dataSampleButton](const std::string& label, const std::string& tooltip,
+        bool pushed, std::function<void(bool)> changeCallback)
+    {
+        auto button = new Button(dataSampleButton->popup(), label);
+        button->setFlags(Button::Flags::ToggleButton);
+        button->setTooltip(tooltip);
+        button->setPushed(pushed);
+        button->setChangeCallback(changeCallback);
+    };
+    makeViewButton("Normal", "Toggle normal view for this data sample", true,
+        [this, dataSample](bool checked) { toggleView(DataSample::Views::NORMAL, dataSample); });
+    makeViewButton("Log", "Toggle logarithmic view for this data sample", false,
+        [this, dataSample](bool checked) { toggleView(DataSample::Views::LOG, dataSample); });
+    makeViewButton("Path", "Show/hide path for this data sample", false,
+        [this, dataSample](bool checked) { toggleView(DataSample::Views::PATH, dataSample); });
+
     selectDataSample(dataSampleButton);
     // by default toggle view for the new data samples
-    m_BSDFCanvas->addDataSample(getSelectedDataSample());
-}
-
-void BSDFApplication::refreshToolButtons()
-{
-    auto& children = m_ViewButtonsContainer->children();
-    for (int i = DataSample::Views::NORMAL; i != DataSample::Views::VIEW_COUNT; ++i)
-    {
-        auto viewButton = dynamic_cast<Button*>(children[i]);
-        viewButton->setPushed(hasSelectedDataSample() ? getSelectedDataSample()->displayView((DataSample::Views)i) : false);
-        viewButton->setEnabled(hasSelectedDataSample());
-    }
+    m_BSDFCanvas->addDataSample(selectedDataSample());
 }
 
 void BSDFApplication::toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample)
@@ -466,12 +474,10 @@ void BSDFApplication::toggleToolButton(nanogui::Button* button, bool needsSelect
     }
 }
 
-void BSDFApplication::toggleView(DataSample::Views view)
+void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample)
 {
-    if (hasSelectedDataSample())
+    if (dataSample)
     {
-        getSelectedDataSample()->toggleView(view);
-        auto button = dynamic_cast<Button*>(m_ViewButtonsContainer->childAt(view));
-        button->setPushed(getSelectedDataSample()->displayView(view));
+        dataSample->toggleView(view);
     }
 }

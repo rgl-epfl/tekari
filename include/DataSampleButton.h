@@ -16,6 +16,7 @@ public:
     virtual bool mouseEnterEvent(const nanogui::Vector2i &p, bool enter) override;
     virtual bool mouseMotionEvent(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
     virtual void draw(NVGcontext *ctx) override;
+    virtual void performLayout(NVGcontext *ctx) override;
 
     void toggleView();
 
@@ -25,6 +26,9 @@ public:
     void setCallback(std::function<void(DataSampleButton*)> callback) { m_Callback = callback; }
     void setDeleteCallback(std::function<void(DataSampleButton*)> callback) { m_DeleteCallback = callback; }
     void setToggleViewCallback(std::function<void(bool, DataSampleButton*)> callback) { m_ToggleViewCallback = callback; }
+
+    nanogui::Popup* popup() { return m_Popup; }
+    const nanogui::Popup* popup() const { return m_Popup; }
 
 private:
     bool InToggleViewButton(const nanogui::Vector2i& p) const {
@@ -47,4 +51,6 @@ private:
     std::function<void(DataSampleButton*)> m_Callback;
     std::function<void(bool, DataSampleButton*)> m_ToggleViewCallback;
     std::function<void(DataSampleButton*)> m_DeleteCallback;
+
+    nanogui::Popup *m_Popup;
 };

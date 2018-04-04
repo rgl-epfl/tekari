@@ -28,17 +28,16 @@ public:
     void selectDataSample(int index, bool clamped = true);
 
 private:
-    void toggleView(DataSample::Views view);
+    void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample);
 
     void updateLayout();
     void addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample);
-    void refreshToolButtons();
 
     void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
 
-    bool hasSelectedDataSample() const { return m_SelectedDataSampleIndex >= 0; }
-    std::shared_ptr<DataSample> getSelectedDataSample() { return m_DataSamples[m_SelectedDataSampleIndex]; }
-    const std::shared_ptr<const DataSample> getSelectedDataSample() const { return m_DataSamples[m_SelectedDataSampleIndex]; }
+    bool hasSelectedDataSample() const { return m_SelectedDataSampleIndex != -1; }
+    std::shared_ptr<DataSample> selectedDataSample() { return m_DataSamples[m_SelectedDataSampleIndex]; }
+    const std::shared_ptr<const DataSample> selectedDataSample() const { return m_DataSamples[m_SelectedDataSampleIndex]; }
 
     bool m_RequiresLayoutUpdate = false;
 
@@ -51,7 +50,6 @@ private:
 
     // tool buttons
     nanogui::Button* m_HelpButton;
-    nanogui::Widget* m_ViewButtonsContainer;
     nanogui::Button* m_GridViewToggle;
     nanogui::Button* m_OrthoViewToggle;
 
