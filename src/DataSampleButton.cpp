@@ -5,6 +5,7 @@
 
 #include <nanogui/opengl.h>
 #include <nanogui/common.h>
+#include <nanogui/Label.h>
 #include <nanogui/popup.h>
 #include <nanogui/layout.h>
 #include <nanogui/entypo.h>
@@ -29,10 +30,14 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
 
     m_Popup = new Popup{ parentWindow->parent(), window() };
     m_Popup->setVisible(false);
-    m_Popup->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill, 5 });
+    m_Popup->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
 
-    auto makeViewButton = [this](const string& label, const string& tooltip, bool pushed) {
-        auto button = new Button(m_Popup, label);
+    new Label{ m_Popup, "View Modes" , "sans-bold", 18};
+    auto buttonContainer = new Widget{ m_Popup };
+    buttonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill });
+
+    auto makeViewButton = [this, buttonContainer](const string& label, const string& tooltip, bool pushed) {
+        auto button = new Button(buttonContainer, label);
         button->setFlags(Button::Flags::ToggleButton);
         button->setTooltip(tooltip);
         button->setPushed(pushed);
@@ -177,4 +182,20 @@ void DataSampleButton::toggleView()
 {
     m_IsVisible = !m_IsVisible;
     m_ToggleViewCallback(m_IsVisible);
+}
+
+void DataSampleButton::toggleButton(DataSample::Views view, bool check)
+{
+    switch (view)
+    {
+    case DataSample::Views::NORMAL:
+        m_NormalViewToggle->setPushed(check);
+        break;
+    case DataSample::Views::LOG:
+        m_LogViewToggle->setPushed(check);
+        break;
+    case DataSample::Views::PATH:
+        m_PathViewToggle->setPushed(check);
+        break;
+    }
 }

@@ -6,6 +6,8 @@
 #include <functional>
 #include <memory>
 
+#include "DataSample.h"
+
 #define BUTTON_RADIUS 10.0f
 
 class DataSampleButton : public nanogui::Widget
@@ -35,6 +37,8 @@ public:
 
     nanogui::Popup* popup()             { return m_Popup; }
     const nanogui::Popup* popup() const { return m_Popup; }
+
+    void toggleButton(DataSample::Views view, bool check);
 
 private:
     bool InToggleViewButton(const nanogui::Vector2i& p) const {

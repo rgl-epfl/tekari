@@ -388,11 +388,6 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         auto button = correspondingButton(m_SelectedDataSample);
         button->setIsSelected(true);
         button->popup()->setVisible(true);
-        auto children = button->popup()->children();
-        for (int i = DataSample::Views::NORMAL; i != DataSample::Views::VIEW_COUNT; ++i)
-        {
-            dynamic_cast<Button*>(children[i])->setPushed(dataSample->displayView((DataSample::Views)i));
-        }
     }
     
     requestLayoutUpdate();
@@ -481,6 +476,7 @@ void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> 
     if (dataSample)
     {
         dataSample->toggleView(view);
+        correspondingButton(dataSample)->toggleButton(view, dataSample->displayView(view));
     }
 }
 
