@@ -51,7 +51,7 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
     if (button == GLFW_MOUSE_BUTTON_1) {
         if (InDeleteButton(p))
         {
-            m_DeleteCallback(this);
+            m_DeleteCallback();
             return true;
         }
         else if (InToggleViewButton(p))
@@ -61,7 +61,7 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
         }
         else if (m_Callback)
         {
-            m_Callback(this);
+            m_Callback();
             return true;
         }
     }
@@ -166,5 +166,5 @@ void DataSampleButton::performLayout(NVGcontext * ctx)
 void DataSampleButton::toggleView()
 {
     m_IsVisible = !m_IsVisible;
-    m_ToggleViewCallback(m_IsVisible, this);
+    m_ToggleViewCallback(m_IsVisible);
 }

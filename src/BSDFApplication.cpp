@@ -14,10 +14,11 @@
 #include <string>
 
 using namespace nanogui;
+using namespace std;
 
 BSDFApplication::BSDFApplication()
-:   nanogui::Screen(Eigen::Vector2i(1200, 750), "BSDF Visualizer", true)
-,	m_SelectedDataSampleIndex(-1)
+:   nanogui::Screen(Vector2i(1200, 750), "BSDF Visualizer", true)
+,   m_SelectedDataSample(nullptr)
 ,	m_MetadataWindow(nullptr)
 ,	m_HelpWindow(nullptr)
 {
@@ -45,8 +46,8 @@ BSDFApplication::BSDFApplication()
     //    m_ViewButtonsContainer = new Widget(m_ToolWindow);
     //    m_ViewButtonsContainer->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
 
-    //    auto makeViewButton = [this](const std::string& label, const std::string& tooltip,
-    //        std::function<void(bool)> changeCallback)
+    //    auto makeViewButton = [this](const string& label, const string& tooltip,
+    //        function<void(bool)> changeCallback)
     //    {
     //        auto button = new Button(m_ViewButtonsContainer, label);
     //        button->setFlags(Button::Flags::ToggleButton);
@@ -129,7 +130,7 @@ BSDFApplication::BSDFApplication()
         auto tools = new Widget{ m_ToolWindow };
         tools->setLayout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
 
-        auto makeToolButton = [&](bool enabled, std::function<void()> callback, int icon = 0, std::string tooltip = "") {
+        auto makeToolButton = [&](bool enabled, function<void()> callback, int icon = 0, string tooltip = "") {
             auto button = new Button{tools, "", icon};
             button->setCallback(callback);
             button->setTooltip(tooltip);
@@ -140,7 +141,7 @@ BSDFApplication::BSDFApplication()
 
         makeToolButton(true, [this] { openDataSampleDialog(); }, ENTYPO_ICON_FOLDER, "Open data sample (CTRL+O)");
         makeToolButton(true, [this] { saveScreenShot(); }, ENTYPO_ICON_IMAGE, "Save image (CTRL+P)");
-        makeToolButton(true, [this] { std::cout << "Data saved\n"; }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
+        makeToolButton(true, [this] { cout << "Data saved\n"; }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
         makeToolButton(true, [this]() { toggleMetadataWindow(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
     }
 
@@ -155,8 +156,8 @@ BSDFApplication::BSDFApplication()
         m_DataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
-    m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/inferno.png"));
-    m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/jet.png"));
+    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/inferno.png"));
+    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/jet.png"));
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
     requestLayoutUpdate();
@@ -181,7 +182,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 openDataSampleDialog();
                 break;
             case GLFW_KEY_S:
-                std::cout << "Save data\n";
+                cout << "Save data\n";
                 break;
             case GLFW_KEY_P:
                 saveScreenShot();
@@ -200,35 +201,31 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 selectDataSample(key - GLFW_KEY_1);
                 return true;
             case GLFW_KEY_DELETE:
-                if (hasSelectedDataSample())
-                {
-                    auto buttonToDelete = m_DataSampleButtonContainer->childAt(m_SelectedDataSampleIndex);
-                    deleteDataSample(dynamic_cast<DataSampleButton*>(buttonToDelete));
+                    deleteDataSample(m_SelectedDataSample);
                     return true;
-                }
                 break;
             case GLFW_KEY_UP:
             case GLFW_KEY_DOWN:
-                selectDataSample(m_SelectedDataSampleIndex + (key == GLFW_KEY_UP ? -1 : 1), false);
+                selectDataSample(selectedDataSampleIndex() + (key == GLFW_KEY_UP ? -1 : 1), false);
                 return true;
                 break;
             case GLFW_KEY_ENTER:
                 if (hasSelectedDataSample())
                 {
-                    auto w = m_DataSampleButtonContainer->childAt(m_SelectedDataSampleIndex);
+                    auto w = m_DataSampleButtonContainer->childAt(selectedDataSampleIndex());
                     DataSampleButton* button = dynamic_cast<DataSampleButton*>(w);
                     button->toggleView();
                     return true;
                 }
                 break;
             case GLFW_KEY_N:
-                toggleView(DataSample::Views::NORMAL, selectedDataSample());
+                toggleView(DataSample::Views::NORMAL, m_SelectedDataSample);
                 return true;
             case GLFW_KEY_L:
-                toggleView(DataSample::Views::LOG, selectedDataSample());
+                toggleView(DataSample::Views::LOG, m_SelectedDataSample);
                 return true;
             case GLFW_KEY_P:
-                toggleView(DataSample::Views::PATH, selectedDataSample());
+                toggleView(DataSample::Views::PATH, m_SelectedDataSample);
                 return true;
             case GLFW_KEY_G:
                 toggleToolButton(m_GridViewToggle, false);
@@ -279,7 +276,7 @@ void BSDFApplication::updateLayout()
 
 void BSDFApplication::openDataSampleDialog()
 {
-    std::string dataSamplePath = file_dialog(
+    string dataSamplePath = file_dialog(
     {
         {"txt",  "Data samples"},
     }, false);
@@ -288,11 +285,11 @@ void BSDFApplication::openDataSampleDialog()
     {
         try
         {
-            std::shared_ptr<DataSample> newDataSample = std::make_shared<DataSample>(m_ColorMaps[1], dataSamplePath);
+            shared_ptr<DataSample> newDataSample = make_shared<DataSample>(m_ColorMaps[1], dataSamplePath);
             m_DataSamples.push_back(newDataSample);
             addDataSampleButton(m_DataSamples.size() - 1, newDataSample);
         }
-        catch (std::exception e)
+        catch (exception e)
         {
             auto errorMsgDialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error loading data",
                 e.what(), "Retry", "Cancel", true);
@@ -358,42 +355,46 @@ void BSDFApplication::toggleHelpWindow()
     }
 }
 
+int BSDFApplication::dataSampleIndex(const shared_ptr<const DataSample> dataSample) const
+{
+    auto pos = static_cast<size_t>(distance(m_DataSamples.begin(), find(m_DataSamples.begin(), m_DataSamples.end(), dataSample)));
+    return pos >= m_DataSamples.size() ? -1 : static_cast<int>(pos);
+}
+
 void BSDFApplication::selectDataSample(int index, bool clamped)
 {
     if (m_DataSamples.empty())
         return;
 
     if (clamped)
-        index = std::max(0, std::min(static_cast<int>(m_DataSamples.size()-1), index));
+        index = max(0, min(static_cast<int>(m_DataSamples.size()-1), index));
     else if (index < 0 || index >= m_DataSamples.size())
         return;
 
-    auto buttonToSelect = m_DataSampleButtonContainer->childAt(index);
-    selectDataSample(dynamic_cast<DataSampleButton*>(buttonToSelect));
+    selectDataSample(m_DataSamples[index]);
 }
 
-void BSDFApplication::selectDataSample(DataSampleButton* button)
+void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 {
     // de-select previously selected button
     Widget* oldButton = nullptr;
     if (hasSelectedDataSample())
     {
-        oldButton = m_DataSampleButtonContainer->childAt(m_SelectedDataSampleIndex);
+        oldButton = m_DataSampleButtonContainer->childAt(selectedDataSampleIndex());
         dynamic_cast<DataSampleButton*>(oldButton)->setIsSelected(false);
     }
 
-    if (oldButton == button)
+    // if we select already selected data sample, just deselect it
+    if (dataSample == m_SelectedDataSample)
     {
-        m_SelectedDataSampleIndex = -1;
+        m_SelectedDataSample = nullptr;
     }
     else
     {
-        // get button index
-        m_SelectedDataSampleIndex = m_DataSampleButtonContainer->childIndex(button);
-        // if the button gave a valid index
+        m_SelectedDataSample = dataSample;
         if (hasSelectedDataSample())
         {
-            // select button
+            auto button = dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(selectedDataSampleIndex()));
             button->setIsSelected(true);
         }
     }
@@ -401,51 +402,58 @@ void BSDFApplication::selectDataSample(DataSampleButton* button)
     requestLayoutUpdate();
 }
 
-void BSDFApplication::deleteDataSample(DataSampleButton* button)
+void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
 {
-    int index = m_DataSampleButtonContainer->childIndex(button);
-    if (index < 0 && index >= m_DataSamples.size())
+    int index = dataSampleIndex(dataSample);
+    if (index == -1)
         return;
 
     // erase data sample and corresponding button
-    m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
-    m_DataSamples.erase(m_DataSamples.begin() + index);
-    m_DataSampleButtonContainer->removeChild(button);
+    m_BSDFCanvas->removeDataSample(dataSample);
+    remove(m_DataSamples.begin(), m_DataSamples.end(), dataSample);
+    m_DataSampleButtonContainer->removeChild(index);
+
     // clear focus path and drag widget pointer, since it may refer to deleted button
     mDragWidget = nullptr;
     mDragActive = false;
     mFocusPath.clear();
 
     // select next valid one
-    DataSampleButton* buttonToSelect = nullptr;
+    shared_ptr<DataSample> dataSampleToSelect = nullptr;
     if (index >= m_DataSamples.size()) --index;
     if (index >= 0)
     {
-        buttonToSelect = dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
+        dataSampleToSelect = m_DataSamples[index];
     }
     // Make sure no button is selected
-    m_SelectedDataSampleIndex = -1;
-    selectDataSample(buttonToSelect);
+    m_SelectedDataSample = nullptr;
+    selectDataSample(dataSampleToSelect);
 }
 
-void BSDFApplication::addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample)
+void BSDFApplication::addDataSampleButton(int index, shared_ptr<DataSample> dataSample)
 {
-    std::string cleanName = dataSample->metadata().sampleName;
-    std::replace(cleanName.begin(), cleanName.end(), '_', ' ');
+    string cleanName = dataSample->metadata().sampleName;
+    replace(cleanName.begin(), cleanName.end(), '_', ' ');
     auto dataSampleButton = new DataSampleButton(m_DataSampleButtonContainer, cleanName);
     dataSampleButton->setFixedHeight(30);
 
-    dataSampleButton->setCallback([this](DataSampleButton* w) { selectDataSample(w); });
-    dataSampleButton->setDeleteCallback([this](DataSampleButton* w) { deleteDataSample(w); });
-    dataSampleButton->setToggleViewCallback([this](bool checked, DataSampleButton* w) {
-        int index = m_DataSampleButtonContainer->childIndex(w);
+    dataSampleButton->setCallback([this, dataSample]() {
+        selectDataSample(dataSample);
+    });
+
+    dataSampleButton->setDeleteCallback([this, dataSample]() {
+        deleteDataSample(dataSample);
+    });
+
+    dataSampleButton->setToggleViewCallback([this, dataSample](bool checked) {
+        int index = dataSampleIndex(dataSample);
         if (checked)    m_BSDFCanvas->addDataSample(m_DataSamples[index]);
         else            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
     });
 
     dataSampleButton->popup()->setLayout(new GridLayout{Orientation::Horizontal, 3, Alignment::Fill, 5});
-    auto makeViewButton = [this, &dataSampleButton](const std::string& label, const std::string& tooltip,
-        bool pushed, std::function<void(bool)> changeCallback)
+    auto makeViewButton = [this, &dataSampleButton](const string& label, const string& tooltip,
+        bool pushed, function<void(bool)> changeCallback)
     {
         auto button = new Button(dataSampleButton->popup(), label);
         button->setFlags(Button::Flags::ToggleButton);
@@ -460,7 +468,7 @@ void BSDFApplication::addDataSampleButton(int index, std::shared_ptr<DataSample>
     makeViewButton("Path", "Show/hide path for this data sample", false,
         [this, dataSample](bool checked) { toggleView(DataSample::Views::PATH, dataSample); });
 
-    selectDataSample(dataSampleButton);
+    selectDataSample(dataSample);
     // by default toggle view for the new data samples
     m_BSDFCanvas->addDataSample(selectedDataSample());
 }
@@ -474,7 +482,7 @@ void BSDFApplication::toggleToolButton(nanogui::Button* button, bool needsSelect
     }
 }
 
-void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample)
+void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> dataSample)
 {
     if (dataSample)
     {

@@ -23,9 +23,16 @@ public:
     void saveScreenShot();
     void toggleMetadataWindow();
     void toggleHelpWindow();
-    void deleteDataSample(DataSampleButton* button);
-    void selectDataSample(DataSampleButton* button);
+    void deleteDataSample(std::shared_ptr<DataSample> dataSample);
+    void selectDataSample(std::shared_ptr<DataSample> dataSample);
     void selectDataSample(int index, bool clamped = true);
+
+    int dataSampleIndex(const std::shared_ptr<const DataSample> dataSample) const;
+    
+    bool hasSelectedDataSample() const                  { return m_SelectedDataSample != nullptr; }
+    std::shared_ptr<DataSample> selectedDataSample()    { return m_SelectedDataSample; }
+    const std::shared_ptr<const DataSample> selectedDataSample() const { return m_SelectedDataSample; }
+    int selectedDataSampleIndex() const { return dataSampleIndex(m_SelectedDataSample); }
 
 private:
     void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample);
@@ -35,9 +42,6 @@ private:
 
     void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
 
-    bool hasSelectedDataSample() const { return m_SelectedDataSampleIndex != -1; }
-    std::shared_ptr<DataSample> selectedDataSample() { return m_DataSamples[m_SelectedDataSampleIndex]; }
-    const std::shared_ptr<const DataSample> selectedDataSample() const { return m_DataSamples[m_SelectedDataSampleIndex]; }
 
     bool m_RequiresLayoutUpdate = false;
 
@@ -60,8 +64,8 @@ private:
     // canvas
     BSDFCanvas *m_BSDFCanvas;
 
-    int m_SelectedDataSampleIndex;
     std::vector<std::shared_ptr<DataSample>> m_DataSamples;
+    std::shared_ptr<DataSample> m_SelectedDataSample;
     std::vector<std::shared_ptr<ColorMap>> m_ColorMaps;
 
     // offscreen buffer

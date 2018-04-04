@@ -3,6 +3,7 @@
 #include <nanogui/widget.h>
 #include <nanogui/opengl.h>
 #include <functional>
+#include <memory>
 
 #define BUTTON_RADIUS 10.0f
 
@@ -23,11 +24,11 @@ public:
     bool isSelected() const { return m_IsSelected; }
     void setIsSelected(bool isSelected) { m_IsSelected = isSelected; }
 
-    void setCallback(std::function<void(DataSampleButton*)> callback) { m_Callback = callback; }
-    void setDeleteCallback(std::function<void(DataSampleButton*)> callback) { m_DeleteCallback = callback; }
-    void setToggleViewCallback(std::function<void(bool, DataSampleButton*)> callback) { m_ToggleViewCallback = callback; }
+    void setCallback(std::function<void(void)> callback)            { m_Callback = callback; }
+    void setDeleteCallback(std::function<void(void)> callback)      { m_DeleteCallback = callback; }
+    void setToggleViewCallback(std::function<void(bool)> callback)  { m_ToggleViewCallback = callback; }
 
-    nanogui::Popup* popup() { return m_Popup; }
+    nanogui::Popup* popup()             { return m_Popup; }
     const nanogui::Popup* popup() const { return m_Popup; }
 
 private:
@@ -48,9 +49,10 @@ private:
     bool m_ToggleViewButtonHovered;
     bool m_DeleteButtonHovered;
 
-    std::function<void(DataSampleButton*)> m_Callback;
-    std::function<void(bool, DataSampleButton*)> m_ToggleViewCallback;
-    std::function<void(DataSampleButton*)> m_DeleteCallback;
+    std::function<void(void)> m_Callback;
+    std::function<void(bool)> m_ToggleViewCallback;
+    std::function<void(void)> m_DeleteCallback;
 
+    //std::shared_ptr<DataSample> m_DataSample;
     nanogui::Popup *m_Popup;
 };
