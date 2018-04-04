@@ -155,6 +155,7 @@ BSDFApplication::BSDFApplication()
     m_ColorMaps.push_back(std::make_shared<ColorMap>("../resources/color_maps/jet.png"));
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
+    requestLayoutUpdate();
 }
 
 BSDFApplication::~BSDFApplication()
