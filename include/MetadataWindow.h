@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nanogui\window.h>
+#include <nanogui/window.h>
 #include <functional>
 
 #include "Metadata.h"

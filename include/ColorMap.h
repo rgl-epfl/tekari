@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nanogui\glutil.h>
+#include <nanogui/glutil.h>
 #include "stb_image.h"
 
 class ColorMap

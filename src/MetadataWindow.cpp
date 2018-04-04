@@ -1,10 +1,10 @@
 #include "MetadataWindow.h"
 
-#include <nanogui\button.h>
-#include <nanogui\entypo.h>
-#include <nanogui\layout.h>
-#include <nanogui\label.h>
-#include <nanogui\glutil.h>
+#include <nanogui/button.h>
+#include <nanogui/entypo.h>
+#include <nanogui/layout.h>
+#include <nanogui/label.h>
+#include <nanogui/glutil.h>
 #include <functional>
 
 using namespace nanogui;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nanogui\widget.h>
+#include <nanogui/widget.h>
 #include <nanogui/opengl.h>
 #include <functional>
 

@@ -1,14 +1,14 @@
 #include "BSDFApplication.h"
 
-#include <nanogui\layout.h>
-#include <nanogui\button.h>
-#include <nanogui\entypo.h>
-#include <nanogui\popupbutton.h>
-#include <nanogui\colorwheel.h>
-#include <nanogui\slider.h>
-#include <nanogui\vscrollpanel.h>
-#include <nanogui\messagedialog.h>
-#include <nanogui\label.h>
+#include <nanogui/layout.h>
+#include <nanogui/button.h>
+#include <nanogui/entypo.h>
+#include <nanogui/popupbutton.h>
+#include <nanogui/colorwheel.h>
+#include <nanogui/slider.h>
+#include <nanogui/vscrollpanel.h>
+#include <nanogui/messagedialog.h>
+#include <nanogui/label.h>
 
 #include <algorithm>
 #include <string>
@@ -278,7 +278,7 @@ void BSDFApplication::openDataSampleDialog()
     {
         {"txt",  "Data samples"},
     }, false);
-    
+
     if (!dataSamplePath.empty())
     {
         try

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nanogui\glutil.h>
+#include <nanogui/glutil.h>
 #include <vector>
 #include "common.h"
 
@@ -25,7 +25,7 @@ public:
 
     const nanogui::Color& color() const { return m_Color; }
     void setColor(const nanogui::Color& newColor) { m_Color = newColor; }
-    
+
 private:
     static constexpr unsigned int CIRCLE_COUNT = 10;
     static constexpr unsigned int VERTEX_PER_CIRCLE_COUNT = 100;
