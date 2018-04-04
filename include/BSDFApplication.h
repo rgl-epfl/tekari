@@ -34,6 +34,9 @@ public:
     const std::shared_ptr<const DataSample> selectedDataSample() const { return m_SelectedDataSample; }
     int selectedDataSampleIndex() const { return dataSampleIndex(m_SelectedDataSample); }
 
+    DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample);
+    const DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample) const;
+
 private:
     void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample);
 

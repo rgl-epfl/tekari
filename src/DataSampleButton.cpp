@@ -6,9 +6,11 @@
 #include <nanogui/opengl.h>
 #include <nanogui/common.h>
 #include <nanogui/popup.h>
+#include <nanogui/layout.h>
 #include <nanogui/entypo.h>
 
 using namespace nanogui;
+using namespace std;
 
 DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
 :   Widget{ parent }
@@ -24,8 +26,21 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
     setTooltip(m_Label);
 
     Window *parentWindow = window();
+
     m_Popup = new Popup{ parentWindow->parent(), window() };
     m_Popup->setVisible(false);
+    m_Popup->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill, 5 });
+
+    auto makeViewButton = [this](const string& label, const string& tooltip, bool pushed) {
+        auto button = new Button(m_Popup, label);
+        button->setFlags(Button::Flags::ToggleButton);
+        button->setTooltip(tooltip);
+        button->setPushed(pushed);
+        return button;
+    };
+    m_NormalViewToggle = makeViewButton("Normal", "Toggle normal view for this data sample", true);
+    m_LogViewToggle = makeViewButton("Log", "Toggle logarithmic view for this data sample", false);
+    m_PathViewToggle = makeViewButton("Path", "Show/Hide path for this data sample", false);
 }
 
 //nanogui::Vector2i DataSampleButton::preferredSize(NVGcontext *ctx) const
@@ -65,14 +80,6 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
             return true;
         }
     }
-    else if (button == GLFW_MOUSE_BUTTON_2)
-    {
-        if (!InDeleteButton(p) && !InToggleViewButton(p))
-        {
-            m_Popup->setVisible(!m_Popup->visible());
-            return true;
-        }
-    }
 
     return false;
 }
@@ -98,7 +105,10 @@ bool DataSampleButton::mouseMotionEvent(const Vector2i &p, const Vector2i &rel, 
 
 void DataSampleButton::draw(NVGcontext * ctx)
 {
-    float fillOpacity = m_IsSelected ? 0.3f : mMouseFocus ? 0.25f : 0.2f;
+    if (!window()->focused() && !m_Popup->focused())
+        m_Popup->setVisible(false);
+
+    Color fillColor = m_IsSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) : Color(1.0f, mMouseFocus ? 0.25f : 0.2f);
     float deleteButtonFillOpacity = m_DeleteButtonHovered ? 0.4f : 0.2f;
     float toggleViewButtonFillOpacity = m_ToggleViewButtonHovered ? 0.4f : m_IsVisible ? 0.5f : 0.2f;
 
@@ -109,9 +119,9 @@ void DataSampleButton::draw(NVGcontext * ctx)
     // draw background
     nvgBeginPath(ctx);
     nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
-    nvgFillColor(ctx, Color(1.0f, fillOpacity));
+    nvgFillColor(ctx, fillColor);
     nvgFill(ctx);
-    if (m_IsSelected || mMouseFocus)
+    if (mMouseFocus)
     {
         nvgStrokeColor(ctx, Color(1.0f, 0.8f));
         nvgStrokeWidth(ctx, 1.0f);

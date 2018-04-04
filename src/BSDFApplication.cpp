@@ -212,9 +212,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_ENTER:
                 if (hasSelectedDataSample())
                 {
-                    auto w = m_DataSampleButtonContainer->childAt(selectedDataSampleIndex());
-                    DataSampleButton* button = dynamic_cast<DataSampleButton*>(w);
-                    button->toggleView();
+                    correspondingButton(m_SelectedDataSample)->toggleView();
                     return true;
                 }
                 break;
@@ -377,28 +375,26 @@ void BSDFApplication::selectDataSample(int index, bool clamped)
 void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 {
     // de-select previously selected button
-    Widget* oldButton = nullptr;
     if (hasSelectedDataSample())
     {
-        oldButton = m_DataSampleButtonContainer->childAt(selectedDataSampleIndex());
-        dynamic_cast<DataSampleButton*>(oldButton)->setIsSelected(false);
+        DataSampleButton* oldButton = correspondingButton(m_SelectedDataSample);
+        oldButton->setIsSelected(false);
+        oldButton->popup()->setVisible(false);
     }
 
-    // if we select already selected data sample, just deselect it
-    if (dataSample == m_SelectedDataSample)
+    m_SelectedDataSample = dataSample;
+    if (hasSelectedDataSample())
     {
-        m_SelectedDataSample = nullptr;
-    }
-    else
-    {
-        m_SelectedDataSample = dataSample;
-        if (hasSelectedDataSample())
+        auto button = correspondingButton(m_SelectedDataSample);
+        button->setIsSelected(true);
+        button->popup()->setVisible(true);
+        auto children = button->popup()->children();
+        for (int i = DataSample::Views::NORMAL; i != DataSample::Views::VIEW_COUNT; ++i)
         {
-            auto button = dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(selectedDataSampleIndex()));
-            button->setIsSelected(true);
+            dynamic_cast<Button*>(children[i])->setPushed(dataSample->displayView((DataSample::Views)i));
         }
     }
-
+    
     requestLayoutUpdate();
 }
 
@@ -409,9 +405,12 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
         return;
 
     // erase data sample and corresponding button
-    m_BSDFCanvas->removeDataSample(dataSample);
-    remove(m_DataSamples.begin(), m_DataSamples.end(), dataSample);
+    auto button = correspondingButton(dataSample);
+    button->popup()->parent()->removeChild(button->popup());
     m_DataSampleButtonContainer->removeChild(index);
+    
+    m_BSDFCanvas->removeDataSample(dataSample);
+    m_DataSamples.erase(find(m_DataSamples.begin(), m_DataSamples.end(), dataSample));
 
     // clear focus path and drag widget pointer, since it may refer to deleted button
     mDragWidget = nullptr;
@@ -451,22 +450,17 @@ void BSDFApplication::addDataSampleButton(int index, shared_ptr<DataSample> data
         else            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
     });
 
-    dataSampleButton->popup()->setLayout(new GridLayout{Orientation::Horizontal, 3, Alignment::Fill, 5});
-    auto makeViewButton = [this, &dataSampleButton](const string& label, const string& tooltip,
-        bool pushed, function<void(bool)> changeCallback)
-    {
-        auto button = new Button(dataSampleButton->popup(), label);
-        button->setFlags(Button::Flags::ToggleButton);
-        button->setTooltip(tooltip);
-        button->setPushed(pushed);
-        button->setChangeCallback(changeCallback);
-    };
-    makeViewButton("Normal", "Toggle normal view for this data sample", true,
-        [this, dataSample](bool checked) { toggleView(DataSample::Views::NORMAL, dataSample); });
-    makeViewButton("Log", "Toggle logarithmic view for this data sample", false,
-        [this, dataSample](bool checked) { toggleView(DataSample::Views::LOG, dataSample); });
-    makeViewButton("Path", "Show/hide path for this data sample", false,
-        [this, dataSample](bool checked) { toggleView(DataSample::Views::PATH, dataSample); });
+    dataSampleButton->setNormalToggleCallback([this, dataSample](bool checked) {
+        toggleView(DataSample::Views::NORMAL, dataSample);
+    });
+
+    dataSampleButton->setLogToggleCallback([this, dataSample](bool checked) {
+        toggleView(DataSample::Views::LOG, dataSample);
+    });
+
+    dataSampleButton->setPathToggleCallback([this, dataSample](bool checked) {
+        toggleView(DataSample::Views::PATH, dataSample);
+    });
 
     selectDataSample(dataSample);
     // by default toggle view for the new data samples
@@ -488,4 +482,20 @@ void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> 
     {
         dataSample->toggleView(view);
     }
+}
+
+DataSampleButton* BSDFApplication::correspondingButton(const std::shared_ptr<const DataSample> dataSample)
+{
+    int index = dataSampleIndex(dataSample);
+    if (index == -1)
+        return nullptr;
+    return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
+}
+
+const DataSampleButton* BSDFApplication::correspondingButton(const std::shared_ptr<const DataSample> dataSample) const
+{
+    int index = dataSampleIndex(dataSample);
+    if (index == -1)
+        return nullptr;
+    return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
 }

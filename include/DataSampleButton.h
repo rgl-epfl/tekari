@@ -2,6 +2,7 @@
 
 #include <nanogui/widget.h>
 #include <nanogui/opengl.h>
+#include <nanogui/button.h>
 #include <functional>
 #include <memory>
 
@@ -24,9 +25,13 @@ public:
     bool isSelected() const { return m_IsSelected; }
     void setIsSelected(bool isSelected) { m_IsSelected = isSelected; }
 
-    void setCallback(std::function<void(void)> callback)            { m_Callback = callback; }
-    void setDeleteCallback(std::function<void(void)> callback)      { m_DeleteCallback = callback; }
-    void setToggleViewCallback(std::function<void(bool)> callback)  { m_ToggleViewCallback = callback; }
+    void setCallback            (std::function<void(void)> callback) { m_Callback = callback; }
+    void setDeleteCallback      (std::function<void(void)> callback) { m_DeleteCallback = callback; }
+    void setToggleViewCallback  (std::function<void(bool)> callback) { m_ToggleViewCallback = callback; }
+
+    void setNormalToggleCallback    (std::function<void(bool)> callback) { m_NormalViewToggle->setChangeCallback(callback); }
+    void setLogToggleCallback       (std::function<void(bool)> callback) { m_LogViewToggle->setChangeCallback(callback); }
+    void setPathToggleCallback      (std::function<void(bool)> callback) { m_PathViewToggle->setChangeCallback(callback); }
 
     nanogui::Popup* popup()             { return m_Popup; }
     const nanogui::Popup* popup() const { return m_Popup; }
@@ -55,4 +60,7 @@ private:
 
     //std::shared_ptr<DataSample> m_DataSample;
     nanogui::Popup *m_Popup;
+    nanogui::Button *m_NormalViewToggle;
+    nanogui::Button *m_LogViewToggle;
+    nanogui::Button *m_PathViewToggle;
 };
