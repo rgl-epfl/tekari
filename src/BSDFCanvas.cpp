@@ -9,6 +9,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,   m_ViewUp(0, 1, 0)
 ,	m_Zoom(0)
 ,	m_OrthoMode(false)
+,   m_SelectionRegion(std::make_pair(Vector2i(), Vector2i()))
 {
     m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
 }
@@ -16,37 +17,63 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
                               const Vector2i &rel,
                               int button, int modifiers) {
-    if (!GLCanvas::mouseMotionEvent(p, rel, button, modifiers))
+    if (GLCanvas::mouseMotionEvent(p, rel, button, modifiers))
+        return true;
+    
+    if (button == GLFW_MOUSE_BUTTON_2)
     {
-        if (button == GLFW_MOUSE_BUTTON_2)
-        {
-            m_Arcball.motion(p);
-            return true;
-        }
-        else if (button == GLFW_MOUSE_BUTTON_5)
-        {
-            float moveSpeed = 0.04f / (m_Zoom + 10.1f);
-            Vector3f translation = Vector3f(-rel[0] * moveSpeed, rel[1] * moveSpeed, 0.0f);
-            m_ViewTarget += translation;
-            m_ViewOrigin += translation;
-            return true;
-        }
-        return false;
+        m_Arcball.motion(p);
+        return true;
     }
-    return true;
+    else if (button == GLFW_MOUSE_BUTTON_3)
+    {
+        m_SelectionRegion.second = p;
+    }
+    else if (button == GLFW_MOUSE_BUTTON_5)
+    {
+        float moveSpeed = 0.04f / (m_Zoom + 10.1f);
+        Vector3f translation = Vector3f(-rel[0] * moveSpeed, rel[1] * moveSpeed, 0.0f);
+        m_ViewTarget += translation;
+        m_ViewOrigin += translation;
+        return true;
+    }
+    return false;
 }
 
 bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) {
-    if (!GLCanvas::mouseButtonEvent(p, button, down, modifiers))
+    if (GLCanvas::mouseButtonEvent(p, button, down, modifiers))
+        return true;
+
+    if (button == GLFW_MOUSE_BUTTON_1)
     {
-        if (button == GLFW_MOUSE_BUTTON_1)
-        {
-            m_Arcball.button(p, down);
-            return true;
-        }
-        return false;
+        m_Arcball.button(p, down);
+        return true;
     }
-    return true;
+    else if (button == GLFW_MOUSE_BUTTON_2)
+    {
+        if (!down)
+        {
+            Matrix4f model, view, proj, mvp;
+            getMVPMatrices(model, view, proj);
+            mvp = proj * view * model;
+
+            Vector2i topLeft{ std::min(m_SelectionRegion.first.x(), m_SelectionRegion.second.x()),
+                std::min(m_SelectionRegion.first.y(), m_SelectionRegion.second.y()) };
+            Vector2i size{ std::abs(m_SelectionRegion.first.x() - m_SelectionRegion.second.x()),
+                std::abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
+            for (auto dataSample : m_DataSamplesToDraw)
+            {
+                dataSample->selectPoints(mvp, topLeft, size, mSize);
+            }
+            m_SelectionRegion = std::make_pair(Vector2i(), Vector2i());
+        }
+        else
+        {
+            m_SelectionRegion = std::make_pair(p, p);
+        }
+        return true;
+    }
+    return false;
 }
 
 bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
@@ -80,6 +107,16 @@ void BSDFCanvas::draw(NVGcontext* ctx)
     getMVPMatrices(model, view, proj);
 
     m_Grid.draw(ctx, mSize, model, view, proj);
+
+    // draw selection region
+    Vector2i topLeft{ std::min(m_SelectionRegion.first.x(), m_SelectionRegion.second.x()),
+        std::min(m_SelectionRegion.first.y(), m_SelectionRegion.second.y()) };
+    Vector2i size{ std::abs(m_SelectionRegion.first.x() - m_SelectionRegion.second.x()),
+        std::abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
+    nvgBeginPath(ctx);
+    nvgRect(ctx, topLeft.x(), topLeft.y(), size.x(), size.y());
+    nvgStrokeColor(ctx, Color(1.0f, 1.0f));
+    nvgStroke(ctx);
 }
 
 void BSDFCanvas::addDataSample(std::shared_ptr<DataSample> dataSample)

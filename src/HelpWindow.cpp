@@ -74,14 +74,17 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(viewOptions, "P", "Show/Hide Path");
         addRow(viewOptions, "G", "Show/Hide Grid");
         addRow(viewOptions, "O / KP_5", "Enable/Disable Orthographic View");
-        addRow(viewOptions, "KP_1 / " + COMMAND + "+KP_1", "Front / Back View");
-        addRow(viewOptions, "KP_3 / " + COMMAND + "+KP_3", "Left / Right View");
-        addRow(viewOptions, "KP_7 / " + COMMAND + "+KP_7", "Top / Bottom View");
+        addRow(viewOptions, "KP_1 or Alt+1 / " + COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Front / Back View");
+        addRow(viewOptions, "KP_3 or Alt+3 / " + COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Left / Right View");
+        addRow(viewOptions, "KP_7 or Alt+7 / " + COMMAND + "+KP_7 or " + COMMAND + "+Alt+7", "Top / Bottom View");
 
-        auto dataSelection = addShortcutSection("Data Selection");
+        auto dataSelection = addShortcutSection("Data Sample Selection");
         addRow(dataSelection, "1...9", "Select N-th Data Sample");
         addRow(dataSelection, "Down or S / Up or W", "Select Next / Previous Data Sample");
         addRow(dataSelection, "Left Click", "Select Hovered Data Sample");
+
+        auto dataEdition = addShortcutSection("Data Editing");
+        addRow(dataEdition, "Right Drag", "Select Data Points In Region");
 
         auto ui = addShortcutSection("Interface");
         addRow(ui, "H", "Show Help (this Window)");

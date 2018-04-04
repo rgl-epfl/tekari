@@ -148,6 +148,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
         return true;
     if (action == GLFW_PRESS)
     {
+        bool alt = modifiers & GLFW_MOD_ALT;
         // control options
         if (modifiers & SYSTEM_COMMAND_MOD)
         {
@@ -162,12 +163,15 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_P:
                 saveScreenShot();
                 return true;
+            case GLFW_KEY_1: if (!alt) break;
             case GLFW_KEY_KP_1:
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::BACK);
                 return true;
+            case GLFW_KEY_3: if (!alt) break;
             case GLFW_KEY_KP_3:
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::RIGHT);
                 return true;
+            case GLFW_KEY_7: if (!alt) break;
             case GLFW_KEY_KP_7:
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
             }

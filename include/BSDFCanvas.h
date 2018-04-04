@@ -50,4 +50,7 @@ private:
     float m_Zoom;
 
     bool m_OrthoMode;
+
+    // selection region
+    std::pair<nanogui::Vector2i, nanogui::Vector2i> m_SelectionRegion;
 };

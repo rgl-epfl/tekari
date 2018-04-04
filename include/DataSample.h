@@ -44,6 +44,13 @@ public:
     float minHeight() const { return m_MinMaxHeights.first; }
     float maxHeight() const { return m_MinMaxHeights.second; }
 
+    const Metadata& metadata() const { return m_Metadata; }
+
+    void selectPoints(const nanogui::Matrix4f& mvp,
+        const nanogui::Vector2i& topLeft,
+        const nanogui::Vector2i& size,
+        const nanogui::Vector2i & canvasSize);
+
 private:
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
@@ -51,9 +58,6 @@ private:
     void readDataset(const std::string &filePath, std::vector<del_point2d_t> &points);
     void computeNormals();
     void linkDataToShaders();
-
-public:	
-    const Metadata& metadata() const { return m_Metadata; }
 
 private:
     // Raw sample data
@@ -76,4 +80,8 @@ private:
 
     // metadata
     Metadata m_Metadata;
+
+    // Selected point
+    nanogui::GLShader m_SelectedPointsShader;
+    std::vector<nanogui::Vector3f> m_SelectedPoints;
 };

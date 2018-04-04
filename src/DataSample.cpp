@@ -13,6 +13,8 @@
 #include "common.h"
 #include "stop_watch.h"
 
+using namespace nanogui;
+
 #define MAX_SAMPLING_DISTANCE 0.05f
 
 DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
@@ -38,6 +40,12 @@ DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
         "../resources/shaders/path.vert",
         "../resources/shaders/path.frag"
     );
+
+    m_SelectedPointsShader.initFromFiles(
+        "selected_points_drawer",
+        "../resources/shaders/selected_points.vert",
+        "../resources/shaders/selected_points.frag"
+    );
 }
 
 DataSample::DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sampleDataPath)
@@ -59,10 +67,10 @@ DataSample::~DataSample()
 }
 
 void DataSample::drawGL(
-    const nanogui::Vector3f& viewOrigin,
-    const nanogui::Matrix4f& model,
-    const nanogui::Matrix4f& view,
-    const nanogui::Matrix4f& proj)
+    const Vector3f& viewOrigin,
+    const Matrix4f& model,
+    const Matrix4f& view,
+    const Matrix4f& proj)
 {
     using namespace nanogui;
     if (tri_delaunay2d)
@@ -106,6 +114,13 @@ void DataSample::drawGL(
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDisable(GL_POLYGON_OFFSET_LINE);
+        }
+        if (!m_SelectedPoints.empty())
+        {
+            glPointSize(2);
+            m_SelectedPointsShader.bind();
+            m_SelectedPointsShader.setUniform("modelViewProj", mvp);
+            m_SelectedPointsShader.drawArray(GL_POINTS, 0, m_SelectedPoints.size());
         }
         glDisable(GL_DEPTH_TEST);
     }
@@ -231,13 +246,13 @@ void DataSample::linkDataToShaders()
         throw std::runtime_error("ERROR: cannot link data to shader before loading.");
     }
     m_NormalShader.bind();
-    m_NormalShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
+    m_NormalShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
     m_NormalShader.uploadAttrib("in_pos2d", tri_delaunay2d->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)tri_delaunay2d->points);
     m_NormalShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
     m_NormalShader.uploadAttrib("indices", tri_delaunay2d->num_triangles, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, tri_delaunay2d->tris);
 
     m_LogShader.bind();
-    m_LogShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
+    m_LogShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
     m_LogShader.shareAttrib(m_NormalShader, "in_pos2d");
     m_LogShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_LogHeights.data());
     m_LogShader.shareAttrib(m_NormalShader, "indices");
@@ -245,10 +260,34 @@ void DataSample::linkDataToShaders()
     m_PathShader.bind();
     m_PathShader.shareAttrib(m_NormalShader, "in_pos2d");
     m_PathShader.shareAttrib(m_NormalShader, "in_height");
-    m_PathShader.shareAttrib(m_NormalShader, "indices");
 }
 
-nanogui::Vector3f DataSample::getVertex(unsigned int i, bool logged) const
+void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft, const Vector2i & size, const Vector2i & canvasSize)
+{
+    m_SelectedPoints.clear();
+    for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
+    {
+        Vector3f point = getVertex(i, false);
+        Vector4f homogeneousPoint;
+        homogeneousPoint << point, 1.0f;
+        Vector4f projPoint = mvp * homogeneousPoint;
+
+        projPoint /= projPoint[3];
+        projPoint[0] = (projPoint[0] + 1.0f) * 0.5f * canvasSize[0];
+        projPoint[1] = canvasSize[1] - (projPoint[1] + 1.0f) * 0.5f * canvasSize[1];
+
+        if (projPoint[0] >= topLeft[0] && projPoint[0] <= topLeft[0] + size[0] &&
+            projPoint[1] >= topLeft[1] && projPoint[1] <= topLeft[1] + size[1])
+        {
+            m_SelectedPoints.push_back(point);
+        }
+    }
+
+    m_SelectedPointsShader.bind();
+    m_SelectedPointsShader.uploadAttrib("in_pos3d", m_SelectedPoints.size(), 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_SelectedPoints.data());
+}
+
+Vector3f DataSample::getVertex(unsigned int i, bool logged) const
 {
     return {	tri_delaunay2d->points[i].x,
                 logged ? m_LogHeights[i] : m_Heights[i],
@@ -257,17 +296,17 @@ nanogui::Vector3f DataSample::getVertex(unsigned int i, bool logged) const
 
 void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged)
 {
-    const nanogui::Vector3f e01 = (getVertex(i1, logged) - getVertex(i0, logged)).normalized();
-    const nanogui::Vector3f e12 = (getVertex(i2, logged) - getVertex(i1, logged)).normalized();
-    const nanogui::Vector3f e20 = (getVertex(i0, logged) - getVertex(i2, logged)).normalized();
+    const Vector3f e01 = (getVertex(i1, logged) - getVertex(i0, logged)).normalized();
+    const Vector3f e12 = (getVertex(i2, logged) - getVertex(i1, logged)).normalized();
+    const Vector3f e20 = (getVertex(i0, logged) - getVertex(i2, logged)).normalized();
 
-    nanogui::Vector3f faceNormal =	-e20.cross(e01).normalized();
+    Vector3f faceNormal =	-e20.cross(e01).normalized();
 
     float w0 = (float)acos(std::max(-1.0f, std::min(1.0f, e01.dot(-e20))));
     float w1 = (float)acos(std::max(-1.0f, std::min(1.0f, e12.dot(-e01))));
     float w2 = (float)acos(std::max(-1.0f, std::min(1.0f, e20.dot(-e12))));
 
-    std::vector<nanogui::Vector3f> &normals = logged ? m_LogNormals : m_Normals;
+    std::vector<Vector3f> &normals = logged ? m_LogNormals : m_Normals;
     normals[i0] += w0 * faceNormal;
     normals[i1] += w1 * faceNormal;
     normals[i2] += w2 * faceNormal;
