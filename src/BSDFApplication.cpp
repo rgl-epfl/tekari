@@ -28,38 +28,13 @@ BSDFApplication::BSDFApplication()
     m_ToolWindow = new Window(this, "Tools");
     m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
     m_ToolWindow->setVisible(true);
+    m_ToolWindow->setPosition({ 10, 10 });
 
     m_HelpButton = new Button(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
     m_HelpButton->setCallback([this]() { toggleHelpWindow(); });
     m_HelpButton->setFontSize(15);
     m_HelpButton->setTooltip("Information about using BSDF Vidualizer (H)");
     m_HelpButton->setPosition({20, 0});
-
-    // Different view options for the selected data sample
-    //{
-    //    auto label = new Label(m_ToolWindow, "View Options", "sans-bold", 25);
-    //    label->setTooltip(
-    //        "Various view modes. Hover on them to learn what they do."
-    //    );
-
-    //    // sample data view options
-    //    m_ViewButtonsContainer = new Widget(m_ToolWindow);
-    //    m_ViewButtonsContainer->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
-
-    //    auto makeViewButton = [this](const string& label, const string& tooltip,
-    //        function<void(bool)> changeCallback)
-    //    {
-    //        auto button = new Button(m_ViewButtonsContainer, label);
-    //        button->setFlags(Button::Flags::ToggleButton);
-    //        button->setTooltip(tooltip);
-    //        button->setChangeCallback(changeCallback);
-    //    };
-
-    //    makeViewButton("Normal", "Display/Hide normal view (N)", [this](bool) { toggleView(DataSample::NORMAL); });
-    //    makeViewButton("Log", "Display/Hide logarithmic view (L)", [this](bool) { toggleView(DataSample::LOG); });
-    //    makeViewButton("Path", "Display/Hide path (P)", [this](bool) { toggleView(DataSample::PATH); });
-
-    //}
 
     // grid view otpions
     {
