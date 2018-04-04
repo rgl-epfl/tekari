@@ -8,13 +8,17 @@
 
 class BSDFCanvas : public nanogui::GLCanvas {
 public:
+    enum ViewAngles
+    {
+        FRONT, BACK, UP, DOWN, LEFT, RIGHT
+    };
+public:
     BSDFCanvas(Widget *parent);
 
     virtual bool mouseMotionEvent(const nanogui::Vector2i &p,
                                   const nanogui::Vector2i &rel,
                                   int button, int modifiers) override;
     virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
-    virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
     virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
 
     virtual void drawGL() override;
@@ -29,6 +33,8 @@ public:
     RadialGrid& grid() { return m_Grid; }
 
     virtual void performLayout(NVGcontext *ctx) override { m_Arcball.setSize(mSize); }
+
+    void setViewAngle(ViewAngles viewAngle);
 
 private:
     void getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const;

@@ -155,20 +155,28 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             {
             case GLFW_KEY_O:
                 openDataSampleDialog();
-                break;
+                return true;
             case GLFW_KEY_S:
                 cout << "Save data\n";
-                break;
+                return true;
             case GLFW_KEY_P:
                 saveScreenShot();
-                break;
+                return true;
+            case GLFW_KEY_KP_1:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::BACK);
+                return true;
+            case GLFW_KEY_KP_3:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::RIGHT);
+                return true;
+            case GLFW_KEY_KP_7:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
             }
         }
         else
         {
             switch (key)
             {
-            case GLFW_KEY_ESCAPE:
+            case GLFW_KEY_ESCAPE: case GLFW_KEY_Q:
                 setVisible(false);
                 return true;
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
@@ -179,11 +187,12 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                     deleteDataSample(m_SelectedDataSample);
                     return true;
                 break;
-            case GLFW_KEY_UP:
-            case GLFW_KEY_DOWN:
-                selectDataSample(selectedDataSampleIndex() + (key == GLFW_KEY_UP ? -1 : 1), false);
+            case GLFW_KEY_UP: case GLFW_KEY_W:
+                selectDataSample(selectedDataSampleIndex() - 1, false);
                 return true;
-                break;
+            case GLFW_KEY_DOWN: case GLFW_KEY_S:
+                selectDataSample(selectedDataSampleIndex() + 1, false);
+                return true;
             case GLFW_KEY_ENTER:
                 if (hasSelectedDataSample())
                 {
@@ -203,7 +212,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_G:
                 toggleToolButton(m_GridViewToggle, false);
                 return true;
-            case GLFW_KEY_O:
+            case GLFW_KEY_O: case GLFW_KEY_KP_5:
                 toggleToolButton(m_OrthoViewToggle, false);
                 return true;
             case GLFW_KEY_I:
@@ -211,6 +220,15 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 return true;
             case GLFW_KEY_H:
                 toggleHelpWindow();
+                return true;
+            case GLFW_KEY_KP_1:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
+                return true;
+            case GLFW_KEY_KP_3:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
+                return true;
+            case GLFW_KEY_KP_7:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
                 return true;
             default:
                 break;

@@ -49,34 +49,6 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
     return true;
 }
 
-bool BSDFCanvas::keyboardEvent(int key, int scancode, int action, int modifiers)
-{
-    if (!GLCanvas::keyboardEvent(key, scancode, action, modifiers))
-    {
-        if (action == GLFW_PRESS)
-        {
-            bool cmd = modifiers & SYSTEM_COMMAND_MOD;
-            switch (key)
-            {
-            case GLFW_KEY_KP_5:
-                m_OrthoMode = !m_OrthoMode;
-                return true;
-            case GLFW_KEY_KP_1:
-                m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(cmd ? M_PI : 0.0f, Vector3f::UnitY())));
-                return true;
-            case GLFW_KEY_KP_3:
-                m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI * (cmd ? 0.5f : -0.5f), Vector3f::UnitY())));
-                return true;
-            case GLFW_KEY_KP_7:
-                m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI * (cmd ? -0.5f : 0.5f), Vector3f::UnitX())));
-                return true;
-            }
-        }
-        return false;
-    }
-    return true;
-}
-
 bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
 {
     if (!GLCanvas::scrollEvent(p, rel))
@@ -123,6 +95,29 @@ void BSDFCanvas::removeDataSample(std::shared_ptr<DataSample> dataSample)
     if (dataSampleToErase != m_DataSamplesToDraw.end())
     {
         m_DataSamplesToDraw.erase(dataSampleToErase);
+    }
+}
+
+void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
+{
+    float dir = 0.0f;
+    switch (viewAngle)
+    {
+    case UP:
+        dir = M_PI;
+    case DOWN:
+        m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(-M_PI * 0.5f + dir, Vector3f::UnitX())));
+        break;
+    case LEFT:
+        dir = M_PI;
+    case RIGHT:
+        m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(- M_PI * 0.5f + dir, Vector3f::UnitY())));
+        break;
+    case BACK:
+        dir = M_PI;
+    case FRONT:
+        m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(dir, Vector3f::UnitY())));
+        break;
     }
 }
 

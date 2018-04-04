@@ -79,15 +79,12 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(viewOptions, "KP_7 / " + COMMAND + "+KP_7", "Top / Bottom View");
 
         auto dataSelection = addShortcutSection("Data Selection");
-        addRow(dataSelection, "1…9", "Select N-th Data Sample");
+        addRow(dataSelection, "1...9", "Select N-th Data Sample");
         addRow(dataSelection, "Down or S / Up or W", "Select Next / Previous Data Sample");
         addRow(dataSelection, "Left Click", "Select Hovered Data Sample");
 
         auto ui = addShortcutSection("Interface");
-        addRow(ui, ALT + "+Enter", "Maximize");
-        addRow(ui, COMMAND + "+B", "Toggle GUI");
         addRow(ui, "H", "Show Help (this Window)");
-        addRow(ui, COMMAND + "+P", "Find Image or Layer");
         addRow(ui, "Q or Esc", "Quit");
     }
 
