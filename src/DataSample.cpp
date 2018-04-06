@@ -115,12 +115,12 @@ void DataSample::drawGL(
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDisable(GL_POLYGON_OFFSET_LINE);
         }
-        if (!m_SelectedPoints.empty())
+        if (true)
         {
-            glPointSize(2);
+            glPointSize(4);
             m_SelectedPointsShader.bind();
             m_SelectedPointsShader.setUniform("modelViewProj", mvp);
-            m_SelectedPointsShader.drawArray(GL_POINTS, 0, m_SelectedPoints.size());
+            m_SelectedPointsShader.drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
         }
         glDisable(GL_DEPTH_TEST);
     }
@@ -184,6 +184,7 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
             {
                 // as soon as we know the total size of the dataset, reserve enough space for it
                 points.reserve(m_Metadata.datapointsInFile);
+                m_SelectedPoints.resize(m_Metadata.datapointsInFile, 0);
                 m_Heights.reserve(m_Metadata.datapointsInFile);
                 m_LogHeights.reserve(m_Metadata.datapointsInFile);
             }
@@ -260,11 +261,16 @@ void DataSample::linkDataToShaders()
     m_PathShader.bind();
     m_PathShader.shareAttrib(m_NormalShader, "in_pos2d");
     m_PathShader.shareAttrib(m_NormalShader, "in_height");
+
+    m_SelectedPointsShader.bind();
+    m_SelectedPointsShader.shareAttrib(m_NormalShader, "in_pos2d");
+    m_SelectedPointsShader.shareAttrib(m_NormalShader, "in_height");
+    m_SelectedPointsShader.uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 }
 
-void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft, const Vector2i & size, const Vector2i & canvasSize)
+void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
+    const Vector2i & size, const Vector2i & canvasSize, SelectionMode mode)
 {
-    m_SelectedPoints.clear();
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
         Vector3f point = getVertex(i, false);
@@ -276,15 +282,25 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft, co
         projPoint[0] = (projPoint[0] + 1.0f) * 0.5f * canvasSize[0];
         projPoint[1] = canvasSize[1] - (projPoint[1] + 1.0f) * 0.5f * canvasSize[1];
 
-        if (projPoint[0] >= topLeft[0] && projPoint[0] <= topLeft[0] + size[0] &&
-            projPoint[1] >= topLeft[1] && projPoint[1] <= topLeft[1] + size[1])
+        bool inSelection = projPoint[0] >= topLeft[0] && projPoint[0] <= topLeft[0] + size[0] &&
+            projPoint[1] >= topLeft[1] && projPoint[1] <= topLeft[1] + size[1];
+        
+        switch (mode)
         {
-            m_SelectedPoints.push_back(point);
+        case NORMAL:
+            m_SelectedPoints[i] = inSelection;
+            break;
+        case ADD:
+            m_SelectedPoints[i] = inSelection || m_SelectedPoints[i];
+            break;
+        case SUBTRACT:
+            m_SelectedPoints[i] = !inSelection && m_SelectedPoints[i];
+            break;
         }
     }
 
     m_SelectedPointsShader.bind();
-    m_SelectedPointsShader.uploadAttrib("in_pos3d", m_SelectedPoints.size(), 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_SelectedPoints.data());
+    m_SelectedPointsShader.uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 }
 
 Vector3f DataSample::getVertex(unsigned int i, bool logged) const

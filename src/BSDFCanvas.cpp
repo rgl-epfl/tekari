@@ -63,7 +63,10 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
                 std::abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
             for (auto dataSample : m_DataSamplesToDraw)
             {
-                dataSample->selectPoints(mvp, topLeft, size, mSize);
+                DataSample::SelectionMode mode = DataSample::SelectionMode::STANDARD;
+                if (modifiers & GLFW_MOD_SHIFT) mode = DataSample::SelectionMode::ADD;
+                if (modifiers & GLFW_MOD_ALT) mode = DataSample::SelectionMode::SUBTRACT;
+                dataSample->selectPoints(mvp, topLeft, size, mSize, mode);
             }
             m_SelectionRegion = std::make_pair(Vector2i(), Vector2i());
         }

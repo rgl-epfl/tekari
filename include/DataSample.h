@@ -18,6 +18,13 @@ struct DataSample
         VIEW_COUNT
     };
 
+    enum SelectionMode
+    {
+        STANDARD,
+        ADD,
+        SUBTRACT
+    };
+
 public:
     DataSample(std::shared_ptr<ColorMap> colorMap);
     DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sampleDataPath);
@@ -49,7 +56,8 @@ public:
     void selectPoints(const nanogui::Matrix4f& mvp,
         const nanogui::Vector2i& topLeft,
         const nanogui::Vector2i& size,
-        const nanogui::Vector2i & canvasSize);
+        const nanogui::Vector2i & canvasSize,
+        SelectionMode mode);
 
 private:
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
@@ -83,5 +91,5 @@ private:
 
     // Selected point
     nanogui::GLShader m_SelectedPointsShader;
-    std::vector<nanogui::Vector3f> m_SelectedPoints;
+    std::vector<char> m_SelectedPoints;
 };
