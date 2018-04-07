@@ -51,24 +51,30 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
     }
     else if (button == GLFW_MOUSE_BUTTON_2)
     {
-        if (!down)
+        if (!down && m_SelectedDataSample)
         {
-            Matrix4f model, view, proj, mvp;
-            getMVPMatrices(model, view, proj);
-            mvp = proj * view * model;
-
-            Vector2i topLeft{ std::min(m_SelectionRegion.first.x(), m_SelectionRegion.second.x()),
-                std::min(m_SelectionRegion.first.y(), m_SelectionRegion.second.y()) };
-            Vector2i size{ std::abs(m_SelectionRegion.first.x() - m_SelectionRegion.second.x()),
-                std::abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
-            for (auto dataSample : m_DataSamplesToDraw)
+            if (m_SelectionRegion.first == m_SelectionRegion.second)
             {
-                DataSample::SelectionMode mode = DataSample::SelectionMode::STANDARD;
-                if (modifiers & GLFW_MOD_SHIFT) mode = DataSample::SelectionMode::ADD;
-                if (modifiers & GLFW_MOD_ALT) mode = DataSample::SelectionMode::SUBTRACT;
-                dataSample->selectPoints(mvp, topLeft, size, mSize, mode);
+                m_SelectedDataSample->deselectAllPoints();
+                std::cout << "HERE\n";
             }
-            m_SelectionRegion = std::make_pair(Vector2i(), Vector2i());
+            else
+            {
+                Matrix4f model, view, proj, mvp;
+                getMVPMatrices(model, view, proj);
+                mvp = proj * view * model;
+
+                Vector2i topLeft, size;
+                getSelectionBox(topLeft, size);
+            
+                DataSample::SelectionMode           mode = DataSample::SelectionMode::STANDARD;
+                if (modifiers & GLFW_MOD_SHIFT)     mode = DataSample::SelectionMode::ADD;
+                else if (modifiers & GLFW_MOD_ALT)  mode = DataSample::SelectionMode::SUBTRACT;
+
+                m_SelectCallback(mvp, topLeft, size, mSize, mode);
+
+                m_SelectionRegion = std::make_pair(Vector2i(), Vector2i());
+            }
         }
         else
         {
@@ -112,10 +118,8 @@ void BSDFCanvas::draw(NVGcontext* ctx)
     m_Grid.draw(ctx, mSize, model, view, proj);
 
     // draw selection region
-    Vector2i topLeft{ std::min(m_SelectionRegion.first.x(), m_SelectionRegion.second.x()),
-        std::min(m_SelectionRegion.first.y(), m_SelectionRegion.second.y()) };
-    Vector2i size{ std::abs(m_SelectionRegion.first.x() - m_SelectionRegion.second.x()),
-        std::abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
+    Vector2i topLeft, size;
+    getSelectionBox(topLeft, size);
     nvgBeginPath(ctx);
     nvgRect(ctx, topLeft.x(), topLeft.y(), size.x(), size.y());
     nvgStrokeColor(ctx, Color(1.0f, 1.0f));
@@ -181,4 +185,12 @@ void BSDFCanvas::getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &vie
         proj = frustum(-fW, fW, -fH, fH, near, far);
     }
     model = m_Arcball.matrix();
+}
+
+void BSDFCanvas::getSelectionBox(Vector2i &topLeft, Vector2i &size) const
+{
+    topLeft = { std::min(m_SelectionRegion.first.x(), m_SelectionRegion.second.x()),
+                std::min(m_SelectionRegion.first.y(), m_SelectionRegion.second.y()) };
+    size = { std::abs(m_SelectionRegion.first.x() - m_SelectionRegion.second.x()),
+             std::abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
 }

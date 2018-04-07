@@ -17,6 +17,7 @@ public:
     virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
 
     void drawContents() override;
+    void draw(NVGcontext *ctx) override;
     void requestLayoutUpdate() { m_RequiresLayoutUpdate = true; }
 
     void openDataSampleDialog();
@@ -49,6 +50,13 @@ private:
     bool m_RequiresLayoutUpdate = false;
 
     nanogui::Window* m_ToolWindow;
+    nanogui::Widget* m_3DView;
+    
+    // footer
+    nanogui::Widget* m_Footer;
+    nanogui::Label* m_DataSampleName;
+    nanogui::Label* m_DataSamplePointsCount;
+    nanogui::Label* m_DataSampleAverageHeight;
 
     // data sample scroll panel
     nanogui::VScrollPanel* m_DataSamplesScrollPanel;

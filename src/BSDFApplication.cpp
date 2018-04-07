@@ -22,8 +22,47 @@ BSDFApplication::BSDFApplication()
 ,	m_MetadataWindow(nullptr)
 ,	m_HelpWindow(nullptr)
 {
-    m_BSDFCanvas = new BSDFCanvas(this);
+    m_3DView = new Widget{this};
+    m_3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
+
+    // the canvas and footer
+    m_BSDFCanvas = new BSDFCanvas{ m_3DView };
     m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
+    m_BSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const Vector2i& topLeft,
+        const Vector2i& size, const Vector2i& canvasSize, DataSample::SelectionMode mode) {
+        for (auto& dataSample : m_DataSamples)
+        {
+            if (dataSample != m_SelectedDataSample)
+                dataSample->deselectAllPoints();
+        }
+        if (hasSelectedDataSample())
+        {
+            if (size.x() == 0 && size.y() == 0)
+            {
+                m_SelectedDataSample->deselectAllPoints();
+            }
+            else
+            {
+                m_SelectedDataSample->selectPoints(mvp, topLeft, size, canvasSize, mode);
+            }
+        }
+    });
+
+    m_Footer = new Widget{ m_3DView };
+    m_Footer->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill});
+    
+    auto makeFooterInfo = [this](string label) {
+        auto container = new Widget{ m_Footer };
+        container->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
+        container->setFixedWidth(width() / 3);
+        new Label{ container, label };
+        auto info = new Label{ container, "-" };
+        return info;
+    };
+
+    m_DataSampleName = makeFooterInfo("Data Sample Name : ");
+    m_DataSamplePointsCount = makeFooterInfo("Points Count : ");
+    m_DataSampleAverageHeight = makeFooterInfo("AverageIntensity : ");
 
     m_ToolWindow = new Window(this, "Tools");
     m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
@@ -88,7 +127,6 @@ BSDFApplication::BSDFApplication()
             gridAlphaSlider->setValue(1.0);
 
             colorwheel->setCallback([gridAlphaSlider, this](const Color& value) {
-                //popupBtn->setBackgroundColor(value);
                 m_BSDFCanvas->grid().setColor(Color{
                     value.r(),
                     value.g(),
@@ -250,10 +288,26 @@ void BSDFApplication::drawContents() {
     }
 }
 
+void BSDFApplication::draw(NVGcontext * ctx)
+{
+    Screen::draw(ctx);
+    /*nvgFontSize(ctx, 30.0f);
+    nvgFontFace(ctx, "sans");
+    nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+    nvgFillColor(ctx, nanogui::Color(1.0f, 0.8f));
+    nvgText(ctx, mSize.x() / 2, mSize.y() / 2, "Hello world", nullptr);*/
+}
+
 void BSDFApplication::updateLayout()
 {
-    m_BSDFCanvas->setFixedSize(mSize);
-    m_ToolWindow->setFixedSize({ 200, 400 });
+    m_3DView->setFixedSize(mSize);
+    
+    m_Footer->setFixedSize(Vector2i{ mSize.x(), 20 });
+    for(auto& footerInfos: m_Footer->children())
+        footerInfos->setFixedWidth(width() / 3);
+
+    m_BSDFCanvas->setFixedSize(Vector2i{ mSize.x(), mSize.y() - 20 });
+    m_ToolWindow->setFixedSize({ 210, 400 });
 
     m_DataSamplesScrollPanel->setFixedHeight(
         m_ToolWindow->height() - m_DataSamplesScrollPanel->position().y()
@@ -380,13 +434,25 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
     }
 
     m_SelectedDataSample = dataSample;
+    m_BSDFCanvas->selectDataSample(dataSample);
     if (hasSelectedDataSample())
     {
         auto button = correspondingButton(m_SelectedDataSample);
         button->setIsSelected(true);
         button->popup()->setVisible(true);
+
+        m_DataSampleName->setCaption(m_SelectedDataSample->name());
+        m_DataSamplePointsCount->setCaption(std::to_string(m_SelectedDataSample->pointsCount()));
+        m_DataSampleAverageHeight->setCaption(std::to_string(m_SelectedDataSample->averageHeight()));
+    }
+    else
+    {
+        m_DataSampleName->setCaption("-");
+        m_DataSamplePointsCount->setCaption("-");
+        m_DataSampleAverageHeight->setCaption("-");
     }
     
+
     requestLayoutUpdate();
 }
 
@@ -448,6 +514,10 @@ void BSDFApplication::addDataSampleButton(int index, shared_ptr<DataSample> data
 
     dataSampleButton->setLogToggleCallback([this, dataSample](bool checked) {
         toggleView(DataSample::Views::LOG, dataSample);
+    });
+
+    dataSampleButton->setPointsToggleCallback([this, dataSample](bool checked) {
+        toggleView(DataSample::Views::POINTS, dataSample);
     });
 
     dataSampleButton->setPathToggleCallback([this, dataSample](bool checked) {
