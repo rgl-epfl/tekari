@@ -15,6 +15,7 @@ struct DataSample
         NORMAL = 0,
         LOG,
         PATH,
+        POINTS,
         VIEW_COUNT
     };
 
@@ -48,8 +49,11 @@ public:
 
     void loadFromFile(const std::string& sampleDataPath);
 
-    float minHeight() const { return m_MinMaxHeights.first; }
-    float maxHeight() const { return m_MinMaxHeights.second; }
+    std::string name()          const { return m_Metadata.sampleName; }
+    unsigned int pointsCount()  const { return tri_delaunay2d->num_points; }
+    float minHeight()           const { return m_MinMaxHeights.first; }
+    float maxHeight()           const { return m_MinMaxHeights.second; }
+    float averageHeight()       const { return m_AverageHeight; }
 
     const Metadata& metadata() const { return m_Metadata; }
 
@@ -58,6 +62,7 @@ public:
         const nanogui::Vector2i& size,
         const nanogui::Vector2i & canvasSize,
         SelectionMode mode);
+    void deselectAllPoints();
 
 private:
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
@@ -75,6 +80,7 @@ private:
     std::vector<nanogui::Vector3f>  m_Normals;
     std::vector<nanogui::Vector3f>  m_LogNormals;
     std::pair<float, float>         m_MinMaxHeights;
+    float                           m_AverageHeight;
 
     // display Shaders
     nanogui::GLShader m_NormalShader;
@@ -92,4 +98,5 @@ private:
     // Selected point
     nanogui::GLShader m_SelectedPointsShader;
     std::vector<char> m_SelectedPoints;
+    float             m_SelectedPointsAverageHeight;
 };

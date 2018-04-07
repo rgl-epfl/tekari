@@ -21,6 +21,8 @@ DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
 :	m_DisplayViews{ true, false, false }
 ,	tri_delaunay2d(nullptr)
 ,	m_ColorMap(colorMap)
+,   m_AverageHeight(0.0f)
+,   m_SelectedPointsAverageHeight(0.0f)
 {
     m_NormalShader.initFromFiles(
         "height_map",
@@ -115,14 +117,15 @@ void DataSample::drawGL(
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDisable(GL_POLYGON_OFFSET_LINE);
         }
-        if (true)
-        {
-            glPointSize(4);
-            m_SelectedPointsShader.bind();
-            m_SelectedPointsShader.setUniform("modelViewProj", mvp);
-            m_SelectedPointsShader.drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
-        }
         glDisable(GL_DEPTH_TEST);
+        glPointSize(4);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        m_SelectedPointsShader.bind();
+        m_SelectedPointsShader.setUniform("modelViewProj", mvp);
+        m_SelectedPointsShader.setUniform("showAllPoints", m_DisplayViews[POINTS]);
+        m_SelectedPointsShader.drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
+        glDisable(GL_BLEND);
     }
 }
 
@@ -158,6 +161,9 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
     // min and max values for normalization
     float min_intensity = std::numeric_limits<float>::max();
     float max_intensity = std::numeric_limits<float>::min();
+
+    // total intensity value for average
+    float total_intensity = 0.0f;
 
     // path segments must always contain the first point...
     m_PathSegments.push_back(0);
@@ -219,6 +225,8 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
 
             min_intensity = std::min(min_intensity, intensity);
             max_intensity = std::max(max_intensity, intensity);
+
+            total_intensity += intensity;
         }
     }
     fclose(datasetFile);
@@ -238,6 +246,8 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
         m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
     m_MinMaxHeights = std::make_pair(min_intensity, max_intensity);
+
+    m_AverageHeight = total_intensity / points.size();
 }
 
 void DataSample::linkDataToShaders()
@@ -271,6 +281,7 @@ void DataSample::linkDataToShaders()
 void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
     const Vector2i & size, const Vector2i & canvasSize, SelectionMode mode)
 {
+    float totalIntensity = 0.0f;
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
         Vector3f point = getVertex(i, false);
@@ -297,8 +308,22 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
             m_SelectedPoints[i] = !inSelection && m_SelectedPoints[i];
             break;
         }
+        // if we selected the point in the end
+        if (m_SelectedPoints[i])
+        {
+            totalIntensity += m_Heights[i];
+        }
     }
+    m_SelectedPointsAverageHeight = totalIntensity / tri_delaunay2d->num_points;
 
+    m_SelectedPointsShader.bind();
+    m_SelectedPointsShader.uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+}
+
+void DataSample::deselectAllPoints()
+{
+    memset(m_SelectedPoints.data(), 0, m_SelectedPoints.size() * sizeof(m_SelectedPoints[0]));
+    //m_SelectedPoints.resize(m_SelectedPoints.size(), 0);
     m_SelectedPointsShader.bind();
     m_SelectedPointsShader.uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 }
@@ -316,7 +341,7 @@ void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigne
     const Vector3f e12 = (getVertex(i2, logged) - getVertex(i1, logged)).normalized();
     const Vector3f e20 = (getVertex(i0, logged) - getVertex(i2, logged)).normalized();
 
-    Vector3f faceNormal =	-e20.cross(e01).normalized();
+    Vector3f faceNormal = e12.cross(-e01).normalized();
 
     float w0 = (float)acos(std::max(-1.0f, std::min(1.0f, e01.dot(-e20))));
     float w1 = (float)acos(std::max(-1.0f, std::min(1.0f, e12.dot(-e01))));
@@ -330,10 +355,10 @@ void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigne
 
 void DataSample::computeNormals()
 {
-    m_Normals.resize(tri_delaunay2d->num_triangles * 3, { 0,0,0 });
-    m_LogNormals.resize(tri_delaunay2d->num_triangles * 3, { 0,0,0 });
+    m_Normals.resize(tri_delaunay2d->num_points, { 0,0,0 });
+    m_LogNormals.resize(tri_delaunay2d->num_points, { 0,0,0 });
 
-    for (unsigned int i = 0; i < tri_delaunay2d->num_triangles; i += 3)
+    for (unsigned int i = 0; i < tri_delaunay2d->num_triangles; ++i)
     {
         const unsigned int &i0 = tri_delaunay2d->tris[3 * i];
         const unsigned int &i1 = tri_delaunay2d->tris[3 * i + 1];
