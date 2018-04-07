@@ -34,7 +34,7 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
 
     new Label{ m_Popup, "View Modes" , "sans-bold", 18};
     auto buttonContainer = new Widget{ m_Popup };
-    buttonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill });
+    buttonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
 
     auto makeViewButton = [this, buttonContainer](const string& label, const string& tooltip, bool pushed) {
         auto button = new Button(buttonContainer, label);
@@ -46,6 +46,7 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
     m_NormalViewToggle = makeViewButton("Normal", "Toggle normal view for this data sample", true);
     m_LogViewToggle = makeViewButton("Log", "Toggle logarithmic view for this data sample", false);
     m_PathViewToggle = makeViewButton("Path", "Show/Hide path for this data sample", false);
+    m_PointsViewToggle = makeViewButton("Points", "Toggle points view for this data sample", false);
 }
 
 //nanogui::Vector2i DataSampleButton::preferredSize(NVGcontext *ctx) const
