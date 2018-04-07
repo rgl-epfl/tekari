@@ -33,6 +33,7 @@ public:
 
     void setNormalToggleCallback    (std::function<void(bool)> callback) { m_NormalViewToggle->setChangeCallback(callback); }
     void setLogToggleCallback       (std::function<void(bool)> callback) { m_LogViewToggle->setChangeCallback(callback); }
+    void setPointsToggleCallback    (std::function<void(bool)> callback) { m_PointsViewToggle->setChangeCallback(callback); }
     void setPathToggleCallback      (std::function<void(bool)> callback) { m_PathViewToggle->setChangeCallback(callback); }
 
     nanogui::Popup* popup()             { return m_Popup; }
@@ -66,5 +67,6 @@ private:
     nanogui::Popup *m_Popup;
     nanogui::Button *m_NormalViewToggle;
     nanogui::Button *m_LogViewToggle;
+    nanogui::Button *m_PointsViewToggle;
     nanogui::Button *m_PathViewToggle;
 };
