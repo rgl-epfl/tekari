@@ -1,5 +1,7 @@
 #include "RadialGrid.h"
 
+using namespace nanogui;
+
 RadialGrid::RadialGrid()
 :	m_Color(200, 200, 200, 200)
 ,	m_Visible(true)
@@ -8,7 +10,7 @@ RadialGrid::RadialGrid()
         "../resources/shaders/radial_grid.vert",
         "../resources/shaders/radial_grid.frag");
 
-    std::vector<nanogui::Vector3f> vertices(CIRCLE_COUNT * VERTEX_PER_CIRCLE_COUNT +
+    std::vector<Vector3f> vertices(CIRCLE_COUNT * VERTEX_PER_CIRCLE_COUNT +
         LINE_COUNT * VERTEX_PER_LINE_COUNT);
 
     for (unsigned int i = 0; i < CIRCLE_COUNT; ++i)
@@ -16,7 +18,7 @@ RadialGrid::RadialGrid()
         float radius = (float)(i + 1) / CIRCLE_COUNT;
         for (unsigned int j = 0; j < VERTEX_PER_CIRCLE_COUNT; ++j)
         {
-            nanogui::Vector3f point{
+            Vector3f point{
                 radius * (float)cos(2 * M_PI * j / VERTEX_PER_CIRCLE_COUNT), // x coord
                 0,                                              // y coord
                 radius * (float)sin(2 * M_PI * j / VERTEX_PER_CIRCLE_COUNT)  // z coord
@@ -37,7 +39,7 @@ RadialGrid::RadialGrid()
     }
 
     m_Shader.bind();
-    m_Shader.uploadAttrib("in_pos", vertices.size(), 3, sizeof(nanogui::Vector3f), GL_FLOAT, GL_FALSE, (const void*)vertices.data());
+    m_Shader.uploadAttrib("in_pos", vertices.size(), 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)vertices.data());
 }
 
 RadialGrid::~RadialGrid()
@@ -45,13 +47,13 @@ RadialGrid::~RadialGrid()
     m_Shader.free();
 }
 
-void RadialGrid::drawGL(const nanogui::Matrix4f& model,
-    const nanogui::Matrix4f& view,
-    const nanogui::Matrix4f& proj)
+void RadialGrid::drawGL(const Matrix4f& model,
+    const Matrix4f& view,
+    const Matrix4f& proj)
 {
     if (m_Visible)
     {
-        nanogui::Matrix4f mvp = proj * view * model;
+        Matrix4f mvp = proj * view * model;
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -77,22 +79,22 @@ void RadialGrid::drawGL(const nanogui::Matrix4f& model,
 }
 
 void RadialGrid::draw(  NVGcontext *ctx,
-                        const nanogui::Vector2i &canvasSize,
-                        const nanogui::Matrix4f &model,
-                        const nanogui::Matrix4f &view,
-                        const nanogui::Matrix4f &proj)
+                        const Vector2i &canvasSize,
+                        const Matrix4f &model,
+                        const Matrix4f &view,
+                        const Matrix4f &proj)
 {
     if (m_Visible)
     {
         nvgFontSize(ctx, 15.0f);
         nvgFontFace(ctx, "sans");
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-        nvgFillColor(ctx, nanogui::Color(1.0f, 0.8f));
+        nvgFillColor(ctx, Color(1.0f, 0.8f));
         for (const auto& degreeLabel : m_DegreesLabel)
         {
-            nanogui::Vector4f homogeneousPoint;
+            Vector4f homogeneousPoint;
             homogeneousPoint << degreeLabel.second * 1.05f, 1.0f;
-            nanogui::Vector4f projectedPoint{ proj * view * model * homogeneousPoint };
+            Vector4f projectedPoint{ proj * view * model * homogeneousPoint };
 
             projectedPoint /= projectedPoint[3];
             projectedPoint[0] = (projectedPoint[0] + 1.0f) * 0.5f * canvasSize.x();
