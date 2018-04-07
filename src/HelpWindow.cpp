@@ -120,11 +120,11 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
 
         addSpacer(about, 15);
 
-        addText(about, "tev — The EXR Viewer", "sans-bold", 46);
+        addText(about, "*Find app name* - A BSDF Visualizer Tool", "sans-bold", 46);
 
         addSpacer(about, 60);
 
-        addText(about, "tev was developed by Thomas Müller and is released under the BSD 3-Clause License.");
+        addText(about, "*Find app name* was developed by Benoît Ruiz and is released under the BSD 3-Clause License.");
         addText(about, "It was built directly or indirectly upon the following amazing third-party libraries.");
 
         addSpacer(about, 40);
