@@ -56,6 +56,8 @@ private:
     nanogui::Widget* m_3DView;
     
     nanogui::PopupButton* m_HiddenOptionsButton;
+    nanogui::CheckBox* m_UseShadowsCheckbox;
+    nanogui::CheckBox* m_DisplayDegreesCheckbox;
 
     // footer
     nanogui::Widget* m_Footer;

@@ -117,6 +117,7 @@ BSDFApplication::BSDFApplication()
     {
         m_HiddenOptionsButton = new PopupButton(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
         m_HiddenOptionsButton->setBackgroundColor(Color{0.6f, 0.1f, 0.1f, 1.0f});
+        m_HiddenOptionsButton->setTooltip("More view options");
         auto hiddenOptionsPopup = m_HiddenOptionsButton->popup();
         hiddenOptionsPopup->setLayout(new GroupLayout{});
 
@@ -124,15 +125,17 @@ BSDFApplication::BSDFApplication()
             const std::function<void(bool)> &callback, bool checked = false) {
             auto checkbox = new CheckBox{ hiddenOptionsPopup, label, callback };
             checkbox->setChecked(checked);
+            checkbox->setTooltip(tooltip);
             return checkbox;
         };
 
         new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
-        addHiddenOptionToggle("Use Shadows", "Enable/Disable Data Shadowing", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
-        addHiddenOptionToggle("Grid Degrees", "Show/Hide Grid Degrees", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
+        m_UseShadowsCheckbox = addHiddenOptionToggle("Use Shadows", "Enable/Disable shadows (Shift+S)", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
+        m_DisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
 
         auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };
+        choseColorMapButton->setTooltip("Chose with which color map the data should be displayed (C)");
         choseColorMapButton->setCallback([this]() {
             toggleColorMapSelectionWindow();
         });
@@ -274,6 +277,28 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
             }
         }
+        else if (modifiers & GLFW_MOD_SHIFT)
+        {
+            switch (key)
+            {
+                case GLFW_KEY_S:
+                {
+                    bool usesShadows = !m_BSDFCanvas->usesShadows();
+                    m_UseShadowsCheckbox->setChecked(usesShadows);
+                    m_BSDFCanvas->setUsesShadows(usesShadows);
+                    return true;
+                }
+                case GLFW_KEY_G:
+                {
+                    bool showDegrees = !m_BSDFCanvas->grid().showDegrees();
+                    m_DisplayDegreesCheckbox->setChecked(showDegrees);
+                    m_BSDFCanvas->grid().setShowDegrees(showDegrees);
+                    return true;
+                }
+                default:
+                    return false;
+            }
+        }
         else if (alt)
         {
             switch (key)
@@ -340,6 +365,9 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_I:
                 toggleMetadataWindow();
                 return true;
+            case GLFW_KEY_C:
+                toggleColorMapSelectionWindow();
+                return true;
             case GLFW_KEY_H:
                 toggleHelpWindow();
                 return true;
@@ -353,7 +381,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
                 return true;
             default:
-                break;
+                return false;
             }
         }
     }
@@ -466,6 +494,7 @@ void BSDFApplication::toggleMetadataWindow()
             errorWindow->setCallback([this](int index) { m_MetadataWindow = nullptr; });
             m_MetadataWindow = errorWindow;
         }
+        requestLayoutUpdate();
     }
 }
 
@@ -481,6 +510,7 @@ void BSDFApplication::toggleHelpWindow()
         m_HelpWindow = new HelpWindow(this, [this]() {toggleHelpWindow(); });
         m_HelpWindow->center();
         m_HelpWindow->requestFocus();
+        requestLayoutUpdate();
     }
 }
 

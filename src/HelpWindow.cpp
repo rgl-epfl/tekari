@@ -43,6 +43,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         m_ScrollPanel = new VScrollPanel{ shortcuts };
         auto scrollContent = new Widget{ m_ScrollPanel };
         scrollContent->setLayout(new GroupLayout{});
+        m_ScrollPanel->setFixedHeight(500);
 
         auto addShortcutSection = [&scrollContent](const std::string& label) {
             new Label{ scrollContent, label, "sans-bold", 18 };
@@ -68,13 +69,16 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(fileLoading, COMMAND + "+O", "Open Data Sample");
         addRow(fileLoading, COMMAND + "+S", "Save Data in obj format");
         addRow(fileLoading, COMMAND + "+P", "Save Screenshot of Data");
-        addRow(fileLoading, "DELETE", "Close Selected Data Sample");
+        addRow(fileLoading, "Delete", "Close Selected Data Sample");
 
         auto viewOptions = addShortcutSection("View Options");
         addRow(viewOptions, "N", "Show/Hide Normal View");
         addRow(viewOptions, "L", "Show/Hide Logarithmic View");
         addRow(viewOptions, "P", "Show/Hide Path");
         addRow(viewOptions, "G", "Show/Hide Grid");
+        addRow(viewOptions, "Shift+G", "Show/Hide Grid Degrees");
+        addRow(viewOptions, "Shift+S", "Use/Un-use Shadows");
+        addRow(viewOptions, "C", "Chose Color Map");
         addRow(viewOptions, "O / KP_5", "Enable/Disable Orthographic View");
         addRow(viewOptions, "KP_1 or Alt+1 / " + COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Front / Back View");
         addRow(viewOptions, "KP_3 or Alt+3 / " + COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Left / Right View");
@@ -95,6 +99,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(ui, "H", "Show Help (this Window)");
         addRow(ui, "Q", "Quit");
     }
+
 
     // About tab
     {
@@ -125,11 +130,12 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
 
         addSpacer(about, 15);
 
-        addText(about, "*Find app name* - A BSDF Visualizer Tool", "sans-bold", 46);
+        addText(about, "BSDF Visualizer Tool", "sans-bold", 46);
 
         addSpacer(about, 60);
 
-        addText(about, "*Find app name* was developed by Benoît Ruiz and is released under the BSD 3-Clause License.");
+        addText(about, "This helper tool was developed by Benoit Ruiz and is released");
+        addText(about, "under the BSD 3 - Clause License.");
         addText(about, "It was built directly or indirectly upon the following amazing third-party libraries.");
 
         addSpacer(about, 40);

@@ -55,13 +55,6 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
     return false;
 }
 
-void ColorMapSelectionWindow::performLayout(NVGcontext *ctx)
-{
-    nanogui::Window::performLayout(ctx);
-    //m_ScrollPanel->setFixedHeight(mParent->height() / 2);
-    center();
-}
-
 void ColorMapSelectionWindow::deselectAllColorMapsButton()
 {
     for (auto colorMapButton : m_ColorMapButtons)

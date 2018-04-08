@@ -14,7 +14,6 @@ public:
         std::function<void(std::shared_ptr<ColorMap> colorMap)> selectionCallback);
 
     virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
-    virtual void performLayout(NVGcontext *ctx) override;
 
     void deselectAllColorMapsButton();
 
