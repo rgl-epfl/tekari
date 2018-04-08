@@ -5,7 +5,7 @@
 
 #include <nanogui/opengl.h>
 #include <nanogui/common.h>
-#include <nanogui/Label.h>
+#include <nanogui/label.h>
 #include <nanogui/popup.h>
 #include <nanogui/layout.h>
 #include <nanogui/entypo.h>

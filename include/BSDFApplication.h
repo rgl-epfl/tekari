@@ -33,7 +33,7 @@ public:
     void selectDataSample(int index, bool clamped = true);
 
     int dataSampleIndex(const std::shared_ptr<const DataSample> dataSample) const;
-    
+
     bool hasSelectedDataSample() const                  { return m_SelectedDataSample != nullptr; }
     std::shared_ptr<DataSample> selectedDataSample()    { return m_SelectedDataSample; }
     const std::shared_ptr<const DataSample> selectedDataSample() const { return m_SelectedDataSample; }
@@ -43,7 +43,7 @@ public:
     const DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample) const;
 
 private:
-    void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample, bool toggle);
+    void toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample, bool toggle);
 
     void updateLayout();
     void addDataSample(int index, std::shared_ptr<DataSample> dataSample);
@@ -55,7 +55,7 @@ private:
 
     nanogui::Window* m_ToolWindow;
     nanogui::Widget* m_3DView;
-    
+
     nanogui::PopupButton* m_HiddenOptionsButton;
     nanogui::CheckBox* m_UseShadowsCheckbox;
     nanogui::CheckBox* m_DisplayDegreesCheckbox;

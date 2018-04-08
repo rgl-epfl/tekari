@@ -1,7 +1,7 @@
 #include "ColorMapButton.h"
 
-#include <nanogui\screen.h>
-#include <nanogui\window.h>
+#include <nanogui/screen.h>
+#include <nanogui/window.h>
 
 using namespace nanogui;
 
