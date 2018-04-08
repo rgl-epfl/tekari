@@ -9,7 +9,8 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,   m_ViewUp(0, 1, 0)
 ,	m_Zoom(0)
 ,	m_OrthoMode(false)
-,   m_SelectionRegion(std::make_pair(Vector2i(), Vector2i()))
+,   m_SelectionRegion(std::make_pair(Vector2i(0,0), Vector2i(0,0)))
+,   m_UsesShadows(true)
 {
     m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
 }
@@ -103,7 +104,7 @@ void BSDFCanvas::drawGL() {
 
     for (const auto& dataSample: m_DataSamplesToDraw)
     {
-        dataSample->drawGL(m_ViewOrigin, model, view, proj);
+        dataSample->drawGL(m_ViewOrigin, model, view, proj, m_UsesShadows);
     }
     m_Grid.drawGL(model, view, proj);
 }

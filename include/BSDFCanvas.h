@@ -38,6 +38,9 @@ public:
     void setSelectionCallback(std::function<void(const nanogui::Matrix4f&, const nanogui::Vector2i&,
         const nanogui::Vector2i&, const nanogui::Vector2i&, DataSample::SelectionMode)> callback) { m_SelectCallback = callback; }
 
+    bool usesShadows() const { return m_UsesShadows; }
+    void setUsesShadows(bool usesShadows) { m_UsesShadows = usesShadows; }
+
 private:
     void getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const;
 
@@ -58,4 +61,6 @@ private:
     std::pair<nanogui::Vector2i, nanogui::Vector2i> m_SelectionRegion;
     std::function<void(const nanogui::Matrix4f&, const nanogui::Vector2i&, const nanogui::Vector2i&,
         const nanogui::Vector2i&, DataSample::SelectionMode)> m_SelectCallback;
+
+    bool m_UsesShadows;
 };

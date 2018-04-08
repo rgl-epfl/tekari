@@ -4,6 +4,7 @@
 #include <nanogui/glutil.h>
 #include <vector>
 #include <memory>
+#include <functional>
 #include "delaunay.h"
 #include "Metadata.h"
 #include "ColorMap.h"
@@ -40,7 +41,8 @@ public:
     void drawGL(const nanogui::Vector3f& viewOrigin,
                 const nanogui::Matrix4f& model,
                 const nanogui::Matrix4f& view,
-                const nanogui::Matrix4f& proj);
+                const nanogui::Matrix4f& proj,
+                bool useShadows);
 
     void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }
     bool displayView(Views view) const { return m_DisplayViews[view]; }
@@ -83,9 +85,9 @@ private:
     float                           m_AverageHeight;
 
     // display Shaders
-    nanogui::GLShader m_NormalShader;
-    nanogui::GLShader m_LogShader;
-    nanogui::GLShader m_PathShader;
+    nanogui::GLShader m_Shaders[VIEW_COUNT];
+    std::function<void(const nanogui::Vector3f&, const nanogui::Matrix4f&, const nanogui::Matrix4f&,
+        const nanogui::Matrix4f&, const nanogui::Matrix4f, bool)> m_DrawFunctions[VIEW_COUNT];
     std::shared_ptr<ColorMap> m_ColorMap;
     std::vector<unsigned int> m_PathSegments;
 
@@ -96,7 +98,6 @@ private:
     Metadata m_Metadata;
 
     // Selected point
-    nanogui::GLShader m_SelectedPointsShader;
     std::vector<char> m_SelectedPoints;
     float             m_SelectedPointsAverageHeight;
 };

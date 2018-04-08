@@ -23,6 +23,9 @@ public:
     void setVisible(bool visible) { m_Visible = visible; }
     bool visible() const { return m_Visible; }
 
+    void setShowDegrees(bool showDegrees) { m_ShowDegrees = showDegrees; }
+    bool showDegrees() const { return m_ShowDegrees; }
+
     const nanogui::Color& color() const { return m_Color; }
     void setColor(const nanogui::Color& newColor) { m_Color = newColor; }
 
@@ -36,4 +39,5 @@ private:
     nanogui::Color m_Color;
     std::vector<std::pair<std::string, nanogui::Vector3f>> m_DegreesLabel;
     bool m_Visible;
+    bool m_ShowDegrees;
 };

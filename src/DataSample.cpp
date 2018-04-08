@@ -24,30 +24,74 @@ DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
 ,   m_AverageHeight(0.0f)
 ,   m_SelectedPointsAverageHeight(0.0f)
 {
-    m_NormalShader.initFromFiles(
-        "height_map",
-        "../resources/shaders/height_map.vert",
-        "../resources/shaders/height_map.frag"
-    );
-    m_NormalShader.setUniform("color_map", 0);
-    m_LogShader.initFromFiles(
-        "log_map",
-        "../resources/shaders/height_map.vert",
-        "../resources/shaders/height_map.frag"
-    );
-    m_LogShader.setUniform("color_map", 0);
+    const std::string shader_path = "../resources/shaders/";
+    m_Shaders[NORMAL].initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_Shaders[LOG].initFromFiles("log_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
+    m_Shaders[POINTS].initFromFiles("selected_points", shader_path + "selected_points.vert", shader_path + "selected_points.frag");
 
-    m_PathShader.initFromFiles(
-        "path_drawer",
-        "../resources/shaders/path.vert",
-        "../resources/shaders/path.frag"
-    );
+    m_Shaders[NORMAL].setUniform("color_map", 0);
+    m_Shaders[LOG].setUniform("color_map", 0);
 
-    m_SelectedPointsShader.initFromFiles(
-        "selected_points_drawer",
-        "../resources/shaders/selected_points.vert",
-        "../resources/shaders/selected_points.frag"
-    );
+    m_DrawFunctions[NORMAL] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
+        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows) {
+        if (m_DisplayViews[NORMAL])
+        {
+            m_Shaders[NORMAL].bind();
+            m_ColorMap->bind();
+            m_Shaders[NORMAL].setUniform("modelViewProj", mvp);
+            m_Shaders[NORMAL].setUniform("model", model);
+            m_Shaders[NORMAL].setUniform("view", viewOrigin);
+            m_Shaders[NORMAL].setUniform("useShadows", useShadows);
+            m_Shaders[NORMAL].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+        }
+    };
+    m_DrawFunctions[LOG] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
+        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows) {
+        if (m_DisplayViews[LOG])
+        {
+            m_Shaders[LOG].bind();
+            m_ColorMap->bind();
+            m_Shaders[LOG].setUniform("modelViewProj", mvp);
+            m_Shaders[LOG].setUniform("model", model);
+            m_Shaders[LOG].setUniform("view", viewOrigin);
+            m_Shaders[LOG].setUniform("useShadows", useShadows);
+            m_Shaders[LOG].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+        }
+    };
+    m_DrawFunctions[PATH] = [this](const Vector3f&, const Matrix4f&,
+        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool) {
+        if (m_DisplayViews[PATH])
+        {
+            glEnable(GL_POLYGON_OFFSET_LINE);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glPolygonOffset(2.0, 2.0);
+            m_Shaders[PATH].bind();
+            m_Shaders[PATH].setUniform("modelViewProj", mvp);
+            for (unsigned int i = 0; i < m_PathSegments.size() - 1; ++i)
+            {
+                int offset = m_PathSegments[i];
+                int count = m_PathSegments[i + 1] - m_PathSegments[i] - 1;
+                m_Shaders[PATH].drawArray(GL_LINE_STRIP, offset, count);
+            }
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glDisable(GL_POLYGON_OFFSET_LINE);
+        }
+    };
+
+    m_DrawFunctions[POINTS] = [this](const Vector3f&, const Matrix4f&,
+        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool) {
+        glDisable(GL_DEPTH_TEST);
+        glPointSize(4);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        m_Shaders[POINTS].bind();
+        m_Shaders[POINTS].setUniform("modelViewProj", mvp);
+        m_Shaders[POINTS].setUniform("showAllPoints", m_DisplayViews[POINTS]);
+        m_Shaders[POINTS].drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
+        glDisable(GL_BLEND);
+    };
 }
 
 DataSample::DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sampleDataPath)
@@ -58,9 +102,10 @@ DataSample::DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sa
 
 DataSample::~DataSample()
 {
-    m_NormalShader.free();
-    m_LogShader.free();
-    m_PathShader.free();
+    for (int i = NORMAL; i != VIEW_COUNT; ++i)
+    {
+        m_Shaders[i].free();
+    }
 
     if (tri_delaunay2d)
     {
@@ -72,7 +117,8 @@ void DataSample::drawGL(
     const Vector3f& viewOrigin,
     const Matrix4f& model,
     const Matrix4f& view,
-    const Matrix4f& proj)
+    const Matrix4f& proj,
+    bool useShadows)
 {
     using namespace nanogui;
     if (tri_delaunay2d)
@@ -82,50 +128,10 @@ void DataSample::drawGL(
         glEnable(GL_DEPTH_TEST);
         glPointSize(2);
     
-        if (m_DisplayViews[NORMAL])
+        for (int i = NORMAL; i != VIEW_COUNT; ++i)
         {
-            m_NormalShader.bind();
-            m_ColorMap->bind();
-            m_NormalShader.setUniform("modelViewProj", mvp);
-            m_NormalShader.setUniform("model", model);
-            m_NormalShader.setUniform("view", viewOrigin);
-            m_NormalShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+            m_DrawFunctions[i](viewOrigin, model, view, proj, mvp, useShadows);
         }
-        if (m_DisplayViews[LOG])
-        {
-            m_LogShader.bind();
-            m_ColorMap->bind();
-            m_LogShader.setUniform("modelViewProj", mvp);
-            m_LogShader.setUniform("model", model);
-            m_LogShader.setUniform("view", viewOrigin);
-            m_LogShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
-        }
-        if (m_DisplayViews[PATH])
-        {
-            glEnable(GL_POLYGON_OFFSET_LINE);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glPolygonOffset(2.0, 2.0);
-            m_PathShader.bind();
-            m_PathShader.setUniform("modelViewProj", mvp);
-            for (unsigned int i = 0; i < m_PathSegments.size()-1; ++i)
-            {
-                int offset = m_PathSegments[i];
-                int count = m_PathSegments[i+1] - m_PathSegments[i] - 1;
-                m_PathShader.drawArray(GL_LINE_STRIP, offset, count);
-            }
-
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glDisable(GL_POLYGON_OFFSET_LINE);
-        }
-        glDisable(GL_DEPTH_TEST);
-        glPointSize(4);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        m_SelectedPointsShader.bind();
-        m_SelectedPointsShader.setUniform("modelViewProj", mvp);
-        m_SelectedPointsShader.setUniform("showAllPoints", m_DisplayViews[POINTS]);
-        m_SelectedPointsShader.drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
-        glDisable(GL_BLEND);
     }
 }
 
@@ -256,26 +262,26 @@ void DataSample::linkDataToShaders()
     {
         throw std::runtime_error("ERROR: cannot link data to shader before loading.");
     }
-    m_NormalShader.bind();
-    m_NormalShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
-    m_NormalShader.uploadAttrib("in_pos2d", tri_delaunay2d->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)tri_delaunay2d->points);
-    m_NormalShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
-    m_NormalShader.uploadAttrib("indices", tri_delaunay2d->num_triangles, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, tri_delaunay2d->tris);
+    m_Shaders[NORMAL].bind();
+    m_Shaders[NORMAL].uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
+    m_Shaders[NORMAL].uploadAttrib("in_pos2d", tri_delaunay2d->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)tri_delaunay2d->points);
+    m_Shaders[NORMAL].uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
+    m_Shaders[NORMAL].uploadAttrib("indices", tri_delaunay2d->num_triangles, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, tri_delaunay2d->tris);
 
-    m_LogShader.bind();
-    m_LogShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
-    m_LogShader.shareAttrib(m_NormalShader, "in_pos2d");
-    m_LogShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_LogHeights.data());
-    m_LogShader.shareAttrib(m_NormalShader, "indices");
+    m_Shaders[LOG].bind();
+    m_Shaders[LOG].uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
+    m_Shaders[LOG].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
+    m_Shaders[LOG].uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_LogHeights.data());
+    m_Shaders[LOG].shareAttrib(m_Shaders[NORMAL], "indices");
 
-    m_PathShader.bind();
-    m_PathShader.shareAttrib(m_NormalShader, "in_pos2d");
-    m_PathShader.shareAttrib(m_NormalShader, "in_height");
+    m_Shaders[PATH].bind();
+    m_Shaders[PATH].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
+    m_Shaders[PATH].shareAttrib(m_Shaders[NORMAL], "in_height");
 
-    m_SelectedPointsShader.bind();
-    m_SelectedPointsShader.shareAttrib(m_NormalShader, "in_pos2d");
-    m_SelectedPointsShader.shareAttrib(m_NormalShader, "in_height");
-    m_SelectedPointsShader.uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+    m_Shaders[POINTS].bind();
+    m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
+    m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_height");
+    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 }
 
 void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
@@ -316,16 +322,15 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
     }
     m_SelectedPointsAverageHeight = totalIntensity / tri_delaunay2d->num_points;
 
-    m_SelectedPointsShader.bind();
-    m_SelectedPointsShader.uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+    m_Shaders[POINTS].bind();
+    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 }
 
 void DataSample::deselectAllPoints()
 {
     memset(m_SelectedPoints.data(), 0, m_SelectedPoints.size() * sizeof(m_SelectedPoints[0]));
-    //m_SelectedPoints.resize(m_SelectedPoints.size(), 0);
-    m_SelectedPointsShader.bind();
-    m_SelectedPointsShader.uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+    m_Shaders[POINTS].bind();
+    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 }
 
 Vector3f DataSample::getVertex(unsigned int i, bool logged) const

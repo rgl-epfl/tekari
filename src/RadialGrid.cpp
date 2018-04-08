@@ -5,6 +5,7 @@ using namespace nanogui;
 RadialGrid::RadialGrid()
 :	m_Color(200, 200, 200, 200)
 ,	m_Visible(true)
+,   m_ShowDegrees(true)
 {
     m_Shader.initFromFiles("grid",
         "../resources/shaders/radial_grid.vert",
@@ -84,7 +85,7 @@ void RadialGrid::draw(  NVGcontext *ctx,
                         const Matrix4f &view,
                         const Matrix4f &proj)
 {
-    if (m_Visible)
+    if (m_Visible && m_ShowDegrees)
     {
         nvgFontSize(ctx, 15.0f);
         nvgFontFace(ctx, "sans");

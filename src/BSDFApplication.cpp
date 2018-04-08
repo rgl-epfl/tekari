@@ -78,18 +78,18 @@ BSDFApplication::BSDFApplication()
 
     m_HiddenOptionsButton = new PopupButton(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
     m_HiddenOptionsButton->setBackgroundColor(Color{0.6f, 0.1f, 0.1f, 1.0f});
-    
-    auto addHiddenOptionToggle = [this](const string& label, const string& tooltip, bool checked,
-        const std::function<void(bool)> &callback) {
-        auto panel = new Widget{ m_HiddenOptionsButton->popup() };
-        panel->setFixedHeight(20);
-        panel->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
-        new Label{panel, label};
-        auto checkbox = new CheckBox{ panel, "", callback };
+    auto hiddenOptionsPopup = m_HiddenOptionsButton->popup();
+    hiddenOptionsPopup->setLayout(new GroupLayout{});
+
+    auto addHiddenOptionToggle = [hiddenOptionsPopup](const string& label, const string& tooltip,
+        const std::function<void(bool)> &callback, bool checked = false) {
+        auto checkbox = new CheckBox{ hiddenOptionsPopup, label, callback };
         checkbox->setChecked(checked);
     };
 
-    addHiddenOptionToggle("Shadows", "Enable/Disable Data Shadowing", true, [](bool) {});
+    new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
+    addHiddenOptionToggle("Use Shadows", "Enable/Disable Data Shadowing", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
+    addHiddenOptionToggle("Grid Degrees", "Show/Hide Grid Degrees", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
     // grid view otpions
     {
