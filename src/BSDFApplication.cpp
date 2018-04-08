@@ -28,8 +28,33 @@ BSDFApplication::BSDFApplication()
 ,	m_ColorMapSelectionWindow(nullptr)
 {
     // load color maps
-    m_ColorMaps.push_back(make_shared<ColorMap>("inferno", "../resources/color_maps/inferno.png"));
-    m_ColorMaps.push_back(make_shared<ColorMap>("jet", "../resources/color_maps/jet.png"));
+    const string color_maps_folder_path = "../resources/color_maps/";
+    const string color_maps_extension = ".png";
+    vector<pair<const string, const string>> color_maps
+    {
+        { "Jet",            "jet" },
+        { "BRG",            "brg" },
+        { "CMR Map",        "CMRmap" },
+        { "Cube Helix",     "cubehelix" },
+        { "Gist Earth",     "gist_earth" },
+        { "Gist Ncar",      "gist_ncar" },
+        { "Gist Rainbow",   "gist_rainbow" },
+        { "Gist Stern",     "gist_stern" },
+        { "GNU Plot",       "gnu_plot" },
+        { "GNU Plot 2",     "gnu_plot2" },
+        { "HSV",            "hsv" },
+        { "Inferno",        "inferno" },
+        { "Numpy Spectral", "npy_spectral" },
+        { "Ocean",          "ocean" },
+        { "Prism",          "prism" },
+        { "Rainbow",        "rainbow" },
+        { "Terrain",        "terrain" },
+    };
+
+    for (auto& p : color_maps)
+    {
+        m_ColorMaps.push_back(make_shared<ColorMap>(p.first, color_maps_folder_path + p.second + color_maps_extension));
+    }
 
     m_3DView = new Widget{this};
     m_3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
@@ -99,6 +124,7 @@ BSDFApplication::BSDFApplication()
             const std::function<void(bool)> &callback, bool checked = false) {
             auto checkbox = new CheckBox{ hiddenOptionsPopup, label, callback };
             checkbox->setChecked(checked);
+            return checkbox;
         };
 
         new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };

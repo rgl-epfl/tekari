@@ -18,18 +18,18 @@ ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_p
 ,   m_CloseCallback{ closeCallback }
 ,   m_SelectionCallback(selectionCallback)
 {
-    setFixedWidth(300);
+    setFixedWidth(200);
     auto closeButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
     closeButton->setCallback(m_CloseCallback);
     setLayout(new GroupLayout{});
 
-    new Label{ this, "Available Color Maps :", "sans-bold", 20 };
+    new Label{ this, "Available Color Maps :", "sans-bold", 18 };
     auto colorMapsButtonContainer = new Widget{ this };
     colorMapsButtonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 2, 2 });
 
     for (auto colorMap : colorMaps)
     {
-        auto colorMapName = new Label{ colorMapsButtonContainer, colorMap->name(), "sans-bold", 18 };
+        auto colorMapName = new Label{ colorMapsButtonContainer, colorMap->name() };
         //colorMapName->setFixedHeight(10);
         auto colorMapButton = new ColorMapButton{ colorMapsButtonContainer, colorMap };
         colorMapButton->setFixedHeight(10);
