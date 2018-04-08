@@ -23,6 +23,7 @@ public:
 
     void openDataSampleDialog();
     void saveScreenShot();
+    void toggleWindow(nanogui::Window* &window, std::function<nanogui::Window*(void)> createWindow);
     void toggleMetadataWindow();
     void toggleHelpWindow();
     void toggleColorMapSelectionWindow();
@@ -77,8 +78,8 @@ private:
 
     // dialog windows
     nanogui::Window* m_MetadataWindow;
-    HelpWindow* m_HelpWindow;
-    ColorMapSelectionWindow* m_ColorMapSelectionWindow;
+    nanogui::Window* m_HelpWindow;
+    nanogui::Window* m_ColorMapSelectionWindow;
 
     // canvas
     BSDFCanvas *m_BSDFCanvas;

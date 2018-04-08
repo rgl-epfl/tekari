@@ -116,7 +116,7 @@ BSDFApplication::BSDFApplication()
     // Hidden options
     {
         m_HiddenOptionsButton = new PopupButton(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
-        m_HiddenOptionsButton->setBackgroundColor(Color{0.6f, 0.1f, 0.1f, 1.0f});
+        m_HiddenOptionsButton->setBackgroundColor(Color{0.4f, 0.1f, 0.1f, 1.0f});
         m_HiddenOptionsButton->setTooltip("More view options");
         auto hiddenOptionsPopup = m_HiddenOptionsButton->popup();
         hiddenOptionsPopup->setLayout(new GroupLayout{});
@@ -472,70 +472,61 @@ void BSDFApplication::saveScreenShot()
     m_Framebuffer.release();
 }
 
-void BSDFApplication::toggleMetadataWindow()
+void BSDFApplication::toggleWindow(nanogui::Window *& window, std::function<nanogui::Window*(void)> createWindow)
 {
-    if (m_MetadataWindow)
+    if (window)
     {
-        m_MetadataWindow->dispose();
-        m_MetadataWindow = nullptr;
+        window->dispose();
+        window = nullptr;
     }
     else
     {
+        window = createWindow();
+        window->center();
+        window->requestFocus();
+        requestLayoutUpdate();
+    }
+}
+
+void BSDFApplication::toggleMetadataWindow()
+{
+    toggleWindow(m_MetadataWindow, [this]() {
+        Window *window;
         if (hasSelectedDataSample())
         {
-            m_MetadataWindow = new MetadataWindow(this, &selectedDataSample()->metadata(), [this]() { toggleMetadataWindow(); });
-            m_MetadataWindow->center();
-            m_MetadataWindow->requestFocus();
+            window = new MetadataWindow(this, &selectedDataSample()->metadata(), [this]() { toggleMetadataWindow(); });
         }
         else
         {
             auto errorWindow = new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
                 "No data sample selected.", "close");
             errorWindow->setCallback([this](int index) { m_MetadataWindow = nullptr; });
-            m_MetadataWindow = errorWindow;
+            window = errorWindow;
         }
-        requestLayoutUpdate();
-    }
+        return window;
+    });
 }
 
 void BSDFApplication::toggleHelpWindow()
 {
-    if (m_HelpWindow)
-    {
-        m_HelpWindow->dispose();
-        m_HelpWindow = nullptr;
-    }
-    else
-    {
-        m_HelpWindow = new HelpWindow(this, [this]() {toggleHelpWindow(); });
-        m_HelpWindow->center();
-        m_HelpWindow->requestFocus();
-        requestLayoutUpdate();
-    }
+    toggleWindow(m_HelpWindow, [this]() {
+        return new HelpWindow(this, [this]() {toggleHelpWindow(); });
+    });
 }
 
 void BSDFApplication::toggleColorMapSelectionWindow()
 {
-    if (m_ColorMapSelectionWindow)
-    {
-        m_ColorMapSelectionWindow->dispose();
-        m_ColorMapSelectionWindow = nullptr;
-    }
-    else
-    {
-        m_ColorMapSelectionWindow = new ColorMapSelectionWindow{
+    toggleWindow(m_ColorMapSelectionWindow, [this]() {
+        auto window = new ColorMapSelectionWindow{
             this,
             m_ColorMaps,
             [this]() { toggleColorMapSelectionWindow(); },
             [this](shared_ptr<ColorMap> colorMap) { selectColorMap(colorMap); }
         };
-        m_ColorMapSelectionWindow->center();
-        m_ColorMapSelectionWindow->requestFocus();
-
         auto pos = distance(m_ColorMaps.begin(), find(m_ColorMaps.begin(), m_ColorMaps.end(), m_BSDFCanvas->colorMap()));
-        m_ColorMapSelectionWindow->setSelectedButton(static_cast<size_t>(pos));
-        requestLayoutUpdate();
-    }
+        window->setSelectedButton(static_cast<size_t>(pos));
+        return dynamic_cast<Window*>(window);
+    });
 }
 
 void BSDFApplication::selectColorMap(std::shared_ptr<ColorMap> colorMap)
