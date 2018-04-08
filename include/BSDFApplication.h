@@ -6,6 +6,7 @@
 #include "BSDFCanvas.h"
 #include "DataSampleButton.h"
 #include "MetadataWindow.h"
+#include "ColorMapSelectionWindow.h"
 #include "HelpWindow.h"
 #include "ColorMap.h"
 
@@ -24,6 +25,8 @@ public:
     void saveScreenShot();
     void toggleMetadataWindow();
     void toggleHelpWindow();
+    void toggleColorMapSelectionWindow();
+    void selectColorMap(std::shared_ptr<ColorMap> colorMap);
     void deleteDataSample(std::shared_ptr<DataSample> dataSample);
     void selectDataSample(std::shared_ptr<DataSample> dataSample);
     void selectDataSample(int index, bool clamped = true);
@@ -42,7 +45,7 @@ private:
     void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample, bool toggle);
 
     void updateLayout();
-    void addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample);
+    void addDataSample(int index, std::shared_ptr<DataSample> dataSample);
 
     void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
 
@@ -73,6 +76,7 @@ private:
     // dialog windows
     nanogui::Window* m_MetadataWindow;
     HelpWindow* m_HelpWindow;
+    ColorMapSelectionWindow* m_ColorMapSelectionWindow;
 
     // canvas
     BSDFCanvas *m_BSDFCanvas;

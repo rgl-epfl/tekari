@@ -12,7 +12,7 @@ in vec3 normal;
 out vec4 out_color;
 
 void main() {
-	vec3 color = texture(color_map, height).rgb;//vec3(height, 1 - abs((height - 0.5)*2), 1-height);
+	vec3 color = texture(color_map, height).rgb;
 	if (useShadows)
 	{
 	    float brightness = abs(dot(normalize(view - position), normal));

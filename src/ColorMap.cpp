@@ -1,6 +1,7 @@
 #include "ColorMap.h"
 
-ColorMap::ColorMap(const std::string& filePath)
+ColorMap::ColorMap(const std::string& name, const std::string& filePath)
+:   m_Name(name)
 {
     glGenTextures(1, &m_RenderId);
     glBindTexture(GL_TEXTURE_1D, m_RenderId);

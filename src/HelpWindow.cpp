@@ -25,7 +25,9 @@ string HelpWindow::ALT = "Alt";
 #endif
 
 HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
-    : Window{ parent, "Help" }, m_CloseCallback{ closeCallback } {
+:   Window{ parent, "Help" }
+,   m_CloseCallback{ closeCallback }
+{
     setFixedWidth(600);
     auto closeButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
     closeButton->setCallback(m_CloseCallback);

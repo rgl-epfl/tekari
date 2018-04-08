@@ -42,6 +42,7 @@ public:
     void setUsesShadows(bool usesShadows) { m_UsesShadows = usesShadows; }
 
     void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
+    const std::shared_ptr<const ColorMap> colorMap() const { return m_ColorMap; }
 
 private:
     void getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const;

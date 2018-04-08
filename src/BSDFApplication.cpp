@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <string>
 
+#include "ColorMapButton.h"
+
 using namespace nanogui;
 using namespace std;
 
@@ -22,11 +24,12 @@ BSDFApplication::BSDFApplication()
 :   nanogui::Screen(Vector2i(1200, 750), "BSDF Visualizer", true)
 ,   m_SelectedDataSample(nullptr)
 ,	m_MetadataWindow(nullptr)
-,	m_HelpWindow(nullptr)
+,   m_HelpWindow(nullptr)
+,	m_ColorMapSelectionWindow(nullptr)
 {
     // load color maps
-    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/inferno.png"));
-    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/jet.png"));
+    m_ColorMaps.push_back(make_shared<ColorMap>("inferno", "../resources/color_maps/inferno.png"));
+    m_ColorMaps.push_back(make_shared<ColorMap>("jet", "../resources/color_maps/jet.png"));
 
     m_3DView = new Widget{this};
     m_3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
@@ -102,6 +105,11 @@ BSDFApplication::BSDFApplication()
         addHiddenOptionToggle("Use Shadows", "Enable/Disable Data Shadowing", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
         addHiddenOptionToggle("Grid Degrees", "Show/Hide Grid Degrees", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
+
+        auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };
+        choseColorMapButton->setCallback([this]() {
+            toggleColorMapSelectionWindow();
+        });
     }
     // grid view otpions
     {
@@ -198,6 +206,7 @@ BSDFApplication::BSDFApplication()
     }
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
+
     requestLayoutUpdate();
 }
 
@@ -237,6 +246,20 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_7: if (!alt) break;
             case GLFW_KEY_KP_7:
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
+            }
+        }
+        else if (alt)
+        {
+            switch (key)
+            {
+            case GLFW_KEY_1:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
+                return true;
+            case GLFW_KEY_3:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
+                return true;
+            case GLFW_KEY_7:
+                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
             }
         }
         else
@@ -367,7 +390,7 @@ void BSDFApplication::openDataSampleDialog()
         {
             shared_ptr<DataSample> newDataSample = make_shared<DataSample>(dataSamplePath);
             m_DataSamples.push_back(newDataSample);
-            addDataSampleButton(m_DataSamples.size() - 1, newDataSample);
+            addDataSample(m_DataSamples.size() - 1, newDataSample);
         }
         catch (exception e)
         {
@@ -435,6 +458,35 @@ void BSDFApplication::toggleHelpWindow()
     }
 }
 
+void BSDFApplication::toggleColorMapSelectionWindow()
+{
+    if (m_ColorMapSelectionWindow)
+    {
+        m_ColorMapSelectionWindow->dispose();
+        m_ColorMapSelectionWindow = nullptr;
+    }
+    else
+    {
+        m_ColorMapSelectionWindow = new ColorMapSelectionWindow{
+            this,
+            m_ColorMaps,
+            [this]() { toggleColorMapSelectionWindow(); },
+            [this](shared_ptr<ColorMap> colorMap) { selectColorMap(colorMap); }
+        };
+        m_ColorMapSelectionWindow->center();
+        m_ColorMapSelectionWindow->requestFocus();
+
+        auto pos = distance(m_ColorMaps.begin(), find(m_ColorMaps.begin(), m_ColorMaps.end(), m_BSDFCanvas->colorMap()));
+        m_ColorMapSelectionWindow->setSelectedButton(static_cast<size_t>(pos));
+        requestLayoutUpdate();
+    }
+}
+
+void BSDFApplication::selectColorMap(std::shared_ptr<ColorMap> colorMap)
+{
+    m_BSDFCanvas->setColorMap(colorMap);
+}
+
 int BSDFApplication::dataSampleIndex(const shared_ptr<const DataSample> dataSample) const
 {
     auto pos = static_cast<size_t>(distance(m_DataSamples.begin(), find(m_DataSamples.begin(), m_DataSamples.end(), dataSample)));
@@ -483,7 +535,6 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         m_DataSampleAverageHeight->setCaption("-");
     }
     
-
     requestLayoutUpdate();
 }
 
@@ -518,7 +569,7 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
     selectDataSample(dataSampleToSelect);
 }
 
-void BSDFApplication::addDataSampleButton(int index, shared_ptr<DataSample> dataSample)
+void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample)
 {
     string cleanName = dataSample->metadata().sampleName;
     replace(cleanName.begin(), cleanName.end(), '_', ' ');

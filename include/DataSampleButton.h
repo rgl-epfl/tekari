@@ -8,8 +8,6 @@
 
 #include "DataSample.h"
 
-#define BUTTON_RADIUS 10.0f
-
 class DataSampleButton : public nanogui::Widget
 {
 public:
@@ -46,6 +44,8 @@ private:
     bool InDeleteButton(const nanogui::Vector2i& p) const {
         return (p - mPos - m_DeleteButtonPos).squaredNorm() <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
+
+    static constexpr float BUTTON_RADIUS = 10.0f;
 
     std::string m_Label;
     std::string m_DisplayLabel;
