@@ -13,18 +13,18 @@
 #include "common.h"
 #include "stop_watch.h"
 
+using namespace std;
 using namespace nanogui;
 
 #define MAX_SAMPLING_DISTANCE 0.05f
 
-DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
+DataSample::DataSample()
 :	m_DisplayViews{ true, false, false }
 ,	tri_delaunay2d(nullptr)
-,	m_ColorMap(colorMap)
 ,   m_AverageHeight(0.0f)
 ,   m_SelectedPointsAverageHeight(0.0f)
 {
-    const std::string shader_path = "../resources/shaders/";
+    const string shader_path = "../resources/shaders/";
     m_Shaders[NORMAL].initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
     m_Shaders[LOG].initFromFiles("log_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
     m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
@@ -33,46 +33,33 @@ DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
     m_Shaders[NORMAL].setUniform("color_map", 0);
     m_Shaders[LOG].setUniform("color_map", 0);
 
-    m_DrawFunctions[NORMAL] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
-        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows) {
-        if (m_DisplayViews[NORMAL])
+    m_DrawFunctions[NORMAL] = m_DrawFunctions[LOG] = [this](Views view, const Vector3f& viewOrigin, const Matrix4f& model,
+        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
+        if (m_DisplayViews[view])
         {
-            m_Shaders[NORMAL].bind();
-            m_ColorMap->bind();
-            m_Shaders[NORMAL].setUniform("modelViewProj", mvp);
-            m_Shaders[NORMAL].setUniform("model", model);
-            m_Shaders[NORMAL].setUniform("view", viewOrigin);
-            m_Shaders[NORMAL].setUniform("useShadows", useShadows);
-            m_Shaders[NORMAL].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+            m_Shaders[view].bind();
+            colorMap->bind();
+            m_Shaders[view].setUniform("modelViewProj", mvp);
+            m_Shaders[view].setUniform("model", model);
+            m_Shaders[view].setUniform("view", viewOrigin);
+            m_Shaders[view].setUniform("useShadows", useShadows);
+            m_Shaders[view].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
         }
     };
-    m_DrawFunctions[LOG] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
-        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows) {
-        if (m_DisplayViews[LOG])
-        {
-            m_Shaders[LOG].bind();
-            m_ColorMap->bind();
-            m_Shaders[LOG].setUniform("modelViewProj", mvp);
-            m_Shaders[LOG].setUniform("model", model);
-            m_Shaders[LOG].setUniform("view", viewOrigin);
-            m_Shaders[LOG].setUniform("useShadows", useShadows);
-            m_Shaders[LOG].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
-        }
-    };
-    m_DrawFunctions[PATH] = [this](const Vector3f&, const Matrix4f&,
-        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool) {
-        if (m_DisplayViews[PATH])
+    m_DrawFunctions[PATH] = [this](Views view, const Vector3f&, const Matrix4f&,
+        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
+        if (m_DisplayViews[view])
         {
             glEnable(GL_POLYGON_OFFSET_LINE);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glPolygonOffset(2.0, 2.0);
-            m_Shaders[PATH].bind();
-            m_Shaders[PATH].setUniform("modelViewProj", mvp);
+            m_Shaders[view].bind();
+            m_Shaders[view].setUniform("modelViewProj", mvp);
             for (unsigned int i = 0; i < m_PathSegments.size() - 1; ++i)
             {
                 int offset = m_PathSegments[i];
                 int count = m_PathSegments[i + 1] - m_PathSegments[i] - 1;
-                m_Shaders[PATH].drawArray(GL_LINE_STRIP, offset, count);
+                m_Shaders[view].drawArray(GL_LINE_STRIP, offset, count);
             }
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -80,22 +67,22 @@ DataSample::DataSample(std::shared_ptr<ColorMap> colorMap)
         }
     };
 
-    m_DrawFunctions[POINTS] = [this](const Vector3f&, const Matrix4f&,
-        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool) {
+    m_DrawFunctions[POINTS] = [this](Views view, const Vector3f&, const Matrix4f&,
+        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
         glDisable(GL_DEPTH_TEST);
         glPointSize(4);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        m_Shaders[POINTS].bind();
-        m_Shaders[POINTS].setUniform("modelViewProj", mvp);
-        m_Shaders[POINTS].setUniform("showAllPoints", m_DisplayViews[POINTS]);
-        m_Shaders[POINTS].drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
+        m_Shaders[view].bind();
+        m_Shaders[view].setUniform("modelViewProj", mvp);
+        m_Shaders[view].setUniform("showAllPoints", m_DisplayViews[view]);
+        m_Shaders[view].drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
         glDisable(GL_BLEND);
     };
 }
 
-DataSample::DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sampleDataPath)
-:	DataSample(colorMap)
+DataSample::DataSample(const string& sampleDataPath)
+:	DataSample()
 {
     loadFromFile(sampleDataPath);
 }
@@ -118,7 +105,8 @@ void DataSample::drawGL(
     const Matrix4f& model,
     const Matrix4f& view,
     const Matrix4f& proj,
-    bool useShadows)
+    bool useShadows,
+    shared_ptr<ColorMap> colorMap)
 {
     using namespace nanogui;
     if (tri_delaunay2d)
@@ -130,19 +118,19 @@ void DataSample::drawGL(
     
         for (int i = NORMAL; i != VIEW_COUNT; ++i)
         {
-            m_DrawFunctions[i](viewOrigin, model, view, proj, mvp, useShadows);
+            m_DrawFunctions[i](static_cast<Views>(i), viewOrigin, model, view, proj, mvp, useShadows, colorMap);
         }
     }
 }
 
-void DataSample::loadFromFile(const std::string& sampleDataPath)
+void DataSample::loadFromFile(const string& sampleDataPath)
 {
     if (tri_delaunay2d)
     {
-        throw std::runtime_error("ERROR: cannot load sample data twice!");
+        throw runtime_error("ERROR: cannot load sample data twice!");
     }
     // load vertex data
-    std::vector<del_point2d_t> points;
+    vector<del_point2d_t> points;
     PROFILE(readDataset(sampleDataPath, points));
 
     // triangulate vertx data
@@ -157,16 +145,16 @@ void DataSample::loadFromFile(const std::string& sampleDataPath)
     linkDataToShaders();
 }
 
-void DataSample::readDataset(const std::string &filePath, std::vector<del_point2d_t> &points)
+void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &points)
 {
     // try open file
     FILE* datasetFile = fopen(filePath.c_str(), "r");
     if (!datasetFile)
-        throw std::runtime_error("Unable to open file " +filePath);
+        throw runtime_error("Unable to open file " +filePath);
 
     // min and max values for normalization
-    float min_intensity = std::numeric_limits<float>::max();
-    float max_intensity = std::numeric_limits<float>::min();
+    float min_intensity = numeric_limits<float>::max();
+    float max_intensity = numeric_limits<float>::min();
 
     // total intensity value for average
     float total_intensity = 0.0f;
@@ -207,9 +195,9 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
             if (sscanf(head, "%f %f %f", &theta, &phi, &intensity) != 3)
             {
                 fclose(datasetFile);
-                std::ostringstream errorMsg;
+                ostringstream errorMsg;
                 errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
-                throw std::runtime_error(errorMsg.str());
+                throw runtime_error(errorMsg.str());
             }
 
             float x = theta * cos(phi * M_PI / 180.0f) / 90.0f;
@@ -229,8 +217,8 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
             m_Heights.push_back(intensity);
             m_LogHeights.push_back(intensity);
 
-            min_intensity = std::min(min_intensity, intensity);
-            max_intensity = std::max(max_intensity, intensity);
+            min_intensity = min(min_intensity, intensity);
+            max_intensity = max(max_intensity, intensity);
 
             total_intensity += intensity;
         }
@@ -251,7 +239,7 @@ void DataSample::readDataset(const std::string &filePath, std::vector<del_point2
         m_Heights[i] = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
         m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
-    m_MinMaxHeights = std::make_pair(min_intensity, max_intensity);
+    m_MinMaxHeights = make_pair(min_intensity, max_intensity);
 
     m_AverageHeight = total_intensity / points.size();
 }
@@ -260,7 +248,7 @@ void DataSample::linkDataToShaders()
 {
     if (!tri_delaunay2d)
     {
-        throw std::runtime_error("ERROR: cannot link data to shader before loading.");
+        throw runtime_error("ERROR: cannot link data to shader before loading.");
     }
     m_Shaders[NORMAL].bind();
     m_Shaders[NORMAL].uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
@@ -348,11 +336,11 @@ void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigne
 
     Vector3f faceNormal = e12.cross(-e01).normalized();
 
-    float w0 = (float)acos(std::max(-1.0f, std::min(1.0f, e01.dot(-e20))));
-    float w1 = (float)acos(std::max(-1.0f, std::min(1.0f, e12.dot(-e01))));
-    float w2 = (float)acos(std::max(-1.0f, std::min(1.0f, e20.dot(-e12))));
+    float w0 = (float)acos(max(-1.0f, min(1.0f, e01.dot(-e20))));
+    float w1 = (float)acos(max(-1.0f, min(1.0f, e12.dot(-e01))));
+    float w2 = (float)acos(max(-1.0f, min(1.0f, e20.dot(-e12))));
 
-    std::vector<Vector3f> &normals = logged ? m_LogNormals : m_Normals;
+    vector<Vector3f> &normals = logged ? m_LogNormals : m_Normals;
     normals[i0] += w0 * faceNormal;
     normals[i1] += w1 * faceNormal;
     normals[i2] += w2 * faceNormal;

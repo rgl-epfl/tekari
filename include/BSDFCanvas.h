@@ -41,6 +41,8 @@ public:
     bool usesShadows() const { return m_UsesShadows; }
     void setUsesShadows(bool usesShadows) { m_UsesShadows = usesShadows; }
 
+    void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
+
 private:
     void getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const;
 
@@ -62,5 +64,7 @@ private:
     std::function<void(const nanogui::Matrix4f&, const nanogui::Vector2i&, const nanogui::Vector2i&,
         const nanogui::Vector2i&, DataSample::SelectionMode)> m_SelectCallback;
 
+    // global state for sample display
     bool m_UsesShadows;
+    std::shared_ptr<ColorMap> m_ColorMap;
 };

@@ -6,6 +6,7 @@
 #include <nanogui/popupbutton.h>
 #include <nanogui/colorwheel.h>
 #include <nanogui/checkbox.h>
+#include <nanogui/imageview.h>
 #include <nanogui/slider.h>
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/messagedialog.h>
@@ -23,6 +24,10 @@ BSDFApplication::BSDFApplication()
 ,	m_MetadataWindow(nullptr)
 ,	m_HelpWindow(nullptr)
 {
+    // load color maps
+    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/inferno.png"));
+    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/jet.png"));
+
     m_3DView = new Widget{this};
     m_3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
 
@@ -48,22 +53,26 @@ BSDFApplication::BSDFApplication()
             }
         }
     });
+    m_BSDFCanvas->setColorMap(m_ColorMaps[0]);
 
-    m_Footer = new Widget{ m_3DView };
-    m_Footer->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill});
+    // Footer
+    {
+        m_Footer = new Widget{ m_3DView };
+        m_Footer->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill});
     
-    auto makeFooterInfo = [this](string label) {
-        auto container = new Widget{ m_Footer };
-        container->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
-        container->setFixedWidth(width() / 3);
-        new Label{ container, label };
-        auto info = new Label{ container, "-" };
-        return info;
-    };
+        auto makeFooterInfo = [this](string label) {
+            auto container = new Widget{ m_Footer };
+            container->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
+            container->setFixedWidth(width() / 3);
+            new Label{ container, label };
+            auto info = new Label{ container, "-" };
+            return info;
+        };
 
-    m_DataSampleName = makeFooterInfo("Data Sample Name : ");
-    m_DataSamplePointsCount = makeFooterInfo("Points Count : ");
-    m_DataSampleAverageHeight = makeFooterInfo("AverageIntensity : ");
+        m_DataSampleName = makeFooterInfo("Data Sample Name : ");
+        m_DataSamplePointsCount = makeFooterInfo("Points Count : ");
+        m_DataSampleAverageHeight = makeFooterInfo("AverageIntensity : ");
+    }
 
     m_ToolWindow = new Window(this, "Tools");
     m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
@@ -76,21 +85,24 @@ BSDFApplication::BSDFApplication()
     m_HelpButton->setTooltip("Information about using BSDF Vidualizer (H)");
     m_HelpButton->setPosition({20, 0});
 
-    m_HiddenOptionsButton = new PopupButton(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
-    m_HiddenOptionsButton->setBackgroundColor(Color{0.6f, 0.1f, 0.1f, 1.0f});
-    auto hiddenOptionsPopup = m_HiddenOptionsButton->popup();
-    hiddenOptionsPopup->setLayout(new GroupLayout{});
+    // Hidden options
+    {
+        m_HiddenOptionsButton = new PopupButton(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
+        m_HiddenOptionsButton->setBackgroundColor(Color{0.6f, 0.1f, 0.1f, 1.0f});
+        auto hiddenOptionsPopup = m_HiddenOptionsButton->popup();
+        hiddenOptionsPopup->setLayout(new GroupLayout{});
 
-    auto addHiddenOptionToggle = [hiddenOptionsPopup](const string& label, const string& tooltip,
-        const std::function<void(bool)> &callback, bool checked = false) {
-        auto checkbox = new CheckBox{ hiddenOptionsPopup, label, callback };
-        checkbox->setChecked(checked);
-    };
+        auto addHiddenOptionToggle = [hiddenOptionsPopup](const string& label, const string& tooltip,
+            const std::function<void(bool)> &callback, bool checked = false) {
+            auto checkbox = new CheckBox{ hiddenOptionsPopup, label, callback };
+            checkbox->setChecked(checked);
+        };
 
-    new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
-    addHiddenOptionToggle("Use Shadows", "Enable/Disable Data Shadowing", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
-    addHiddenOptionToggle("Grid Degrees", "Show/Hide Grid Degrees", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
+        new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
+        addHiddenOptionToggle("Use Shadows", "Enable/Disable Data Shadowing", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
+        addHiddenOptionToggle("Grid Degrees", "Show/Hide Grid Degrees", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
+    }
     // grid view otpions
     {
         auto label = new Label(m_ToolWindow, "View Options", "sans-bold", 25);
@@ -184,9 +196,6 @@ BSDFApplication::BSDFApplication()
         m_DataSampleButtonContainer = new Widget{ m_ScrollContent };
         m_DataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
-
-    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/inferno.png"));
-    m_ColorMaps.push_back(make_shared<ColorMap>("../resources/color_maps/jet.png"));
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
     requestLayoutUpdate();
@@ -356,7 +365,7 @@ void BSDFApplication::openDataSampleDialog()
     {
         try
         {
-            shared_ptr<DataSample> newDataSample = make_shared<DataSample>(m_ColorMaps[1], dataSamplePath);
+            shared_ptr<DataSample> newDataSample = make_shared<DataSample>(dataSamplePath);
             m_DataSamples.push_back(newDataSample);
             addDataSampleButton(m_DataSamples.size() - 1, newDataSample);
         }

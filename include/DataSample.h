@@ -28,8 +28,8 @@ struct DataSample
     };
 
 public:
-    DataSample(std::shared_ptr<ColorMap> colorMap);
-    DataSample(std::shared_ptr<ColorMap> colorMap, const std::string& sampleDataPath);
+    DataSample();
+    DataSample(const std::string& sampleDataPath);
     DataSample(const DataSample&) = delete;
     DataSample(DataSample&&) = default;
 
@@ -42,12 +42,11 @@ public:
                 const nanogui::Matrix4f& model,
                 const nanogui::Matrix4f& view,
                 const nanogui::Matrix4f& proj,
-                bool useShadows);
+                bool useShadows,
+                std::shared_ptr<ColorMap> colorMap);
 
     void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }
     bool displayView(Views view) const { return m_DisplayViews[view]; }
-
-    void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
 
     void loadFromFile(const std::string& sampleDataPath);
 
@@ -86,9 +85,8 @@ private:
 
     // display Shaders
     nanogui::GLShader m_Shaders[VIEW_COUNT];
-    std::function<void(const nanogui::Vector3f&, const nanogui::Matrix4f&, const nanogui::Matrix4f&,
-        const nanogui::Matrix4f&, const nanogui::Matrix4f, bool)> m_DrawFunctions[VIEW_COUNT];
-    std::shared_ptr<ColorMap> m_ColorMap;
+    std::function<void(Views, const nanogui::Vector3f&, const nanogui::Matrix4f&, const nanogui::Matrix4f&,
+        const nanogui::Matrix4f&, const nanogui::Matrix4f, bool, std::shared_ptr<ColorMap>)> m_DrawFunctions[VIEW_COUNT];
     std::vector<unsigned int> m_PathSegments;
 
     // display options

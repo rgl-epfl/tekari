@@ -104,7 +104,7 @@ void BSDFCanvas::drawGL() {
 
     for (const auto& dataSample: m_DataSamplesToDraw)
     {
-        dataSample->drawGL(m_ViewOrigin, model, view, proj, m_UsesShadows);
+        dataSample->drawGL(m_ViewOrigin, model, view, proj, m_UsesShadows, m_ColorMap);
     }
     m_Grid.drawGL(model, view, proj);
 }
