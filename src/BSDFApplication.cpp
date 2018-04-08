@@ -5,6 +5,7 @@
 #include <nanogui/entypo.h>
 #include <nanogui/popupbutton.h>
 #include <nanogui/colorwheel.h>
+#include <nanogui/checkbox.h>
 #include <nanogui/slider.h>
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/messagedialog.h>
@@ -67,13 +68,28 @@ BSDFApplication::BSDFApplication()
     m_ToolWindow = new Window(this, "Tools");
     m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
     m_ToolWindow->setVisible(true);
-    m_ToolWindow->setPosition({ 10, 10 });
+    m_ToolWindow->setPosition({ 20, 20 });
 
     m_HelpButton = new Button(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
     m_HelpButton->setCallback([this]() { toggleHelpWindow(); });
     m_HelpButton->setFontSize(15);
     m_HelpButton->setTooltip("Information about using BSDF Vidualizer (H)");
     m_HelpButton->setPosition({20, 0});
+
+    m_HiddenOptionsButton = new PopupButton(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
+    m_HiddenOptionsButton->setBackgroundColor(Color{0.6f, 0.1f, 0.1f, 1.0f});
+    
+    auto addHiddenOptionToggle = [this](const string& label, const string& tooltip, bool checked,
+        const std::function<void(bool)> &callback) {
+        auto panel = new Widget{ m_HiddenOptionsButton->popup() };
+        panel->setFixedHeight(20);
+        panel->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
+        new Label{panel, label};
+        auto checkbox = new CheckBox{ panel, "", callback };
+        checkbox->setChecked(checked);
+    };
+
+    addHiddenOptionToggle("Shadows", "Enable/Disable Data Shadowing", true, [](bool) {});
 
     // grid view otpions
     {
@@ -243,13 +259,13 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 }
                 break;
             case GLFW_KEY_N:
-                toggleView(DataSample::Views::NORMAL, m_SelectedDataSample);
+                toggleView(DataSample::Views::NORMAL, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::NORMAL));
                 return true;
             case GLFW_KEY_L:
-                toggleView(DataSample::Views::LOG, m_SelectedDataSample);
+                toggleView(DataSample::Views::LOG, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::LOG));
                 return true;
             case GLFW_KEY_P:
-                toggleView(DataSample::Views::PATH, m_SelectedDataSample);
+                toggleView(DataSample::Views::PATH, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::PATH));
                 return true;
             case GLFW_KEY_G:
                 toggleToolButton(m_GridViewToggle, false);
@@ -508,20 +524,12 @@ void BSDFApplication::addDataSampleButton(int index, shared_ptr<DataSample> data
         else            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
     });
 
-    dataSampleButton->setNormalToggleCallback([this, dataSample](bool checked) {
-        toggleView(DataSample::Views::NORMAL, dataSample);
-    });
-
-    dataSampleButton->setLogToggleCallback([this, dataSample](bool checked) {
-        toggleView(DataSample::Views::LOG, dataSample);
-    });
-
-    dataSampleButton->setPointsToggleCallback([this, dataSample](bool checked) {
-        toggleView(DataSample::Views::POINTS, dataSample);
-    });
-
-    dataSampleButton->setPathToggleCallback([this, dataSample](bool checked) {
-        toggleView(DataSample::Views::PATH, dataSample);
+    dataSampleButton->setToggleCallback([this, dataSample, dataSampleButton](bool checked) {
+        for (int i = DataSample::Views::NORMAL; i != DataSample::Views::VIEW_COUNT; ++i)
+        {
+            DataSample::Views view = static_cast<DataSample::Views>(i);
+            toggleView(view, dataSample, dataSampleButton->isButtonToggled(view));
+        }
     });
 
     selectDataSample(dataSample);
@@ -538,11 +546,11 @@ void BSDFApplication::toggleToolButton(nanogui::Button* button, bool needsSelect
     }
 }
 
-void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> dataSample)
+void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> dataSample, bool toggle)
 {
     if (dataSample)
     {
-        dataSample->toggleView(view);
+        dataSample->toggleView(view, toggle);
         correspondingButton(dataSample)->toggleButton(view, dataSample->displayView(view));
     }
 }

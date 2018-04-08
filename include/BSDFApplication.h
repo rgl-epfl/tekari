@@ -39,19 +39,21 @@ public:
     const DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample) const;
 
 private:
-    void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample);
+    void BSDFApplication::toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample, bool toggle);
 
     void updateLayout();
     void addDataSampleButton(int index, std::shared_ptr<DataSample> dataSample);
 
     void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
 
-
+private:
     bool m_RequiresLayoutUpdate = false;
 
     nanogui::Window* m_ToolWindow;
     nanogui::Widget* m_3DView;
     
+    nanogui::PopupButton* m_HiddenOptionsButton;
+
     // footer
     nanogui::Widget* m_Footer;
     nanogui::Label* m_DataSampleName;

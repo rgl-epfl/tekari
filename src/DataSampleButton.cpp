@@ -43,10 +43,10 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
         button->setPushed(pushed);
         return button;
     };
-    m_NormalViewToggle = makeViewButton("Normal", "Toggle normal view for this data sample", true);
-    m_LogViewToggle = makeViewButton("Log", "Toggle logarithmic view for this data sample", false);
-    m_PathViewToggle = makeViewButton("Path", "Show/Hide path for this data sample", false);
-    m_PointsViewToggle = makeViewButton("Points", "Toggle points view for this data sample", false);
+    m_ViewToggles[DataSample::Views::NORMAL] = makeViewButton("Normal", "Toggle normal view for this data sample", true);
+    m_ViewToggles[DataSample::Views::LOG]    = makeViewButton("Log", "Toggle logarithmic view for this data sample", false);
+    m_ViewToggles[DataSample::Views::PATH]   = makeViewButton("Path", "Show/Hide path for this data sample", false);
+    m_ViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample", false);
 }
 
 //nanogui::Vector2i DataSampleButton::preferredSize(NVGcontext *ctx) const
@@ -187,16 +187,18 @@ void DataSampleButton::toggleView()
 
 void DataSampleButton::toggleButton(DataSample::Views view, bool check)
 {
-    switch (view)
+    m_ViewToggles[static_cast<int>(view)]->setPushed(check);
+}
+
+bool DataSampleButton::isButtonToggled(DataSample::Views view)
+{
+    return m_ViewToggles[static_cast<int>(view)]->pushed();
+}
+
+void DataSampleButton::setToggleCallback(std::function<void(bool)> callback) {
+    for (int i = DataSample::Views::NORMAL; i != DataSample::Views::VIEW_COUNT; ++i)
     {
-    case DataSample::Views::NORMAL:
-        m_NormalViewToggle->setPushed(check);
-        break;
-    case DataSample::Views::LOG:
-        m_LogViewToggle->setPushed(check);
-        break;
-    case DataSample::Views::PATH:
-        m_PathViewToggle->setPushed(check);
-        break;
+        DataSample::Views view = static_cast<DataSample::Views>(i);
+        m_ViewToggles[view]->setChangeCallback(callback);
     }
 }

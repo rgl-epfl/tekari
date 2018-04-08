@@ -42,7 +42,7 @@ public:
                 const nanogui::Matrix4f& view,
                 const nanogui::Matrix4f& proj);
 
-    void toggleView(Views view) { m_DisplayViews[view] = !m_DisplayViews[view]; }
+    void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }
     bool displayView(Views view) const { return m_DisplayViews[view]; }
 
     void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }

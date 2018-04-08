@@ -31,15 +31,13 @@ public:
     void setDeleteCallback      (std::function<void(void)> callback) { m_DeleteCallback = callback; }
     void setToggleViewCallback  (std::function<void(bool)> callback) { m_ToggleViewCallback = callback; }
 
-    void setNormalToggleCallback    (std::function<void(bool)> callback) { m_NormalViewToggle->setChangeCallback(callback); }
-    void setLogToggleCallback       (std::function<void(bool)> callback) { m_LogViewToggle->setChangeCallback(callback); }
-    void setPointsToggleCallback    (std::function<void(bool)> callback) { m_PointsViewToggle->setChangeCallback(callback); }
-    void setPathToggleCallback      (std::function<void(bool)> callback) { m_PathViewToggle->setChangeCallback(callback); }
-
+    void setToggleCallback(std::function<void(bool)> callback);
+  
     nanogui::Popup* popup()             { return m_Popup; }
     const nanogui::Popup* popup() const { return m_Popup; }
 
     void toggleButton(DataSample::Views view, bool check);
+    bool isButtonToggled(DataSample::Views view);
 
 private:
     bool InToggleViewButton(const nanogui::Vector2i& p) const {
@@ -65,8 +63,5 @@ private:
 
     //std::shared_ptr<DataSample> m_DataSample;
     nanogui::Popup *m_Popup;
-    nanogui::Button *m_NormalViewToggle;
-    nanogui::Button *m_LogViewToggle;
-    nanogui::Button *m_PointsViewToggle;
-    nanogui::Button *m_PathViewToggle;
+    nanogui::Button* m_ViewToggles[DataSample::Views::VIEW_COUNT];
 };
