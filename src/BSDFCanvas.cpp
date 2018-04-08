@@ -73,7 +73,7 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
 
                 m_SelectCallback(mvp, topLeft, size, mSize, mode);
 
-                m_SelectionRegion = std::make_pair(Vector2i(), Vector2i());
+                m_SelectionRegion = std::make_pair(Vector2i(0, 0), Vector2i(0, 0));
             }
         }
         else

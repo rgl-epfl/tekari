@@ -85,10 +85,13 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
 
         auto dataEdition = addShortcutSection("Data Editing");
         addRow(dataEdition, "Right Drag", "Select Data Points In Region");
+        addRow(dataEdition, "Shift + Right Drag", "Add Points In Region To Current Selection");
+        addRow(dataEdition, "Alt + Right Drag", "Remove Points In Region To Current Selection");
+        addRow(dataEdition, "Right Click or Escape", "Deselect All Points");
 
         auto ui = addShortcutSection("Interface");
         addRow(ui, "H", "Show Help (this Window)");
-        addRow(ui, "Q or Esc", "Quit");
+        addRow(ui, "Q", "Quit");
     }
 
     // About tab

@@ -234,7 +234,13 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
         {
             switch (key)
             {
-            case GLFW_KEY_ESCAPE: case GLFW_KEY_Q:
+            case GLFW_KEY_ESCAPE:
+                if (hasSelectedDataSample())
+                {
+                    m_SelectedDataSample->deselectAllPoints();
+                }
+                return true;
+            case GLFW_KEY_Q:
                 setVisible(false);
                 return true;
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
