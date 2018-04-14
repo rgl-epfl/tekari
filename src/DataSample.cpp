@@ -24,19 +24,12 @@ DataSample::DataSample()
 ,   m_AverageHeight(0.0f)
 ,   m_SelectedPointsAverageHeight(0.0f)
 {
-    const string shader_path = "../resources/shaders/";
-    m_Shaders[NORMAL].initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
-    m_Shaders[LOG].initFromFiles("log_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
-    m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
-    m_Shaders[POINTS].initFromFiles("selected_points", shader_path + "selected_points.vert", shader_path + "selected_points.frag");
-
-    m_Shaders[NORMAL].setUniform("color_map", 0);
-    m_Shaders[LOG].setUniform("color_map", 0);
-
     m_DrawFunctions[NORMAL] = m_DrawFunctions[LOG] = [this](Views view, const Vector3f& viewOrigin, const Matrix4f& model,
         const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
         if (m_DisplayViews[view])
         {
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glPolygonOffset(2.0, 2.0);
             m_Shaders[view].bind();
             colorMap->bind();
             m_Shaders[view].setUniform("modelViewProj", mvp);
@@ -44,15 +37,14 @@ DataSample::DataSample()
             m_Shaders[view].setUniform("view", viewOrigin);
             m_Shaders[view].setUniform("useShadows", useShadows);
             m_Shaders[view].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+            glDisable(GL_POLYGON_OFFSET_FILL);
         }
     };
     m_DrawFunctions[PATH] = [this](Views view, const Vector3f&, const Matrix4f&,
         const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
         if (m_DisplayViews[view])
         {
-            glEnable(GL_POLYGON_OFFSET_LINE);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glPolygonOffset(2.0, 2.0);
             m_Shaders[view].bind();
             m_Shaders[view].setUniform("modelViewProj", mvp);
             for (unsigned int i = 0; i < m_PathSegments.size() - 1; ++i)
@@ -63,7 +55,6 @@ DataSample::DataSample()
             }
 
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glDisable(GL_POLYGON_OFFSET_LINE);
         }
     };
 
@@ -76,7 +67,7 @@ DataSample::DataSample()
         m_Shaders[view].bind();
         m_Shaders[view].setUniform("modelViewProj", mvp);
         m_Shaders[view].setUniform("showAllPoints", m_DisplayViews[view]);
-        m_Shaders[view].drawArray(GL_POINTS, 0, tri_delaunay2d->num_triangles);
+        m_Shaders[view].drawArray(GL_POINTS, 0, tri_delaunay2d->num_points);
         glDisable(GL_BLEND);
     };
 }
@@ -141,8 +132,6 @@ void DataSample::loadFromFile(const string& sampleDataPath)
 
     // compute normals
     PROFILE(computeNormals());
-
-    linkDataToShaders();
 }
 
 void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &points)
@@ -246,6 +235,15 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
 
 void DataSample::linkDataToShaders()
 {
+    const string shader_path = "../resources/shaders/";
+    m_Shaders[NORMAL].initFromFiles ("height_map",       shader_path + "height_map.vert",       shader_path + "height_map.frag");
+    m_Shaders[LOG].initFromFiles    ("log_map",          shader_path + "height_map.vert",       shader_path + "height_map.frag");
+    m_Shaders[PATH].initFromFiles   ("path",             shader_path + "path.vert",             shader_path + "path.frag");
+    m_Shaders[POINTS].initFromFiles ("selected_points",  shader_path + "selected_points.vert",  shader_path + "selected_points.frag");
+
+    m_Shaders[NORMAL].setUniform("color_map", 0);
+    m_Shaders[LOG].setUniform("color_map", 0);
+
     if (!tri_delaunay2d)
     {
         throw runtime_error("ERROR: cannot link data to shader before loading.");

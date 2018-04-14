@@ -2,6 +2,7 @@
 
 #include <nanogui/screen.h>
 #include <memory>
+#include <thread>
 
 #include "BSDFCanvas.h"
 #include "DataSampleButton.h"
@@ -9,6 +10,13 @@
 #include "ColorMapSelectionWindow.h"
 #include "HelpWindow.h"
 #include "ColorMap.h"
+#include "SharedQueue.h"
+
+struct DataSampleToAdd
+{
+    std::string errorMsg;
+    std::shared_ptr<DataSample> dataSample;
+};
 
 class BSDFApplication : public nanogui::Screen {
 public:
@@ -50,6 +58,8 @@ private:
 
     void toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample);
 
+    void tryLoadDataSample(std::string filePath, std::shared_ptr<DataSampleToAdd> dataSampleToAdd);
+
 private:
     bool m_RequiresLayoutUpdate = false;
 
@@ -90,4 +100,8 @@ private:
 
     // offscreen buffer
     nanogui::GLFramebuffer m_Framebuffer;
+
+    SharedQueue<std::shared_ptr<DataSampleToAdd>> m_DataSamplesToAdd;
+
+    std::unique_ptr<std::thread> m_LoadDataSampleThread;
 };

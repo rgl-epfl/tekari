@@ -118,6 +118,7 @@ add_executable(BSDFVisualizer
   "src/MetadataWindow.cpp" "include/MetadataWindow.h"
   "src/HelpWindow.cpp" "include/HelpWindow.h"
   "src/delaunay.c" "include/delaunay.h"
+  "include/SharedQueue.h"
   "include/common.h"
   "include/stop_watch.h"
   )

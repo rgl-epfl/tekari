@@ -49,6 +49,7 @@ public:
     bool displayView(Views view) const { return m_DisplayViews[view]; }
 
     void loadFromFile(const std::string& sampleDataPath);
+    void linkDataToShaders();
 
     std::string name()          const { return m_Metadata.sampleName; }
     unsigned int pointsCount()  const { return tri_delaunay2d->num_points; }
@@ -71,7 +72,6 @@ private:
 
     void readDataset(const std::string &filePath, std::vector<del_point2d_t> &points);
     void computeNormals();
-    void linkDataToShaders();
 
 private:
     // Raw sample data

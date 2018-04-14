@@ -394,6 +394,33 @@ void BSDFApplication::drawContents() {
         updateLayout();
         m_RequiresLayoutUpdate = false;
     }
+
+    try {
+        while (true) {
+            auto newDataSample = m_DataSamplesToAdd.tryPop();
+            if (!newDataSample->dataSample)
+            {
+                auto errorMsgDialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error",
+                    newDataSample->errorMsg, "Retry", "Cancel", true);
+                errorMsgDialog->setCallback([this](int index) {
+                    if (index == 0) { openDataSampleDialog(); }
+                });
+            }
+            else
+            {
+                newDataSample->dataSample->linkDataToShaders();
+                addDataSample(m_DataSamples.size(), newDataSample->dataSample);
+            }
+
+            if (m_LoadDataSampleThread)
+            {
+                m_LoadDataSampleThread->join();
+                m_LoadDataSampleThread = nullptr;
+            }
+        }
+    }
+    catch (runtime_error) {
+    }
 }
 
 void BSDFApplication::draw(NVGcontext * ctx)
@@ -438,24 +465,17 @@ void BSDFApplication::openDataSampleDialog()
         {"txt",  "Data samples"},
     }, false);
 
-    if (!dataSamplePath.empty())
-    {
-        try
-        {
-            shared_ptr<DataSample> newDataSample = make_shared<DataSample>(dataSamplePath);
-            m_DataSamples.push_back(newDataSample);
-            addDataSample(m_DataSamples.size() - 1, newDataSample);
-        }
-        catch (exception e)
-        {
-            auto errorMsgDialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error loading data",
-                e.what(), "Retry", "Cancel", true);
-            errorMsgDialog->setCallback([this](int index)
-            {
-                if (index == 0) { openDataSampleDialog(); }
-            });
-        }
-    }
+    if (dataSamplePath.empty())
+        return;
+
+    if (m_LoadDataSampleThread)
+        m_LoadDataSampleThread->join();
+    m_LoadDataSampleThread = make_unique<thread>([this, dataSamplePath]() {
+        auto newDataSample = make_shared<DataSampleToAdd>();
+        tryLoadDataSample(dataSamplePath, newDataSample);
+        m_DataSamplesToAdd.push(newDataSample);
+    });
+    
     // Make sure we gain focus after seleting a file to be loaded.
     glfwFocusWindow(mGLFWWindow);
 }
@@ -618,10 +638,15 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
 
 void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample)
 {
+    if (!dataSample) {
+        throw invalid_argument{ "Data sample may not be null." };
+    }
+
     string cleanName = dataSample->metadata().sampleName;
     replace(cleanName.begin(), cleanName.end(), '_', ' ');
     auto dataSampleButton = new DataSampleButton(m_DataSampleButtonContainer, cleanName);
     dataSampleButton->setFixedHeight(30);
+
 
     dataSampleButton->setCallback([this, dataSample]() {
         selectDataSample(dataSample);
@@ -645,7 +670,9 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
         }
     });
 
+    m_DataSamples.push_back(dataSample);
     selectDataSample(dataSample);
+
     // by default toggle view for the new data samples
     m_BSDFCanvas->addDataSample(selectedDataSample());
 }
@@ -682,4 +709,16 @@ const DataSampleButton* BSDFApplication::correspondingButton(const std::shared_p
     if (index == -1)
         return nullptr;
     return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
+}
+
+void BSDFApplication::tryLoadDataSample(std::string filePath, std::shared_ptr<DataSampleToAdd> dataSampleToAdd)
+{
+    try {
+        dataSampleToAdd->dataSample = make_shared<DataSample>(filePath);
+    }
+    catch (exception e) {
+        string errorMsg = "Could not open data sample at " + filePath + " : " + e.what();
+        std::cerr << errorMsg << std::endl;
+        dataSampleToAdd->errorMsg = errorMsg;
+    }
 }
