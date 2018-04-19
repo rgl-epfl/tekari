@@ -117,6 +117,7 @@ add_executable(BSDFVisualizer
   "include/ColorMapButton.h" "src/ColorMapButton.cpp"
   "src/MetadataWindow.cpp" "include/MetadataWindow.h"
   "src/HelpWindow.cpp" "include/HelpWindow.h"
+  "src/Axis.cpp" "include/Axis.h"
   "src/delaunay.c" "include/delaunay.h"
   "include/SharedQueue.h"
   "include/DataPoint.h"

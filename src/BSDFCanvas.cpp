@@ -11,6 +11,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,	m_OrthoMode(false)
 ,   m_SelectionRegion(std::make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_UsesShadows(true)
+,   m_Axis(Vector3f{0, 0, 0})
 {
     m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
 }
@@ -107,6 +108,8 @@ void BSDFCanvas::drawGL() {
         dataSample->drawGL(m_ViewOrigin, model, view, proj, m_UsesShadows, m_ColorMap);
     }
     m_Grid.drawGL(model, view, proj);
+
+    m_Axis.drawGL(model, view, proj);
 }
 
 void BSDFCanvas::draw(NVGcontext* ctx)
@@ -127,6 +130,18 @@ void BSDFCanvas::draw(NVGcontext* ctx)
     nvgStroke(ctx);
 }
 
+void BSDFCanvas::selectDataSample(std::shared_ptr<DataSample> dataSample) {
+    m_SelectedDataSample = dataSample;
+    if (m_SelectedDataSample)
+    {
+        m_Axis.setOrigin(m_SelectedDataSample->selectionCenter());
+    }
+    else
+    {
+        m_Axis.setOrigin(Vector3f());
+    }
+}
+
 void BSDFCanvas::addDataSample(std::shared_ptr<DataSample> dataSample)
 {
     if (std::find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample) == m_DataSamplesToDraw.end())
@@ -141,6 +156,17 @@ void BSDFCanvas::removeDataSample(std::shared_ptr<DataSample> dataSample)
     {
         m_DataSamplesToDraw.erase(dataSampleToErase);
     }
+}
+
+void BSDFCanvas::snapToSelectionCenter()
+{
+    if (!m_SelectedDataSample)
+        return;
+
+    Vector3f selectionCenter = m_SelectedDataSample->selectionCenter();
+    Vector3f translation = selectionCenter - m_ViewTarget;
+    m_ViewOrigin += translation;
+    m_ViewTarget += translation;
 }
 
 void BSDFCanvas::setViewAngle(ViewAngles viewAngle)

@@ -30,8 +30,15 @@ struct DataSample
 
     struct PointSampleInfo
     {
+        unsigned int pointCount;
         std::pair<float, float> minMaxHeights;
         nanogui::Vector3f averagePoint;
+
+        PointSampleInfo()
+        :   pointCount(0)
+        ,   minMaxHeights(std::make_pair<float, float>(0.0f, 0.0f))
+        ,   averagePoint{0.0f, 0.0f, 0.0f}
+        {}
     };
 
 public:
@@ -72,6 +79,7 @@ public:
         const nanogui::Vector2i & canvasSize,
         SelectionMode mode);
     void deselectAllPoints();
+    nanogui::Vector3f selectionCenter();
 
 private:
     void readDataset(const std::string &filePath, std::vector<del_point2d_t> &points);

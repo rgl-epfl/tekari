@@ -365,6 +365,9 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_I:
                 toggleMetadataWindow();
                 return true;
+            case GLFW_KEY_E:
+                m_BSDFCanvas->snapToSelectionCenter();
+                return true;
             case GLFW_KEY_C:
                 toggleColorMapSelectionWindow();
                 return true;

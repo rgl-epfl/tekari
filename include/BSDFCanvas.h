@@ -4,6 +4,7 @@
 #include <nanogui/widget.h>
 #include <memory>
 #include "DataSample.h"
+#include "Axis.h"
 #include "RadialGrid.h"
 
 class BSDFCanvas : public nanogui::GLCanvas {
@@ -25,9 +26,11 @@ public:
     virtual void drawGL() override;
     virtual void draw(NVGcontext* ctx) override;
 
-    void selectDataSample(std::shared_ptr<DataSample> dataSample) { m_SelectedDataSample = dataSample; }
+    void selectDataSample(std::shared_ptr<DataSample> dataSample);
     void addDataSample(std::shared_ptr<DataSample> dataSample);
     void removeDataSample(std::shared_ptr<DataSample> dataSample);
+
+    void snapToSelectionCenter();
 
     const RadialGrid& grid() const { return m_Grid; }
     RadialGrid& grid() { return m_Grid; }
@@ -50,6 +53,7 @@ private:
     std::vector<std::shared_ptr<DataSample>> m_DataSamplesToDraw;
     std::shared_ptr<DataSample> m_SelectedDataSample;
     RadialGrid m_Grid;
+    Axis m_Axis;
     nanogui::Arcball m_Arcball;
 
     nanogui::Vector3f m_ViewOrigin;

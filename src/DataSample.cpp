@@ -22,8 +22,8 @@ DataSample::DataSample()
 :	m_DisplayViews{ true, false, false }
 ,   m_ShaderLinked(false)
 ,	tri_delaunay2d(nullptr)
-,   m_PointsInfo{ make_pair<float, float>(0.0f, 0.0f),{ 0,0,0 } }
-,   m_SelectedPointsInfo{make_pair<float, float>(0.0f, 0.0f), {0,0,0}}
+,   m_PointsInfo()
+,   m_SelectedPointsInfo()
 {
     m_DrawFunctions[NORMAL] = m_DrawFunctions[LOG] = [this](Views view, const Vector3f& viewOrigin, const Matrix4f& model,
         const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
@@ -179,6 +179,7 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
                 m_LogHeights.reserve(m_Metadata.datapointsInFile);
 
                 m_RawPoints.reserve(m_Metadata.datapointsInFile);
+                m_PointsInfo.pointCount = m_Metadata.datapointsInFile;
             }
         }
         else
@@ -233,6 +234,8 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
     }
     m_PointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
     m_PointsInfo.averagePoint = total_point / points.size();
+    // normalize averagePoint intensity
+    m_PointsInfo.averagePoint[1] = (m_PointsInfo.averagePoint[1] - min_intensity) / (max_intensity - min_intensity);
 }
 
 void DataSample::linkDataToShaders()
@@ -285,6 +288,7 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
     Vector3f total_point{ 0.0f, 0.0f, 0.0f };
     float min_intensity = numeric_limits<float>::max();
     float max_intensity = numeric_limits<float>::min();
+    m_SelectedPointsInfo.pointCount = 0;
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
         Vector3f point = getVertex(i, false);
@@ -317,6 +321,7 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
             total_point += getVertex(i, false);
             min_intensity = min(min_intensity, m_RawPoints[i].intensity);
             max_intensity = max(max_intensity, m_RawPoints[i].intensity);
+            ++m_SelectedPointsInfo.pointCount;
         }
     }
     m_SelectedPointsInfo.averagePoint = total_point / tri_delaunay2d->num_points;
@@ -331,6 +336,13 @@ void DataSample::deselectAllPoints()
     memset(m_SelectedPoints.data(), 0, m_SelectedPoints.size() * sizeof(m_SelectedPoints[0]));
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+
+    m_SelectedPointsInfo.pointCount = 0;
+}
+
+nanogui::Vector3f DataSample::selectionCenter()
+{
+    return m_SelectedPointsInfo.pointCount == 0 ? m_PointsInfo.averagePoint : m_SelectedPointsInfo.averagePoint;
 }
 
 Vector3f DataSample::getVertex(unsigned int i, bool logged) const
