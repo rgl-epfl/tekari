@@ -48,7 +48,8 @@ RadialGrid::~RadialGrid()
     m_Shader.free();
 }
 
-void RadialGrid::drawGL(const Matrix4f& model,
+void RadialGrid::drawGL(
+    const Matrix4f& model,
     const Matrix4f& view,
     const Matrix4f& proj)
 {
@@ -93,6 +94,7 @@ void RadialGrid::draw(  NVGcontext *ctx,
         nvgFillColor(ctx, Color(1.0f, 0.8f));
         for (const auto& degreeLabel : m_DegreesLabel)
         {
+
             Vector4f homogeneousPoint;
             homogeneousPoint << degreeLabel.second * 1.05f, 1.0f;
             Vector4f projectedPoint{ proj * view * model * homogeneousPoint };

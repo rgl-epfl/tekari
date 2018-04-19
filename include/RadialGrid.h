@@ -10,7 +10,8 @@ public:
     RadialGrid();
     ~RadialGrid();
 
-    void drawGL(const nanogui::Matrix4f& model,
+    void drawGL(
+        const nanogui::Matrix4f& model,
         const nanogui::Matrix4f& view,
         const nanogui::Matrix4f& proj);
 

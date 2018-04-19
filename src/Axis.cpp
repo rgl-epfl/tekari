@@ -23,7 +23,7 @@ void Axis::drawGL(
     const nanogui::Matrix4f& view,
     const nanogui::Matrix4f& proj)
 {
-    //glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
     m_Shader.bind();
     m_Shader.setUniform("modelViewProj", nanogui::Matrix4f(proj*view*model));
     m_Shader.drawArray(GL_POINTS, 0, 1);

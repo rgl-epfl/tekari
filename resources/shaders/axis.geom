@@ -18,7 +18,10 @@ void drawArrow(vec4 front, vec4 up, vec4 right, vec3 color)
   fcolor = color;
   vec4 cylingerBaseCenter1 = gl_in[0].gl_Position;
   vec4 cylingerBaseCenter2 = gl_in[0].gl_Position + modelViewProj * lineLength * front;
+  vec4 coneBaseCenter = gl_in[0].gl_Position + modelViewProj * lineLength * front;
+  vec4 coneTip        = gl_in[0].gl_Position + modelViewProj * (lineLength + coneHeight) * front;
 
+  // draw cylinder for line
   for(int i = 0; i <= 10; ++i)
   {
     float angle = PI * 2.0 / 10.0 * i;
@@ -30,8 +33,7 @@ void drawArrow(vec4 front, vec4 up, vec4 right, vec3 color)
   }
   EndPrimitive();
 
-  vec4 coneBaseCenter = gl_in[0].gl_Position + modelViewProj * lineLength * front;
-  vec4 coneTip        = gl_in[0].gl_Position + modelViewProj * (lineLength + coneHeight) * front;
+  // draw cone for arrow
   for(int i = 0; i <= 10; ++i)
   {
     float angle = PI * 2.0 / 10.0 * i;
@@ -46,7 +48,6 @@ void drawArrow(vec4 front, vec4 up, vec4 right, vec3 color)
 
 void main()
 {
-// draw axis lines
   drawArrow(vec4(1, 0, 0, 0), vec4(0, 1, 0, 0), vec4(0, 0, 1, 0), vec3(1, 0, 0));
   drawArrow(vec4(0, 1, 0, 0), vec4(0, 0, 1, 0), vec4(1, 0, 0, 0), vec3(0, 1, 0));
   drawArrow(vec4(0, 0, 1, 0), vec4(1, 0, 0, 0), vec4(0, 1, 0, 0), vec3(0, 0, 1));

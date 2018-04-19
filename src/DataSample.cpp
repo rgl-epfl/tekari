@@ -324,7 +324,7 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
             ++m_SelectedPointsInfo.pointCount;
         }
     }
-    m_SelectedPointsInfo.averagePoint = total_point / tri_delaunay2d->num_points;
+    m_SelectedPointsInfo.averagePoint = total_point / m_SelectedPointsInfo.pointCount;
     m_SelectedPointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
 
     m_Shaders[POINTS].bind();

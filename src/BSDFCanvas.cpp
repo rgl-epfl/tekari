@@ -34,7 +34,9 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
     else if (button == GLFW_MOUSE_BUTTON_5)
     {
         float moveSpeed = 0.04f / (m_Zoom + 10.1f);
-        Vector3f translation = Vector3f(-rel[0] * moveSpeed, rel[1] * moveSpeed, 0.0f);
+        Vector3f front = (m_ViewOrigin - m_ViewTarget).normalized();
+        Vector3f right = m_ViewUp.cross(front);
+        Vector3f translation = m_Arcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * moveSpeed * right + rel[1] * moveSpeed * m_ViewUp);
         m_ViewTarget += translation;
         m_ViewOrigin += translation;
         return true;
@@ -74,7 +76,7 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
                 else if (modifiers & GLFW_MOD_ALT)  mode = DataSample::SelectionMode::SUBTRACT;
 
                 m_SelectCallback(mvp, topLeft, size, mSize, mode);
-
+                snapToSelectionCenter();
                 m_SelectionRegion = std::make_pair(Vector2i(0, 0), Vector2i(0, 0));
             }
         }
@@ -109,7 +111,7 @@ void BSDFCanvas::drawGL() {
     }
     m_Grid.drawGL(model, view, proj);
 
-    m_Axis.drawGL(model, view, proj);
+    m_Axis.drawGL(m_Arcball.matrix(), view, proj);
 }
 
 void BSDFCanvas::draw(NVGcontext* ctx)
@@ -132,14 +134,7 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 
 void BSDFCanvas::selectDataSample(std::shared_ptr<DataSample> dataSample) {
     m_SelectedDataSample = dataSample;
-    if (m_SelectedDataSample)
-    {
-        m_Axis.setOrigin(m_SelectedDataSample->selectionCenter());
-    }
-    else
-    {
-        m_Axis.setOrigin(Vector3f());
-    }
+    snapToSelectionCenter();
 }
 
 void BSDFCanvas::addDataSample(std::shared_ptr<DataSample> dataSample)
@@ -160,13 +155,22 @@ void BSDFCanvas::removeDataSample(std::shared_ptr<DataSample> dataSample)
 
 void BSDFCanvas::snapToSelectionCenter()
 {
+    Vector3f selectionCenter;
+    Vector3f translation;
     if (!m_SelectedDataSample)
-        return;
-
-    Vector3f selectionCenter = m_SelectedDataSample->selectionCenter();
-    Vector3f translation = selectionCenter - m_ViewTarget;
-    m_ViewOrigin += translation;
-    m_ViewTarget += translation;
+    {
+        selectionCenter = Vector3f{};
+        translation = selectionCenter - m_ViewTarget;
+        m_ViewOrigin += translation;
+        m_ViewTarget += translation;
+    }
+    else
+    {
+        selectionCenter = m_SelectedDataSample->selectionCenter();
+        translation = selectionCenter - m_ViewTarget;
+        m_ViewOrigin += translation;
+        m_ViewTarget += translation;
+    }
 }
 
 void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
@@ -194,7 +198,9 @@ void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
 
 void BSDFCanvas::getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const
 {
-    view = lookAt(m_ViewOrigin, m_ViewTarget, m_ViewUp);
+    model = m_Arcball.matrix() * translate(-m_ViewTarget);
+    view = lookAt(m_ViewOrigin - m_ViewTarget, m_ViewTarget - m_ViewTarget, m_ViewUp);
+
     float near = 0.01f, far = 100.0f;
     float zoomFactor = (m_Zoom + 10.0f) / 20.0f + 0.01f;
     float sizeRatio = (float)mSize.x() / (float)mSize.y();
@@ -211,7 +217,6 @@ void BSDFCanvas::getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &vie
         float fW = fH * sizeRatio;
         proj = frustum(-fW, fW, -fH, fH, near, far);
     }
-    model = m_Arcball.matrix();
 }
 
 void BSDFCanvas::getSelectionBox(Vector2i &topLeft, Vector2i &size) const
