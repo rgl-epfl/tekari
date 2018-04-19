@@ -8,6 +8,7 @@
 #include "delaunay.h"
 #include "Metadata.h"
 #include "ColorMap.h"
+#include "DataPoint.h"
 
 struct DataSample
 {
@@ -25,6 +26,12 @@ struct DataSample
         STANDARD,
         ADD,
         SUBTRACT
+    };
+
+    struct PointSampleInfo
+    {
+        std::pair<float, float> minMaxHeights;
+        nanogui::Vector3f averagePoint;
     };
 
 public:
@@ -53,9 +60,9 @@ public:
 
     std::string name()          const { return m_Metadata.sampleName; }
     unsigned int pointsCount()  const { return tri_delaunay2d->num_points; }
-    float minHeight()           const { return m_MinMaxHeights.first; }
-    float maxHeight()           const { return m_MinMaxHeights.second; }
-    float averageHeight()       const { return m_AverageHeight; }
+    float minHeight()           const { return m_PointsInfo.minMaxHeights.first; }
+    float maxHeight()           const { return m_PointsInfo.minMaxHeights.second; }
+    float averageHeight()       const { return m_PointsInfo.averagePoint[1]; }
 
     const Metadata& metadata() const { return m_Metadata; }
 
@@ -67,21 +74,22 @@ public:
     void deselectAllPoints();
 
 private:
+    void readDataset(const std::string &filePath, std::vector<del_point2d_t> &points);
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
-
-    void readDataset(const std::string &filePath, std::vector<del_point2d_t> &points);
     void computeNormals();
 
 private:
     // Raw sample data
+    bool m_ShaderLinked;
     tri_delaunay2d_t *tri_delaunay2d;
     std::vector<float>				m_Heights;
     std::vector<float>              m_LogHeights;
     std::vector<nanogui::Vector3f>  m_Normals;
     std::vector<nanogui::Vector3f>  m_LogNormals;
-    std::pair<float, float>         m_MinMaxHeights;
-    float                           m_AverageHeight;
+    // Untransformed data
+    std::vector<RawDataPoint>           m_RawPoints;
+    PointSampleInfo                     m_PointsInfo;
 
     // display Shaders
     nanogui::GLShader m_Shaders[VIEW_COUNT];
@@ -96,6 +104,6 @@ private:
     Metadata m_Metadata;
 
     // Selected point
-    std::vector<char> m_SelectedPoints;
-    float             m_SelectedPointsAverageHeight;
+    std::vector<char>   m_SelectedPoints;
+    PointSampleInfo     m_SelectedPointsInfo;
 };

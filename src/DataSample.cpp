@@ -20,9 +20,10 @@ using namespace nanogui;
 
 DataSample::DataSample()
 :	m_DisplayViews{ true, false, false }
+,   m_ShaderLinked(false)
 ,	tri_delaunay2d(nullptr)
-,   m_AverageHeight(0.0f)
-,   m_SelectedPointsAverageHeight(0.0f)
+,   m_PointsInfo{ make_pair<float, float>(0.0f, 0.0f),{ 0,0,0 } }
+,   m_SelectedPointsInfo{make_pair<float, float>(0.0f, 0.0f), {0,0,0}}
 {
     m_DrawFunctions[NORMAL] = m_DrawFunctions[LOG] = [this](Views view, const Vector3f& viewOrigin, const Matrix4f& model,
         const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
@@ -139,14 +140,14 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
     // try open file
     FILE* datasetFile = fopen(filePath.c_str(), "r");
     if (!datasetFile)
-        throw runtime_error("Unable to open file " +filePath);
+        throw runtime_error("Unable to open file " + filePath);
 
     // min and max values for normalization
     float min_intensity = numeric_limits<float>::max();
     float max_intensity = numeric_limits<float>::min();
 
-    // total intensity value for average
-    float total_intensity = 0.0f;
+    // total point value for average
+    Vector3f total_point = { 0.0f, 0.0f, 0.0f };
 
     // path segments must always contain the first point...
     m_PathSegments.push_back(0);
@@ -176,6 +177,8 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
                 m_SelectedPoints.resize(m_Metadata.datapointsInFile, 0);
                 m_Heights.reserve(m_Metadata.datapointsInFile);
                 m_LogHeights.reserve(m_Metadata.datapointsInFile);
+
+                m_RawPoints.reserve(m_Metadata.datapointsInFile);
             }
         }
         else
@@ -188,28 +191,28 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
                 errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
                 throw runtime_error(errorMsg.str());
             }
-
-            float x = theta * cos(phi * M_PI / 180.0f) / 90.0f;
-            float z = theta * sin(phi * M_PI / 180.0f) / 90.0f;
-
+            m_RawPoints.push_back(RawDataPoint{ theta, phi, intensity });
+            del_point2d_t transformedPoint = m_RawPoints.back().transform();
             // if two last points are too far appart, a new path segments begins
             if (!points.empty())
             {
                 const del_point2d_t& prev = points.back();
-                if ((x - prev.x)*(x - prev.x) + (z - prev.y)*(z - prev.y) > MAX_SAMPLING_DISTANCE)
+                float dx = transformedPoint.x - prev.x;
+                float dz = transformedPoint.y - prev.y;
+                if (dx*dx + dz*dz > MAX_SAMPLING_DISTANCE)
                 {
                     m_PathSegments.push_back(points.size());
                 }
             }
 
-            points.push_back({ x, z });
+            points.push_back({ transformedPoint.x, transformedPoint.y });
             m_Heights.push_back(intensity);
             m_LogHeights.push_back(intensity);
 
             min_intensity = min(min_intensity, intensity);
             max_intensity = max(max_intensity, intensity);
 
-            total_intensity += intensity;
+            total_point += Vector3f{ transformedPoint.x, intensity, transformedPoint.y };
         }
     }
     fclose(datasetFile);
@@ -228,13 +231,21 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
         m_Heights[i] = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
         m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
-    m_MinMaxHeights = make_pair(min_intensity, max_intensity);
-
-    m_AverageHeight = total_intensity / points.size();
+    m_PointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
+    m_PointsInfo.averagePoint = total_point / points.size();
 }
 
 void DataSample::linkDataToShaders()
 {
+    if (!tri_delaunay2d)
+    {
+        throw runtime_error("ERROR: cannot link data to shader before loading data.");
+    }
+    if (m_ShaderLinked)
+    {
+        throw runtime_error("ERROR: cannot link data to shader twice.");
+    }
+
     const string shader_path = "../resources/shaders/";
     m_Shaders[NORMAL].initFromFiles ("height_map",       shader_path + "height_map.vert",       shader_path + "height_map.frag");
     m_Shaders[LOG].initFromFiles    ("log_map",          shader_path + "height_map.vert",       shader_path + "height_map.frag");
@@ -244,10 +255,6 @@ void DataSample::linkDataToShaders()
     m_Shaders[NORMAL].setUniform("color_map", 0);
     m_Shaders[LOG].setUniform("color_map", 0);
 
-    if (!tri_delaunay2d)
-    {
-        throw runtime_error("ERROR: cannot link data to shader before loading.");
-    }
     m_Shaders[NORMAL].bind();
     m_Shaders[NORMAL].uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
     m_Shaders[NORMAL].uploadAttrib("in_pos2d", tri_delaunay2d->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)tri_delaunay2d->points);
@@ -268,12 +275,16 @@ void DataSample::linkDataToShaders()
     m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
     m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_height");
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+
+    m_ShaderLinked = true;
 }
 
 void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
     const Vector2i & size, const Vector2i & canvasSize, SelectionMode mode)
 {
-    float totalIntensity = 0.0f;
+    Vector3f total_point{ 0.0f, 0.0f, 0.0f };
+    float min_intensity = numeric_limits<float>::max();
+    float max_intensity = numeric_limits<float>::min();
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
         Vector3f point = getVertex(i, false);
@@ -303,10 +314,13 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
         // if we selected the point in the end
         if (m_SelectedPoints[i])
         {
-            totalIntensity += m_Heights[i];
+            total_point += getVertex(i, false);
+            min_intensity = min(min_intensity, m_RawPoints[i].intensity);
+            max_intensity = max(max_intensity, m_RawPoints[i].intensity);
         }
     }
-    m_SelectedPointsAverageHeight = totalIntensity / tri_delaunay2d->num_points;
+    m_SelectedPointsInfo.averagePoint = total_point / tri_delaunay2d->num_points;
+    m_SelectedPointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
 
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
