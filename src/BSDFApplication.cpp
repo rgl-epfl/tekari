@@ -624,16 +624,20 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
     mDragActive = false;
     mFocusPath.clear();
 
-    // select next valid one
-    shared_ptr<DataSample> dataSampleToSelect = nullptr;
-    if (index >= m_DataSamples.size()) --index;
-    if (index >= 0)
+    // update selected datasample, if we just deleted the selected data sample
+    if (dataSample == m_SelectedDataSample)
     {
-        dataSampleToSelect = m_DataSamples[index];
+        shared_ptr<DataSample> dataSampleToSelect = nullptr;
+        if (index >= m_DataSamples.size()) --index;
+        if (index >= 0)
+        {
+            dataSampleToSelect = m_DataSamples[index];
+        }
+        // Make sure no button is selected
+        m_SelectedDataSample = nullptr;
+        selectDataSample(dataSampleToSelect);
     }
-    // Make sure no button is selected
-    m_SelectedDataSample = nullptr;
-    selectDataSample(dataSampleToSelect);
+    requestLayoutUpdate();
 }
 
 void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample)
