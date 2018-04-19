@@ -24,12 +24,14 @@ DataSample::DataSample()
 ,	tri_delaunay2d(nullptr)
 ,   m_PointsInfo()
 ,   m_SelectedPointsInfo()
+,   m_Axis{Vector3f{0.0f, 0.0f, 0.0f}}
 {
     m_DrawFunctions[NORMAL] = m_DrawFunctions[LOG] = [this](Views view, const Vector3f& viewOrigin, const Matrix4f& model,
         const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
         if (m_DisplayViews[view])
         {
             glEnable(GL_POLYGON_OFFSET_FILL);
+            glEnable(GL_DEPTH_TEST);
             glPolygonOffset(2.0, 2.0);
             m_Shaders[view].bind();
             colorMap->bind();
@@ -38,6 +40,7 @@ DataSample::DataSample()
             m_Shaders[view].setUniform("view", viewOrigin);
             m_Shaders[view].setUniform("useShadows", useShadows);
             m_Shaders[view].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+            glDisable(GL_DEPTH_TEST);
             glDisable(GL_POLYGON_OFFSET_FILL);
         }
     };
@@ -46,6 +49,7 @@ DataSample::DataSample()
         if (m_DisplayViews[view])
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glEnable(GL_DEPTH_TEST);
             m_Shaders[view].bind();
             m_Shaders[view].setUniform("modelViewProj", mvp);
             for (unsigned int i = 0; i < m_PathSegments.size() - 1; ++i)
@@ -54,14 +58,13 @@ DataSample::DataSample()
                 int count = m_PathSegments[i + 1] - m_PathSegments[i] - 1;
                 m_Shaders[view].drawArray(GL_LINE_STRIP, offset, count);
             }
-
+            glDisable(GL_DEPTH_TEST);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
 
     m_DrawFunctions[POINTS] = [this](Views view, const Vector3f&, const Matrix4f&,
         const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
-        glDisable(GL_DEPTH_TEST);
         glPointSize(4);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -105,14 +108,14 @@ void DataSample::drawGL(
     {
         Matrix4f mvp = proj * view * model;
 
-        glEnable(GL_DEPTH_TEST);
-        glPointSize(2);
-    
         for (int i = NORMAL; i != VIEW_COUNT; ++i)
         {
             m_DrawFunctions[i](static_cast<Views>(i), viewOrigin, model, view, proj, mvp, useShadows, colorMap);
         }
+
+        m_Axis.drawGL(mvp);
     }
+
 }
 
 void DataSample::loadFromFile(const string& sampleDataPath)
@@ -236,6 +239,8 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
     m_PointsInfo.averagePoint = total_point / points.size();
     // normalize averagePoint intensity
     m_PointsInfo.averagePoint[1] = (m_PointsInfo.averagePoint[1] - min_intensity) / (max_intensity - min_intensity);
+
+    m_Axis.setOrigin(m_PointsInfo.averagePoint);
 }
 
 void DataSample::linkDataToShaders()
@@ -278,6 +283,8 @@ void DataSample::linkDataToShaders()
     m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
     m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_height");
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+
+    m_Axis.loadShader();
 
     m_ShaderLinked = true;
 }
@@ -326,6 +333,12 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
     }
     m_SelectedPointsInfo.averagePoint = total_point / m_SelectedPointsInfo.pointCount;
     m_SelectedPointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
+
+    // snap to selection
+    if (m_SelectedPointsInfo.pointCount == 0)
+        m_Axis.setOrigin(m_PointsInfo.averagePoint);
+    else
+        m_Axis.setOrigin(m_SelectedPointsInfo.averagePoint);
 
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());

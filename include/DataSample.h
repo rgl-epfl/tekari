@@ -9,6 +9,7 @@
 #include "Metadata.h"
 #include "ColorMap.h"
 #include "DataPoint.h"
+#include "Axis.h"
 
 struct DataSample
 {
@@ -110,6 +111,7 @@ private:
 
     // metadata
     Metadata m_Metadata;
+    Axis m_Axis;
 
     // Selected point
     std::vector<char>   m_SelectedPoints;

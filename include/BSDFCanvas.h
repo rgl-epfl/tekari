@@ -53,7 +53,6 @@ private:
     std::vector<std::shared_ptr<DataSample>> m_DataSamplesToDraw;
     std::shared_ptr<DataSample> m_SelectedDataSample;
     RadialGrid m_Grid;
-    Axis m_Axis;
     nanogui::Arcball m_Arcball;
 
     nanogui::Vector3f m_ViewOrigin;

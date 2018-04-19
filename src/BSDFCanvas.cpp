@@ -11,7 +11,6 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,	m_OrthoMode(false)
 ,   m_SelectionRegion(std::make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_UsesShadows(true)
-,   m_Axis(Vector3f{0, 0, 0})
 {
     m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
 }
@@ -60,7 +59,6 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
             if (m_SelectionRegion.first == m_SelectionRegion.second)
             {
                 m_SelectedDataSample->deselectAllPoints();
-                std::cout << "HERE\n";
             }
             else
             {
@@ -110,8 +108,6 @@ void BSDFCanvas::drawGL() {
         dataSample->drawGL(m_ViewOrigin, model, view, proj, m_UsesShadows, m_ColorMap);
     }
     m_Grid.drawGL(model, view, proj);
-
-    m_Axis.drawGL(m_Arcball.matrix(), view, proj);
 }
 
 void BSDFCanvas::draw(NVGcontext* ctx)
