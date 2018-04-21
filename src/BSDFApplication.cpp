@@ -241,6 +241,8 @@ BSDFApplication::BSDFApplication()
 
 BSDFApplication::~BSDFApplication()
 {
+    if (m_LoadDataSampleThread)
+        m_LoadDataSampleThread->join();
     m_Framebuffer.free();
 }
 

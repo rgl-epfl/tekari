@@ -16,8 +16,6 @@ TODO:
 - delaunay crashes for too big inputs
 
 // To do:
-- snap to point (rotation)
-- show incident direction
 - show infos about selected points
 - delete (re-run delaunay)
 - save feature (just reprint in the same format (keep data in the same format))
