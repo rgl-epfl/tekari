@@ -19,6 +19,7 @@ struct DataSample
         LOG,
         PATH,
         POINTS,
+        INCIDENT_ANGLE,
         VIEW_COUNT
     };
 
@@ -102,8 +103,8 @@ private:
 
     // display Shaders
     nanogui::GLShader m_Shaders[VIEW_COUNT];
-    std::function<void(Views, const nanogui::Vector3f&, const nanogui::Matrix4f&, const nanogui::Matrix4f&,
-        const nanogui::Matrix4f&, const nanogui::Matrix4f, bool, std::shared_ptr<ColorMap>)> m_DrawFunctions[VIEW_COUNT];
+    std::function<void(const nanogui::Vector3f&, const nanogui::Matrix4f&, const nanogui::Matrix4f&,
+        bool, std::shared_ptr<ColorMap>)> m_DrawFunctions[VIEW_COUNT];
     std::vector<unsigned int> m_PathSegments;
 
     // display options

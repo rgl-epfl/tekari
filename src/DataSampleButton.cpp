@@ -47,6 +47,7 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
     m_ViewToggles[DataSample::Views::LOG]    = makeViewButton("Log", "Toggle logarithmic view for this data sample", false);
     m_ViewToggles[DataSample::Views::PATH]   = makeViewButton("Path", "Show/Hide path for this data sample", false);
     m_ViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample", false);
+    m_ViewToggles[DataSample::Views::INCIDENT_ANGLE] = makeViewButton("Incident Angle", "Show/Hide incident angle for this data sample", true);
 }
 
 //nanogui::Vector2i DataSampleButton::preferredSize(NVGcontext *ctx) const

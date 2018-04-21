@@ -19,60 +19,90 @@ using namespace nanogui;
 #define MAX_SAMPLING_DISTANCE 0.05f
 
 DataSample::DataSample()
-:	m_DisplayViews{ true, false, false }
+:	m_DisplayViews{ true, false, false, false, true }
 ,   m_ShaderLinked(false)
 ,	tri_delaunay2d(nullptr)
 ,   m_PointsInfo()
 ,   m_SelectedPointsInfo()
 ,   m_Axis{Vector3f{0.0f, 0.0f, 0.0f}}
 {
-    m_DrawFunctions[NORMAL] = m_DrawFunctions[LOG] = [this](Views view, const Vector3f& viewOrigin, const Matrix4f& model,
-        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
-        if (m_DisplayViews[view])
+    m_DrawFunctions[NORMAL] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
+        const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
+        if (m_DisplayViews[NORMAL])
         {
             glEnable(GL_POLYGON_OFFSET_FILL);
             glEnable(GL_DEPTH_TEST);
             glPolygonOffset(2.0, 2.0);
-            m_Shaders[view].bind();
+            m_Shaders[NORMAL].bind();
             colorMap->bind();
-            m_Shaders[view].setUniform("modelViewProj", mvp);
-            m_Shaders[view].setUniform("model", model);
-            m_Shaders[view].setUniform("view", viewOrigin);
-            m_Shaders[view].setUniform("useShadows", useShadows);
-            m_Shaders[view].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+            m_Shaders[NORMAL].setUniform("modelViewProj", mvp);
+            m_Shaders[NORMAL].setUniform("model", model);
+            m_Shaders[NORMAL].setUniform("view", viewOrigin);
+            m_Shaders[NORMAL].setUniform("useShadows", useShadows);
+            m_Shaders[NORMAL].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
             glDisable(GL_DEPTH_TEST);
             glDisable(GL_POLYGON_OFFSET_FILL);
         }
     };
-    m_DrawFunctions[PATH] = [this](Views view, const Vector3f&, const Matrix4f&,
-        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
-        if (m_DisplayViews[view])
+
+    m_DrawFunctions[LOG] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
+        const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
+        if (m_DisplayViews[LOG])
+        {
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            glEnable(GL_DEPTH_TEST);
+            glPolygonOffset(2.0, 2.0);
+            m_Shaders[LOG].bind();
+            colorMap->bind();
+            m_Shaders[LOG].setUniform("modelViewProj", mvp);
+            m_Shaders[LOG].setUniform("model", model);
+            m_Shaders[LOG].setUniform("view", viewOrigin);
+            m_Shaders[LOG].setUniform("useShadows", useShadows);
+            m_Shaders[LOG].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_POLYGON_OFFSET_FILL);
+        }
+    };
+    m_DrawFunctions[PATH] = [this](const Vector3f&, const Matrix4f&,
+        const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
+        if (m_DisplayViews[PATH])
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glEnable(GL_DEPTH_TEST);
-            m_Shaders[view].bind();
-            m_Shaders[view].setUniform("modelViewProj", mvp);
+            m_Shaders[PATH].bind();
+            m_Shaders[PATH].setUniform("modelViewProj", mvp);
             for (unsigned int i = 0; i < m_PathSegments.size() - 1; ++i)
             {
                 int offset = m_PathSegments[i];
                 int count = m_PathSegments[i + 1] - m_PathSegments[i] - 1;
-                m_Shaders[view].drawArray(GL_LINE_STRIP, offset, count);
+                m_Shaders[PATH].drawArray(GL_LINE_STRIP, offset, count);
             }
             glDisable(GL_DEPTH_TEST);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
 
-    m_DrawFunctions[POINTS] = [this](Views view, const Vector3f&, const Matrix4f&,
-        const Matrix4f&, const Matrix4f&, const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
+    m_DrawFunctions[POINTS] = [this](const Vector3f&, const Matrix4f&,
+        const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
         glPointSize(4);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        m_Shaders[view].bind();
-        m_Shaders[view].setUniform("modelViewProj", mvp);
-        m_Shaders[view].setUniform("showAllPoints", m_DisplayViews[view]);
-        m_Shaders[view].drawArray(GL_POINTS, 0, tri_delaunay2d->num_points);
+        m_Shaders[POINTS].bind();
+        m_Shaders[POINTS].setUniform("modelViewProj", mvp);
+        m_Shaders[POINTS].setUniform("showAllPoints", m_DisplayViews[POINTS]);
+        m_Shaders[POINTS].drawArray(GL_POINTS, 0, tri_delaunay2d->num_points);
         glDisable(GL_BLEND);
+    };
+    m_DrawFunctions[INCIDENT_ANGLE] = [this](const Vector3f&, const Matrix4f&,
+        const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
+        if (m_DisplayViews[INCIDENT_ANGLE])
+        {
+            glEnable(GL_DEPTH_TEST);
+            m_Shaders[INCIDENT_ANGLE].bind();
+            m_Shaders[INCIDENT_ANGLE].setUniform("modelViewProj", mvp);
+            m_Shaders[INCIDENT_ANGLE].drawArray(GL_POINTS, 0, 1);
+            glDisable(GL_DEPTH_TEST);
+        }
     };
 }
 
@@ -110,7 +140,7 @@ void DataSample::drawGL(
 
         for (int i = NORMAL; i != VIEW_COUNT; ++i)
         {
-            m_DrawFunctions[i](static_cast<Views>(i), viewOrigin, model, view, proj, mvp, useShadows, colorMap);
+            m_DrawFunctions[i](viewOrigin, model, mvp, useShadows, colorMap);
         }
 
         m_Axis.drawGL(mvp);
@@ -255,10 +285,11 @@ void DataSample::linkDataToShaders()
     }
 
     const string shader_path = "../resources/shaders/";
-    m_Shaders[NORMAL].initFromFiles ("height_map",       shader_path + "height_map.vert",       shader_path + "height_map.frag");
-    m_Shaders[LOG].initFromFiles    ("log_map",          shader_path + "height_map.vert",       shader_path + "height_map.frag");
-    m_Shaders[PATH].initFromFiles   ("path",             shader_path + "path.vert",             shader_path + "path.frag");
-    m_Shaders[POINTS].initFromFiles ("selected_points",  shader_path + "selected_points.vert",  shader_path + "selected_points.frag");
+    m_Shaders[NORMAL].initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_Shaders[LOG].initFromFiles("log_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
+    m_Shaders[POINTS].initFromFiles("selected_points", shader_path + "selected_points.vert", shader_path + "selected_points.frag");
+    m_Shaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "incident_angle.vert", shader_path + "incident_angle.frag", shader_path + "incident_angle.geom");
 
     m_Shaders[NORMAL].setUniform("color_map", 0);
     m_Shaders[LOG].setUniform("color_map", 0);
@@ -283,6 +314,11 @@ void DataSample::linkDataToShaders()
     m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
     m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_height");
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+
+    Vector2f incidentCoords{ (float)(m_Metadata.incidentTheta * cos(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f),
+                             (float)(m_Metadata.incidentTheta * sin(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f) };
+    m_Shaders[INCIDENT_ANGLE].bind();
+    m_Shaders[INCIDENT_ANGLE].uploadAttrib("in_pos", 1, 2, sizeof(Vector2f), GL_FLOAT, GL_FALSE, (const void*)&incidentCoords);
 
     m_Axis.loadShader();
 

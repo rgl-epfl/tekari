@@ -60,7 +60,7 @@ void RadialGrid::drawGL(
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         m_Shader.bind();
-        m_Shader.setUniform("mvp", mvp);
+        m_Shader.setUniform("modelViewProj", mvp);
 
         for (size_t i = 0; i < 2; i++)
         {
