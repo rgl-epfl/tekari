@@ -1,13 +1,18 @@
 #include "BSDFCanvas.h"
 
+#include <nanogui/layout.h>
+#include <nanogui/screen.h>
+#include <string>
+
 using namespace nanogui;
+using namespace std;
 
 BSDFCanvas::BSDFCanvas(Widget *parent)
 :   GLCanvas(parent)
 ,   m_Translation(0, 0, 0)
 ,	m_Zoom(0)
 ,	m_OrthoMode(false)
-,   m_SelectionRegion(std::make_pair(Vector2i(0,0), Vector2i(0,0)))
+,   m_SelectionRegion(make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_UsesShadows(true)
 ,   m_DisplayAxis(true)
 {
@@ -52,30 +57,23 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
     {
         if (!down && m_SelectedDataSample)
         {
-            if (m_SelectionRegion.first == m_SelectionRegion.second)
-            {
-                m_SelectedDataSample->deselectAllPoints();
-            }
-            else
-            {
-                Matrix4f model, view, proj, mvp;
-                getMVPMatrices(model, view, proj);
-                mvp = proj * view * model;
+            Matrix4f model, view, proj, mvp;
+            getMVPMatrices(model, view, proj);
+            mvp = proj * view * model;
 
-                Vector2i topLeft, size;
-                getSelectionBox(topLeft, size);
+            Vector2i topLeft, size;
+            getSelectionBox(topLeft, size);
             
-                DataSample::SelectionMode           mode = DataSample::SelectionMode::STANDARD;
-                if (modifiers & GLFW_MOD_SHIFT)     mode = DataSample::SelectionMode::ADD;
-                else if (modifiers & GLFW_MOD_ALT)  mode = DataSample::SelectionMode::SUBTRACT;
+            DataSample::SelectionMode           mode = DataSample::SelectionMode::STANDARD;
+            if (modifiers & GLFW_MOD_SHIFT)     mode = DataSample::SelectionMode::ADD;
+            else if (modifiers & GLFW_MOD_ALT)  mode = DataSample::SelectionMode::SUBTRACT;
 
-                m_SelectCallback(mvp, topLeft, size, mSize, mode);
-                m_SelectionRegion = std::make_pair(Vector2i(0, 0), Vector2i(0, 0));
-            }
+            m_SelectCallback(mvp, topLeft, size, mSize, mode);
+            m_SelectionRegion = make_pair(Vector2i(0, 0), Vector2i(0, 0));
         }
         else
         {
-            m_SelectionRegion = std::make_pair(p, p);
+            m_SelectionRegion = make_pair(p, p);
         }
         return true;
     }
@@ -87,7 +85,7 @@ bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
     if (!GLCanvas::scrollEvent(p, rel))
     {
         m_Zoom += rel[1] * 0.2f;
-        m_Zoom = std::min(10.0f, std::max(-10.0f, m_Zoom));
+        m_Zoom = min(10.0f, max(-10.0f, m_Zoom));
     }
     return true;
 }
@@ -115,20 +113,20 @@ void BSDFCanvas::drawGL(NVGcontext* ctx) {
     m_Grid.drawGL(model, view, proj);
 }
 
-void BSDFCanvas::selectDataSample(std::shared_ptr<DataSample> dataSample) {
+void BSDFCanvas::selectDataSample(shared_ptr<DataSample> dataSample) {
     m_SelectedDataSample = dataSample;
 }
 
-void BSDFCanvas::addDataSample(std::shared_ptr<DataSample> dataSample)
+void BSDFCanvas::addDataSample(shared_ptr<DataSample> dataSample)
 {
-    if (std::find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample) == m_DataSamplesToDraw.end())
+    if (find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample) == m_DataSamplesToDraw.end())
     {
         m_DataSamplesToDraw.push_back(dataSample);
     }
 }
-void BSDFCanvas::removeDataSample(std::shared_ptr<DataSample> dataSample)
+void BSDFCanvas::removeDataSample(shared_ptr<DataSample> dataSample)
 {
-    auto dataSampleToErase = std::find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample);
+    auto dataSampleToErase = find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample);
     if (dataSampleToErase != m_DataSamplesToDraw.end())
     {
         m_DataSamplesToDraw.erase(dataSampleToErase);
@@ -187,7 +185,7 @@ void BSDFCanvas::getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &vie
     }
     else {
         const float viewAngle = 81.0f - zoomFactor * 80.0f;
-        float fH = std::tan(viewAngle / 360.0f * M_PI) * near;
+        float fH = tan(viewAngle / 360.0f * M_PI) * near;
         float fW = fH * sizeRatio;
         proj = frustum(-fW, fW, -fH, fH, near, far);
     }
@@ -195,8 +193,8 @@ void BSDFCanvas::getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &vie
 
 void BSDFCanvas::getSelectionBox(Vector2i &topLeft, Vector2i &size) const
 {
-    topLeft = { std::min(m_SelectionRegion.first.x(), m_SelectionRegion.second.x()),
-                std::min(m_SelectionRegion.first.y(), m_SelectionRegion.second.y()) };
-    size = { std::abs(m_SelectionRegion.first.x() - m_SelectionRegion.second.x()),
-             std::abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
+    topLeft = { min(m_SelectionRegion.first.x(), m_SelectionRegion.second.x()),
+                min(m_SelectionRegion.first.y(), m_SelectionRegion.second.y()) };
+    size = { abs(m_SelectionRegion.first.x() - m_SelectionRegion.second.x()),
+             abs(m_SelectionRegion.first.y() - m_SelectionRegion.second.y()) };
 }

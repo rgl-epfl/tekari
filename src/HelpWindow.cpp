@@ -76,6 +76,8 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(viewOptions, "N", "Show/Hide Normal View");
         addRow(viewOptions, "L", "Show/Hide Logarithmic View");
         addRow(viewOptions, "P", "Show/Hide Path");
+        addRow(viewOptions, "Shift + P", "Show/Hide All Points");
+        addRow(viewOptions, "Shift + I", "Show/Hide Incident Angle");
         addRow(viewOptions, "G", "Show/Hide Grid");
         addRow(viewOptions, "A", "Show/Hide Center Points");
         addRow(viewOptions, "Shift+G", "Show/Hide Grid Degrees");

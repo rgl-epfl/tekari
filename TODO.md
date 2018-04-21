@@ -17,7 +17,8 @@ TODO:
 
 // To do:
 - show infos about selected points
-- delete (re-run delaunay)
-- save feature (just reprint in the same format (keep data in the same format))
 - spectral data
 - improve 3d view (elevation labels)
+
+// issues:
+- delete points random crashes + not threaded

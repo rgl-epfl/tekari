@@ -35,6 +35,7 @@ public:
     void toggleWindow(nanogui::Window* &window, std::function<nanogui::Window*(void)> createWindow);
     void toggleMetadataWindow();
     void toggleHelpWindow();
+    void toggleSelectionInfoWindow();
     void toggleColorMapSelectionWindow();
     void selectColorMap(std::shared_ptr<ColorMap> colorMap);
     void deleteDataSample(std::shared_ptr<DataSample> dataSample);
@@ -92,6 +93,13 @@ private:
     nanogui::Window* m_MetadataWindow;
     nanogui::Window* m_HelpWindow;
     nanogui::Window* m_ColorMapSelectionWindow;
+
+    // selection infos
+    nanogui::Window* m_SelectionInfoWindow;
+    nanogui::Label* m_SelectionInfoPointsCountLabel;
+    nanogui::Label* m_SelectionInfoMinHeightLabel;
+    nanogui::Label* m_SelectionInfoMaxHeightLabel;
+    nanogui::Label* m_SelectionInfoAverageHeightLabel;
 
     // canvas
     BSDFCanvas *m_BSDFCanvas;

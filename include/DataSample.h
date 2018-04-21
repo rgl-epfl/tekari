@@ -33,12 +33,13 @@ struct DataSample
     struct PointSampleInfo
     {
         unsigned int pointCount;
-        std::pair<float, float> minMaxHeights;
+        std::pair<float, float> minMaxIntensity;
         nanogui::Vector3f averagePoint;
+        nanogui::Vector3f averageRawPoint;
 
         PointSampleInfo()
         :   pointCount(0)
-        ,   minMaxHeights(std::make_pair<float, float>(0.0f, 0.0f))
+        ,   minMaxIntensity(std::make_pair<float, float>(0.0f, 0.0f))
         ,   averagePoint{0.0f, 0.0f, 0.0f}
         {}
     };
@@ -70,9 +71,11 @@ public:
 
     std::string name()          const { return m_Metadata.sampleName; }
     unsigned int pointsCount()  const { return tri_delaunay2d->num_points; }
-    float minHeight()           const { return m_PointsInfo.minMaxHeights.first; }
-    float maxHeight()           const { return m_PointsInfo.minMaxHeights.second; }
-    float averageHeight()       const { return m_PointsInfo.averagePoint[1]; }
+    float minHeight()           const { return m_PointsInfo.minMaxIntensity.first; }
+    float maxHeight()           const { return m_PointsInfo.minMaxIntensity.second; }
+    float averageHeight()       const { return m_PointsInfo.averageRawPoint[2]; }
+
+    const PointSampleInfo& selectionInfo() const { return m_SelectedPointsInfo; }
 
     const Metadata& metadata() const { return m_Metadata; }
 
@@ -95,6 +98,12 @@ private:
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
     void computeNormals();
 
+    static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
+    {
+        return del_point2d_t{   (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
+                                (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
+    }
+
 private:
     // Raw sample data
     bool m_ShaderLinked;
@@ -105,8 +114,8 @@ private:
     std::vector<nanogui::Vector3f>  m_Normals;
     std::vector<nanogui::Vector3f>  m_LogNormals;
     // Untransformed data
-    std::vector<RawDataPoint>           m_RawPoints;
-    PointSampleInfo                     m_PointsInfo;
+    std::vector<nanogui::Vector3f>  m_RawPoints;        // theta, phi, intensity
+    PointSampleInfo                 m_PointsInfo;
 
     // display Shaders
     nanogui::GLShader m_Shaders[VIEW_COUNT];

@@ -25,6 +25,7 @@ BSDFApplication::BSDFApplication()
 ,   m_SelectedDataSample(nullptr)
 ,	m_MetadataWindow(nullptr)
 ,   m_HelpWindow(nullptr)
+,   m_SelectionInfoWindow(nullptr)
 ,	m_ColorMapSelectionWindow(nullptr)
 {
     // load color maps
@@ -64,6 +65,11 @@ BSDFApplication::BSDFApplication()
     m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
     m_BSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const Vector2i& topLeft,
         const Vector2i& size, const Vector2i& canvasSize, DataSample::SelectionMode mode) {
+        if (m_SelectionInfoWindow)
+        {
+            toggleSelectionInfoWindow();
+        }
+
         for (auto& dataSample : m_DataSamples)
         {
             if (dataSample != m_SelectedDataSample)
@@ -78,6 +84,7 @@ BSDFApplication::BSDFApplication()
             else
             {
                 m_SelectedDataSample->selectPoints(mvp, topLeft, size, canvasSize, mode);
+                toggleSelectionInfoWindow();
             }
         }
     });
@@ -298,6 +305,12 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                     m_BSDFCanvas->grid().setShowDegrees(showDegrees);
                     return true;
                 }
+                case GLFW_KEY_P:
+                    toggleView(DataSample::Views::POINTS, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::POINTS));
+                    return true;
+                case GLFW_KEY_I:
+                    toggleView(DataSample::Views::INCIDENT_ANGLE, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::INCIDENT_ANGLE));
+                    return true;
                 default:
                     return false;
             }
@@ -339,15 +352,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_D:
                 if (m_SelectedDataSample)
                 {
-                    try
-                    {
                     m_SelectedDataSample->deleteSelectedPoints();
-                    cout << "there you are" << endl;
-                    }
-                    catch (const std::runtime_error& e)
-                    {
-                    cout << "lol" << endl;
-                    }
+                    selectDataSample(m_SelectedDataSample);
                     return true;
                 }
             case GLFW_KEY_UP: case GLFW_KEY_W:
@@ -545,7 +551,6 @@ void BSDFApplication::toggleWindow(nanogui::Window *& window, std::function<nano
     else
     {
         window = createWindow();
-        window->center();
         window->requestFocus();
         requestLayoutUpdate();
     }
@@ -566,6 +571,35 @@ void BSDFApplication::toggleMetadataWindow()
             errorWindow->setCallback([this](int index) { m_MetadataWindow = nullptr; });
             window = errorWindow;
         }
+        window->center();
+        return window;
+    });
+}
+
+void BSDFApplication::toggleSelectionInfoWindow()
+{
+    toggleWindow(m_SelectionInfoWindow, [this]() {
+
+        auto window = new Window{ this, "Selection Info" };
+        window->setLayout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 5, 5 });
+
+        auto makeSelectionInfoLabels = [this, window](const string& caption, const string& value) {
+            new Label{ window, caption, "sans-bold" };
+            return new Label{ window, value };
+        };
+
+        unsigned int pointCount = m_SelectedDataSample->selectionInfo().pointCount;
+        float minIntensity = m_SelectedDataSample->selectionInfo().minMaxIntensity.first;
+        float maxIntensity = m_SelectedDataSample->selectionInfo().minMaxIntensity.second;
+        float averageIntensity = m_SelectedDataSample->selectionInfo().averageRawPoint[2];
+
+        m_SelectionInfoPointsCountLabel = makeSelectionInfoLabels("Points In Selection :", to_string(pointCount));
+        m_SelectionInfoMinHeightLabel = makeSelectionInfoLabels("Minimum Intensity :", to_string(minIntensity));
+        m_SelectionInfoMaxHeightLabel = makeSelectionInfoLabels("Maximum Intensity :", to_string(maxIntensity));
+        m_SelectionInfoAverageHeightLabel = makeSelectionInfoLabels("Average Intensity :", to_string(averageIntensity));
+
+        window->setPosition(Vector2i{width() - 200, 20});
+
         return window;
     });
 }
@@ -573,7 +607,9 @@ void BSDFApplication::toggleMetadataWindow()
 void BSDFApplication::toggleHelpWindow()
 {
     toggleWindow(m_HelpWindow, [this]() {
-        return new HelpWindow(this, [this]() {toggleHelpWindow(); });
+        auto window = new HelpWindow(this, [this]() {toggleHelpWindow(); });
+        window->center();
+        return window;
     });
 }
 
@@ -588,6 +624,7 @@ void BSDFApplication::toggleColorMapSelectionWindow()
         };
         auto pos = distance(m_ColorMaps.begin(), find(m_ColorMaps.begin(), m_ColorMaps.end(), m_BSDFCanvas->colorMap()));
         window->setSelectedButton(static_cast<size_t>(pos));
+        window->center();
         return dynamic_cast<Window*>(window);
     });
 }

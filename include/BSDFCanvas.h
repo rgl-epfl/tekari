@@ -2,6 +2,8 @@
 
 #include <nanogui/glcanvas.h>
 #include <nanogui/widget.h>
+#include <nanogui/label.h>
+#include <nanogui/window.h>
 #include <memory>
 #include "DataSample.h"
 #include "Axis.h"
@@ -36,7 +38,6 @@ public:
 
     void setOrthoMode(bool orthoMode) { m_OrthoMode = orthoMode; }
     void setViewAngle(ViewAngles viewAngle);
-    void getSelectionBox(nanogui::Vector2i &topLeft, nanogui::Vector2i &size) const;
     void setSelectionCallback(std::function<void(const nanogui::Matrix4f&, const nanogui::Vector2i&,
         const nanogui::Vector2i&, const nanogui::Vector2i&, DataSample::SelectionMode)> callback) { m_SelectCallback = callback; }
 
@@ -50,6 +51,7 @@ public:
     const std::shared_ptr<const ColorMap> colorMap() const { return m_ColorMap; }
 
 private:
+    void getSelectionBox(nanogui::Vector2i &topLeft, nanogui::Vector2i &size) const;
     void getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const;
 
     std::vector<std::shared_ptr<DataSample>> m_DataSamplesToDraw;
@@ -66,7 +68,7 @@ private:
 
     bool m_OrthoMode;
 
-    // selection region
+    // selection
     std::pair<nanogui::Vector2i, nanogui::Vector2i> m_SelectionRegion;
     std::function<void(const nanogui::Matrix4f&, const nanogui::Vector2i&, const nanogui::Vector2i&,
         const nanogui::Vector2i&, DataSample::SelectionMode)> m_SelectCallback;
@@ -75,4 +77,5 @@ private:
     bool m_DisplayAxis;
     bool m_UsesShadows;
     std::shared_ptr<ColorMap> m_ColorMap;
+
 };

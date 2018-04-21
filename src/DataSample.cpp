@@ -186,6 +186,7 @@ void DataSample::readDataset(const string &filePath)
 
     // total point value for average
     Vector3f total_point = { 0.0f, 0.0f, 0.0f };
+    Vector3f total_raw_point = { 0.0f, 0.0f, 0.0f };
 
     unsigned int lineNumber = 0;
     const size_t MAX_LENGTH = 512;
@@ -229,8 +230,8 @@ void DataSample::readDataset(const string &filePath)
                 errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
                 throw runtime_error(errorMsg.str());
             }
-            m_RawPoints.push_back(RawDataPoint{ theta, phi, intensity });
-            del_point2d_t transformedPoint = m_RawPoints.back().transform();
+            m_RawPoints.push_back(Vector3f{ theta, phi, intensity });
+            del_point2d_t transformedPoint = transformRawPoint(m_RawPoints.back());
 
             m_2DPoints.push_back(transformedPoint);
             m_Heights.push_back(intensity);
@@ -240,6 +241,7 @@ void DataSample::readDataset(const string &filePath)
             max_intensity = max(max_intensity, intensity);
 
             total_point += Vector3f{ transformedPoint.x, intensity, transformedPoint.y };
+            total_raw_point += m_RawPoints.back();
         }
     }
     fclose(datasetFile);
@@ -258,8 +260,9 @@ void DataSample::readDataset(const string &filePath)
         m_Heights[i] = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
         m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
-    m_PointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
+    m_PointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
     m_PointsInfo.averagePoint = total_point / m_2DPoints.size();
+    m_PointsInfo.averageRawPoint = total_raw_point / m_2DPoints.size();
     // normalize averagePoint intensity
     m_PointsInfo.averagePoint[1] = (m_PointsInfo.averagePoint[1] - min_intensity) / (max_intensity - min_intensity);
 
@@ -274,6 +277,7 @@ void DataSample::deleteSelectedPoints()
 
     // delete per vertex data
     Vector3f total_point{ 0.0f, 0.0f, 0.0f };
+    Vector3f total_raw_point{ 0.0f, 0.0f, 0.0f };
     float min_intensity = numeric_limits<float>::max();
     float max_intensity = numeric_limits<float>::min();
     for (int i = m_SelectedPoints.size() - 1; i >= 0; --i)
@@ -288,13 +292,15 @@ void DataSample::deleteSelectedPoints()
         }
         else
         {
-            total_point += Vector3f{m_2DPoints[i].x, m_Heights[i], m_2DPoints[i].y };
-            min_intensity = min(min_intensity, m_RawPoints[i].intensity);
-            max_intensity = max(max_intensity, m_RawPoints[i].intensity);
+            total_point += Vector3f{ m_2DPoints[i].x, m_Heights[i], m_2DPoints[i].y };
+            total_raw_point += m_RawPoints[i];
+            min_intensity = min(min_intensity, m_RawPoints[i][2]);
+            max_intensity = max(max_intensity, m_RawPoints[i][2]);
         }
     }
     m_PointsInfo.averagePoint = total_point / m_2DPoints.size();
-    m_PointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
+    m_PointsInfo.averageRawPoint = total_raw_point / m_2DPoints.size();
+    m_PointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
     m_PointsInfo.pointCount = m_2DPoints.size();
 
     m_Axis.setOrigin(m_PointsInfo.averagePoint);
@@ -387,10 +393,13 @@ void DataSample::linkDataToShaders()
 void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
     const Vector2i & size, const Vector2i & canvasSize, SelectionMode mode)
 {
-    Vector3f total_point{ 0.0f, 0.0f, 0.0f };
+    m_SelectedPointsInfo.averagePoint = Vector3f{ 0.0f, 0.0f, 0.0f };
+    m_SelectedPointsInfo.averageRawPoint = Vector3f{ 0.0f, 0.0f, 0.0f };
+    m_SelectedPointsInfo.minMaxIntensity = make_pair(0.0f, 0.0f);
+    m_SelectedPointsInfo.pointCount = 0;
+
     float min_intensity = numeric_limits<float>::max();
     float max_intensity = numeric_limits<float>::min();
-    m_SelectedPointsInfo.pointCount = 0;
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
         Vector3f point = getVertex(i, false);
@@ -420,20 +429,25 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
         // if we selected the point in the end
         if (m_SelectedPoints[i])
         {
-            total_point += point;
-            min_intensity = min(min_intensity, m_RawPoints[i].intensity);
-            max_intensity = max(max_intensity, m_RawPoints[i].intensity);
+            m_SelectedPointsInfo.averagePoint += getVertex(i, false);
+            m_SelectedPointsInfo.averageRawPoint += m_RawPoints[i];
+            min_intensity = min(min_intensity, m_RawPoints[i][2]);
+            max_intensity = max(max_intensity, m_RawPoints[i][2]);
             ++m_SelectedPointsInfo.pointCount;
         }
     }
-    m_SelectedPointsInfo.averagePoint = total_point / m_SelectedPointsInfo.pointCount;
-    m_SelectedPointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
-
-    // snap to selection
     if (m_SelectedPointsInfo.pointCount == 0)
+    {
         m_Axis.setOrigin(m_PointsInfo.averagePoint);
+    }
     else
+    {
+        m_SelectedPointsInfo.averagePoint /= m_SelectedPointsInfo.pointCount;
+        m_SelectedPointsInfo.averageRawPoint /= m_SelectedPointsInfo.pointCount;
+        m_SelectedPointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
+
         m_Axis.setOrigin(m_SelectedPointsInfo.averagePoint);
+    }
 
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
@@ -514,7 +528,7 @@ void DataSample::save(const std::string& path) const
     //!feof(datasetFile) && !ferror(datasetFile))
     for (unsigned int i = 0; i < m_RawPoints.size(); ++i)
     {
-        fprintf(datasetFile, "%lf %lf %lf\n", m_RawPoints[i].theta, m_RawPoints[i].phi, m_RawPoints[i].intensity);
+        fprintf(datasetFile, "%lf %lf %lf\n", m_RawPoints[i][0], m_RawPoints[i][1], m_RawPoints[i][2]);
     }
     fclose(datasetFile);
 }
