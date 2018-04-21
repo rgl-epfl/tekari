@@ -66,6 +66,7 @@ public:
 
     void loadFromFile(const std::string& sampleDataPath);
     void linkDataToShaders();
+    void initShaders();
 
     std::string name()          const { return m_Metadata.sampleName; }
     unsigned int pointsCount()  const { return tri_delaunay2d->num_points; }
@@ -82,11 +83,14 @@ public:
         SelectionMode mode);
     void deselectAllPoints();
     nanogui::Vector3f selectionCenter();
+    void deleteSelectedPoints();
 
     void save(const std::string& path) const;
 
 private:
-    void readDataset(const std::string &filePath, std::vector<del_point2d_t> &points);
+    void readDataset(const std::string &filePath);
+    void triangulateData();
+    void computePathSegments();
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
     void computeNormals();
@@ -95,6 +99,7 @@ private:
     // Raw sample data
     bool m_ShaderLinked;
     tri_delaunay2d_t *tri_delaunay2d;
+    std::vector<del_point2d_t>      m_2DPoints;
     std::vector<float>				m_Heights;
     std::vector<float>              m_LogHeights;
     std::vector<nanogui::Vector3f>  m_Normals;

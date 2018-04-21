@@ -157,20 +157,23 @@ void DataSample::loadFromFile(const string& sampleDataPath)
         throw runtime_error("ERROR: cannot load sample data twice!");
     }
     // load vertex data
-    vector<del_point2d_t> points;
-    PROFILE(readDataset(sampleDataPath, points));
+    PROFILE(readDataset(sampleDataPath));
 
-    // triangulate vertx data
-    delaunay2d_t *delaunay;
-    PROFILE(delaunay = delaunay2d_from((del_point2d_t*)points.data(), points.size()));
-    PROFILE(tri_delaunay2d = tri_delaunay2d_from(delaunay));
-    delaunay2d_release(delaunay);
-
-    // compute normals
+    PROFILE(triangulateData());
+    PROFILE(computePathSegments());
     PROFILE(computeNormals());
 }
 
-void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &points)
+void DataSample::triangulateData()
+{
+    // triangulate vertx data
+    delaunay2d_t *delaunay;
+    delaunay = delaunay2d_from(m_2DPoints.data(), m_2DPoints.size());
+    tri_delaunay2d = tri_delaunay2d_from(delaunay);
+    delaunay2d_release(delaunay);
+}
+
+void DataSample::readDataset(const string &filePath)
 {
     // try open file
     FILE* datasetFile = fopen(filePath.c_str(), "r");
@@ -183,9 +186,6 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
 
     // total point value for average
     Vector3f total_point = { 0.0f, 0.0f, 0.0f };
-
-    // path segments must always contain the first point...
-    m_PathSegments.push_back(0);
 
     unsigned int lineNumber = 0;
     const size_t MAX_LENGTH = 512;
@@ -210,7 +210,7 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
             if (m_Metadata.datapointsInFile >= 0)
             {
                 // as soon as we know the total size of the dataset, reserve enough space for it
-                points.reserve(m_Metadata.datapointsInFile);
+                m_2DPoints.reserve(m_Metadata.datapointsInFile);
                 m_SelectedPoints.resize(m_Metadata.datapointsInFile, 0);
                 m_Heights.reserve(m_Metadata.datapointsInFile);
                 m_LogHeights.reserve(m_Metadata.datapointsInFile);
@@ -231,19 +231,8 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
             }
             m_RawPoints.push_back(RawDataPoint{ theta, phi, intensity });
             del_point2d_t transformedPoint = m_RawPoints.back().transform();
-            // if two last points are too far appart, a new path segments begins
-            if (!points.empty())
-            {
-                const del_point2d_t& prev = points.back();
-                float dx = transformedPoint.x - prev.x;
-                float dz = transformedPoint.y - prev.y;
-                if (dx*dx + dz*dz > MAX_SAMPLING_DISTANCE)
-                {
-                    m_PathSegments.push_back(points.size());
-                }
-            }
 
-            points.push_back({ transformedPoint.x, transformedPoint.y });
+            m_2DPoints.push_back(transformedPoint);
             m_Heights.push_back(intensity);
             m_LogHeights.push_back(intensity);
 
@@ -257,10 +246,6 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
 
     // store raw metadata
     m_RawMetaData = rawMetaData.str();
-    cout << m_RawMetaData << endl;
-    
-    // ...and the last one
-    m_PathSegments.push_back(points.size());
 
     // normalize intensities
     float correction_factor = 0.0f;
@@ -274,11 +259,84 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
         m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
     m_PointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
-    m_PointsInfo.averagePoint = total_point / points.size();
+    m_PointsInfo.averagePoint = total_point / m_2DPoints.size();
     // normalize averagePoint intensity
     m_PointsInfo.averagePoint[1] = (m_PointsInfo.averagePoint[1] - min_intensity) / (max_intensity - min_intensity);
 
     m_Axis.setOrigin(m_PointsInfo.averagePoint);
+}
+
+void DataSample::deleteSelectedPoints()
+{
+    // if no points selected, there's nothing to do
+    if (m_SelectedPointsInfo.pointCount == 0)
+        return;
+
+    // delete per vertex data
+    Vector3f total_point{ 0.0f, 0.0f, 0.0f };
+    float min_intensity = numeric_limits<float>::max();
+    float max_intensity = numeric_limits<float>::min();
+    for (int i = m_SelectedPoints.size() - 1; i >= 0; --i)
+    {
+        if (m_SelectedPoints[i])
+        {
+            m_2DPoints.erase(m_2DPoints.begin() + i);
+            m_Heights.erase(m_Heights.begin() + i);
+            m_LogHeights.erase(m_LogHeights.begin() + i);
+            m_RawPoints.erase(m_RawPoints.begin() + i);
+            m_SelectedPoints.erase(m_SelectedPoints.begin() + i);
+        }
+        else
+        {
+            total_point += Vector3f{m_2DPoints[i].x, m_Heights[i], m_2DPoints[i].y };
+            min_intensity = min(min_intensity, m_RawPoints[i].intensity);
+            max_intensity = max(max_intensity, m_RawPoints[i].intensity);
+        }
+    }
+    m_PointsInfo.averagePoint = total_point / m_2DPoints.size();
+    m_PointsInfo.minMaxHeights = make_pair(min_intensity, max_intensity);
+    m_PointsInfo.pointCount = m_2DPoints.size();
+
+    m_Axis.setOrigin(m_PointsInfo.averagePoint);
+
+    tri_delaunay2d_release(tri_delaunay2d);
+    PROFILE(triangulateData());
+    PROFILE(computePathSegments());
+    PROFILE(computeNormals());
+
+    m_ShaderLinked = false;
+    linkDataToShaders();
+}
+
+void DataSample::computePathSegments()
+{
+    m_PathSegments.clear();
+    // path segments must always contain the first point
+    m_PathSegments.push_back(0);
+    for (int i = 1; i < m_2DPoints.size(); ++i)
+    {
+        // if two last points are too far appart, a new path segments begins
+        const del_point2d_t& current = m_2DPoints[i];
+        const del_point2d_t& prev = m_2DPoints[i-1];
+        float dx = prev.x - current.x;
+        float dz = prev.y - current.y;
+        if (dx * dx + dz * dz > MAX_SAMPLING_DISTANCE)
+        {
+            m_PathSegments.push_back(i);
+        }
+    }
+    // path segments must always contain the last point
+    m_PathSegments.push_back(m_2DPoints.size());
+}
+
+void DataSample::initShaders()
+{
+    const string shader_path = "../resources/shaders/";
+    m_Shaders[NORMAL].initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_Shaders[LOG].initFromFiles("log_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
+    m_Shaders[POINTS].initFromFiles("selected_points", shader_path + "selected_points.vert", shader_path + "selected_points.frag");
+    m_Shaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "incident_angle.vert", shader_path + "incident_angle.frag", shader_path + "incident_angle.geom");
 }
 
 void DataSample::linkDataToShaders()
@@ -291,13 +349,6 @@ void DataSample::linkDataToShaders()
     {
         throw runtime_error("ERROR: cannot link data to shader twice.");
     }
-
-    const string shader_path = "../resources/shaders/";
-    m_Shaders[NORMAL].initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
-    m_Shaders[LOG].initFromFiles("log_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
-    m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
-    m_Shaders[POINTS].initFromFiles("selected_points", shader_path + "selected_points.vert", shader_path + "selected_points.frag");
-    m_Shaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "incident_angle.vert", shader_path + "incident_angle.frag", shader_path + "incident_angle.geom");
 
     m_Shaders[NORMAL].setUniform("color_map", 0);
     m_Shaders[LOG].setUniform("color_map", 0);
@@ -369,7 +420,7 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
         // if we selected the point in the end
         if (m_SelectedPoints[i])
         {
-            total_point += getVertex(i, false);
+            total_point += point;
             min_intensity = min(min_intensity, m_RawPoints[i].intensity);
             max_intensity = max(max_intensity, m_RawPoints[i].intensity);
             ++m_SelectedPointsInfo.pointCount;

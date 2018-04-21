@@ -334,9 +334,22 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 selectDataSample(key - GLFW_KEY_1);
                 return true;
             case GLFW_KEY_DELETE:
-                    deleteDataSample(m_SelectedDataSample);
+                deleteDataSample(m_SelectedDataSample);
+                return true;
+            case GLFW_KEY_D:
+                if (m_SelectedDataSample)
+                {
+                    try
+                    {
+                    m_SelectedDataSample->deleteSelectedPoints();
+                    cout << "there you are" << endl;
+                    }
+                    catch (const std::runtime_error& e)
+                    {
+                    cout << "lol" << endl;
+                    }
                     return true;
-                break;
+                }
             case GLFW_KEY_UP: case GLFW_KEY_W:
                 selectDataSample(selectedDataSampleIndex() - 1, false);
                 return true;
@@ -421,6 +434,7 @@ void BSDFApplication::drawContents() {
             }
             else
             {
+                newDataSample->dataSample->initShaders();
                 newDataSample->dataSample->linkDataToShaders();
                 addDataSample(m_DataSamples.size(), newDataSample->dataSample);
             }
