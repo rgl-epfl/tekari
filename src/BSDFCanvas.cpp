@@ -9,6 +9,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,	m_OrthoMode(false)
 ,   m_SelectionRegion(std::make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_UsesShadows(true)
+,   m_DisplayAxis(true)
 {
     m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
 }
@@ -69,7 +70,6 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
                 else if (modifiers & GLFW_MOD_ALT)  mode = DataSample::SelectionMode::SUBTRACT;
 
                 m_SelectCallback(mvp, topLeft, size, mSize, mode);
-                snapToSelectionCenter();
                 m_SelectionRegion = std::make_pair(Vector2i(0, 0), Vector2i(0, 0));
             }
         }
@@ -92,22 +92,8 @@ bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
     return true;
 }
 
-void BSDFCanvas::drawGL() {
+void BSDFCanvas::drawGL(NVGcontext* ctx) {
     using namespace nanogui;
-
-    Matrix4f model, view, proj;
-    getMVPMatrices(model, view, proj);
-
-    for (const auto& dataSample: m_DataSamplesToDraw)
-    {
-        dataSample->drawGL(m_ViewOrigin, model, view, proj, m_UsesShadows, m_ColorMap);
-    }
-    m_Grid.drawGL(model, view, proj);
-}
-
-void BSDFCanvas::draw(NVGcontext* ctx)
-{
-    GLCanvas::draw(ctx);
 
     Matrix4f model, view, proj;
     getMVPMatrices(model, view, proj);
@@ -121,11 +107,16 @@ void BSDFCanvas::draw(NVGcontext* ctx)
     nvgRect(ctx, topLeft.x(), topLeft.y(), size.x(), size.y());
     nvgStrokeColor(ctx, Color(1.0f, 1.0f));
     nvgStroke(ctx);
+
+    for (const auto& dataSample: m_DataSamplesToDraw)
+    {
+        dataSample->drawGL(m_ViewOrigin, model, view, proj, m_UsesShadows, m_DisplayAxis, m_ColorMap);
+    }
+    m_Grid.drawGL(model, view, proj);
 }
 
 void BSDFCanvas::selectDataSample(std::shared_ptr<DataSample> dataSample) {
     m_SelectedDataSample = dataSample;
-    snapToSelectionCenter();
 }
 
 void BSDFCanvas::addDataSample(std::shared_ptr<DataSample> dataSample)

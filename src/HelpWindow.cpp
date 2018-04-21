@@ -64,6 +64,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(moveControls, "Left Drag", "Rotate Data Sample");
         addRow(moveControls, "Middle Drag", "Translate Data Sample");
         addRow(moveControls, "Scroll In / Out", "Zoom In / Out");
+        addRow(moveControls, "C", "Snap To Selection Center");
 
         auto fileLoading = addShortcutSection("File Loading");
         addRow(fileLoading, COMMAND + "+O", "Open Data Sample");
@@ -76,9 +77,10 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(viewOptions, "L", "Show/Hide Logarithmic View");
         addRow(viewOptions, "P", "Show/Hide Path");
         addRow(viewOptions, "G", "Show/Hide Grid");
+        addRow(viewOptions, "A", "Show/Hide Center Points");
         addRow(viewOptions, "Shift+G", "Show/Hide Grid Degrees");
         addRow(viewOptions, "Shift+S", "Use/Un-use Shadows");
-        addRow(viewOptions, "C", "Chose Color Map");
+        addRow(viewOptions, "M", "Chose Color Map");
         addRow(viewOptions, "O / KP_5", "Enable/Disable Orthographic View");
         addRow(viewOptions, "KP_1 or Alt+1 / " + COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Front / Back View");
         addRow(viewOptions, "KP_3 or Alt+3 / " + COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Left / Right View");

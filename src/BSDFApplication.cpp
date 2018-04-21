@@ -131,6 +131,7 @@ BSDFApplication::BSDFApplication()
 
         new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
         m_UseShadowsCheckbox = addHiddenOptionToggle("Use Shadows", "Enable/Disable shadows (Shift+S)", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
+        m_DisplayCenterAxis = addHiddenOptionToggle("Display Center Axis", "Show/Hide Center Axis (A)", [this](bool checked) { m_BSDFCanvas->setDisplayAxis(checked); }, true);
         m_DisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
 
@@ -367,12 +368,19 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_I:
                 toggleMetadataWindow();
                 return true;
-            case GLFW_KEY_E:
+            case GLFW_KEY_C:
                 m_BSDFCanvas->snapToSelectionCenter();
                 return true;
-            case GLFW_KEY_C:
+            case GLFW_KEY_M:
                 toggleColorMapSelectionWindow();
                 return true;
+            case GLFW_KEY_A:
+            {
+                bool displayAxis = !m_BSDFCanvas->displayAxis();
+                m_BSDFCanvas->setDisplayAxis(displayAxis);
+                m_DisplayCenterAxis->setChecked(displayAxis);
+                return true;
+            }
             case GLFW_KEY_H:
                 toggleHelpWindow();
                 return true;

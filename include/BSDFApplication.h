@@ -68,6 +68,7 @@ private:
 
     nanogui::PopupButton* m_HiddenOptionsButton;
     nanogui::CheckBox* m_UseShadowsCheckbox;
+    nanogui::CheckBox* m_DisplayCenterAxis;
     nanogui::CheckBox* m_DisplayDegreesCheckbox;
 
     // footer

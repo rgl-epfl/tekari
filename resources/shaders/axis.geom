@@ -10,7 +10,7 @@ const float PI = 3.1415926;
 
 const float lineRadius = 0.002f;
 const float lineLength = 0.15f;
-const float baseRadius = 0.01f;
+const float coneRadius = 0.01f;
 const float coneHeight = 0.05f;
 
 void drawArrow(vec4 front, vec4 up, vec4 right, vec3 color)
@@ -37,7 +37,7 @@ void drawArrow(vec4 front, vec4 up, vec4 right, vec3 color)
   for(int i = 0; i <= 10; ++i)
   {
     float angle = PI * 2.0 / 10.0 * i;
-    vec4 offset = modelViewProj * (sin(angle)*up + cos(angle)*right) * baseRadius;
+    vec4 offset = modelViewProj * (sin(angle)*up + cos(angle)*right) * coneRadius;
     gl_Position = coneBaseCenter + offset;
     EmitVertex();
     gl_Position = coneTip;

@@ -58,7 +58,7 @@ public:
                 const nanogui::Matrix4f& model,
                 const nanogui::Matrix4f& view,
                 const nanogui::Matrix4f& proj,
-                bool useShadows,
+                bool useShadows, bool displayAxis,
                 std::shared_ptr<ColorMap> colorMap);
 
     void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }

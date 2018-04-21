@@ -1,15 +1,49 @@
 #version 150 core
 
 layout(points) in;
-layout(line_strip, max_vertices = 2) out;
+layout(triangle_strip, max_vertices = 44) out;
 
 uniform mat4 modelViewProj;
+const float PI = 3.1415926;
+
+const float lineRadius = 0.002f;
+const float lineLength = 1.0f;
+const float coneRadius = 0.01f;
+const float coneHeight = 0.05f;
+
+void drawArrow(vec4 front, vec4 up, vec4 right)
+{
+  vec4 cylingerBaseCenter1 = gl_in[0].gl_Position;
+  vec4 cylingerBaseCenter2 = gl_in[0].gl_Position + modelViewProj * lineLength * front;
+  vec4 coneBaseCenter = gl_in[0].gl_Position + modelViewProj * lineLength * front;
+  vec4 coneTip        = gl_in[0].gl_Position + modelViewProj * (lineLength + coneHeight) * front;
+
+  // draw cylinder for line
+  for(int i = 0; i <= 10; ++i)
+  {
+    float angle = PI * 2.0 / 10.0 * i;
+    vec4 offset = modelViewProj * (sin(angle)*up + cos(angle)*right) * lineRadius;
+    gl_Position = cylingerBaseCenter1 + offset;
+    EmitVertex();
+    gl_Position = cylingerBaseCenter2 + offset;
+    EmitVertex();
+  }
+  EndPrimitive();
+
+  // draw cone for arrow
+  for(int i = 0; i <= 10; ++i)
+  {
+    float angle = PI * 2.0 / 10.0 * i;
+    vec4 offset = modelViewProj * (sin(angle)*up + cos(angle)*right) * coneRadius;
+    gl_Position = coneBaseCenter + offset;
+    EmitVertex();
+    gl_Position = coneTip;
+    EmitVertex();
+  }
+  EndPrimitive();
+}
 
 void main()
 {
-  gl_Position = gl_in[0].gl_Position;
-  EmitVertex();
-  gl_Position = gl_in[0].gl_Position + modelViewProj * vec4(0, 1, 0, 0);
-  EmitVertex();
-  EndPrimitive();
+  drawArrow(vec4(0, 1, 0, 0), vec4(0, 0, 1, 0), vec4(1, 0, 0, 0));
 }

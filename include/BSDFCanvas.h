@@ -23,8 +23,7 @@ public:
     virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
 
     virtual void performLayout(NVGcontext *ctx) override { m_Arcball.setSize(mSize); }
-    virtual void drawGL() override;
-    virtual void draw(NVGcontext* ctx) override;
+    virtual void drawGL(NVGcontext* ctx) override;
 
     void selectDataSample(std::shared_ptr<DataSample> dataSample);
     void addDataSample(std::shared_ptr<DataSample> dataSample);
@@ -43,6 +42,9 @@ public:
 
     bool usesShadows() const { return m_UsesShadows; }
     void setUsesShadows(bool usesShadows) { m_UsesShadows = usesShadows; }
+
+    bool displayAxis() const { return m_DisplayAxis; }
+    void setDisplayAxis(bool displayAxis) { m_DisplayAxis = displayAxis; }
 
     void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
     const std::shared_ptr<const ColorMap> colorMap() const { return m_ColorMap; }
@@ -70,6 +72,7 @@ private:
         const nanogui::Vector2i&, DataSample::SelectionMode)> m_SelectCallback;
 
     // global state for sample display
+    bool m_DisplayAxis;
     bool m_UsesShadows;
     std::shared_ptr<ColorMap> m_ColorMap;
 };

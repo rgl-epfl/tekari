@@ -130,7 +130,7 @@ void DataSample::drawGL(
     const Matrix4f& model,
     const Matrix4f& view,
     const Matrix4f& proj,
-    bool useShadows,
+    bool useShadows, bool displayAxis,
     shared_ptr<ColorMap> colorMap)
 {
     using namespace nanogui;
@@ -142,8 +142,10 @@ void DataSample::drawGL(
         {
             m_DrawFunctions[i](viewOrigin, model, mvp, useShadows, colorMap);
         }
-
-        m_Axis.drawGL(mvp);
+        if (displayAxis)
+        {
+            m_Axis.drawGL(mvp);
+        }
     }
 
 }
@@ -387,6 +389,7 @@ void DataSample::deselectAllPoints()
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
     m_SelectedPointsInfo.pointCount = 0;
+    m_Axis.setOrigin(m_PointsInfo.averagePoint);
 }
 
 nanogui::Vector3f DataSample::selectionCenter()
