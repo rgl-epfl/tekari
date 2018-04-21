@@ -31,6 +31,7 @@ public:
 
     void openDataSampleDialog();
     void saveScreenShot();
+    void saveSelectedDataSample();
     void toggleWindow(nanogui::Window* &window, std::function<nanogui::Window*(void)> createWindow);
     void toggleMetadataWindow();
     void toggleHelpWindow();

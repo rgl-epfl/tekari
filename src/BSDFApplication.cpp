@@ -220,7 +220,7 @@ BSDFApplication::BSDFApplication()
 
         makeToolButton(true, [this] { openDataSampleDialog(); }, ENTYPO_ICON_FOLDER, "Open data sample (CTRL+O)");
         makeToolButton(true, [this] { saveScreenShot(); }, ENTYPO_ICON_IMAGE, "Save image (CTRL+P)");
-        makeToolButton(true, [this] { cout << "Data saved\n"; }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
+        makeToolButton(true, [this] { saveSelectedDataSample(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
         makeToolButton(true, [this]() { toggleMetadataWindow(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
     }
 
@@ -491,6 +491,22 @@ void BSDFApplication::openDataSampleDialog()
     
     // Make sure we gain focus after seleting a file to be loaded.
     glfwFocusWindow(mGLFWWindow);
+}
+
+void BSDFApplication::saveSelectedDataSample()
+{
+    if (m_SelectedDataSample)
+    {
+        string path = file_dialog(
+        {
+            { "txt",  "Data samples" },
+        }, true);
+
+        if (path.empty())
+            return;
+
+        m_SelectedDataSample->save(path);
+    }
 }
 
 void BSDFApplication::saveScreenShot()

@@ -190,6 +190,7 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
     unsigned int lineNumber = 0;
     const size_t MAX_LENGTH = 512;
     char line[MAX_LENGTH];
+    stringstream rawMetaData;
     while (!feof(datasetFile) && !ferror(datasetFile) && fgets(line, MAX_LENGTH, datasetFile))
     {
         ++lineNumber;
@@ -204,6 +205,7 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
         }
         else if (*head == '#')
         {
+            rawMetaData << head;
             m_Metadata.parse(head);
             if (m_Metadata.datapointsInFile >= 0)
             {
@@ -252,6 +254,10 @@ void DataSample::readDataset(const string &filePath, vector<del_point2d_t> &poin
         }
     }
     fclose(datasetFile);
+
+    // store raw metadata
+    m_RawMetaData = rawMetaData.str();
+    cout << m_RawMetaData << endl;
     
     // ...and the last one
     m_PathSegments.push_back(points.size());
@@ -442,4 +448,22 @@ void DataSample::computeNormals()
         m_Normals[i].normalize();
         m_LogNormals[i].normalize();
     }
+}
+
+void DataSample::save(const std::string& path) const
+{
+    // try open file
+    FILE* datasetFile = fopen(path.c_str(), "w");
+    if (!datasetFile)
+        throw runtime_error("Unable to open file " + path);
+
+    // save metadata
+    fprintf(datasetFile, "%s", m_RawMetaData.c_str());
+
+    //!feof(datasetFile) && !ferror(datasetFile))
+    for (unsigned int i = 0; i < m_RawPoints.size(); ++i)
+    {
+        fprintf(datasetFile, "%lf %lf %lf\n", m_RawPoints[i].theta, m_RawPoints[i].phi, m_RawPoints[i].intensity);
+    }
+    fclose(datasetFile);
 }

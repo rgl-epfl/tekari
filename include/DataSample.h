@@ -83,6 +83,8 @@ public:
     void deselectAllPoints();
     nanogui::Vector3f selectionCenter();
 
+    void save(const std::string& path) const;
+
 private:
     void readDataset(const std::string &filePath, std::vector<del_point2d_t> &points);
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
@@ -112,6 +114,7 @@ private:
 
     // metadata
     Metadata m_Metadata;
+    std::string m_RawMetaData;
     Axis m_Axis;
 
     // Selected point
