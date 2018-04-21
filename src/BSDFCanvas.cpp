@@ -4,9 +4,7 @@ using namespace nanogui;
 
 BSDFCanvas::BSDFCanvas(Widget *parent)
 :   GLCanvas(parent)
-,   m_ViewOrigin(0, 0, 4)
-,   m_ViewTarget(0, 0, 0)
-,   m_ViewUp(0, 1, 0)
+,   m_Translation(0, 0, 0)
 ,	m_Zoom(0)
 ,	m_OrthoMode(false)
 ,   m_SelectionRegion(std::make_pair(Vector2i(0,0), Vector2i(0,0)))
@@ -33,11 +31,8 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
     else if (button == GLFW_MOUSE_BUTTON_5)
     {
         float moveSpeed = 0.04f / (m_Zoom + 10.1f);
-        Vector3f front = (m_ViewOrigin - m_ViewTarget).normalized();
-        Vector3f right = m_ViewUp.cross(front);
-        Vector3f translation = m_Arcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * moveSpeed * right + rel[1] * moveSpeed * m_ViewUp);
-        m_ViewTarget += translation;
-        m_ViewOrigin += translation;
+        Vector3f translation = m_Arcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * moveSpeed * m_ViewRight + rel[1] * moveSpeed * m_ViewUp);
+        m_Translation += translation;
         return true;
     }
     return false;
@@ -151,21 +146,13 @@ void BSDFCanvas::removeDataSample(std::shared_ptr<DataSample> dataSample)
 
 void BSDFCanvas::snapToSelectionCenter()
 {
-    Vector3f selectionCenter;
-    Vector3f translation;
     if (!m_SelectedDataSample)
     {
-        selectionCenter = Vector3f{};
-        translation = selectionCenter - m_ViewTarget;
-        m_ViewOrigin += translation;
-        m_ViewTarget += translation;
+        m_Translation = Vector3f{};
     }
     else
     {
-        selectionCenter = m_SelectedDataSample->selectionCenter();
-        translation = selectionCenter - m_ViewTarget;
-        m_ViewOrigin += translation;
-        m_ViewTarget += translation;
+        m_Translation = m_SelectedDataSample->selectionCenter();
     }
 }
 
@@ -194,8 +181,8 @@ void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
 
 void BSDFCanvas::getMVPMatrices(nanogui::Matrix4f &model, nanogui::Matrix4f &view, nanogui::Matrix4f &proj) const
 {
-    model = m_Arcball.matrix() * translate(-m_ViewTarget);
-    view = lookAt(m_ViewOrigin - m_ViewTarget, m_ViewTarget - m_ViewTarget, m_ViewUp);
+    model = m_Arcball.matrix() * translate(-m_Translation);
+    view = lookAt(m_ViewOrigin, Vector3f{0,0,0}, m_ViewUp);
 
     float near = 0.01f, far = 100.0f;
     float zoomFactor = (m_Zoom + 10.0f) / 20.0f + 0.01f;

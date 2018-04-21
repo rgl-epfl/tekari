@@ -55,9 +55,10 @@ private:
     RadialGrid m_Grid;
     nanogui::Arcball m_Arcball;
 
-    nanogui::Vector3f m_ViewOrigin;
-    nanogui::Vector3f m_ViewTarget;
-    nanogui::Vector3f m_ViewUp;
+    const nanogui::Vector3f m_ViewOrigin    = nanogui::Vector3f{ 0, 0, 4 };
+    const nanogui::Vector3f m_ViewUp        = nanogui::Vector3f{ 0, 1, 0 };
+    const nanogui::Vector3f m_ViewRight     = nanogui::Vector3f{ 1, 0, 0 };
+    nanogui::Vector3f m_Translation;
 
     float m_Zoom;
 
