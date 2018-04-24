@@ -3,6 +3,10 @@
 #include <string>
 #include <iostream>
 
+#include "common.h"
+
+TEKARI_NAMESPACE_BEGIN
+
 struct Metadata
 {
     std::string mountainVersion;
@@ -63,3 +67,5 @@ struct Metadata
 private:
     static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2);; }
 };
+
+TEKARI_NAMESPACE_END

@@ -1,9 +1,11 @@
-#include "ColorMapButton.h"
+#include "tekari/ColorMapButton.h"
 
 #include <nanogui/screen.h>
 #include <nanogui/window.h>
 
 using namespace nanogui;
+
+TEKARI_NAMESPACE_BEGIN
 
 ColorMapButton::ColorMapButton(nanogui::Widget * parent, std::shared_ptr<ColorMap> colorMap)
 :   Widget(parent)
@@ -87,3 +89,4 @@ void ColorMapButton::draw(NVGcontext * ctx)
     }
 }
 
+TEKARI_NAMESPACE_END

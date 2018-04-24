@@ -1,6 +1,9 @@
-#include "RadialGrid.h"
+#include "tekari/RadialGrid.h"
 
 using namespace nanogui;
+using namespace std;
+
+TEKARI_NAMESPACE_BEGIN
 
 RadialGrid::RadialGrid()
 :	m_Color(200, 200, 200, 200)
@@ -11,7 +14,7 @@ RadialGrid::RadialGrid()
         "../resources/shaders/radial_grid.vert",
         "../resources/shaders/radial_grid.frag");
 
-    std::vector<Vector3f> vertices(CIRCLE_COUNT * VERTEX_PER_CIRCLE_COUNT +
+    vector<Vector3f> vertices(CIRCLE_COUNT * VERTEX_PER_CIRCLE_COUNT +
         LINE_COUNT * VERTEX_PER_LINE_COUNT);
 
     for (unsigned int i = 0; i < CIRCLE_COUNT; ++i)
@@ -26,6 +29,12 @@ RadialGrid::RadialGrid()
             };
             vertices[i*VERTEX_PER_CIRCLE_COUNT + j] = point;
         }
+        int theta = (CIRCLE_COUNT - i - 1) * 90 / CIRCLE_COUNT;
+        if (theta != 0)
+        {
+            Vector3f &pos = vertices[i*VERTEX_PER_CIRCLE_COUNT];
+            m_ThetaLabels.push_back(make_pair(to_string(theta), pos + Vector3f{0.02f, 0.02f, -0.02f}));
+        }
     }
 
     for (unsigned int i = 0; i < LINE_COUNT; ++i)
@@ -35,8 +44,8 @@ RadialGrid::RadialGrid()
         vertices[index] = { (float)cos(angle), 0, (float)sin(angle) };
         vertices[index + 1] = -vertices[index];
 
-        m_DegreesLabel.push_back(std::make_pair(std::to_string(180 * i / LINE_COUNT), vertices[index]));
-        m_DegreesLabel.push_back(std::make_pair(std::to_string(180 * i / LINE_COUNT + 180), vertices[index+1]));
+        m_PhiLabels.push_back(make_pair(to_string(180 * i / LINE_COUNT), vertices[index] + vertices[index].normalized() * 0.04f));
+        m_PhiLabels.push_back(make_pair(to_string(180 * i / LINE_COUNT + 180), vertices[index+1] + vertices[index + 1].normalized() * 0.04f));
     }
 
     m_Shader.bind();
@@ -88,22 +97,22 @@ void RadialGrid::draw(  NVGcontext *ctx,
 {
     if (m_Visible && m_ShowDegrees)
     {
+        Matrix4f mvp = proj * view * model;
         nvgFontSize(ctx, 15.0f);
         nvgFontFace(ctx, "sans");
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFillColor(ctx, Color(1.0f, 0.8f));
-        for (const auto& degreeLabel : m_DegreesLabel)
+        for (const auto& phiLabel : m_PhiLabels)
         {
-
-            Vector4f homogeneousPoint;
-            homogeneousPoint << degreeLabel.second * 1.05f, 1.0f;
-            Vector4f projectedPoint{ proj * view * model * homogeneousPoint };
-
-            projectedPoint /= projectedPoint[3];
-            projectedPoint[0] = (projectedPoint[0] + 1.0f) * 0.5f * canvasSize.x();
-            projectedPoint[1] = canvasSize.y() - (projectedPoint[1] + 1.0f) * 0.5f * canvasSize.y();
-            nvgText(ctx, projectedPoint[0], projectedPoint[1], degreeLabel.first.c_str(), nullptr);
+            Vector4f projectedPoint = projectOnScreen(phiLabel.second, canvasSize, mvp);
+            nvgText(ctx, projectedPoint[0], projectedPoint[1], phiLabel.first.c_str(), nullptr);
+        }
+        for (const auto& thetaLabel : m_ThetaLabels)
+        {
+            Vector4f projectedPoint = projectOnScreen(thetaLabel.second, canvasSize, mvp);
+            nvgText(ctx, projectedPoint[0], projectedPoint[1], thetaLabel.first.c_str(), nullptr);
         }
     }
-
 }
+
+TEKARI_NAMESPACE_END

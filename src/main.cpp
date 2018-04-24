@@ -1,4 +1,4 @@
-#include "BSDFApplication.h"
+#include "tekari/BSDFApplication.h"
 
 #if defined(__GNUC__)
 #  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
@@ -18,7 +18,7 @@
 #  include <windows.h>
 #endif
 
-#include "delaunay.h"
+#include "tekari/delaunay.h"
 
 int main(int /* argc */, char ** /* argv */) {
     
@@ -27,7 +27,7 @@ int main(int /* argc */, char ** /* argv */) {
         nanogui::init();
         // scoped variables
         {
-            nanogui::ref<BSDFApplication> app = new BSDFApplication();
+            nanogui::ref<tekari::BSDFApplication> app = new tekari::BSDFApplication();
             app->drawAll();
             app->setVisible(true);
             nanogui::mainloop();

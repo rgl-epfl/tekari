@@ -8,6 +8,8 @@
 
 #include "DataSample.h"
 
+TEKARI_NAMESPACE_BEGIN
+
 class DataSampleButton : public nanogui::Widget
 {
 public:
@@ -65,3 +67,5 @@ private:
     nanogui::Popup *m_Popup;
     nanogui::Button* m_ViewToggles[DataSample::Views::VIEW_COUNT];
 };
+
+TEKARI_NAMESPACE_END

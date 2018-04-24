@@ -4,6 +4,7 @@
 #include <memory>
 #include <thread>
 
+#include "common.h"
 #include "BSDFCanvas.h"
 #include "DataSampleButton.h"
 #include "MetadataWindow.h"
@@ -11,6 +12,8 @@
 #include "HelpWindow.h"
 #include "ColorMap.h"
 #include "SharedQueue.h"
+
+TEKARI_NAMESPACE_BEGIN
 
 struct DataSampleToAdd
 {
@@ -93,13 +96,7 @@ private:
     nanogui::Window* m_MetadataWindow;
     nanogui::Window* m_HelpWindow;
     nanogui::Window* m_ColorMapSelectionWindow;
-
-    // selection infos
     nanogui::Window* m_SelectionInfoWindow;
-    nanogui::Label* m_SelectionInfoPointsCountLabel;
-    nanogui::Label* m_SelectionInfoMinHeightLabel;
-    nanogui::Label* m_SelectionInfoMaxHeightLabel;
-    nanogui::Label* m_SelectionInfoAverageHeightLabel;
 
     // canvas
     BSDFCanvas *m_BSDFCanvas;
@@ -115,3 +112,5 @@ private:
 
     std::unique_ptr<std::thread> m_LoadDataSampleThread;
 };
+
+TEKARI_NAMESPACE_END

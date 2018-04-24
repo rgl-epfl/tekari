@@ -3,6 +3,10 @@
 #include <nanogui/glutil.h>
 #include <string>
 
+#include "common.h"
+
+TEKARI_NAMESPACE_BEGIN
+
 class Axis
 {
 public:
@@ -17,3 +21,5 @@ private:
     nanogui::Vector3f m_Origin;
     nanogui::GLShader m_Shader;
 };
+
+TEKARI_NAMESPACE_END

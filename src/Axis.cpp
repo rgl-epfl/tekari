@@ -1,9 +1,11 @@
-#include "Axis.h"
+#include "tekari/Axis.h"
 
 #pragma once
 
 #include <nanogui/glutil.h>
 #include <string>
+
+TEKARI_NAMESPACE_BEGIN
 
 Axis::Axis(nanogui::Vector3f origin)
     : m_Origin(origin)
@@ -36,3 +38,5 @@ void Axis::setOrigin(const nanogui::Vector3f& newOrigin)
 {
     m_Origin = newOrigin;
 }
+
+TEKARI_NAMESPACE_END

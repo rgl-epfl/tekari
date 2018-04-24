@@ -4,8 +4,11 @@
 #include <memory>
 #include <vector>
 
+#include "common.h"
 #include "ColorMap.h"
 #include "ColorMapButton.h"
+
+TEKARI_NAMESPACE_BEGIN
 
 class ColorMapSelectionWindow : public nanogui::Window
 {
@@ -25,3 +28,5 @@ private:
 
     std::vector<ColorMapButton*> m_ColorMapButtons;
 };
+
+TEKARI_NAMESPACE_END

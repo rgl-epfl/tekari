@@ -1,4 +1,4 @@
-#include "BSDFApplication.h"
+#include "tekari/BSDFApplication.h"
 
 #include <nanogui/layout.h>
 #include <nanogui/button.h>
@@ -15,10 +15,12 @@
 #include <algorithm>
 #include <string>
 
-#include "ColorMapButton.h"
+#include "tekari/SelectionBox.h"
 
 using namespace nanogui;
 using namespace std;
+
+TEKARI_NAMESPACE_BEGIN
 
 BSDFApplication::BSDFApplication()
 :   nanogui::Screen(Vector2i(1200, 750), "BSDF Visualizer", true)
@@ -63,8 +65,8 @@ BSDFApplication::BSDFApplication()
     // the canvas and footer
     m_BSDFCanvas = new BSDFCanvas{ m_3DView };
     m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
-    m_BSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const Vector2i& topLeft,
-        const Vector2i& size, const Vector2i& canvasSize, DataSample::SelectionMode mode) {
+    m_BSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const SelectionBox& selectionBox,
+        const Vector2i& canvasSize, DataSample::SelectionMode mode) {
         if (m_SelectionInfoWindow)
         {
             toggleSelectionInfoWindow();
@@ -77,13 +79,13 @@ BSDFApplication::BSDFApplication()
         }
         if (hasSelectedDataSample())
         {
-            if (size.x() == 0 && size.y() == 0)
+            if (selectionBox.empty())
             {
                 m_SelectedDataSample->deselectAllPoints();
             }
             else
             {
-                m_SelectedDataSample->selectPoints(mvp, topLeft, size, canvasSize, mode);
+                m_SelectedDataSample->selectPoints(mvp, selectionBox, canvasSize, mode);
                 toggleSelectionInfoWindow();
             }
         }
@@ -137,9 +139,12 @@ BSDFApplication::BSDFApplication()
         };
 
         new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
-        m_UseShadowsCheckbox = addHiddenOptionToggle("Use Shadows", "Enable/Disable shadows (Shift+S)", [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
-        m_DisplayCenterAxis = addHiddenOptionToggle("Display Center Axis", "Show/Hide Center Axis (A)", [this](bool checked) { m_BSDFCanvas->setDisplayAxis(checked); }, true);
-        m_DisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)", [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
+        m_UseShadowsCheckbox = addHiddenOptionToggle("Use Shadows", "Enable/Disable shadows (Shift+S)",
+            [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
+        m_DisplayCenterAxis = addHiddenOptionToggle("Display Center Axis", "Show/Hide Center Axis (A)",
+            [this](bool checked) { m_BSDFCanvas->setDisplayAxis(checked); }, true);
+        m_DisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
+            [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
 
         auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };
@@ -352,8 +357,11 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_D:
                 if (m_SelectedDataSample)
                 {
-                    m_SelectedDataSample->deleteSelectedPoints();
-                    selectDataSample(m_SelectedDataSample);
+                    if (m_SelectedDataSample->deleteSelectedPoints())
+                    {
+                        toggleSelectionInfoWindow();
+                        selectDataSample(m_SelectedDataSample);
+                    }
                     return true;
                 }
             case GLFW_KEY_UP: case GLFW_KEY_W:
@@ -585,18 +593,13 @@ void BSDFApplication::toggleSelectionInfoWindow()
 
         auto makeSelectionInfoLabels = [this, window](const string& caption, const string& value) {
             new Label{ window, caption, "sans-bold" };
-            return new Label{ window, value };
+            new Label{ window, value };
         };
 
-        unsigned int pointCount = m_SelectedDataSample->selectionInfo().pointCount;
-        float minIntensity = m_SelectedDataSample->selectionInfo().minMaxIntensity.first;
-        float maxIntensity = m_SelectedDataSample->selectionInfo().minMaxIntensity.second;
-        float averageIntensity = m_SelectedDataSample->selectionInfo().averageRawPoint[2];
-
-        m_SelectionInfoPointsCountLabel = makeSelectionInfoLabels("Points In Selection :", to_string(pointCount));
-        m_SelectionInfoMinHeightLabel = makeSelectionInfoLabels("Minimum Intensity :", to_string(minIntensity));
-        m_SelectionInfoMaxHeightLabel = makeSelectionInfoLabels("Maximum Intensity :", to_string(maxIntensity));
-        m_SelectionInfoAverageHeightLabel = makeSelectionInfoLabels("Average Intensity :", to_string(averageIntensity));
+        makeSelectionInfoLabels("Points In Selection :", to_string(m_SelectedDataSample->selectionPointsCount()));
+        makeSelectionInfoLabels("Minimum Intensity :",   to_string(m_SelectedDataSample->selectionMinIntensity()));
+        makeSelectionInfoLabels("Maximum Intensity :",   to_string(m_SelectedDataSample->selectionMaxIntensity()));
+        makeSelectionInfoLabels("Average Intensity :",   to_string(m_SelectedDataSample->selectionAverageIntensity()));
 
         window->setPosition(Vector2i{width() - 200, 20});
 
@@ -647,7 +650,7 @@ void BSDFApplication::selectDataSample(int index, bool clamped)
 
     if (clamped)
         index = max(0, min(static_cast<int>(m_DataSamples.size()-1), index));
-    else if (index < 0 || index >= m_DataSamples.size())
+    else if (index < 0 || index >= static_cast<int>(m_DataSamples.size()))
         return;
 
     selectDataSample(m_DataSamples[index]);
@@ -673,7 +676,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 
         m_DataSampleName->setCaption(m_SelectedDataSample->name());
         m_DataSamplePointsCount->setCaption(std::to_string(m_SelectedDataSample->pointsCount()));
-        m_DataSampleAverageHeight->setCaption(std::to_string(m_SelectedDataSample->averageHeight()));
+        m_DataSampleAverageHeight->setCaption(std::to_string(m_SelectedDataSample->averageIntensity()));
     }
     else
     {
@@ -708,7 +711,7 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
     if (dataSample == m_SelectedDataSample)
     {
         shared_ptr<DataSample> dataSampleToSelect = nullptr;
-        if (index >= m_DataSamples.size()) --index;
+        if (index >= static_cast<int>(m_DataSamples.size())) --index;
         if (index >= 0)
         {
             dataSampleToSelect = m_DataSamples[index];
@@ -806,3 +809,5 @@ void BSDFApplication::tryLoadDataSample(std::string filePath, std::shared_ptr<Da
         dataSampleToAdd->errorMsg = errorMsg;
     }
 }
+
+TEKARI_NAMESPACE_END

@@ -5,6 +5,8 @@
 
 #include "Metadata.h"
 
+TEKARI_NAMESPACE_BEGIN
+
 class MetadataWindow : public nanogui::Window
 {
 public:
@@ -14,3 +16,5 @@ public:
 private:
     std::function<void(void)> m_CloseCallback;
 };
+
+TEKARI_NAMESPACE_END

@@ -23,7 +23,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "delaunay.h"
+#include "tekari/delaunay.h"
 
 #define ON_RIGHT	1
 #define ON_SEG		0

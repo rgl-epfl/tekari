@@ -1,4 +1,4 @@
-#include "DataSampleButton.h"
+#include "tekari/DataSampleButton.h"
 
 #include <iostream>
 #include <functional>
@@ -12,6 +12,8 @@
 
 using namespace nanogui;
 using namespace std;
+
+TEKARI_NAMESPACE_BEGIN
 
 DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
 :   Widget{ parent }
@@ -203,3 +205,5 @@ void DataSampleButton::setToggleCallback(std::function<void(bool)> callback) {
         m_ViewToggles[view]->setChangeCallback(callback);
     }
 }
+
+TEKARI_NAMESPACE_END

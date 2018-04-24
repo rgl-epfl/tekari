@@ -1,4 +1,4 @@
-#include "ColorMapSelectionWindow.h"
+#include "tekari/ColorMapSelectionWindow.h"
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
@@ -11,6 +11,8 @@
 
 using namespace nanogui;
 using namespace std;
+
+TEKARI_NAMESPACE_BEGIN
 
 ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_ptr<ColorMap>> colorMaps,
     function<void()> closeCallback, function<void(shared_ptr<ColorMap> colorMap)> selectionCallback)
@@ -62,3 +64,5 @@ void ColorMapSelectionWindow::deselectAllColorMapsButton()
         colorMapButton->setSelected(false);
     }
 }
+
+TEKARI_NAMESPACE_END

@@ -1,4 +1,4 @@
-#include "DataSample.h"
+#include "tekari/DataSample.h"
 
 #include <cstdint>
 #include <limits>
@@ -8,17 +8,18 @@
 #include <cstring>
 #include <iostream>
 #include <istream>
-#include <delaunay.h>
 
-#include "common.h"
-#include "stop_watch.h"
+#include "tekari/delaunay.h"
+#include "tekari/stop_watch.h"
 
 using namespace std;
 using namespace nanogui;
 
 #define MAX_SAMPLING_DISTANCE 0.05f
 
-DataSample::DataSample()
+TEKARI_NAMESPACE_BEGIN
+
+DataSample::DataSample(const string& sampleDataPath)
 :	m_DisplayViews{ true, false, false, false, true }
 ,   m_ShaderLinked(false)
 ,	tri_delaunay2d(nullptr)
@@ -44,7 +45,6 @@ DataSample::DataSample()
             glDisable(GL_POLYGON_OFFSET_FILL);
         }
     };
-
     m_DrawFunctions[LOG] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
         const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
         if (m_DisplayViews[LOG])
@@ -81,7 +81,6 @@ DataSample::DataSample()
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
-
     m_DrawFunctions[POINTS] = [this](const Vector3f&, const Matrix4f&,
         const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
         glPointSize(4);
@@ -104,12 +103,13 @@ DataSample::DataSample()
             glDisable(GL_DEPTH_TEST);
         }
     };
-}
 
-DataSample::DataSample(const string& sampleDataPath)
-:	DataSample()
-{
-    loadFromFile(sampleDataPath);
+    // load vertex data from file
+    PROFILE(readDataset(sampleDataPath));
+
+    PROFILE(triangulateData());
+    PROFILE(computePathSegments());
+    PROFILE(computeNormals());
 }
 
 DataSample::~DataSample()
@@ -150,22 +150,14 @@ void DataSample::drawGL(
 
 }
 
-void DataSample::loadFromFile(const string& sampleDataPath)
-{
-    if (tri_delaunay2d)
-    {
-        throw runtime_error("ERROR: cannot load sample data twice!");
-    }
-    // load vertex data
-    PROFILE(readDataset(sampleDataPath));
-
-    PROFILE(triangulateData());
-    PROFILE(computePathSegments());
-    PROFILE(computeNormals());
-}
 
 void DataSample::triangulateData()
 {
+    if (tri_delaunay2d)
+    {
+        throw runtime_error("ERROR: cannot triangulate data twice!");
+    }
+
     // triangulate vertx data
     delaunay2d_t *delaunay;
     delaunay = delaunay2d_from(m_2DPoints.data(), m_2DPoints.size());
@@ -181,12 +173,9 @@ void DataSample::readDataset(const string &filePath)
         throw runtime_error("Unable to open file " + filePath);
 
     // min and max values for normalization
+    m_PointsInfo = PointSampleInfo();
     float min_intensity = numeric_limits<float>::max();
     float max_intensity = numeric_limits<float>::min();
-
-    // total point value for average
-    Vector3f total_point = { 0.0f, 0.0f, 0.0f };
-    Vector3f total_raw_point = { 0.0f, 0.0f, 0.0f };
 
     unsigned int lineNumber = 0;
     const size_t MAX_LENGTH = 512;
@@ -212,7 +201,7 @@ void DataSample::readDataset(const string &filePath)
             {
                 // as soon as we know the total size of the dataset, reserve enough space for it
                 m_2DPoints.reserve(m_Metadata.datapointsInFile);
-                m_SelectedPoints.resize(m_Metadata.datapointsInFile, 0);
+                m_SelectedPoints.resize(m_Metadata.datapointsInFile, false);
                 m_Heights.reserve(m_Metadata.datapointsInFile);
                 m_LogHeights.reserve(m_Metadata.datapointsInFile);
 
@@ -240,8 +229,8 @@ void DataSample::readDataset(const string &filePath)
             min_intensity = min(min_intensity, intensity);
             max_intensity = max(max_intensity, intensity);
 
-            total_point += Vector3f{ transformedPoint.x, intensity, transformedPoint.y };
-            total_raw_point += m_RawPoints.back();
+            m_PointsInfo.averagePoint += Vector3f{ transformedPoint.x, intensity, transformedPoint.y };
+            m_PointsInfo.averageRawPoint += m_RawPoints.back();
         }
     }
     fclose(datasetFile);
@@ -261,57 +250,71 @@ void DataSample::readDataset(const string &filePath)
         m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
     m_PointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
-    m_PointsInfo.averagePoint = total_point / m_2DPoints.size();
-    m_PointsInfo.averageRawPoint = total_raw_point / m_2DPoints.size();
+    m_PointsInfo.averagePoint /= m_PointsInfo.pointCount;
+    m_PointsInfo.averageRawPoint /= m_PointsInfo.pointCount;
     // normalize averagePoint intensity
     m_PointsInfo.averagePoint[1] = (m_PointsInfo.averagePoint[1] - min_intensity) / (max_intensity - min_intensity);
 
     m_Axis.setOrigin(m_PointsInfo.averagePoint);
 }
 
-void DataSample::deleteSelectedPoints()
+bool DataSample::deleteSelectedPoints()
 {
     // if no points selected, there's nothing to do
     if (m_SelectedPointsInfo.pointCount == 0)
-        return;
+        return false;
 
     // delete per vertex data
-    Vector3f total_point{ 0.0f, 0.0f, 0.0f };
-    Vector3f total_raw_point{ 0.0f, 0.0f, 0.0f };
+    m_PointsInfo = PointSampleInfo();
     float min_intensity = numeric_limits<float>::max();
     float max_intensity = numeric_limits<float>::min();
-    for (int i = m_SelectedPoints.size() - 1; i >= 0; --i)
+    
+    unsigned int lastValid = 0;
+    for (unsigned int i = 0; i < m_SelectedPoints.size(); ++i)
     {
-        if (m_SelectedPoints[i])
+        if (!m_SelectedPoints[i])
         {
-            m_2DPoints.erase(m_2DPoints.begin() + i);
-            m_Heights.erase(m_Heights.begin() + i);
-            m_LogHeights.erase(m_LogHeights.begin() + i);
-            m_RawPoints.erase(m_RawPoints.begin() + i);
-            m_SelectedPoints.erase(m_SelectedPoints.begin() + i);
-        }
-        else
-        {
-            total_point += Vector3f{ m_2DPoints[i].x, m_Heights[i], m_2DPoints[i].y };
-            total_raw_point += m_RawPoints[i];
+            // move undeleted point to last valid position
+            m_2DPoints[lastValid] = m_2DPoints[i];
+            m_Heights[lastValid] = m_Heights[i];
+            m_LogHeights[lastValid] = m_LogHeights[i];
+            m_RawPoints[lastValid] = m_RawPoints[i];
+            m_SelectedPoints[lastValid] = 0;
+            ++lastValid;
+
+            // update point info
+            m_PointsInfo.averagePoint += Vector3f{ m_2DPoints[i].x, m_Heights[i], m_2DPoints[i].y };
+            m_PointsInfo.averageRawPoint += m_RawPoints[i];
+            ++m_PointsInfo.pointCount;
             min_intensity = min(min_intensity, m_RawPoints[i][2]);
             max_intensity = max(max_intensity, m_RawPoints[i][2]);
         }
     }
-    m_PointsInfo.averagePoint = total_point / m_2DPoints.size();
-    m_PointsInfo.averageRawPoint = total_raw_point / m_2DPoints.size();
+
+    // resize all my vectors
+    m_2DPoints.resize(m_PointsInfo.pointCount);
+    m_Heights.resize(m_PointsInfo.pointCount);
+    m_LogHeights.resize(m_PointsInfo.pointCount);
+    m_RawPoints.resize(m_PointsInfo.pointCount);
+    m_SelectedPoints.resize(m_PointsInfo.pointCount);
+
+    // compute points info
+    m_PointsInfo.averagePoint /= m_PointsInfo.pointCount;
+    m_PointsInfo.averageRawPoint /= m_PointsInfo.pointCount;
     m_PointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
-    m_PointsInfo.pointCount = m_2DPoints.size();
 
     m_Axis.setOrigin(m_PointsInfo.averagePoint);
 
+    // recompute mesh
     tri_delaunay2d_release(tri_delaunay2d);
+    tri_delaunay2d = nullptr;
     PROFILE(triangulateData());
     PROFILE(computePathSegments());
     PROFILE(computeNormals());
 
     m_ShaderLinked = false;
     linkDataToShaders();
+    return true;
 }
 
 void DataSample::computePathSegments()
@@ -319,7 +322,7 @@ void DataSample::computePathSegments()
     m_PathSegments.clear();
     // path segments must always contain the first point
     m_PathSegments.push_back(0);
-    for (int i = 1; i < m_2DPoints.size(); ++i)
+    for (unsigned int i = 1; i < m_2DPoints.size(); ++i)
     {
         // if two last points are too far appart, a new path segments begins
         const del_point2d_t& current = m_2DPoints[i];
@@ -390,34 +393,23 @@ void DataSample::linkDataToShaders()
     m_ShaderLinked = true;
 }
 
-void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
-    const Vector2i & size, const Vector2i & canvasSize, SelectionMode mode)
+void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectionBox,
+    const Vector2i & canvasSize, SelectionMode mode)
 {
-    m_SelectedPointsInfo.averagePoint = Vector3f{ 0.0f, 0.0f, 0.0f };
-    m_SelectedPointsInfo.averageRawPoint = Vector3f{ 0.0f, 0.0f, 0.0f };
-    m_SelectedPointsInfo.minMaxIntensity = make_pair(0.0f, 0.0f);
-    m_SelectedPointsInfo.pointCount = 0;
+    m_SelectedPointsInfo = PointSampleInfo();
 
     float min_intensity = numeric_limits<float>::max();
     float max_intensity = numeric_limits<float>::min();
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
-        Vector3f point = getVertex(i, false);
-        Vector4f homogeneousPoint;
-        homogeneousPoint << point, 1.0f;
-        Vector4f projPoint = mvp * homogeneousPoint;
+        Vector4f projPoint = projectOnScreen(getVertex(i, false), canvasSize, mvp);
 
-        projPoint /= projPoint[3];
-        projPoint[0] = (projPoint[0] + 1.0f) * 0.5f * canvasSize[0];
-        projPoint[1] = canvasSize[1] - (projPoint[1] + 1.0f) * 0.5f * canvasSize[1];
-
-        bool inSelection = projPoint[0] >= topLeft[0] && projPoint[0] <= topLeft[0] + size[0] &&
-            projPoint[1] >= topLeft[1] && projPoint[1] <= topLeft[1] + size[1];
+        bool inSelection = selectionBox.contains(Vector2i{ projPoint[0], projPoint[1] });
         
         switch (mode)
         {
         case NORMAL:
-            m_SelectedPoints[i] = inSelection;
+            m_SelectedPoints[i] =  inSelection;
             break;
         case ADD:
             m_SelectedPoints[i] = inSelection || m_SelectedPoints[i];
@@ -455,7 +447,7 @@ void DataSample::selectPoints(const Matrix4f & mvp, const Vector2i & topLeft,
 
 void DataSample::deselectAllPoints()
 {
-    memset(m_SelectedPoints.data(), 0, m_SelectedPoints.size() * sizeof(m_SelectedPoints[0]));
+    memset(m_SelectedPoints.data(), 0, sizeof(unsigned char) * m_SelectedPoints.size());
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
@@ -495,8 +487,10 @@ void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigne
 
 void DataSample::computeNormals()
 {
-    m_Normals.resize(tri_delaunay2d->num_points, { 0,0,0 });
-    m_LogNormals.resize(tri_delaunay2d->num_points, { 0,0,0 });
+    m_Normals.resize(tri_delaunay2d->num_points);
+    m_LogNormals.resize(tri_delaunay2d->num_points);
+    memset(m_Normals.data(),     0, sizeof(Vector3f) * m_Normals.size());
+    memset(m_LogNormals.data(),  0, sizeof(Vector3f) * m_LogNormals.size());
 
     for (unsigned int i = 0; i < tri_delaunay2d->num_triangles; ++i)
     {
@@ -532,3 +526,5 @@ void DataSample::save(const std::string& path) const
     }
     fclose(datasetFile);
 }
+
+TEKARI_NAMESPACE_END

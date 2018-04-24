@@ -1,4 +1,6 @@
-#include "ColorMap.h"
+#include "tekari/ColorMap.h"
+
+TEKARI_NAMESPACE_BEGIN
 
 ColorMap::ColorMap(const std::string& name, const std::string& filePath)
 :   m_Name(name)
@@ -40,3 +42,5 @@ void ColorMap::unbind(unsigned int target)
     glActiveTexture(GL_TEXTURE0 + target);
     glBindTexture(GL_TEXTURE_1D, 0);
 }
+
+TEKARI_NAMESPACE_END

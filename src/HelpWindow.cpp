@@ -1,4 +1,4 @@
-#include "HelpWindow.h"
+#include "tekari/HelpWindow.h"
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
@@ -12,6 +12,8 @@
 using namespace nanogui;
 using namespace std;
 
+TEKARI_NAMESPACE_BEGIN
+
 #ifdef __APPLE__
 string HelpWindow::COMMAND = "Cmd";
 #else
@@ -23,6 +25,7 @@ string HelpWindow::ALT = "Opt";
 #else
 string HelpWindow::ALT = "Alt";
 #endif
+
 
 HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
 :   Window{ parent, "Help" }
@@ -174,3 +177,5 @@ void HelpWindow::performLayout(NVGcontext *ctx)
     //m_ScrollPanel->setFixedHeight(mParent->height() / 2);
     center();
 }
+
+TEKARI_NAMESPACE_END

@@ -4,6 +4,8 @@
 #include <vector>
 #include "common.h"
 
+TEKARI_NAMESPACE_BEGIN
+
 class RadialGrid
 {
 public:
@@ -38,7 +40,10 @@ private:
 
     nanogui::GLShader m_Shader;
     nanogui::Color m_Color;
-    std::vector<std::pair<std::string, nanogui::Vector3f>> m_DegreesLabel;
+    std::vector<std::pair<std::string, nanogui::Vector3f>> m_PhiLabels;
+    std::vector<std::pair<std::string, nanogui::Vector3f>> m_ThetaLabels;
     bool m_Visible;
     bool m_ShowDegrees;
 };
+
+TEKARI_NAMESPACE_END

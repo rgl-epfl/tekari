@@ -1,5 +1,7 @@
 #pragma once
 
+#include <nanogui\glutil.h>
+
 #if defined(_WIN32)
 #	define NOMINMAX  // Remove min/max macros when building on windows
 #	include <Windows.h>
@@ -23,3 +25,24 @@
 #else
 	#define SYSTEM_COMMAND_MOD GLFW_MOD_CONTROL
 #endif
+
+#define TEKARI_NAMESPACE_BEGIN namespace tekari {
+#define TEKARI_NAMESPACE_END }
+
+TEKARI_NAMESPACE_BEGIN
+
+inline nanogui::Vector4f projectOnScreen(const nanogui::Vector3f &point,
+    const nanogui::Vector2i &canvasSize,
+    const nanogui::Matrix4f &mvp)
+{
+    nanogui::Vector4f homogeneousPoint;
+    homogeneousPoint << point, 1.0f;
+    nanogui::Vector4f projectedPoint{ mvp * homogeneousPoint };
+
+    projectedPoint /= projectedPoint[3];
+    projectedPoint[0] = (projectedPoint[0] + 1.0f) * 0.5f * canvasSize.x();
+    projectedPoint[1] = canvasSize.y() - (projectedPoint[1] + 1.0f) * 0.5f * canvasSize.y();
+    return projectedPoint;
+}
+
+TEKARI_NAMESPACE_END

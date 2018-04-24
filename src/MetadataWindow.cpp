@@ -1,4 +1,4 @@
-#include "MetadataWindow.h"
+#include "tekari/MetadataWindow.h"
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
@@ -9,6 +9,8 @@
 
 using namespace nanogui;
 
+TEKARI_NAMESPACE_BEGIN
+
 MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::function<void(void)> closeCallback)
     : Window(parent, "Metadata")
     , m_CloseCallback(closeCallback)
@@ -17,7 +19,6 @@ MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::fu
     closeButton->setCallback(m_CloseCallback);
 
     setLayout(new GroupLayout{});
-    setFixedWidth(650);
 
     auto infos = new Widget{this};
     infos->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
@@ -82,3 +83,5 @@ bool MetadataWindow::keyboardEvent(int key, int scancode, int action, int modifi
 
     return false;
 }
+
+TEKARI_NAMESPACE_END

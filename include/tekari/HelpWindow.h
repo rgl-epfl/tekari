@@ -1,9 +1,12 @@
 #pragma once
 
 #include <nanogui/window.h>
-
 #include <string>
 #include <iostream>
+
+#include "common.h"
+
+TEKARI_NAMESPACE_BEGIN
 
 class HelpWindow : public nanogui::Window {
 public:
@@ -20,3 +23,5 @@ private:
 
     nanogui::VScrollPanel *m_ScrollPanel;
 };
+
+TEKARI_NAMESPACE_END

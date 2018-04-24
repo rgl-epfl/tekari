@@ -2,6 +2,9 @@
 
 #include <nanogui/glutil.h>
 #include "stb_image.h"
+#include "common.h"
+
+TEKARI_NAMESPACE_BEGIN
 
 class ColorMap
 {
@@ -18,3 +21,5 @@ private:
     unsigned int m_RenderId;
     std::string m_Name;
 };
+
+TEKARI_NAMESPACE_END

@@ -16,9 +16,9 @@ TODO:
 - delaunay crashes for too big inputs
 
 // To do:
-- show infos about selected points
 - spectral data
 - improve 3d view (elevation labels)
 
 // issues:
 - delete points random crashes + not threaded
+- can't figure out how to draw grid info behind datasample

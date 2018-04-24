@@ -6,7 +6,10 @@
 #include <functional>
 #include <memory>
 
+#include "common.h"
 #include "ColorMap.h"
+
+TEKARI_NAMESPACE_BEGIN
 
 class ColorMapButton : public nanogui::Widget
 {
@@ -30,3 +33,5 @@ private:
 
     bool m_Selected;
 };
+
+TEKARI_NAMESPACE_END
