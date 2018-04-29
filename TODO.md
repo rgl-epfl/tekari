@@ -17,7 +17,6 @@ TODO:
 // To do:
 - spectral data
 
-- log/normal shoudl be toggle, selection should consider current view and path and points too
 - select individual points
 - scale points depending on zoom plus manual factor
 - move point along path

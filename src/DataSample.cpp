@@ -1,7 +1,6 @@
 #include "tekari/DataSample.h"
 
 #include <cstdint>
-#include <limits>
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
@@ -151,11 +150,6 @@ void DataSample::readDataset(const string &filePath)
     if (!datasetFile)
         throw runtime_error("Unable to open file " + filePath);
 
-    // min and max values for normalization
-    m_PointsInfo = PointSampleInfo();
-    float min_intensity = numeric_limits<float>::max();
-    float max_intensity = numeric_limits<float>::min();
-
     unsigned int lineNumber = 0;
     const size_t MAX_LENGTH = 512;
     char line[MAX_LENGTH];
@@ -185,7 +179,6 @@ void DataSample::readDataset(const string &filePath)
                 m_LogHeights.reserve(m_Metadata.datapointsInFile);
 
                 m_RawPoints.reserve(m_Metadata.datapointsInFile);
-                m_PointsInfo.pointCount = m_Metadata.datapointsInFile;
             }
         }
         else
@@ -205,13 +198,10 @@ void DataSample::readDataset(const string &filePath)
             m_Heights.push_back(intensity);
             m_LogHeights.push_back(intensity);
 
-            min_intensity = min(min_intensity, intensity);
-            max_intensity = max(max_intensity, intensity);
-
-            m_PointsInfo.averagePoint += Vector3f{ transformedPoint.x, intensity, transformedPoint.y };
-            m_PointsInfo.averageRawPoint += m_RawPoints.back();
+            m_PointsInfo.addPoint(m_2DPoints.size() - 1, m_RawPoints.back(), Vector3f{ transformedPoint.x, intensity, transformedPoint.y });
         }
     }
+    m_PointsInfo.normalize();
     fclose(datasetFile);
 
     // store raw metadata
@@ -219,6 +209,8 @@ void DataSample::readDataset(const string &filePath)
 
     // normalize intensities
     float correction_factor = 0.0f;
+    float min_intensity = m_PointsInfo.minIntensity();
+    float max_intensity = m_PointsInfo.maxIntensity();
     if (min_intensity <= 0.0f)
         correction_factor = -min_intensity + 1e-10f;
     float min_log_intensity = log(min_intensity + correction_factor);
@@ -228,25 +220,19 @@ void DataSample::readDataset(const string &filePath)
         m_Heights[i] = (m_Heights[i] - min_intensity) / (max_intensity - min_intensity);
         m_LogHeights[i] = (log(m_LogHeights[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
-    m_PointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
-    m_PointsInfo.averagePoint /= m_PointsInfo.pointCount;
-    m_PointsInfo.averageRawPoint /= m_PointsInfo.pointCount;
-    // normalize averagePoint intensity
-    m_PointsInfo.averagePoint[1] = (m_PointsInfo.averagePoint[1] - min_intensity) / (max_intensity - min_intensity);
 
-    m_Axis.setOrigin(m_PointsInfo.averagePoint);
+    m_Axis.setOrigin(selectionCenter());
 }
 
 bool DataSample::deleteSelectedPoints()
 {
     // if no points selected, there's nothing to do
-    if (m_SelectedPointsInfo.pointCount == 0)
+    if (m_SelectedPointsInfo.pointsCount() == 0)
         return false;
 
     // delete per vertex data
     m_PointsInfo = PointSampleInfo();
-    float min_intensity = numeric_limits<float>::max();
-    float max_intensity = numeric_limits<float>::min();
+    m_SelectedPointsInfo = PointSampleInfo();
     
     unsigned int lastValid = 0;
     for (unsigned int i = 0; i < m_SelectedPoints.size(); ++i)
@@ -262,27 +248,19 @@ bool DataSample::deleteSelectedPoints()
             ++lastValid;
 
             // update point info
-            m_PointsInfo.averagePoint += Vector3f{ m_2DPoints[i].x, m_Heights[i], m_2DPoints[i].y };
-            m_PointsInfo.averageRawPoint += m_RawPoints[i];
-            ++m_PointsInfo.pointCount;
-            min_intensity = min(min_intensity, m_RawPoints[i][2]);
-            max_intensity = max(max_intensity, m_RawPoints[i][2]);
+            m_PointsInfo.addPoint(i, m_RawPoints[i], Vector3f{ m_2DPoints[i].x, m_Heights[i], m_2DPoints[i].y });
         }
     }
 
     // resize all my vectors
-    m_2DPoints.resize(m_PointsInfo.pointCount);
-    m_Heights.resize(m_PointsInfo.pointCount);
-    m_LogHeights.resize(m_PointsInfo.pointCount);
-    m_RawPoints.resize(m_PointsInfo.pointCount);
-    m_SelectedPoints.resize(m_PointsInfo.pointCount);
+    m_2DPoints.resize(m_PointsInfo.pointsCount());
+    m_Heights.resize(m_PointsInfo.pointsCount());
+    m_LogHeights.resize(m_PointsInfo.pointsCount());
+    m_RawPoints.resize(m_PointsInfo.pointsCount());
+    m_SelectedPoints.resize(m_PointsInfo.pointsCount());
 
-    // compute points info
-    m_PointsInfo.averagePoint /= m_PointsInfo.pointCount;
-    m_PointsInfo.averageRawPoint /= m_PointsInfo.pointCount;
-    m_PointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
-
-    m_Axis.setOrigin(m_PointsInfo.averagePoint);
+    m_PointsInfo.normalize();
+    m_Axis.setOrigin(m_PointsInfo.averagePoint());
 
     // recompute mesh
     tri_delaunay2d_release(tri_delaunay2d);
@@ -393,11 +371,10 @@ void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectio
 {
     m_SelectedPointsInfo = PointSampleInfo();
 
-    float min_intensity = numeric_limits<float>::max();
-    float max_intensity = numeric_limits<float>::min();
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
-        Vector4f projPoint = projectOnScreen(getVertex(i, m_DisplayAsLog), canvasSize, mvp);
+        Vector3f point = getVertex(i, m_DisplayAsLog);
+        Vector4f projPoint = projectOnScreen(point, canvasSize, mvp);
 
         bool inSelection = selectionBox.contains(Vector2i{ projPoint[0], projPoint[1] });
         
@@ -416,25 +393,11 @@ void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectio
         // if we selected the point in the end
         if (m_SelectedPoints[i])
         {
-            m_SelectedPointsInfo.averagePoint += getVertex(i, false);
-            m_SelectedPointsInfo.averageRawPoint += m_RawPoints[i];
-            min_intensity = min(min_intensity, m_RawPoints[i][2]);
-            max_intensity = max(max_intensity, m_RawPoints[i][2]);
-            ++m_SelectedPointsInfo.pointCount;
+            m_SelectedPointsInfo.addPoint(i, m_RawPoints[i], point);
         }
     }
-    if (m_SelectedPointsInfo.pointCount == 0)
-    {
-        m_Axis.setOrigin(m_PointsInfo.averagePoint);
-    }
-    else
-    {
-        m_SelectedPointsInfo.averagePoint /= m_SelectedPointsInfo.pointCount;
-        m_SelectedPointsInfo.averageRawPoint /= m_SelectedPointsInfo.pointCount;
-        m_SelectedPointsInfo.minMaxIntensity = make_pair(min_intensity, max_intensity);
-
-        m_Axis.setOrigin(m_SelectedPointsInfo.averagePoint);
-    }
+    m_SelectedPointsInfo.normalize();
+    m_Axis.setOrigin(selectionCenter());
 
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
@@ -446,13 +409,33 @@ void DataSample::deselectAllPoints()
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
-    m_SelectedPointsInfo.pointCount = 0;
-    m_Axis.setOrigin(m_PointsInfo.averagePoint);
+    m_SelectedPointsInfo = PointSampleInfo();
+    m_Axis.setOrigin(selectionCenter());
+}
+
+void DataSample::selectHighestPoint()
+{
+    int highestPointIndex = m_SelectedPointsInfo.pointsCount() == 0 ?
+                            m_PointsInfo.highestPointIndex() :
+                            m_SelectedPointsInfo.highestPointIndex();
+
+    m_SelectedPointsInfo = PointSampleInfo();
+
+    memset(m_SelectedPoints.data(), 0, sizeof(unsigned char) * m_SelectedPoints.size());
+    m_SelectedPoints[highestPointIndex] = 1;
+    m_Shaders[POINTS].bind();
+    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+
+    m_SelectedPointsInfo.addPoint(highestPointIndex,
+                                  Vector3f{m_2DPoints[highestPointIndex].x, m_Heights[highestPointIndex], m_2DPoints[highestPointIndex].y },
+                                  m_RawPoints[highestPointIndex]);
+    m_SelectedPointsInfo.normalize();
+    m_Axis.setOrigin(selectionCenter());
 }
 
 nanogui::Vector3f DataSample::selectionCenter()
 {
-    return m_SelectedPointsInfo.pointCount == 0 ? m_PointsInfo.averagePoint : m_SelectedPointsInfo.averagePoint;
+    return m_SelectedPointsInfo.pointsCount() == 0 ? m_PointsInfo.averagePoint() : m_SelectedPointsInfo.averagePoint();
 }
 
 Vector3f DataSample::getVertex(unsigned int i, bool logged) const

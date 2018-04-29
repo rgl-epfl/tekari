@@ -120,6 +120,7 @@ add_executable(BSDFVisualizer
   "include/tekari/HelpWindow.h"                 "src/HelpWindow.cpp"
   "include/tekari/Axis.h"                       "src/Axis.cpp"
   "include/tekari/delaunay.h"                   "src/delaunay.c"
+  "include/tekari/PointSampleInfo.h"
   "include/tekari/SelectionBox.h"
   "include/tekari/SharedQueue.h"
   "include/tekari/common.h"

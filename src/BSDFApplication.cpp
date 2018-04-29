@@ -316,6 +316,16 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 case GLFW_KEY_I:
                     toggleView(DataSample::Views::INCIDENT_ANGLE, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::INCIDENT_ANGLE));
                     return true;
+                case GLFW_KEY_H:
+                    if (m_SelectedDataSample)
+                    {
+                        m_SelectedDataSample->selectHighestPoint();
+                        // if selection window already visible, hide it
+                        if(m_SelectionInfoWindow) toggleSelectionInfoWindow();
+                        // show selection window
+                        toggleSelectionInfoWindow();
+                    }
+                    return true;
                 default:
                     return false;
             }
@@ -596,10 +606,10 @@ void BSDFApplication::toggleSelectionInfoWindow()
             new Label{ window, value };
         };
 
-        makeSelectionInfoLabels("Points In Selection :", to_string(m_SelectedDataSample->selectionPointsCount()));
-        makeSelectionInfoLabels("Minimum Intensity :",   to_string(m_SelectedDataSample->selectionMinIntensity()));
-        makeSelectionInfoLabels("Maximum Intensity :",   to_string(m_SelectedDataSample->selectionMaxIntensity()));
-        makeSelectionInfoLabels("Average Intensity :",   to_string(m_SelectedDataSample->selectionAverageIntensity()));
+        makeSelectionInfoLabels("Points In Selection :", to_string(m_SelectedDataSample->selectedPointsInfo().pointsCount()));
+        makeSelectionInfoLabels("Minimum Intensity :",   to_string(m_SelectedDataSample->selectedPointsInfo().minIntensity()));
+        makeSelectionInfoLabels("Maximum Intensity :",   to_string(m_SelectedDataSample->selectedPointsInfo().maxIntensity()));
+        makeSelectionInfoLabels("Average Intensity :",   to_string(m_SelectedDataSample->selectedPointsInfo().averageIntensity()));
 
         window->setPosition(Vector2i{width() - 200, 20});
 
@@ -675,8 +685,8 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         button->showPopup(true);
 
         m_DataSampleName->setCaption(m_SelectedDataSample->name());
-        m_DataSamplePointsCount->setCaption(std::to_string(m_SelectedDataSample->pointsCount()));
-        m_DataSampleAverageHeight->setCaption(std::to_string(m_SelectedDataSample->averageIntensity()));
+        m_DataSamplePointsCount->setCaption(std::to_string(m_SelectedDataSample->pointsInfo().pointsCount()));
+        m_DataSampleAverageHeight->setCaption(std::to_string(m_SelectedDataSample->pointsInfo().averageIntensity()));
     }
     else
     {

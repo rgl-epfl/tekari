@@ -6,6 +6,7 @@
 #include <memory>
 #include <functional>
 #include "delaunay.h"
+#include "PointSampleInfo.h"
 #include "Metadata.h"
 #include "ColorMap.h"
 #include "DataPoint.h"
@@ -32,21 +33,6 @@ public:
         ADD,
         SUBTRACT
     };
-    struct PointSampleInfo
-    {
-        unsigned int pointCount;
-        std::pair<float, float> minMaxIntensity;
-        nanogui::Vector3f averagePoint;
-        nanogui::Vector3f averageRawPoint;
-
-        PointSampleInfo()
-        :   pointCount(0)
-        ,   minMaxIntensity(std::make_pair<float, float>(0.0f, 0.0f))
-        ,   averagePoint{ 0.0f, 0.0f, 0.0f }
-        ,   averageRawPoint{ 0.0f, 0.0f, 0.0f }
-        {}
-    };
-
     // constructors/destructors, assignement operators
     DataSample(const std::string& sampleDataPath);
     DataSample(const DataSample&) = delete;
@@ -71,16 +57,8 @@ public:
 
     // data sample info accessors
     std::string name()         const { return m_Metadata.sampleName; }
-    unsigned int pointsCount() const { return m_PointsInfo.pointCount; }
-    float minIntensity()       const { return m_PointsInfo.minMaxIntensity.first; }
-    float maxIntensity()       const { return m_PointsInfo.minMaxIntensity.second; }
-    float averageIntensity()   const { return m_PointsInfo.averageRawPoint[2]; }
-
-    // selected points info accessors
-    unsigned int selectionPointsCount() const { return m_SelectedPointsInfo.pointCount; }
-    float selectionMinIntensity()       const { return m_SelectedPointsInfo.minMaxIntensity.first; }
-    float selectionMaxIntensity()       const { return m_SelectedPointsInfo.minMaxIntensity.second; }
-    float selectionAverageIntensity()   const { return m_SelectedPointsInfo.averageRawPoint[2]; }
+    const PointSampleInfo& pointsInfo() const { return m_PointsInfo; }
+    const PointSampleInfo& selectedPointsInfo() const { return m_SelectedPointsInfo; }
 
     const Metadata& metadata() const { return m_Metadata; }
 
@@ -90,6 +68,7 @@ public:
         const nanogui::Vector2i & canvasSize,
         SelectionMode mode);
     void deselectAllPoints();
+    void selectHighestPoint();
     nanogui::Vector3f selectionCenter();
     bool deleteSelectedPoints();
 
@@ -106,7 +85,7 @@ private:
 
     static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
     {
-        return del_point2d_t{   (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
+        return del_point2d_t{ (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
                                 (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
     }
 
