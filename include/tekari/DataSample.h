@@ -21,9 +21,7 @@ public:
     // Usefull types
     enum Views
     {
-        NORMAL = 0,
-        LOG,
-        PATH,
+        PATH = 0,
         POINTS,
         INCIDENT_ANGLE,
         VIEW_COUNT
@@ -64,6 +62,7 @@ public:
                 bool useShadows, bool displayAxis,
                 std::shared_ptr<ColorMap> colorMap);
 
+    void setDisplayAsLog(bool displayAsLog);
     void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }
     bool displayView(Views view) const { return m_DisplayViews[view]; }
 
@@ -126,6 +125,7 @@ private:
     PointSampleInfo                 m_PointsInfo;
 
     // display Shaders
+    nanogui::GLShader m_MeshShader;
     nanogui::GLShader m_Shaders[VIEW_COUNT];
     std::function<void(
         const nanogui::Vector3f&,   // view origin
@@ -134,6 +134,7 @@ private:
         bool, std::shared_ptr<ColorMap>)> m_DrawFunctions[VIEW_COUNT];
 
     // display options
+    bool m_DisplayAsLog;
     bool m_DisplayViews[VIEW_COUNT];
 
     // metadata

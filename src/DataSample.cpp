@@ -20,49 +20,14 @@ using namespace nanogui;
 TEKARI_NAMESPACE_BEGIN
 
 DataSample::DataSample(const string& sampleDataPath)
-:	m_DisplayViews{ true, false, false, false, true }
+:	m_DisplayAsLog(false)
+,   m_DisplayViews{ false, false, true }
 ,   m_ShaderLinked(false)
 ,	tri_delaunay2d(nullptr)
 ,   m_PointsInfo()
 ,   m_SelectedPointsInfo()
 ,   m_Axis{Vector3f{0.0f, 0.0f, 0.0f}}
-{
-    m_DrawFunctions[NORMAL] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
-        const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
-        if (m_DisplayViews[NORMAL])
-        {
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glEnable(GL_DEPTH_TEST);
-            glPolygonOffset(2.0, 2.0);
-            m_Shaders[NORMAL].bind();
-            colorMap->bind();
-            m_Shaders[NORMAL].setUniform("modelViewProj", mvp);
-            m_Shaders[NORMAL].setUniform("model", model);
-            m_Shaders[NORMAL].setUniform("view", viewOrigin);
-            m_Shaders[NORMAL].setUniform("useShadows", useShadows);
-            m_Shaders[NORMAL].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_POLYGON_OFFSET_FILL);
-        }
-    };
-    m_DrawFunctions[LOG] = [this](const Vector3f& viewOrigin, const Matrix4f& model,
-        const Matrix4f &mvp, bool useShadows, shared_ptr<ColorMap> colorMap) {
-        if (m_DisplayViews[LOG])
-        {
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glEnable(GL_DEPTH_TEST);
-            glPolygonOffset(2.0, 2.0);
-            m_Shaders[LOG].bind();
-            colorMap->bind();
-            m_Shaders[LOG].setUniform("modelViewProj", mvp);
-            m_Shaders[LOG].setUniform("model", model);
-            m_Shaders[LOG].setUniform("view", viewOrigin);
-            m_Shaders[LOG].setUniform("useShadows", useShadows);
-            m_Shaders[LOG].drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_POLYGON_OFFSET_FILL);
-        }
-    };
+{    
     m_DrawFunctions[PATH] = [this](const Vector3f&, const Matrix4f&,
         const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
         if (m_DisplayViews[PATH])
@@ -114,7 +79,8 @@ DataSample::DataSample(const string& sampleDataPath)
 
 DataSample::~DataSample()
 {
-    for (int i = NORMAL; i != VIEW_COUNT; ++i)
+    m_MeshShader.free();
+    for (int i = 0; i != VIEW_COUNT; ++i)
     {
         m_Shaders[i].free();
     }
@@ -138,7 +104,20 @@ void DataSample::drawGL(
     {
         Matrix4f mvp = proj * view * model;
 
-        for (int i = NORMAL; i != VIEW_COUNT; ++i)
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glEnable(GL_DEPTH_TEST);
+        glPolygonOffset(2.0, 2.0);
+        m_MeshShader.bind();
+        colorMap->bind();
+        m_MeshShader.setUniform("modelViewProj", mvp);
+        m_MeshShader.setUniform("model", model);
+        m_MeshShader.setUniform("view", viewOrigin);
+        m_MeshShader.setUniform("useShadows", useShadows);
+        m_MeshShader.drawIndexed(GL_TRIANGLES, 0, tri_delaunay2d->num_triangles);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_POLYGON_OFFSET_FILL);
+
+        for (int i = 0; i != VIEW_COUNT; ++i)
         {
             m_DrawFunctions[i](viewOrigin, model, mvp, useShadows, colorMap);
         }
@@ -341,8 +320,7 @@ void DataSample::computePathSegments()
 void DataSample::initShaders()
 {
     const string shader_path = "../resources/shaders/";
-    m_Shaders[NORMAL].initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
-    m_Shaders[LOG].initFromFiles("log_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_MeshShader.initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
     m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
     m_Shaders[POINTS].initFromFiles("selected_points", shader_path + "selected_points.vert", shader_path + "selected_points.frag");
     m_Shaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "incident_angle.vert", shader_path + "incident_angle.frag", shader_path + "incident_angle.geom");
@@ -359,28 +337,21 @@ void DataSample::linkDataToShaders()
         throw runtime_error("ERROR: cannot link data to shader twice.");
     }
 
-    m_Shaders[NORMAL].setUniform("color_map", 0);
-    m_Shaders[LOG].setUniform("color_map", 0);
+    m_MeshShader.setUniform("color_map", 0);
 
-    m_Shaders[NORMAL].bind();
-    m_Shaders[NORMAL].uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
-    m_Shaders[NORMAL].uploadAttrib("in_pos2d", tri_delaunay2d->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)tri_delaunay2d->points);
-    m_Shaders[NORMAL].uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
-    m_Shaders[NORMAL].uploadAttrib("indices", tri_delaunay2d->num_triangles, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, tri_delaunay2d->tris);
-
-    m_Shaders[LOG].bind();
-    m_Shaders[LOG].uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_LogNormals.data());
-    m_Shaders[LOG].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
-    m_Shaders[LOG].uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_LogHeights.data());
-    m_Shaders[LOG].shareAttrib(m_Shaders[NORMAL], "indices");
+    m_MeshShader.bind();
+    m_MeshShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)m_Normals.data());
+    m_MeshShader.uploadAttrib("in_pos2d", tri_delaunay2d->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)tri_delaunay2d->points);
+    m_MeshShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)m_Heights.data());
+    m_MeshShader.uploadAttrib("indices", tri_delaunay2d->num_triangles, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, tri_delaunay2d->tris);
 
     m_Shaders[PATH].bind();
-    m_Shaders[PATH].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
-    m_Shaders[PATH].shareAttrib(m_Shaders[NORMAL], "in_height");
+    m_Shaders[PATH].shareAttrib(m_MeshShader, "in_pos2d");
+    m_Shaders[PATH].shareAttrib(m_MeshShader, "in_height");
 
     m_Shaders[POINTS].bind();
-    m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_pos2d");
-    m_Shaders[POINTS].shareAttrib(m_Shaders[NORMAL], "in_height");
+    m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_pos2d");
+    m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
     Vector2f incidentCoords{ (float)(m_Metadata.incidentTheta * cos(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f),
@@ -393,6 +364,30 @@ void DataSample::linkDataToShaders()
     m_ShaderLinked = true;
 }
 
+void DataSample::setDisplayAsLog(bool displayAsLog)
+{
+    if (m_DisplayAsLog == displayAsLog)
+        return;
+
+    m_DisplayAsLog = displayAsLog;
+    vector<Vector3f> *normals = &m_Normals;
+    vector<float>    *heights = &m_Heights;
+    if (m_DisplayAsLog)
+    {
+        normals = &m_LogNormals;
+        heights = &m_LogHeights;
+    }
+
+    m_MeshShader.bind();
+    m_MeshShader.uploadAttrib("in_normal", tri_delaunay2d->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)normals->data());
+    m_MeshShader.uploadAttrib("in_height", tri_delaunay2d->num_points, 1, sizeof(float),    GL_FLOAT, GL_FALSE, (const void*)heights->data());
+    
+    m_Shaders[PATH].bind();
+    m_Shaders[PATH].shareAttrib(m_MeshShader, "in_height");
+    m_Shaders[POINTS].bind();
+    m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
+}
+
 void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectionBox,
     const Vector2i & canvasSize, SelectionMode mode)
 {
@@ -402,13 +397,13 @@ void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectio
     float max_intensity = numeric_limits<float>::min();
     for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
     {
-        Vector4f projPoint = projectOnScreen(getVertex(i, false), canvasSize, mvp);
+        Vector4f projPoint = projectOnScreen(getVertex(i, m_DisplayAsLog), canvasSize, mvp);
 
         bool inSelection = selectionBox.contains(Vector2i{ projPoint[0], projPoint[1] });
         
         switch (mode)
         {
-        case NORMAL:
+        case STANDARD:
             m_SelectedPoints[i] =  inSelection;
             break;
         case ADD:

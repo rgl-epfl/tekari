@@ -1,6 +1,5 @@
 TODO:
 - make faster where possible                                        <<---- always
-- use terminal input for files (options)
 
 // problems
 - GLFrameBuffer: how to write to it
@@ -17,7 +16,15 @@ TODO:
 
 // To do:
 - spectral data
-- improve 3d view (elevation labels)
+
+- log/normal shoudl be toggle, selection should consider current view and path and points too
+- select individual points
+- scale points depending on zoom plus manual factor
+- move point along path
+- shortcut to select highest point (also in selection)
+- predicted outgoing angle
+- moving for notepads (scroll+ALT), selection is weird
+- use terminal input for files (options)
 
 // issues:
 - delete points random crashes + not threaded

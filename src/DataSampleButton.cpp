@@ -6,9 +6,10 @@
 #include <nanogui/opengl.h>
 #include <nanogui/common.h>
 #include <nanogui/label.h>
-#include <nanogui/popup.h>
 #include <nanogui/layout.h>
 #include <nanogui/entypo.h>
+#include <nanogui/button.h>
+#include <nanogui/checkbox.h>
 
 using namespace nanogui;
 using namespace std;
@@ -35,6 +36,8 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
     m_Popup->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
 
     new Label{ m_Popup, "View Modes" , "sans-bold", 18};
+    m_DisplayAsLog = new CheckBox{ m_Popup, "Display as log" };
+
     auto buttonContainer = new Widget{ m_Popup };
     buttonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
 
@@ -45,22 +48,10 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
         button->setPushed(pushed);
         return button;
     };
-    m_ViewToggles[DataSample::Views::NORMAL] = makeViewButton("Normal", "Toggle normal view for this data sample (N)", true);
-    m_ViewToggles[DataSample::Views::LOG]    = makeViewButton("Log", "Toggle logarithmic view for this data sample (L)", false);
     m_ViewToggles[DataSample::Views::PATH]   = makeViewButton("Path", "Show/Hide path for this data sample (P)", false);
     m_ViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample (Shift + P)", false);
     m_ViewToggles[DataSample::Views::INCIDENT_ANGLE] = makeViewButton("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
 }
-
-//nanogui::Vector2i DataSampleButton::preferredSize(NVGcontext *ctx) const
-//{
-//    nvgFontSize(ctx, mFontSize);
-//    nvgFontFace(ctx, "sans-bold");
-//    std::string fixedSizeLabel = m_Label.size() > 20 ? m_Label.substr(0, 17) + "..." : m_Label;
-//    float labelSize = nvgTextBounds(ctx, 0, 0, fixedSizeLabel.c_str(), nullptr, nullptr);
-//
-//    return nanogui::Vector2i(static_cast<int>(labelSize) + 15, mFontSize + 6);
-//}
 
 bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, bool down, int modifiers)
 {
@@ -188,22 +179,32 @@ void DataSampleButton::toggleView()
     m_ToggleViewCallback(m_IsVisible);
 }
 
-void DataSampleButton::toggleButton(DataSample::Views view, bool check)
+void DataSampleButton::toggleView(DataSample::Views view, bool check)
 {
     m_ViewToggles[static_cast<int>(view)]->setPushed(check);
 }
 
-bool DataSampleButton::isButtonToggled(DataSample::Views view)
+bool DataSampleButton::isViewToggled(DataSample::Views view)
 {
     return m_ViewToggles[static_cast<int>(view)]->pushed();
 }
 
-void DataSampleButton::setToggleCallback(std::function<void(bool)> callback) {
-    for (int i = DataSample::Views::NORMAL; i != DataSample::Views::VIEW_COUNT; ++i)
+void DataSampleButton::setDisplayAsLog(bool value)
+{
+    m_DisplayAsLog->setChecked(value);
+}
+
+void DataSampleButton::setViewTogglesCallback(std::function<void(bool)> callback) {
+    for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
     {
         DataSample::Views view = static_cast<DataSample::Views>(i);
         m_ViewToggles[view]->setChangeCallback(callback);
     }
+}
+
+void DataSampleButton::setDisplayAsLogCallback(std::function<void(bool)> callback)
+{
+    m_DisplayAsLog->setCallback(callback);
 }
 
 TEKARI_NAMESPACE_END

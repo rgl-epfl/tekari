@@ -378,10 +378,10 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 }
                 break;
             case GLFW_KEY_N:
-                toggleView(DataSample::Views::NORMAL, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::NORMAL));
+                setDisplayAsLog(m_SelectedDataSample, false);
                 return true;
             case GLFW_KEY_L:
-                toggleView(DataSample::Views::LOG, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::LOG));
+                setDisplayAsLog(m_SelectedDataSample, true);
                 return true;
             case GLFW_KEY_P:
                 toggleView(DataSample::Views::PATH, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::PATH));
@@ -663,7 +663,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
     {
         DataSampleButton* oldButton = correspondingButton(m_SelectedDataSample);
         oldButton->setIsSelected(false);
-        oldButton->popup()->setVisible(false);
+        oldButton->showPopup(false);
     }
 
     m_SelectedDataSample = dataSample;
@@ -672,7 +672,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
     {
         auto button = correspondingButton(m_SelectedDataSample);
         button->setIsSelected(true);
-        button->popup()->setVisible(true);
+        button->showPopup(true);
 
         m_DataSampleName->setCaption(m_SelectedDataSample->name());
         m_DataSamplePointsCount->setCaption(std::to_string(m_SelectedDataSample->pointsCount()));
@@ -696,7 +696,7 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
 
     // erase data sample and corresponding button
     auto button = correspondingButton(dataSample);
-    button->popup()->parent()->removeChild(button->popup());
+    button->removePopupFromParent();
     m_DataSampleButtonContainer->removeChild(index);
     
     m_BSDFCanvas->removeDataSample(dataSample);
@@ -749,12 +749,16 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
         else            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
     });
 
-    dataSampleButton->setToggleCallback([this, dataSample, dataSampleButton](bool checked) {
-        for (int i = DataSample::Views::NORMAL; i != DataSample::Views::VIEW_COUNT; ++i)
+    dataSampleButton->setViewTogglesCallback([this, dataSample, dataSampleButton](bool checked) {
+        for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
         {
             DataSample::Views view = static_cast<DataSample::Views>(i);
-            toggleView(view, dataSample, dataSampleButton->isButtonToggled(view));
+            toggleView(view, dataSample, dataSampleButton->isViewToggled(view));
         }
+    });
+
+    dataSampleButton->setDisplayAsLogCallback([this, dataSample](bool checked) {
+        setDisplayAsLog(dataSample, checked);
     });
 
     m_DataSamples.push_back(dataSample);
@@ -778,7 +782,16 @@ void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> 
     if (dataSample)
     {
         dataSample->toggleView(view, toggle);
-        correspondingButton(dataSample)->toggleButton(view, dataSample->displayView(view));
+        correspondingButton(dataSample)->toggleView(view, dataSample->displayView(view));
+    }
+}
+
+void BSDFApplication::setDisplayAsLog(std::shared_ptr<DataSample> dataSample, bool value)
+{
+    if (dataSample)
+    {
+        dataSample->setDisplayAsLog(value);
+        correspondingButton(dataSample)->setDisplayAsLog(value);
     }
 }
 

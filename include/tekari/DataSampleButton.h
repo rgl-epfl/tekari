@@ -1,8 +1,7 @@
 #pragma once
 
 #include <nanogui/widget.h>
-#include <nanogui/opengl.h>
-#include <nanogui/button.h>
+#include <nanogui/popup.h>
 #include <functional>
 #include <memory>
 
@@ -15,7 +14,6 @@ class DataSampleButton : public nanogui::Widget
 public:
     DataSampleButton(nanogui::Widget* parent, const std::string &label);
 
-    //virtual nanogui::Vector2i preferredSize(NVGcontext *ctx) const override;
     virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
     virtual bool mouseEnterEvent(const nanogui::Vector2i &p, bool enter) override;
     virtual bool mouseMotionEvent(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
@@ -31,13 +29,16 @@ public:
     void setDeleteCallback      (std::function<void(void)> callback) { m_DeleteCallback = callback; }
     void setToggleViewCallback  (std::function<void(bool)> callback) { m_ToggleViewCallback = callback; }
 
-    void setToggleCallback(std::function<void(bool)> callback);
+    void setDisplayAsLogCallback(std::function<void(bool)> callback);
+    void setViewTogglesCallback(std::function<void(bool)> callback);
   
-    nanogui::Popup* popup()             { return m_Popup; }
-    const nanogui::Popup* popup() const { return m_Popup; }
+    void showPopup(bool visible) { m_Popup->setVisible(visible); }
+    void removePopupFromParent() { m_Popup->parent()->removeChild(m_Popup); }
 
-    void toggleButton(DataSample::Views view, bool check);
-    bool isButtonToggled(DataSample::Views view);
+    void toggleView(DataSample::Views view, bool check);
+    bool isViewToggled(DataSample::Views view);
+
+    void setDisplayAsLog(bool value);
 
 private:
     bool InToggleViewButton(const nanogui::Vector2i& p) const {
@@ -65,6 +66,7 @@ private:
 
     //std::shared_ptr<DataSample> m_DataSample;
     nanogui::Popup *m_Popup;
+    nanogui::CheckBox* m_DisplayAsLog;
     nanogui::Button* m_ViewToggles[DataSample::Views::VIEW_COUNT];
 };
 
