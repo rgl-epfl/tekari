@@ -270,7 +270,8 @@ BSDFApplication::~BSDFApplication()
 bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modifiers) {
     if (Screen::keyboardEvent(key, scancode, action, modifiers))
         return true;
-    if (action == GLFW_PRESS)
+
+    if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
         bool alt = modifiers & GLFW_MOD_ALT;
         // control options
@@ -437,6 +438,17 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 return true;
             case GLFW_KEY_KP_7:
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
+                return true;
+            case GLFW_KEY_KP_ADD:
+            case GLFW_KEY_KP_SUBTRACT:
+                if (m_SelectedDataSample)
+                {
+                    m_SelectedDataSample->movePointsAlongPath(key == GLFW_KEY_KP_ADD);
+                    // if selection window already visible, hide it
+                    if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
+                    // show selection window
+                    toggleSelectionInfoWindow();
+                }
                 return true;
             default:
                 return false;

@@ -74,6 +74,7 @@ public:
     void selectHighestPoint();
     nanogui::Vector3f selectionCenter();
     bool deleteSelectedPoints();
+    void movePointsAlongPath(bool up);
 
     void save(const std::string& path) const;
 private:
@@ -85,6 +86,8 @@ private:
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
     void computeNormals();
+    void updatePointSelection();
+    void updateSelectionInfo();
 
     static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
     {

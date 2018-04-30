@@ -407,8 +407,7 @@ void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectio
     m_SelectedPointsInfo.normalize();
     m_Axis.setOrigin(selectionCenter());
 
-    m_Shaders[POINTS].bind();
-    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+    updatePointSelection();
 }
 
 
@@ -444,18 +443,41 @@ void DataSample::selectSinglePoint(const nanogui::Matrix4f& mvp,
     m_SelectedPointsInfo.normalize();
     m_Axis.setOrigin(selectionCenter());
 
+    updatePointSelection();
+}
+
+void DataSample::updatePointSelection()
+{
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
-
 }
 
 void DataSample::deselectAllPoints()
 {
     memset(m_SelectedPoints.data(), 0, sizeof(unsigned char) * m_SelectedPoints.size());
-    m_Shaders[POINTS].bind();
-    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+    updatePointSelection();
 
     m_SelectedPointsInfo = PointSampleInfo();
+    m_Axis.setOrigin(selectionCenter());
+}
+
+void DataSample::movePointsAlongPath(bool up)
+{
+    unsigned char extremity;
+    if (up)
+    {
+        extremity = m_SelectedPoints.back();
+        memmove(m_SelectedPoints.data()+1, m_SelectedPoints.data(), m_SelectedPoints.size() - 1);
+        m_SelectedPoints.front() = extremity;
+    }
+    else
+    {
+        extremity = m_SelectedPoints.front();
+        memmove(m_SelectedPoints.data(), m_SelectedPoints.data()+1, m_SelectedPoints.size() - 1);
+        m_SelectedPoints.back() = extremity;
+    }
+    updatePointSelection();
+    updateSelectionInfo();
     m_Axis.setOrigin(selectionCenter());
 }
 
@@ -469,8 +491,7 @@ void DataSample::selectHighestPoint()
 
     memset(m_SelectedPoints.data(), 0, sizeof(unsigned char) * m_SelectedPoints.size());
     m_SelectedPoints[highestPointIndex] = 1;
-    m_Shaders[POINTS].bind();
-    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+    updatePointSelection();
 
     m_SelectedPointsInfo.addPoint(  highestPointIndex,
                                     m_RawPoints[highestPointIndex],
@@ -478,6 +499,19 @@ void DataSample::selectHighestPoint()
 
     m_SelectedPointsInfo.normalize();
     m_Axis.setOrigin(selectionCenter());
+}
+
+void DataSample::updateSelectionInfo()
+{
+    m_SelectedPointsInfo = PointSampleInfo();
+    for (unsigned int i = 0; i < m_SelectedPoints.size(); ++i)
+    {
+        if (m_SelectedPoints[i])
+        {
+            m_SelectedPointsInfo.addPoint(i, m_RawPoints[i], getVertex(i, m_DisplayAsLog));
+        }
+    }
+    m_SelectedPointsInfo.normalize();
 }
 
 nanogui::Vector3f DataSample::selectionCenter()

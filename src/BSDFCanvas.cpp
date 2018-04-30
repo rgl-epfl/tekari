@@ -117,6 +117,8 @@ void BSDFCanvas::drawGL(NVGcontext* ctx) {
                  selectionBox.size.x(), selectionBox.size.y());
     nvgStrokeColor(ctx, Color(1.0f, 1.0f));
     nvgStroke(ctx);
+    nvgFillColor(ctx, Color(1.0f, 0.1f));
+    nvgFill(ctx);
 
     glPointSize(m_Zoom + m_BasePointSize);
     for (const auto& dataSample: m_DataSamplesToDraw)

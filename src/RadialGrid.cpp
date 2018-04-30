@@ -29,7 +29,7 @@ RadialGrid::RadialGrid()
             };
             vertices[i*VERTEX_PER_CIRCLE_COUNT + j] = point;
         }
-        int theta = (CIRCLE_COUNT - i - 1) * 90 / CIRCLE_COUNT;
+        int theta = (i + 1) * 90 / CIRCLE_COUNT;
         if (theta != 0)
         {
             Vector3f &pos = vertices[i*VERTEX_PER_CIRCLE_COUNT];
