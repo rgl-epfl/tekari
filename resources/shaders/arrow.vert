@@ -1,8 +1,8 @@
 #version 150 core
 in vec3 pos;
 
-uniform mat4 modelViewProj;
 uniform vec3 origin;
+uniform mat4 modelViewProj;
 
 void main()
 {
