@@ -131,7 +131,7 @@ BSDFApplication::BSDFApplication()
         hiddenOptionsPopup->setLayout(new GroupLayout{});
 
         auto addHiddenOptionToggle = [hiddenOptionsPopup](const string& label, const string& tooltip,
-            const std::function<void(bool)> &callback, bool checked = false) {
+            const function<void(bool)> &callback, bool checked = false) {
             auto checkbox = new CheckBox{ hiddenOptionsPopup, label, callback };
             checkbox->setChecked(checked);
             checkbox->setTooltip(tooltip);
@@ -559,7 +559,7 @@ void BSDFApplication::saveScreenShot()
     m_Framebuffer.release();
 }
 
-void BSDFApplication::toggleWindow(nanogui::Window *& window, std::function<nanogui::Window*(void)> createWindow)
+void BSDFApplication::toggleWindow(nanogui::Window *& window, function<nanogui::Window*(void)> createWindow)
 {
     if (window)
     {
@@ -642,7 +642,7 @@ void BSDFApplication::toggleColorMapSelectionWindow()
     });
 }
 
-void BSDFApplication::selectColorMap(std::shared_ptr<ColorMap> colorMap)
+void BSDFApplication::selectColorMap(shared_ptr<ColorMap> colorMap)
 {
     m_BSDFCanvas->setColorMap(colorMap);
 }
@@ -684,9 +684,9 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         button->setIsSelected(true);
         button->showPopup(true);
 
-        m_DataSampleName->setCaption(m_SelectedDataSample->name());
-        m_DataSamplePointsCount->setCaption(std::to_string(m_SelectedDataSample->pointsInfo().pointsCount()));
-        m_DataSampleAverageHeight->setCaption(std::to_string(m_SelectedDataSample->pointsInfo().averageIntensity()));
+        m_DataSampleName->setCaption("hello world");// m_SelectedDataSample->name());
+        m_DataSamplePointsCount->setCaption(to_string(m_SelectedDataSample->pointsInfo().pointsCount()));
+        m_DataSampleAverageHeight->setCaption(to_string(m_SelectedDataSample->pointsInfo().averageIntensity()));
     }
     else
     {
@@ -739,7 +739,7 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
         throw invalid_argument{ "Data sample may not be null." };
     }
 
-    string cleanName = dataSample->metadata().sampleName;
+    string cleanName = "hello there";// dataSample->name();
     replace(cleanName.begin(), cleanName.end(), '_', ' ');
     auto dataSampleButton = new DataSampleButton(m_DataSampleButtonContainer, cleanName);
     dataSampleButton->setFixedHeight(30);
@@ -796,7 +796,7 @@ void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> 
     }
 }
 
-void BSDFApplication::setDisplayAsLog(std::shared_ptr<DataSample> dataSample, bool value)
+void BSDFApplication::setDisplayAsLog(shared_ptr<DataSample> dataSample, bool value)
 {
     if (dataSample)
     {
@@ -805,7 +805,7 @@ void BSDFApplication::setDisplayAsLog(std::shared_ptr<DataSample> dataSample, bo
     }
 }
 
-DataSampleButton* BSDFApplication::correspondingButton(const std::shared_ptr<const DataSample> dataSample)
+DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<const DataSample> dataSample)
 {
     int index = dataSampleIndex(dataSample);
     if (index == -1)
@@ -813,7 +813,7 @@ DataSampleButton* BSDFApplication::correspondingButton(const std::shared_ptr<con
     return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
 }
 
-const DataSampleButton* BSDFApplication::correspondingButton(const std::shared_ptr<const DataSample> dataSample) const
+const DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<const DataSample> dataSample) const
 {
     int index = dataSampleIndex(dataSample);
     if (index == -1)
@@ -821,14 +821,14 @@ const DataSampleButton* BSDFApplication::correspondingButton(const std::shared_p
     return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
 }
 
-void BSDFApplication::tryLoadDataSample(std::string filePath, std::shared_ptr<DataSampleToAdd> dataSampleToAdd)
+void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)
 {
     try {
         dataSampleToAdd->dataSample = make_shared<DataSample>(filePath);
     }
     catch (exception e) {
         string errorMsg = "Could not open data sample at " + filePath + " : " + e.what();
-        std::cerr << errorMsg << std::endl;
+        cerr << errorMsg << endl;
         dataSampleToAdd->errorMsg = errorMsg;
     }
 }

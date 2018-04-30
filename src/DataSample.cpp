@@ -170,16 +170,16 @@ void DataSample::readDataset(const string &filePath)
         {
             rawMetaData << head;
             m_Metadata.parse(head);
-            if (m_Metadata.datapointsInFile >= 0)
-            {
-                // as soon as we know the total size of the dataset, reserve enough space for it
-                m_2DPoints.reserve(m_Metadata.datapointsInFile);
-                m_SelectedPoints.resize(m_Metadata.datapointsInFile, false);
-                m_Heights.reserve(m_Metadata.datapointsInFile);
-                m_LogHeights.reserve(m_Metadata.datapointsInFile);
+            //if (m_Metadata.datapointsInFile >= 0)
+            //{
+            //    // as soon as we know the total size of the dataset, reserve enough space for it
+            //    m_2DPoints.reserve(m_Metadata.datapointsInFile);
+            //    m_SelectedPoints.resize(m_Metadata.datapointsInFile, false);
+            //    m_Heights.reserve(m_Metadata.datapointsInFile);
+            //    m_LogHeights.reserve(m_Metadata.datapointsInFile);
 
-                m_RawPoints.reserve(m_Metadata.datapointsInFile);
-            }
+            //    m_RawPoints.reserve(m_Metadata.datapointsInFile);
+            //}
         }
         else
         {
@@ -197,11 +197,14 @@ void DataSample::readDataset(const string &filePath)
             m_2DPoints.push_back(transformedPoint);
             m_Heights.push_back(intensity);
             m_LogHeights.push_back(intensity);
-
+            
             m_PointsInfo.addPoint(m_2DPoints.size() - 1, m_RawPoints.back(), Vector3f{ transformedPoint.x, intensity, transformedPoint.y });
+
+            m_SelectedPoints.push_back(false);
         }
     }
     m_PointsInfo.normalize();
+    m_PointsInfo.normalizeAverage();
     fclose(datasetFile);
 
     // store raw metadata
@@ -300,8 +303,8 @@ void DataSample::initShaders()
     const string shader_path = "../resources/shaders/";
     m_MeshShader.initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
     m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
-    m_Shaders[POINTS].initFromFiles("selected_points", shader_path + "selected_points.vert", shader_path + "selected_points.frag");
-    m_Shaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "incident_angle.vert", shader_path + "incident_angle.frag", shader_path + "incident_angle.geom");
+    m_Shaders[POINTS].initFromFiles("points", shader_path + "points.vert", shader_path + "points.frag");
+    m_Shaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
 }
 
 void DataSample::linkDataToShaders()
@@ -332,10 +335,15 @@ void DataSample::linkDataToShaders()
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
-    Vector2f incidentCoords{ (float)(m_Metadata.incidentTheta * cos(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f),
-                             (float)(m_Metadata.incidentTheta * sin(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f) };
+    Vector3f incidentCoords{ 0.0f, 0.0f, 0.0f };
+    //(float)(m_Metadata.incidentTheta * cos(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f),
+                             //(float)(m_Metadata.incidentTheta * sin(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f) };
     m_Shaders[INCIDENT_ANGLE].bind();
-    m_Shaders[INCIDENT_ANGLE].uploadAttrib("in_pos", 1, 2, sizeof(Vector2f), GL_FLOAT, GL_FALSE, (const void*)&incidentCoords);
+    m_Shaders[INCIDENT_ANGLE].uploadAttrib("pos", 1, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)&incidentCoords);
+    m_Shaders[INCIDENT_ANGLE].setUniform("origin", incidentCoords);
+    m_Shaders[INCIDENT_ANGLE].setUniform("direction", Vector3f{ 0, 1, 0 });
+    m_Shaders[INCIDENT_ANGLE].setUniform("color", Vector3f{ 1, 0, 1 });
+    m_Shaders[INCIDENT_ANGLE].setUniform("length", 1.0f);
 
     m_Axis.loadShader();
 
@@ -426,9 +434,10 @@ void DataSample::selectHighestPoint()
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
-    m_SelectedPointsInfo.addPoint(highestPointIndex,
-                                  Vector3f{m_2DPoints[highestPointIndex].x, m_Heights[highestPointIndex], m_2DPoints[highestPointIndex].y },
-                                  m_RawPoints[highestPointIndex]);
+    m_SelectedPointsInfo.addPoint(  highestPointIndex,
+                                    m_RawPoints[highestPointIndex],
+                                    getVertex(highestPointIndex, false));
+
     m_SelectedPointsInfo.normalize();
     m_Axis.setOrigin(selectionCenter());
 }

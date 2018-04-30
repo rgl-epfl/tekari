@@ -20,8 +20,7 @@ TODO:
 - select individual points
 - scale points depending on zoom plus manual factor
 - move point along path
-- shortcut to select highest point (also in selection)
-- predicted outgoing angle
+- predicted outgoing angle 
 - moving for notepads (scroll+ALT), selection is weird
 - use terminal input for files (options)
 

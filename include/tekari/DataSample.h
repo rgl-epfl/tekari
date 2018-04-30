@@ -56,8 +56,8 @@ public:
     void initShaders();
 
     // data sample info accessors
-    std::string name()         const { return m_Metadata.sampleName; }
-    const PointSampleInfo& pointsInfo() const { return m_PointsInfo; }
+    //const std::string& name()                   const { return "hello there"; }// m_Metadata.sampleName; }
+    const PointSampleInfo& pointsInfo()         const { return m_PointsInfo; }
     const PointSampleInfo& selectedPointsInfo() const { return m_SelectedPointsInfo; }
 
     const Metadata& metadata() const { return m_Metadata; }

@@ -46,29 +46,29 @@ MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::fu
     };
 
     auto generalSection = addInfoSection("General");
-    addInfo(generalSection, "Mountain Version", metadata->mountainVersion);
-    addInfo(generalSection, "Measured At", metadata->measuredAt);
-    addInfo(generalSection, "Read From Database At", metadata->dataReadFromDatabaseAt);
+    //addInfo(generalSection, "Mountain Version", metadata->mountainVersion);
+    //addInfo(generalSection, "Measured At", metadata->measuredAt);
+    //addInfo(generalSection, "Read From Database At", metadata->dataReadFromDatabaseAt);
     addSpacer(10);
 
     auto sampleInfo = addInfoSection("Data Sample");
-    addInfo(sampleInfo, "Sample Label", metadata->sampleLabel);
-    addInfo(sampleInfo, "Sample Name", metadata->sampleName);
-    addInfo(sampleInfo, "Datapoints In Sample", std::to_string(metadata->datapointsInFile));
+    //addInfo(sampleInfo, "Sample Label", metadata->sampleLabel);
+    //addInfo(sampleInfo, "Sample Name", metadata->sampleName);
+    //addInfo(sampleInfo, "Datapoints In Sample", std::to_string(metadata->datapointsInFile));
     addSpacer(10);
 
     auto techInfo = addInfoSection("Technical Details");
-    addInfo(techInfo, "Lamp Used", metadata->lamp);
-    addInfo(techInfo, "Incident Theta", std::to_string(metadata->incidentTheta));
-    addInfo(techInfo, "Incident Phi", std::to_string(metadata->incidentPhi));
+    //addInfo(techInfo, "Lamp Used", metadata->lamp);
+    //addInfo(techInfo, "Incident Theta", std::to_string(metadata->incidentTheta));
+    //addInfo(techInfo, "Incident Phi", std::to_string(metadata->incidentPhi));
     addSpacer(10);
 
     auto dbSection = addInfoSection("Database");
-    addInfo(dbSection, "Database Host", metadata->databaseHost);
-    addInfo(dbSection, "Database Name", metadata->databaseName);
-    addInfo(dbSection, "Database Id", std::to_string(metadata->databaseId));
-    addInfo(dbSection, "Datapoints In Database", std::to_string(metadata->datapointsInDatabase));
-    addInfo(techInfo, "Front Integral", std::to_string(metadata->frontIntegral));
+    //addInfo(dbSection, "Database Host", metadata->databaseHost);
+    //addInfo(dbSection, "Database Name", metadata->databaseName);
+    //addInfo(dbSection, "Database Id", std::to_string(metadata->databaseId));
+    //addInfo(dbSection, "Datapoints In Database", std::to_string(metadata->datapointsInDatabase));
+    //addInfo(techInfo, "Front Integral", std::to_string(metadata->frontIntegral));
 }
 
 bool MetadataWindow::keyboardEvent(int key, int scancode, int action, int modifiers) {
