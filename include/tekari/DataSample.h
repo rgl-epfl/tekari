@@ -67,6 +67,9 @@ public:
         const SelectionBox& selectionBox,
         const nanogui::Vector2i & canvasSize,
         SelectionMode mode);
+    void selectSinglePoint(const nanogui::Matrix4f& mvp,
+        const nanogui::Vector2i& mousePos,
+        const nanogui::Vector2i & canvasSize);
     void deselectAllPoints();
     void selectHighestPoint();
     nanogui::Vector3f selectionCenter();

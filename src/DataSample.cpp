@@ -15,6 +15,7 @@ using namespace std;
 using namespace nanogui;
 
 #define MAX_SAMPLING_DISTANCE 0.05f
+#define MAX_SELECTION_DISTANCE 30.0f
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -47,7 +48,6 @@ DataSample::DataSample(const string& sampleDataPath)
     };
     m_DrawFunctions[POINTS] = [this](const Vector3f&, const Matrix4f&,
         const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
-        glPointSize(4);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         m_Shaders[POINTS].bind();
@@ -409,6 +409,44 @@ void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectio
 
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+}
+
+
+void DataSample::selectSinglePoint(const nanogui::Matrix4f& mvp,
+    const nanogui::Vector2i & mousePos,
+    const nanogui::Vector2i & canvasSize)
+{
+    m_SelectedPointsInfo = PointSampleInfo();
+
+    float smallestDistance = MAX_SELECTION_DISTANCE * MAX_SELECTION_DISTANCE;
+    int closestPointIndex = -1;
+    for (unsigned int i = 0; i < tri_delaunay2d->num_points; ++i)
+    {
+        Vector3f point = getVertex(i, m_DisplayAsLog);
+        Vector4f projPoint = projectOnScreen(point, canvasSize, mvp);
+
+        float distSqr = Vector2f{ projPoint[0] - mousePos[0], projPoint[1] - mousePos[1] }.squaredNorm();
+        
+        if (smallestDistance > distSqr)
+        {
+            closestPointIndex = i;
+            smallestDistance = distSqr;
+        }
+
+        m_SelectedPoints[i] = false;
+    }
+    if (closestPointIndex != -1)
+    {
+        m_SelectedPoints[closestPointIndex] = true;
+        m_SelectedPointsInfo.addPoint(closestPointIndex, m_RawPoints[closestPointIndex], getVertex(closestPointIndex, m_DisplayAsLog));
+    }
+
+    m_SelectedPointsInfo.normalize();
+    m_Axis.setOrigin(selectionCenter());
+
+    m_Shaders[POINTS].bind();
+    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+
 }
 
 void DataSample::deselectAllPoints()

@@ -57,12 +57,17 @@ public:
     // Setters/Getters
     const RadialGrid& grid() const { return m_Grid; }
     RadialGrid& grid() { return m_Grid; }
+
     bool usesShadows() const { return m_UsesShadows; }
     void setUsesShadows(bool usesShadows) { m_UsesShadows = usesShadows; }
+
     bool displayAxis() const { return m_DisplayAxis; }
     void setDisplayAxis(bool displayAxis) { m_DisplayAxis = displayAxis; }
+
     void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
     const std::shared_ptr<const ColorMap> colorMap() const { return m_ColorMap; }
+
+    void setBasePointSize(float basePointSize) { m_BasePointSize = basePointSize; }
 
 private:
     SelectionBox getSelectionBox() const;
@@ -78,6 +83,7 @@ private:
     // view state
     nanogui::Vector3f m_Translation;
     float m_Zoom;
+    float m_BasePointSize;
     bool m_OrthoMode;
 
     // selection

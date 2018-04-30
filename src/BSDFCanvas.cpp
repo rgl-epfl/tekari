@@ -22,6 +22,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 :   GLCanvas(parent)
 ,   m_Translation(0, 0, 0)
 ,	m_Zoom(0)
+,   m_BasePointSize(0)
 ,	m_OrthoMode(false)
 ,   m_SelectionRegion(make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_UsesShadows(true)
@@ -117,6 +118,7 @@ void BSDFCanvas::drawGL(NVGcontext* ctx) {
     nvgStrokeColor(ctx, Color(1.0f, 1.0f));
     nvgStroke(ctx);
 
+    glPointSize(m_Zoom + m_BasePointSize);
     for (const auto& dataSample: m_DataSamplesToDraw)
     {
         dataSample->drawGL(VIEW_ORIGIN, model, VIEW, proj, m_UsesShadows, m_DisplayAxis, m_ColorMap);

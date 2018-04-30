@@ -81,7 +81,8 @@ BSDFApplication::BSDFApplication()
         {
             if (selectionBox.empty())
             {
-                m_SelectedDataSample->deselectAllPoints();
+                m_SelectedDataSample->selectSinglePoint(mvp, selectionBox.topLeft, canvasSize);
+                toggleSelectionInfoWindow();
             }
             else
             {
@@ -146,6 +147,13 @@ BSDFApplication::BSDFApplication()
         m_DisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
             [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
+        new Label{ hiddenOptionsPopup , "Point Size" };
+        auto pointSizeSlider = new Slider{ hiddenOptionsPopup };
+        pointSizeSlider->setRange(make_pair(0.0f, 10.0f));
+        pointSizeSlider->setValue(0.0f);
+        pointSizeSlider->setCallback([this](float value) {
+            m_BSDFCanvas->setBasePointSize(value);
+        });
 
         auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };
         choseColorMapButton->setTooltip("Chose with which color map the data should be displayed (C)");

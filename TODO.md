@@ -18,7 +18,6 @@ TODO:
 - spectral data
 
 - select individual points
-- scale points depending on zoom plus manual factor
 - move point along path
 - predicted outgoing angle 
 - moving for notepads (scroll+ALT), selection is weird
