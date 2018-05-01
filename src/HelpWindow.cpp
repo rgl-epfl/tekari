@@ -48,8 +48,9 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         scrollContent->setLayout(new GroupLayout{});
         m_ScrollPanel->setFixedHeight(500);
 
-        auto addShortcutSection = [&scrollContent](const std::string& label) {
-            new Label{ scrollContent, label, "sans-bold", 18 };
+        auto addShortcutSection = [&scrollContent](const std::string& label, const std::string& tooltip="") {
+            auto l = new Label{ scrollContent, label, "sans-bold", 18 };
+            l->setTooltip(tooltip);
             auto section = new Widget{ scrollContent };
             section->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 0, 0 });
             return section;
@@ -61,11 +62,17 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
             auto descWidget = new Label{ row, desc, "sans" };
             descWidget->setFixedWidth(250);
             new Label{ row, keys, "sans-bold" };
+            return descWidget;
         };
 
+        auto mouseModes = addShortcutSection("MouseModes", "Changes the mouse buttons mapping, hover on each mode to see what it does.");
+        addRow(mouseModes, "R", "Rotation Mode")->setTooltip("(Left -> Rotate, Middle -> Translate, Right -> Select)");
+        addRow(mouseModes, "T", "Translation Mode")->setTooltip("(Left -> Translate, Middle -> Select, Right -> Rotate)");
+        addRow(mouseModes, "B", "Box Selection Mode")->setTooltip("(Left -> Select, Middle -> Rotate, Right -> Translate)");
+
         auto moveControls = addShortcutSection("Move Controls");
-        addRow(moveControls, "Left Drag", "Rotate Data Sample");
-        addRow(moveControls, "Middle Drag", "Translate Data Sample");
+        addRow(moveControls, "Rotate Button Drag", "Rotate Data Sample");
+        addRow(moveControls, "Translate Button Drag", "Translate Data Sample");
         addRow(moveControls, "Scroll In / Out", "Zoom In / Out");
         addRow(moveControls, "C", "Snap To Selection Center");
 
@@ -75,35 +82,43 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(fileLoading, COMMAND + "+P", "Save Screenshot of Data");
         addRow(fileLoading, "Delete", "Close Selected Data Sample");
 
+        auto dataSampleViewOptions = addShortcutSection("Data Sample View Options", "For the currently selected datasample");
+        addRow(dataSampleViewOptions, "N", "Switch To Normal View");
+        addRow(dataSampleViewOptions, "L", "Switch To Logarithmic View");
+        addRow(dataSampleViewOptions, "P", "Show/Hide Path");
+        addRow(dataSampleViewOptions, "Shift+P", "Show/Hide All Points");
+        addRow(dataSampleViewOptions, "Shift+I", "Show/Hide Incident Angle");
+
+
         auto viewOptions = addShortcutSection("View Options");
-        addRow(viewOptions, "N", "Show/Hide Normal View");
-        addRow(viewOptions, "L", "Show/Hide Logarithmic View");
-        addRow(viewOptions, "P", "Show/Hide Path");
-        addRow(viewOptions, "Shift + P", "Show/Hide All Points");
-        addRow(viewOptions, "Shift + I", "Show/Hide Incident Angle");
         addRow(viewOptions, "G", "Show/Hide Grid");
-        addRow(viewOptions, "A", "Show/Hide Center Points");
+        addRow(viewOptions, "A", "Show/Hide Center Axis");
         addRow(viewOptions, "Shift+G", "Show/Hide Grid Degrees");
         addRow(viewOptions, "Shift+S", "Use/Un-use Shadows");
-        addRow(viewOptions, "M", "Chose Color Map");
-        addRow(viewOptions, "O / KP_5", "Enable/Disable Orthographic View");
-        addRow(viewOptions, "KP_1 or Alt+1 / " + COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Front / Back View");
-        addRow(viewOptions, "KP_3 or Alt+3 / " + COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Left / Right View");
-        addRow(viewOptions, "KP_7 or Alt+7 / " + COMMAND + "+KP_7 or " + COMMAND + "+Alt+7", "Top / Bottom View");
+        addRow(viewOptions, "O or KP_5 or Alt+5", "Enable/Disable Orthographic View");
+        addRow(viewOptions, "KP_1 or Alt+1", "Front View");
+        addRow(viewOptions, "KP_3 or Alt+3", "Left View");
+        addRow(viewOptions, "KP_7 or Alt+7", "Top View");
+        addRow(viewOptions, COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Back View");
+        addRow(viewOptions, COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Right View");
+        addRow(viewOptions, COMMAND + "+KP_7 or " + COMMAND + "+Alt+7", "Bottom View");
 
         auto dataSelection = addShortcutSection("Data Sample Selection");
         addRow(dataSelection, "1...9", "Select N-th Data Sample");
         addRow(dataSelection, "Down or S / Up or W", "Select Next / Previous Data Sample");
         addRow(dataSelection, "Left Click", "Select Hovered Data Sample");
 
-        auto dataEdition = addShortcutSection("Data Editing");
-        addRow(dataEdition, "Right Drag", "Select Data Points In Region");
-        addRow(dataEdition, "Shift + Right Drag", "Add Points In Region To Current Selection");
-        addRow(dataEdition, "Alt + Right Drag", "Remove Points In Region To Current Selection");
-        addRow(dataEdition, "Right Click or Escape", "Deselect All Points");
+        auto dataEdition = addShortcutSection("Data Selection/Editing");
+        addRow(dataEdition, "Select Button Drag", "Select Data Points In Region");
+        addRow(dataEdition, "Shift + Select Button Drag", "Add Points To Current Selection");
+        addRow(dataEdition, "Alt + Select Button Drag", "Remove Points To Current Selection");
+        addRow(dataEdition, "Select Button Click", "Select Closest Point (In Range)");
+        addRow(dataEdition, "Escape", "Deselect All Points");
 
         auto ui = addShortcutSection("Interface");
         addRow(ui, "H", "Show Help (this Window)");
+        addRow(ui, "I", "Show Metadata");
+        addRow(ui, "M", "Chose Color Map");
         addRow(ui, "Q", "Quit");
     }
 

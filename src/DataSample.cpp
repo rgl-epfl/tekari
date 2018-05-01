@@ -441,11 +441,10 @@ void DataSample::selectSinglePoint(const nanogui::Matrix4f& mvp,
     {
         m_SelectedPoints[closestPointIndex] = true;
         m_SelectedPointsInfo.addPoint(closestPointIndex, m_RawPoints[closestPointIndex], getVertex(closestPointIndex, m_DisplayAsLog));
+        m_SelectedPointsInfo.normalize();
     }
 
-    m_SelectedPointsInfo.normalize();
     m_Axis.setOrigin(selectionCenter());
-
     updatePointSelection();
 }
 

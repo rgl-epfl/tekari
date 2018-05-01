@@ -21,6 +21,13 @@ public:
     {
         FRONT, BACK, UP, DOWN, LEFT, RIGHT
     };
+    enum MouseMode
+    {
+        ROTATE,
+        TRANSLATE,
+        SELECTION,
+        MOUSE_MODE_COUNT
+    };
 
 private:
     // view state constants
@@ -69,9 +76,15 @@ public:
 
     void setPointSizeScale(float pointSizeScale) { m_PointSizeScale = pointSizeScale; }
 
+    void setMouseMode(MouseMode mode) { m_MouseMode = mode; }
+    MouseMode mouseMode() const { return m_MouseMode; }
+
 private:
     SelectionBox getSelectionBox() const;
     nanogui::Matrix4f getProjectionMatrix() const;
+    int rotationMouseButton(bool dragging) const;
+    int translationMouseButton(bool dragging) const;
+    int selectionMouseButton(bool dragging) const;
 
     // data samples
     std::vector<std::shared_ptr<DataSample>>    m_DataSamplesToDraw;
@@ -85,6 +98,7 @@ private:
     float m_Zoom;
     float m_PointSizeScale;
     bool m_OrthoMode;
+    MouseMode m_MouseMode;
 
     // selection
     std::pair<nanogui::Vector2i, nanogui::Vector2i> m_SelectionRegion;

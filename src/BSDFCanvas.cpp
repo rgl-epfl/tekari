@@ -12,7 +12,14 @@
 using namespace nanogui;
 using namespace std;
 
+
 TEKARI_NAMESPACE_BEGIN
+
+int BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT] =
+{
+    { GLFW_MOUSE_BUTTON_1, GLFW_MOUSE_BUTTON_2, GLFW_MOUSE_BUTTON_3 },
+    { GLFW_MOUSE_BUTTON_2, GLFW_MOUSE_BUTTON_3, GLFW_MOUSE_BUTTON_5 }
+};
 
 const Vector3f BSDFCanvas::VIEW_ORIGIN{ 0, 0, 4 };
 const Vector3f BSDFCanvas::VIEW_UP{ 0, 1, 0 };
@@ -29,6 +36,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,   m_SelectionRegion(make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_UsesShadows(true)
 ,   m_DisplayAxis(true)
+,   m_MouseMode(ROTATE)
 {
     m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
 }
@@ -39,16 +47,16 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
     if (GLCanvas::mouseMotionEvent(p, rel, button, modifiers))
         return true;
     
-    if (button == GLFW_MOUSE_BUTTON_2)
+    if (button == rotationMouseButton(true))
     {
         m_Arcball.motion(p);
         return true;
     }
-    else if (button == GLFW_MOUSE_BUTTON_3)
+    else if (button == selectionMouseButton(true))
     {
         m_SelectionRegion.second = p;
     }
-    else if (button == GLFW_MOUSE_BUTTON_5)
+    else if (button == translationMouseButton(true))
     {
         float moveSpeed = 0.04f / (m_Zoom + MAX_ZOOM + 0.1f);
         Vector3f translation = m_Arcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * moveSpeed * VIEW_RIGHT + rel[1] * moveSpeed * VIEW_UP);
@@ -62,12 +70,12 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
     if (GLCanvas::mouseButtonEvent(p, button, down, modifiers))
         return true;
 
-    if (button == GLFW_MOUSE_BUTTON_1)
+    if (button == rotationMouseButton(false))
     {
         m_Arcball.button(p, down);
         return true;
     }
-    else if (button == GLFW_MOUSE_BUTTON_2)
+    else if (button == selectionMouseButton(false))
     {
         if (!down && m_SelectedDataSample)
         {
@@ -92,6 +100,18 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
         return true;
     }
     return false;
+}
+int BSDFCanvas::rotationMouseButton(bool dragging) const
+{
+    return BUTTON_MAPPINGS[dragging][m_MouseMode];
+}
+int BSDFCanvas::translationMouseButton(bool dragging) const
+{
+    return BUTTON_MAPPINGS[dragging][(m_MouseMode + 2) % MOUSE_MODE_COUNT];
+}
+int BSDFCanvas::selectionMouseButton(bool dragging) const
+{
+    return BUTTON_MAPPINGS[dragging][(m_MouseMode + 1) % MOUSE_MODE_COUNT];
 }
 
 bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)

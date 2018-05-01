@@ -30,7 +30,6 @@ BSDFApplication::BSDFApplication()
 ,   m_HelpWindow(nullptr)
 ,   m_SelectionInfoWindow(nullptr)
 ,	m_ColorMapSelectionWindow(nullptr)
-,   m_MouseMode(MOVE)
 {
     // load color maps
     for (auto& p : ColorMap::PREDEFINED_MAPS)
@@ -144,15 +143,17 @@ BSDFApplication::BSDFApplication()
     // mouse mode
     {
         new Label{ m_ToolWindow, "Mouse Mode", "sans-bold", 25};
-        auto mouseModeSelector = new ComboBox{ m_ToolWindow, {"Move", "Selection"} };
-        mouseModeSelector->setCallback([this](int index) {
-            m_MouseMode = static_cast<MouseMode>(index);
+        m_MouseModeSelector = new ComboBox{ m_ToolWindow, {"Rotation", "Translation", "Box Selection"} };
+        m_MouseModeSelector->setCallback([this](int index) {
+            m_BSDFCanvas->setMouseMode(static_cast<BSDFCanvas::MouseMode>(index));
             glfwSetCursor(mGLFWWindow, m_Cursors[index]);
         });
+        m_MouseModeSelector->setTooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
 
-        m_Cursors[MOVE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-        m_Cursors[SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-        glfwSetCursor(mGLFWWindow, m_Cursors[m_MouseMode]);
+        m_Cursors[BSDFCanvas::MouseMode::ROTATE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        m_Cursors[BSDFCanvas::MouseMode::TRANSLATE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+        m_Cursors[BSDFCanvas::MouseMode::SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+        glfwSetCursor(mGLFWWindow, m_Cursors[m_BSDFCanvas->mouseMode()]);
     }
 
     // grid view otpions
@@ -260,7 +261,7 @@ BSDFApplication::~BSDFApplication()
         m_LoadDataSampleThread->join();
     m_Framebuffer.free();
 
-    for (size_t i = 0; i < MOUSE_MODE_COUNT; i++)
+    for (size_t i = 0; i < BSDFCanvas::MOUSE_MODE_COUNT; i++)
     {
         glfwDestroyCursor(m_Cursors[i]);
     }
@@ -350,6 +351,10 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 return true;
             case GLFW_KEY_7:
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
+                return true;
+            case GLFW_KEY_5:
+                toggleToolButton(m_OrthoViewToggle);
+                return true;
             }
         }
         else
@@ -401,14 +406,24 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_L:
                 setDisplayAsLog(m_SelectedDataSample, true);
                 return true;
+            case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
+            {
+                BSDFCanvas::MouseMode mode = BSDFCanvas::MouseMode::ROTATE;
+                if (key == GLFW_KEY_T) mode = BSDFCanvas::MouseMode::TRANSLATE;
+                if (key == GLFW_KEY_B) mode = BSDFCanvas::MouseMode::SELECTION;
+                m_MouseModeSelector->setSelectedIndex(mode);
+                m_BSDFCanvas->setMouseMode(mode);
+                glfwSetCursor(mGLFWWindow, m_Cursors[mode]);
+                return true;
+            }
             case GLFW_KEY_P:
                 toggleView(DataSample::Views::PATH, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::PATH));
                 return true;
             case GLFW_KEY_G:
-                toggleToolButton(m_GridViewToggle, false);
+                toggleToolButton(m_GridViewToggle);
                 return true;
             case GLFW_KEY_O: case GLFW_KEY_KP_5:
-                toggleToolButton(m_OrthoViewToggle, false);
+                toggleToolButton(m_OrthoViewToggle);
                 return true;
             case GLFW_KEY_I:
                 toggleMetadataWindow();
@@ -625,10 +640,21 @@ void BSDFApplication::toggleSelectionInfoWindow()
             new Label{ window, value };
         };
 
-        makeSelectionInfoLabels("Points In Selection :", to_string(m_SelectedDataSample->selectedPointsInfo().pointsCount()));
-        makeSelectionInfoLabels("Minimum Intensity :",   to_string(m_SelectedDataSample->selectedPointsInfo().minIntensity()));
-        makeSelectionInfoLabels("Maximum Intensity :",   to_string(m_SelectedDataSample->selectedPointsInfo().maxIntensity()));
-        makeSelectionInfoLabels("Average Intensity :",   to_string(m_SelectedDataSample->selectedPointsInfo().averageIntensity()));
+        unsigned int points_count = m_SelectedDataSample->selectedPointsInfo().pointsCount();
+        string min_intensity = "-";
+        string max_intensity = "-";
+        string average_intensity = "-";
+        if (points_count != 0)
+        {
+            min_intensity = to_string(m_SelectedDataSample->selectedPointsInfo().minIntensity());
+            max_intensity = to_string(m_SelectedDataSample->selectedPointsInfo().maxIntensity());
+            average_intensity = to_string(m_SelectedDataSample->selectedPointsInfo().averageIntensity());
+        }
+
+        makeSelectionInfoLabels("Points In Selection :", to_string(points_count));
+        makeSelectionInfoLabels("Minimum Intensity :",   min_intensity);
+        makeSelectionInfoLabels("Maximum Intensity :",   max_intensity);
+        makeSelectionInfoLabels("Average Intensity :",   average_intensity);
 
         window->setPosition(Vector2i{width() - 200, 20});
 
@@ -797,13 +823,10 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
     m_BSDFCanvas->addDataSample(selectedDataSample());
 }
 
-void BSDFApplication::toggleToolButton(nanogui::Button* button, bool needsSelectedDataSample)
+void BSDFApplication::toggleToolButton(nanogui::Button* button)
 {
-    if (!needsSelectedDataSample || hasSelectedDataSample())
-    {
-        button->setPushed(!button->pushed());
-        button->changeCallback()(button->pushed());
-    }
+    button->setPushed(!button->pushed());
+    button->changeCallback()(button->pushed());
 }
 
 void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> dataSample, bool toggle)
