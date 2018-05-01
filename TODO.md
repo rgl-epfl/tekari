@@ -17,7 +17,6 @@ TODO:
 // To do:
 - spectral data
 
-- move point along path
 - predicted outgoing angle
 - moving for notepads (scroll+ALT), selection is weird
 - use terminal input for files (options)

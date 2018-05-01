@@ -113,6 +113,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(dataEdition, "Shift + Select Button Drag", "Add Points To Current Selection");
         addRow(dataEdition, "Alt + Select Button Drag", "Remove Points To Current Selection");
         addRow(dataEdition, "Select Button Click", "Select Closest Point (In Range)");
+        addRow(dataEdition, "KP_+ / KP_-", "Move Selected Points Allong Path");
         addRow(dataEdition, "Escape", "Deselect All Points");
 
         auto ui = addShortcutSection("Interface");

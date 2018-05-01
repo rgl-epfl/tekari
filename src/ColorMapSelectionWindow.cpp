@@ -19,8 +19,7 @@ ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_p
 ,   m_SelectedColorMapIndex(0)
 {
     setFixedWidth(200);
-    auto closeButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
-    closeButton->setCallback(m_CloseCallback);
+    m_CloseButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
     setLayout(new GroupLayout{});
 
     new Label{ this, "Available Color Maps :", "sans-bold", 18 };
@@ -68,7 +67,10 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
         {
             int increment = (key == GLFW_KEY_UP || key == GLFW_KEY_W) ? -1 : 1;
             deselectAllColorMapsButton();
-            m_SelectedColorMapIndex = (m_SelectedColorMapIndex + increment) % m_ColorMapButtons.size();
+
+            int selectedColorMapIndex = m_SelectedColorMapIndex + increment;
+            if (selectedColorMapIndex < 0) selectedColorMapIndex += m_ColorMapButtons.size();
+            m_SelectedColorMapIndex = selectedColorMapIndex % m_ColorMapButtons.size();
             auto colorMapButton = m_ColorMapButtons[m_SelectedColorMapIndex];
             colorMapButton->setSelected(true);
             m_SelectionCallback(colorMapButton->colorMap());
