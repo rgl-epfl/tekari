@@ -149,10 +149,10 @@ BSDFApplication::BSDFApplication()
 
         new Label{ hiddenOptionsPopup , "Point Size" };
         auto pointSizeSlider = new Slider{ hiddenOptionsPopup };
-        pointSizeSlider->setRange(make_pair(0.0f, 10.0f));
-        pointSizeSlider->setValue(0.0f);
+        pointSizeSlider->setRange(make_pair(0.1f, 10.0f));
+        pointSizeSlider->setValue(1.0f);
         pointSizeSlider->setCallback([this](float value) {
-            m_BSDFCanvas->setBasePointSize(value);
+            m_BSDFCanvas->setPointSizeScale(value);
         });
 
         auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };

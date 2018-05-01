@@ -6,11 +6,13 @@
 
 #include "tekari/DataSample.h"
 
+#define MAX_ZOOM 10.0f
+#define MIN_ZOOM -MAX_ZOOM
+
 using namespace nanogui;
 using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
-
 
 const Vector3f BSDFCanvas::VIEW_ORIGIN{ 0, 0, 4 };
 const Vector3f BSDFCanvas::VIEW_UP{ 0, 1, 0 };
@@ -22,7 +24,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 :   GLCanvas(parent)
 ,   m_Translation(0, 0, 0)
 ,	m_Zoom(0)
-,   m_BasePointSize(0)
+,   m_PointSizeScale(1.0f)
 ,	m_OrthoMode(false)
 ,   m_SelectionRegion(make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_UsesShadows(true)
@@ -48,7 +50,7 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
     }
     else if (button == GLFW_MOUSE_BUTTON_5)
     {
-        float moveSpeed = 0.04f / (m_Zoom + 10.1f);
+        float moveSpeed = 0.04f / (m_Zoom + MAX_ZOOM + 0.1f);
         Vector3f translation = m_Arcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * moveSpeed * VIEW_RIGHT + rel[1] * moveSpeed * VIEW_UP);
         m_Translation += translation;
         return true;
@@ -97,7 +99,7 @@ bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
     if (!GLCanvas::scrollEvent(p, rel))
     {
         m_Zoom += rel[1] * 0.2f;
-        m_Zoom = min(10.0f, max(-10.0f, m_Zoom));
+        m_Zoom = min(MAX_ZOOM, max(MIN_ZOOM, m_Zoom));
     }
     return true;
 }
@@ -120,7 +122,8 @@ void BSDFCanvas::drawGL(NVGcontext* ctx) {
     nvgFillColor(ctx, Color(1.0f, 0.1f));
     nvgFill(ctx);
 
-    glPointSize(m_Zoom + m_BasePointSize);
+    float pointSizeFactor = (m_Zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
+    glPointSize(pointSizeFactor * pointSizeFactor * pointSizeFactor * m_PointSizeScale);
     for (const auto& dataSample: m_DataSamplesToDraw)
     {
         dataSample->drawGL(VIEW_ORIGIN, model, VIEW, proj, m_UsesShadows, m_DisplayAxis, m_ColorMap);

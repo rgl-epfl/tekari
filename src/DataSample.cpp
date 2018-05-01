@@ -372,6 +372,9 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
     m_Shaders[PATH].shareAttrib(m_MeshShader, "in_height");
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
+
+    updateSelectionInfo();
+    m_Axis.setOrigin(selectionCenter());
 }
 
 void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectionBox,

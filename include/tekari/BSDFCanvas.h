@@ -67,7 +67,7 @@ public:
     void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
     const std::shared_ptr<const ColorMap> colorMap() const { return m_ColorMap; }
 
-    void setBasePointSize(float basePointSize) { m_BasePointSize = basePointSize; }
+    void setPointSizeScale(float pointSizeScale) { m_PointSizeScale = pointSizeScale; }
 
 private:
     SelectionBox getSelectionBox() const;
@@ -83,7 +83,7 @@ private:
     // view state
     nanogui::Vector3f m_Translation;
     float m_Zoom;
-    float m_BasePointSize;
+    float m_PointSizeScale;
     bool m_OrthoMode;
 
     // selection
