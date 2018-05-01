@@ -23,6 +23,14 @@ struct DataSampleToAdd
 
 class BSDFApplication : public nanogui::Screen {
 public:
+    enum MouseMode
+    {
+        MOVE,
+        SELECTION,
+        MOUSE_MODE_COUNT
+    };
+
+public:
     BSDFApplication();
     ~BSDFApplication();
 
@@ -101,6 +109,10 @@ private:
 
     // canvas
     BSDFCanvas *m_BSDFCanvas;
+
+    // cursors and mouse mode
+    MouseMode m_MouseMode;
+    GLFWcursor* m_Cursors[MOUSE_MODE_COUNT];
 
     std::vector<std::shared_ptr<DataSample>> m_DataSamples;
     std::shared_ptr<DataSample> m_SelectedDataSample;

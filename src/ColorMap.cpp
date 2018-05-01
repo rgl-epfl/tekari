@@ -2,6 +2,28 @@
 
 TEKARI_NAMESPACE_BEGIN
 
+const std::string ColorMap::FOLDER_PATH = "../resources/color_maps/";
+const std::vector<std::pair<const std::string, const std::string>> ColorMap::PREDEFINED_MAPS =
+{
+    { "Jet",            "jet.png" },
+    { "BRG",            "brg.png" },
+    { "CMR Map",        "CMRmap.png" },
+    { "Cube Helix",     "cubehelix.png" },
+    { "Gist Earth",     "gist_earth.png" },
+    { "Gist Ncar",      "gist_ncar.png" },
+    { "Gist Rainbow",   "gist_rainbow.png" },
+    { "Gist Stern",     "gist_stern.png" },
+    { "GNU Plot",       "gnu_plot.png" },
+    { "GNU Plot 2",     "gnu_plot2.png" },
+    { "HSV",            "hsv.png" },
+    { "Inferno",        "inferno.png" },
+    { "Numpy Spectral", "npy_spectral.png" },
+    { "Ocean",          "ocean.png" },
+    { "Prism",          "prism.png" },
+    { "Rainbow",        "rainbow.png" },
+    { "Terrain",        "terrain.png" },
+};
+
 ColorMap::ColorMap(const std::string& name, const std::string& filePath)
 :   m_Name(name)
 {

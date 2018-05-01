@@ -51,7 +51,7 @@ bool ColorMapButton::mouseButtonEvent(const nanogui::Vector2i & p, int button, b
     if (button == GLFW_MOUSE_BUTTON_1) {
         if (m_Callback)
         {
-            m_Callback(m_ColorMap);
+            m_Callback(this);
             m_Selected = true;
             return true;
         }

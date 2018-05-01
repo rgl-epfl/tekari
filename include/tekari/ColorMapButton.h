@@ -20,16 +20,18 @@ public:
     virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
     void draw(NVGcontext *ctx) override;
 
-    void setCallback(std::function<void(std::shared_ptr<ColorMap>)> callback) { m_Callback = callback; }
+    void setCallback(std::function<void(ColorMapButton*)> callback) { m_Callback = callback; }
 
     bool selected() const { return m_Selected; }
     void setSelected(bool selected) { m_Selected = selected; }
+
+    std::shared_ptr<ColorMap> colorMap() { return m_ColorMap; }
 
 private:
     nanogui::GLShader m_ColorMapShader;
     std::shared_ptr<ColorMap> m_ColorMap;
 
-    std::function<void(std::shared_ptr<ColorMap>)> m_Callback;
+    std::function<void(ColorMapButton*)> m_Callback;
 
     bool m_Selected;
 };

@@ -8,6 +8,7 @@
 #include <nanogui/checkbox.h>
 #include <nanogui/imageview.h>
 #include <nanogui/slider.h>
+#include <nanogui/combobox.h>
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/messagedialog.h>
 #include <nanogui/label.h>
@@ -29,40 +30,18 @@ BSDFApplication::BSDFApplication()
 ,   m_HelpWindow(nullptr)
 ,   m_SelectionInfoWindow(nullptr)
 ,	m_ColorMapSelectionWindow(nullptr)
+,   m_MouseMode(MOVE)
 {
     // load color maps
-    const string color_maps_folder_path = "../resources/color_maps/";
-    const string color_maps_extension = ".png";
-    vector<pair<const string, const string>> color_maps
+    for (auto& p : ColorMap::PREDEFINED_MAPS)
     {
-        { "Jet",            "jet" },
-        { "BRG",            "brg" },
-        { "CMR Map",        "CMRmap" },
-        { "Cube Helix",     "cubehelix" },
-        { "Gist Earth",     "gist_earth" },
-        { "Gist Ncar",      "gist_ncar" },
-        { "Gist Rainbow",   "gist_rainbow" },
-        { "Gist Stern",     "gist_stern" },
-        { "GNU Plot",       "gnu_plot" },
-        { "GNU Plot 2",     "gnu_plot2" },
-        { "HSV",            "hsv" },
-        { "Inferno",        "inferno" },
-        { "Numpy Spectral", "npy_spectral" },
-        { "Ocean",          "ocean" },
-        { "Prism",          "prism" },
-        { "Rainbow",        "rainbow" },
-        { "Terrain",        "terrain" },
-    };
-
-    for (auto& p : color_maps)
-    {
-        m_ColorMaps.push_back(make_shared<ColorMap>(p.first, color_maps_folder_path + p.second + color_maps_extension));
+        m_ColorMaps.push_back(make_shared<ColorMap>(p.first, ColorMap::FOLDER_PATH + p.second));
     }
 
     m_3DView = new Widget{this};
     m_3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
 
-    // the canvas and footer
+    // canvas
     m_BSDFCanvas = new BSDFCanvas{ m_3DView };
     m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
     m_BSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const SelectionBox& selectionBox,
@@ -161,6 +140,21 @@ BSDFApplication::BSDFApplication()
             toggleColorMapSelectionWindow();
         });
     }
+
+    // mouse mode
+    {
+        new Label{ m_ToolWindow, "Mouse Mode", "sans-bold", 25};
+        auto mouseModeSelector = new ComboBox{ m_ToolWindow, {"Move", "Selection"} };
+        mouseModeSelector->setCallback([this](int index) {
+            m_MouseMode = static_cast<MouseMode>(index);
+            glfwSetCursor(mGLFWWindow, m_Cursors[index]);
+        });
+
+        m_Cursors[MOVE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+        m_Cursors[SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+        glfwSetCursor(mGLFWWindow, m_Cursors[m_MouseMode]);
+    }
+
     // grid view otpions
     {
         auto label = new Label(m_ToolWindow, "View Options", "sans-bold", 25);
@@ -265,6 +259,11 @@ BSDFApplication::~BSDFApplication()
     if (m_LoadDataSampleThread)
         m_LoadDataSampleThread->join();
     m_Framebuffer.free();
+
+    for (size_t i = 0; i < MOUSE_MODE_COUNT; i++)
+    {
+        glfwDestroyCursor(m_Cursors[i]);
+    }
 }
 
 bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modifiers) {
@@ -652,9 +651,9 @@ void BSDFApplication::toggleColorMapSelectionWindow()
         auto window = new ColorMapSelectionWindow{
             this,
             m_ColorMaps,
-            [this]() { toggleColorMapSelectionWindow(); },
-            [this](shared_ptr<ColorMap> colorMap) { selectColorMap(colorMap); }
         };
+        window->setCloseCallback([this]() { toggleColorMapSelectionWindow(); });
+        window->setSelectionCallback([this](shared_ptr<ColorMap> colorMap) { selectColorMap(colorMap); });
         auto pos = distance(m_ColorMaps.begin(), find(m_ColorMaps.begin(), m_ColorMaps.end(), m_BSDFCanvas->colorMap()));
         window->setSelectedButton(static_cast<size_t>(pos));
         window->center();
