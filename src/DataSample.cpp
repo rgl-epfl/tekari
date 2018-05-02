@@ -79,6 +79,7 @@ DataSample::DataSample(const string& sampleDataPath)
 DataSample::~DataSample()
 {
     m_MeshShader.free();
+    m_PredictedOutgoingAngleShader.free();
     for (int i = 0; i != VIEW_COUNT; ++i)
     {
         m_Shaders[i].free();
@@ -115,6 +116,12 @@ void DataSample::drawGL(
         m_MeshShader.drawIndexed(GL_TRIANGLES, 0, m_DelaunayTriangulation->num_triangles);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_POLYGON_OFFSET_FILL);
+
+        glEnable(GL_DEPTH_TEST);
+        m_PredictedOutgoingAngleShader.bind();
+        m_PredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
+        m_PredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
+        glDisable(GL_DEPTH_TEST);
 
         for (int i = 0; i != VIEW_COUNT; ++i)
         {
@@ -153,7 +160,7 @@ void DataSample::readDataset(const string &filePath)
     unsigned int lineNumber = 0;
     const size_t MAX_LENGTH = 512;
     char line[MAX_LENGTH];
-    stringstream rawMetaData;
+    bool readingMetadata = true;
     while (!feof(datasetFile) && !ferror(datasetFile) && fgets(line, MAX_LENGTH, datasetFile))
     {
         ++lineNumber;
@@ -166,23 +173,27 @@ void DataSample::readDataset(const string &filePath)
         {
             // skip empty lines
         }
-        else if (*head == '#')
+        else if (*head == '#' && readingMetadata)
         {
-            rawMetaData << head;
-            m_Metadata.parse(head);
-            //if (m_Metadata.datapointsInFile >= 0)
-            //{
-            //    // as soon as we know the total size of the dataset, reserve enough space for it
-            //    m_2DPoints.reserve(m_Metadata.datapointsInFile);
-            //    m_SelectedPoints.resize(m_Metadata.datapointsInFile, false);
-            //    m_Heights.reserve(m_Metadata.datapointsInFile);
-            //    m_LogHeights.reserve(m_Metadata.datapointsInFile);
-
-            //    m_RawPoints.reserve(m_Metadata.datapointsInFile);
-            //}
+            m_Metadata.addLine(head);
         }
         else
         {
+            if (readingMetadata)
+            {
+                readingMetadata = false;
+                m_Metadata.initInfos();
+                if (m_Metadata.pointsInFile() >= 0)
+                {
+                    // as soon as we know the total size of the dataset, reserve enough space for it
+                    m_2DPoints.reserve(m_Metadata.pointsInFile());
+                    m_SelectedPoints.resize(m_Metadata.pointsInFile(), false);
+                    m_Heights.reserve(m_Metadata.pointsInFile());
+                    m_LogHeights.reserve(m_Metadata.pointsInFile());
+
+                    m_RawPoints.reserve(m_Metadata.pointsInFile());
+                }
+            }
             float phi, theta, intensity;
             if (sscanf(head, "%f %f %f", &theta, &phi, &intensity) != 3)
             {
@@ -203,9 +214,6 @@ void DataSample::readDataset(const string &filePath)
 
     m_PointsInfo.normalize();
     m_PointsInfo.normalizeAverage();
-
-    // store raw metadata
-    m_RawMetaData = rawMetaData.str();
 
     computeNormalizedIntensities();
     m_Axis.setOrigin(selectionCenter());
@@ -307,6 +315,8 @@ void DataSample::initShaders()
     m_Shaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
     m_Shaders[POINTS].initFromFiles("points", shader_path + "points.vert", shader_path + "points.frag");
     m_Shaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
+
+    m_PredictedOutgoingAngleShader.initFromFiles("predicted_outgoing_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
 }
 
 void DataSample::linkDataToShaders()
@@ -339,15 +349,22 @@ void DataSample::linkDataToShaders()
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
-    Vector3f incidentCoords{ 0.0f, 0.0f, 0.0f };
-    //(float)(m_Metadata.incidentTheta * cos(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f),
-                             //(float)(m_Metadata.incidentTheta * sin(m_Metadata.incidentPhi * M_PI / 180.0f) / 90.0f) };
+    Vector3f pos{ 0.0f, 0.0f, 0.0f };
+    del_point2d_t origin = transformRawPoint({ m_Metadata.incidentTheta(), m_Metadata.incidentPhi(), 0.0f });
     m_Shaders[INCIDENT_ANGLE].bind();
-    m_Shaders[INCIDENT_ANGLE].uploadAttrib("pos", 1, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)&incidentCoords);
-    m_Shaders[INCIDENT_ANGLE].setUniform("origin", incidentCoords);
+    m_Shaders[INCIDENT_ANGLE].uploadAttrib("pos", 1, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)&pos);
+    m_Shaders[INCIDENT_ANGLE].setUniform("origin", Vector3f{ origin.x, 0.0f, origin.y });
     m_Shaders[INCIDENT_ANGLE].setUniform("direction", Vector3f{ 0, 1, 0 });
     m_Shaders[INCIDENT_ANGLE].setUniform("color", Vector3f{ 1, 0, 1 });
     m_Shaders[INCIDENT_ANGLE].setUniform("length", 1.0f);
+
+    origin = { -origin.x, -origin.y };
+    m_PredictedOutgoingAngleShader.bind();
+    m_PredictedOutgoingAngleShader.uploadAttrib("pos", 1, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)&pos);
+    m_PredictedOutgoingAngleShader.setUniform("origin", Vector3f{ origin.x, 0.0f, origin.y });
+    m_PredictedOutgoingAngleShader.setUniform("direction", Vector3f{ 0, 1, 0 });
+    m_PredictedOutgoingAngleShader.setUniform("color", Vector3f{ 0, 0.1f, 0.8f });
+    m_PredictedOutgoingAngleShader.setUniform("length", 1.0f);
 
     m_Axis.loadShader();
 
@@ -582,7 +599,7 @@ void DataSample::save(const std::string& path) const
         throw runtime_error("Unable to open file " + path);
 
     // save metadata
-    fprintf(datasetFile, "%s", m_RawMetaData.c_str());
+    fprintf(datasetFile, "%s", m_Metadata.toString().c_str());
 
     //!feof(datasetFile) && !ferror(datasetFile))
     for (unsigned int i = 0; i < m_RawPoints.size(); ++i)

@@ -57,7 +57,7 @@ public:
     void computeNormalizedIntensities();
 
     // data sample info accessors
-    //const std::string& name()                   const { return "hello there"; }// m_Metadata.sampleName; }
+    const std::string name()                    const { return m_Metadata.sampleName(); }
     const PointSampleInfo& pointsInfo()         const { return m_PointsInfo; }
     const PointSampleInfo& selectedPointsInfo() const { return m_SelectedPointsInfo; }
 
@@ -118,6 +118,7 @@ private:
         const nanogui::Matrix4f&,   // model matrix
         const nanogui::Matrix4f&,   // mvp matrix
         bool, std::shared_ptr<ColorMap>)> m_DrawFunctions[VIEW_COUNT];
+    nanogui::GLShader m_PredictedOutgoingAngleShader;
 
     // display options
     bool m_DisplayAsLog;
@@ -125,7 +126,6 @@ private:
 
     // metadata
     Metadata m_Metadata;
-    std::string m_RawMetaData;
     Axis m_Axis;
 
     // Selected point

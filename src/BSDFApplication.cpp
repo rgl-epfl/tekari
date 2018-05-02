@@ -737,7 +737,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         button->setIsSelected(true);
         button->showPopup(true);
 
-        m_DataSampleName->setCaption("hello world");// m_SelectedDataSample->name());
+        m_DataSampleName->setCaption(m_SelectedDataSample->name());
         m_DataSamplePointsCount->setCaption(to_string(m_SelectedDataSample->pointsInfo().pointsCount()));
         m_DataSampleAverageHeight->setCaption(to_string(m_SelectedDataSample->pointsInfo().averageIntensity()));
     }
@@ -792,7 +792,7 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
         throw invalid_argument{ "Data sample may not be null." };
     }
 
-    string cleanName = "hello there";// dataSample->name();
+    string cleanName = dataSample->name();
     replace(cleanName.begin(), cleanName.end(), '_', ' ');
     auto dataSampleButton = new DataSampleButton(m_DataSampleButtonContainer, cleanName);
     dataSampleButton->setFixedHeight(30);
