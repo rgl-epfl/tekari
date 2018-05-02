@@ -14,6 +14,7 @@
 #include <nanogui/label.h>
 
 #include <algorithm>
+#include <bitset>
 #include <string>
 
 #include "tekari/SelectionBox.h"
@@ -118,10 +119,18 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         };
 
         new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
-        m_UseShadowsCheckbox = addHiddenOptionToggle("Use Shadows", "Enable/Disable shadows (Shift+S)",
-            [this](bool checked) { m_BSDFCanvas->setUsesShadows(checked); }, true);
-        m_DisplayCenterAxis = addHiddenOptionToggle("Display Center Axis", "Show/Hide Center Axis (A)",
-            [this](bool checked) { m_BSDFCanvas->setDisplayAxis(checked); }, true);
+        m_UseShadowsCheckbox = addHiddenOptionToggle("Shadows", "Enable/Disable shadows (Shift+S)",
+            [this](bool checked) {
+            m_BSDFCanvas->setDrawFlag(USES_SHADOWS, checked);
+        }, true);
+        m_DisplayCenterAxis = addHiddenOptionToggle("Center Axis", "Show/Hide Center Axis (A)",
+            [this](bool checked) {
+            m_BSDFCanvas->setDrawFlag(DISPLAY_AXIS, checked);
+        }, true);
+        m_DisplayPredictedOutgoingAngleCheckbox = addHiddenOptionToggle("Predicted Outgoing Angle", "Show/Hide Predicted Outgoing Angle (Ctrl+I)",
+            [this](bool checked) {
+            m_BSDFCanvas->setDrawFlag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
+        });
         m_DisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
             [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
 
@@ -300,6 +309,10 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_7: if (!alt) break;
             case GLFW_KEY_KP_7:
                 m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
+                return true;
+            case GLFW_KEY_I:
+                toggleCanvasDrawFlags(DISPLAY_PREDICTED_OUTGOING_ANGLE, m_DisplayPredictedOutgoingAngleCheckbox);
+                return true;
             }
         }
         else if (modifiers & GLFW_MOD_SHIFT)
@@ -307,15 +320,11 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
                 case GLFW_KEY_S:
-                {
-                    bool usesShadows = !m_BSDFCanvas->usesShadows();
-                    m_UseShadowsCheckbox->setChecked(usesShadows);
-                    m_BSDFCanvas->setUsesShadows(usesShadows);
+                    toggleCanvasDrawFlags(USES_SHADOWS, m_UseShadowsCheckbox);
                     return true;
-                }
                 case GLFW_KEY_G:
                 {
-                    bool showDegrees = !m_BSDFCanvas->grid().showDegrees();
+                    int showDegrees = !m_BSDFCanvas->grid().showDegrees();
                     m_DisplayDegreesCheckbox->setChecked(showDegrees);
                     m_BSDFCanvas->grid().setShowDegrees(showDegrees);
                     return true;
@@ -436,12 +445,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 toggleColorMapSelectionWindow();
                 return true;
             case GLFW_KEY_A:
-            {
-                bool displayAxis = !m_BSDFCanvas->displayAxis();
-                m_BSDFCanvas->setDisplayAxis(displayAxis);
-                m_DisplayCenterAxis->setChecked(displayAxis);
+                toggleCanvasDrawFlags(DISPLAY_AXIS, m_DisplayCenterAxis);
                 return true;
-            }
             case GLFW_KEY_H:
                 toggleHelpWindow();
                 return true;
@@ -869,6 +874,13 @@ const DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<co
     if (index == -1)
         return nullptr;
     return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
+}
+
+void BSDFApplication::toggleCanvasDrawFlags(int flag, CheckBox *checkbox)
+{
+    int flags = m_BSDFCanvas->drawFlags() ^ flag;
+    checkbox->setChecked(static_cast<bool>(flags & flag));
+    m_BSDFCanvas->setDrawFlags(flags);
 }
 
 void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)

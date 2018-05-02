@@ -34,8 +34,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,   m_PointSizeScale(1.0f)
 ,	m_OrthoMode(false)
 ,   m_SelectionRegion(make_pair(Vector2i(0,0), Vector2i(0,0)))
-,   m_UsesShadows(true)
-,   m_DisplayAxis(true)
+,   m_DrawFlags(DISPLAY_AXIS | USES_SHADOWS)
 ,   m_MouseMode(ROTATE)
 {
     m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(static_cast<float>(M_PI / 4.0), Vector3f::UnitX())));
@@ -152,7 +151,7 @@ void BSDFCanvas::drawGL() {
     glPointSize(pointSizeFactor * pointSizeFactor * pointSizeFactor * m_PointSizeScale);
     for (const auto& dataSample: m_DataSamplesToDraw)
     {
-        dataSample->drawGL(VIEW_ORIGIN, model, VIEW, proj, m_UsesShadows, m_DisplayAxis, m_ColorMap);
+        dataSample->drawGL(VIEW_ORIGIN, model, VIEW, proj, m_DrawFlags, m_ColorMap);
     }
     m_Grid.drawGL(model, VIEW, proj);
 }

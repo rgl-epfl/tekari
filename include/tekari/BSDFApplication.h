@@ -35,18 +35,20 @@ public:
     void openDataSampleDialog();
     void saveScreenShot();
     void saveSelectedDataSample();
+
     void toggleWindow(nanogui::Window* &window, std::function<nanogui::Window*(void)> createWindow);
     void toggleMetadataWindow();
     void toggleHelpWindow();
     void toggleSelectionInfoWindow();
     void toggleColorMapSelectionWindow();
+    
     void selectColorMap(std::shared_ptr<ColorMap> colorMap);
+    
     void deleteDataSample(std::shared_ptr<DataSample> dataSample);
     void selectDataSample(std::shared_ptr<DataSample> dataSample);
     void selectDataSample(int index, bool clamped = true);
 
     int dataSampleIndex(const std::shared_ptr<const DataSample> dataSample) const;
-
     bool hasSelectedDataSample() const                  { return m_SelectedDataSample != nullptr; }
     std::shared_ptr<DataSample> selectedDataSample()    { return m_SelectedDataSample; }
     const std::shared_ptr<const DataSample> selectedDataSample() const { return m_SelectedDataSample; }
@@ -67,6 +69,8 @@ private:
     void openFiles(const std::vector<std::string>& dataSamplePaths);
     void tryLoadDataSample(std::string filePath, std::shared_ptr<DataSampleToAdd> dataSampleToAdd);
 
+    void toggleCanvasDrawFlags(int flag, nanogui::CheckBox *checkbox);
+
 private:
     bool m_RequiresLayoutUpdate = false;
 
@@ -77,6 +81,7 @@ private:
     nanogui::CheckBox* m_UseShadowsCheckbox;
     nanogui::CheckBox* m_DisplayCenterAxis;
     nanogui::CheckBox* m_DisplayDegreesCheckbox;
+    nanogui::CheckBox* m_DisplayPredictedOutgoingAngleCheckbox;
 
     // footer
     nanogui::Widget* m_Footer;

@@ -96,7 +96,7 @@ void DataSample::drawGL(
     const Matrix4f& model,
     const Matrix4f& view,
     const Matrix4f& proj,
-    bool useShadows, bool displayAxis,
+    int flags,
     shared_ptr<ColorMap> colorMap)
 {
     using namespace nanogui;
@@ -112,22 +112,25 @@ void DataSample::drawGL(
         m_MeshShader.setUniform("modelViewProj", mvp);
         m_MeshShader.setUniform("model", model);
         m_MeshShader.setUniform("view", viewOrigin);
-        m_MeshShader.setUniform("useShadows", useShadows);
+        m_MeshShader.setUniform("useShadows", flags & USES_SHADOWS);
         m_MeshShader.drawIndexed(GL_TRIANGLES, 0, m_DelaunayTriangulation->num_triangles);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_POLYGON_OFFSET_FILL);
 
-        glEnable(GL_DEPTH_TEST);
-        m_PredictedOutgoingAngleShader.bind();
-        m_PredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
-        m_PredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
-        glDisable(GL_DEPTH_TEST);
+        if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
+        {
+            glEnable(GL_DEPTH_TEST);
+            m_PredictedOutgoingAngleShader.bind();
+            m_PredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
+            m_PredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
+            glDisable(GL_DEPTH_TEST);
+        }
 
         for (int i = 0; i != VIEW_COUNT; ++i)
         {
-            m_DrawFunctions[i](viewOrigin, model, mvp, useShadows, colorMap);
+            m_DrawFunctions[i](viewOrigin, model, mvp, flags & USES_SHADOWS, colorMap);
         }
-        if (displayAxis)
+        if (flags & DISPLAY_AXIS)
         {
             m_Axis.drawGL(mvp);
         }

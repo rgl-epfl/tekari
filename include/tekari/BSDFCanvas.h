@@ -66,11 +66,9 @@ public:
     const RadialGrid& grid() const { return m_Grid; }
     RadialGrid& grid() { return m_Grid; }
 
-    bool usesShadows() const { return m_UsesShadows; }
-    void setUsesShadows(bool usesShadows) { m_UsesShadows = usesShadows; }
-
-    bool displayAxis() const { return m_DisplayAxis; }
-    void setDisplayAxis(bool displayAxis) { m_DisplayAxis = displayAxis; }
+    int drawFlags() const { return m_DrawFlags; }
+    void setDrawFlags(int flags) { m_DrawFlags = flags; }
+    void setDrawFlag(int flag, bool state) { m_DrawFlags = state ? m_DrawFlags | flag : m_DrawFlags & ~flag; }
 
     void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
     const std::shared_ptr<const ColorMap> colorMap() const { return m_ColorMap; }
@@ -107,8 +105,7 @@ private:
         const nanogui::Vector2i&, DataSample::SelectionMode)> m_SelectCallback;
 
     // global state for sample display
-    bool m_DisplayAxis;
-    bool m_UsesShadows;
+    int m_DrawFlags;
     std::shared_ptr<ColorMap> m_ColorMap;
 
 };

@@ -16,6 +16,10 @@
 
 TEKARI_NAMESPACE_BEGIN
 
+#define USES_SHADOWS (1 << 0)
+#define DISPLAY_AXIS (1 << 1)
+#define DISPLAY_PREDICTED_OUTGOING_ANGLE (1 << 2)
+
 class DataSample
 {
 public:
@@ -45,7 +49,7 @@ public:
                 const nanogui::Matrix4f& model,
                 const nanogui::Matrix4f& view,
                 const nanogui::Matrix4f& proj,
-                bool useShadows, bool displayAxis,
+                int flags,
                 std::shared_ptr<ColorMap> colorMap);
 
     void setDisplayAsLog(bool displayAsLog);
