@@ -33,6 +33,7 @@ void Axis::drawGL(const Matrix4f& mvp)
 {
     glEnable(GL_DEPTH_TEST);
     m_Shader.bind();
+    m_Shader.setUniform("origin", m_Origin);
     m_Shader.setUniform("modelViewProj", mvp);
 
     m_Shader.setUniform("direction", Vector3f{ 1, 0, 0 });
@@ -52,8 +53,6 @@ void Axis::drawGL(const Matrix4f& mvp)
 void Axis::setOrigin(const Vector3f& newOrigin)
 {
     m_Origin = newOrigin;
-    m_Shader.bind();
-    m_Shader.setUniform("origin", m_Origin);
 }
 
 TEKARI_NAMESPACE_END
