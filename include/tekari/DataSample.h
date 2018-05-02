@@ -54,6 +54,7 @@ public:
 
     void linkDataToShaders();
     void initShaders();
+    void computeNormalizedIntensities();
 
     // data sample info accessors
     //const std::string& name()                   const { return "hello there"; }// m_Metadata.sampleName; }
@@ -98,7 +99,7 @@ private:
 private:
     // Raw sample data
     bool m_ShaderLinked;
-    tri_delaunay2d_t *tri_delaunay2d;
+    tri_delaunay2d_t*               m_DelaunayTriangulation;
     std::vector<del_point2d_t>      m_2DPoints;
     std::vector<float>				m_Heights;
     std::vector<float>              m_LogHeights;
