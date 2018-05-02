@@ -46,7 +46,8 @@ public:
     virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
     virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
     virtual void performLayout(NVGcontext *ctx) override { m_Arcball.setSize(mSize); }
-    virtual void drawGL(NVGcontext* ctx) override;
+    virtual void draw(NVGcontext* ctx) override;
+    virtual void drawGL() override;
 
     // data sample addition/removale/selection
     void selectDataSample(std::shared_ptr<DataSample> dataSample);

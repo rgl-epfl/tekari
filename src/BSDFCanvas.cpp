@@ -124,8 +124,9 @@ bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
     return true;
 }
 
-void BSDFCanvas::drawGL(NVGcontext* ctx) {
-    using namespace nanogui;
+void BSDFCanvas::draw(NVGcontext* ctx)
+{
+    GLCanvas::draw(ctx);
 
     Matrix4f model = m_Arcball.matrix() * translate(-m_Translation);
     Matrix4f proj = getProjectionMatrix();
@@ -136,11 +137,16 @@ void BSDFCanvas::drawGL(NVGcontext* ctx) {
     SelectionBox selectionBox = getSelectionBox();
     nvgBeginPath(ctx);
     nvgRect(ctx, selectionBox.topLeft.x(), selectionBox.topLeft.y(),
-                 selectionBox.size.x(), selectionBox.size.y());
+        selectionBox.size.x(), selectionBox.size.y());
     nvgStrokeColor(ctx, Color(1.0f, 1.0f));
     nvgStroke(ctx);
     nvgFillColor(ctx, Color(1.0f, 0.1f));
     nvgFill(ctx);
+}
+
+void BSDFCanvas::drawGL() {
+    Matrix4f model = m_Arcball.matrix() * translate(-m_Translation);
+    Matrix4f proj = getProjectionMatrix();
 
     float pointSizeFactor = (m_Zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
     glPointSize(pointSizeFactor * pointSizeFactor * pointSizeFactor * m_PointSizeScale);

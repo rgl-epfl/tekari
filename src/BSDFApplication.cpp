@@ -545,20 +545,23 @@ void BSDFApplication::updateLayout()
 
 void BSDFApplication::openDataSampleDialog()
 {
-    string dataSamplePath = file_dialog(
+    vector<string> dataSamplePaths = file_dialog(
     {
         {"txt",  "Data samples"},
-    }, false);
+    }, false, true);
 
-    if (dataSamplePath.empty())
+    if (dataSamplePaths.empty())
         return;
 
     if (m_LoadDataSampleThread)
         m_LoadDataSampleThread->join();
-    m_LoadDataSampleThread = make_unique<thread>([this, dataSamplePath]() {
-        auto newDataSample = make_shared<DataSampleToAdd>();
-        tryLoadDataSample(dataSamplePath, newDataSample);
-        m_DataSamplesToAdd.push(newDataSample);
+    m_LoadDataSampleThread = make_unique<thread>([this, dataSamplePaths]() {
+        for (const auto& dataSamplePath : dataSamplePaths)
+        {
+            auto newDataSample = make_shared<DataSampleToAdd>();
+            tryLoadDataSample(dataSamplePath, newDataSample);
+            m_DataSamplesToAdd.push(newDataSample);
+        }
     });
     
     // Make sure we gain focus after seleting a file to be loaded.
