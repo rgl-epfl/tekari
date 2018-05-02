@@ -23,7 +23,7 @@ struct DataSampleToAdd
 
 class BSDFApplication : public nanogui::Screen {
 public:
-    BSDFApplication();
+    BSDFApplication(const std::vector<std::string>& dataSamplePaths);
     ~BSDFApplication();
 
     virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
@@ -64,6 +64,7 @@ private:
 
     void toggleToolButton(nanogui::Button* button);
 
+    void openFiles(const std::vector<std::string>& dataSamplePaths);
     void tryLoadDataSample(std::string filePath, std::shared_ptr<DataSampleToAdd> dataSampleToAdd);
 
 private:

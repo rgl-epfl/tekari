@@ -23,7 +23,7 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-BSDFApplication::BSDFApplication()
+BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths)
 :   nanogui::Screen(Vector2i(1200, 750), "BSDF Visualizer", true)
 ,   m_SelectedDataSample(nullptr)
 ,	m_MetadataWindow(nullptr)
@@ -253,6 +253,7 @@ BSDFApplication::BSDFApplication()
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
 
     requestLayoutUpdate();
+    openFiles(dataSamplePaths);
 }
 
 BSDFApplication::~BSDFApplication()
@@ -550,6 +551,13 @@ void BSDFApplication::openDataSampleDialog()
         {"txt",  "Data samples"},
     }, false, true);
 
+    openFiles(dataSamplePaths);
+    // Make sure we gain focus after seleting a file to be loaded.
+    glfwFocusWindow(mGLFWWindow);
+}
+
+void BSDFApplication::openFiles(const std::vector<std::string>& dataSamplePaths)
+{
     if (dataSamplePaths.empty())
         return;
 
@@ -563,9 +571,6 @@ void BSDFApplication::openDataSampleDialog()
             m_DataSamplesToAdd.push(newDataSample);
         }
     });
-    
-    // Make sure we gain focus after seleting a file to be loaded.
-    glfwFocusWindow(mGLFWWindow);
 }
 
 void BSDFApplication::saveSelectedDataSample()

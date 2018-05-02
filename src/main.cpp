@@ -1,33 +1,22 @@
 #include "tekari/BSDFApplication.h"
 
-#if defined(__GNUC__)
-#  pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-#endif
-#if defined(_WIN32)
-#  pragma warning(push)
-#  pragma warning(disable: 4457 4456 4005 4312)
-#endif
-
-#if defined(_WIN32)
-#  pragma warning(pop)
-#endif
-#if defined(_WIN32)
-#  if defined(APIENTRY)
-#    undef APIENTRY
-#  endif
-#  include <windows.h>
-#endif
-
+#include <vector>
+#include <string>
 #include "tekari/delaunay.h"
 
-int main(int /* argc */, char ** /* argv */) {
-    
+int main(int argc, char ** argv) {
+    std::vector<std::string> dataSamplePaths;
+    for (int i = 1; i < argc; ++i)
+    {
+        dataSamplePaths.push_back(argv[i]);
+    }
+
     // nanogui
     try {
         nanogui::init();
         // scoped variables
         {
-            nanogui::ref<tekari::BSDFApplication> app = new tekari::BSDFApplication();
+            nanogui::ref<tekari::BSDFApplication> app = new tekari::BSDFApplication(dataSamplePaths);
             app->drawAll();
             app->setVisible(true);
             nanogui::mainloop();
