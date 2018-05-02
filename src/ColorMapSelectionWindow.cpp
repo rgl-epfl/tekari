@@ -28,8 +28,7 @@ ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_p
 
     for (auto colorMap : colorMaps)
     {
-        auto colorMapName = new Label{ colorMapsButtonContainer, colorMap->name() };
-        //colorMapName->setFixedHeight(10);
+        new Label{ colorMapsButtonContainer, colorMap->name() };
         auto colorMapButton = new ColorMapButton{ colorMapsButtonContainer, colorMap };
         colorMapButton->setFixedHeight(10);
         colorMapButton->setCallback([this](ColorMapButton* colorMapButton) {

@@ -71,10 +71,10 @@ void RadialGrid::drawGL(
         m_Shader.bind();
         m_Shader.setUniform("modelViewProj", mvp);
 
-        for (size_t i = 0; i < 2; i++)
+        for (size_t j = 0; j < 2; j++)
         {
-            glDepthFunc(i % 2 == 0 ? GL_LESS : GL_GREATER);
-            m_Shader.setUniform("in_color", i % 2 == 0 ? m_Color : m_Color * 0.6);
+            glDepthFunc(j % 2 == 0 ? GL_LESS : GL_GREATER);
+            m_Shader.setUniform("in_color", j % 2 == 0 ? m_Color : m_Color * 0.6);
             for (unsigned int i = 0; i < CIRCLE_COUNT; ++i)
             {
                 m_Shader.drawArray(GL_LINE_LOOP, i*VERTEX_PER_CIRCLE_COUNT, VERTEX_PER_CIRCLE_COUNT);

@@ -51,11 +51,6 @@ elseif(APPLE)
   #string(REGEX REPLACE "^.*X([0-9.]*).sdk$" "\\1" CMAKE_OSX_DEPLOYMENT_TARGET "${CMAKE_OSX_SYSROOT}")
 endif()
 
-# Build qhull
-set(qhull_STATIC ON CACHE BOOL " " FORCE)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/ ext_build/qhull)
-
 # Enable C++14 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
@@ -91,9 +86,6 @@ include_directories(
   # NanoGUI dependencies (Eigen, GLFW, NanoVG, GLAD?)
   ${NANOGUI_EXTRA_INCS}
 
-  # qhull
-  ${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src
-
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
@@ -122,6 +114,6 @@ add_executable(tekari
   )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
-target_link_libraries(tekari qhullcpp qhullstatic_r qhullstatic nanogui ${NANOGUI_EXTRA_LIBS})
+target_link_libraries(tekari nanogui ${NANOGUI_EXTRA_LIBS})
 
 set_target_properties(tekari PROPERTIES OUTPUT_NAME "tekari")

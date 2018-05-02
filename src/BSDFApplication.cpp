@@ -628,7 +628,7 @@ void BSDFApplication::toggleMetadataWindow()
         {
             auto errorWindow = new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
                 "No data sample selected.", "close");
-            errorWindow->setCallback([this](int index) { m_MetadataWindow = nullptr; });
+            errorWindow->setCallback([this](int) { m_MetadataWindow = nullptr; });
             window = errorWindow;
         }
         window->center();
@@ -812,7 +812,7 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
         else            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
     });
 
-    dataSampleButton->setViewTogglesCallback([this, dataSample, dataSampleButton](bool checked) {
+    dataSampleButton->setViewTogglesCallback([this, dataSample, dataSampleButton](bool) {
         for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
         {
             DataSample::Views view = static_cast<DataSample::Views>(i);

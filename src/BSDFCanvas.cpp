@@ -38,7 +38,7 @@ BSDFCanvas::BSDFCanvas(Widget *parent)
 ,   m_DisplayAxis(true)
 ,   m_MouseMode(ROTATE)
 {
-    m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(M_PI / 4, Vector3f::UnitX())));
+    m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(static_cast<float>(M_PI / 4.0), Vector3f::UnitX())));
 }
 
 bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
@@ -189,17 +189,17 @@ void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
     switch (viewAngle)
     {
     case UP:
-        dir = M_PI;
+        dir = (float)M_PI;
     case DOWN:
         m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(-M_PI * 0.5f + dir, Vector3f::UnitX())));
         break;
     case LEFT:
-        dir = M_PI;
+        dir = (float)M_PI;
     case RIGHT:
         m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(- M_PI * 0.5f + dir, Vector3f::UnitY())));
         break;
     case BACK:
-        dir = M_PI;
+        dir = (float)M_PI;
     case FRONT:
         m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(dir, Vector3f::UnitY())));
         break;
