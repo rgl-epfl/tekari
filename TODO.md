@@ -17,8 +17,7 @@ TODO:
 // To do:
 - spectral data
 
-- predicted outgoing angle
-- moving for notepads (scroll+ALT), selection is weird
+- predicted outgoing angle	
 - use terminal input for files (options)
 
 // issues:

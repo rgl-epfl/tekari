@@ -1,7 +1,6 @@
 #pragma once
 
-#include <nanogui\glutil.h>
-
+#include <nanogui/glutil.h>
 
 struct SelectionBox
 {

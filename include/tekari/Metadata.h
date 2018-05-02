@@ -17,9 +17,7 @@ public:
     
     template<typename T>
     void addElement(const std::string& name, const T& value);
-    template<>
-    void addElement<std::string>(const std::string& name, const std::string& value);
-
+    
     template<typename T>
     T getElementValue(const std::string& name) const;
 

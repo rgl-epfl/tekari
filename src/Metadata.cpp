@@ -6,6 +6,18 @@ TEKARI_NAMESPACE_BEGIN
 
 using namespace std;
 
+template<typename T>
+void Metadata::addElement(const std::string& name, const T& value)
+{
+    m_Elements.push_back(make_shared<MetadataElement<T>>(name, value));
+}
+
+template<>
+void Metadata::addElement<string>(const string& name, const string& value)
+{
+    m_Elements.push_back(make_shared<MetadataElement<string>>(name, stripQuoteMarks(value)));
+}
+
 void Metadata::parse(const std::string& line)
 {
     size_t firstTab = line.find_first_of('\t');
@@ -48,18 +60,6 @@ void Metadata::parse(const std::string& line)
     {
 
     }
-}
-
-template<typename T>
-void Metadata::addElement(const std::string& name, const T& value)
-{
-    m_Elements.push_back(make_shared<MetadataElement<T>>(name, value));
-}
-
-template<>
-void Metadata::addElement<string>(const string& name, const string& value)
-{
-    m_Elements.push_back(make_shared<MetadataElement<string>>(name, stripQuoteMarks(value)));
 }
 
 template<typename T>

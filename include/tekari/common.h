@@ -1,6 +1,6 @@
 #pragma once
 
-#include <nanogui\glutil.h>
+#include <nanogui/glutil.h>
 
 #if defined(_WIN32)
 #	define NOMINMAX  // Remove min/max macros when building on windows
