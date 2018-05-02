@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.3)
-project(BSDFVisualizer)
+project(tekari)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -10,7 +10,7 @@ endif()
 string(TOUPPER "${CMAKE_BUILD_TYPE}" U_CMAKE_BUILD_TYPE)
 
 if(NOT IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui/ext/glfw")
-  message(FATAL_ERROR "The BSDF Visualizer dependency repositories (NanoGUI, GLFW, etc.) are missing! "
+  message(FATAL_ERROR "Tekari's dependency repositories (NanoGUI, GLFW, etc.) are missing! "
     "You probably did not clone the project with --recursive. It is possible to recover "
     "by calling \"git submodule update --init --recursive\"")
 endif()
@@ -56,10 +56,6 @@ set(qhull_STATIC ON CACHE BOOL " " FORCE)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/ ext_build/qhull)
 
-# Build delaunay
-# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ext/delaunay)
-# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/delaunay/ ext_build/delaunay)
-
 # Enable C++14 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
@@ -74,19 +70,19 @@ set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui ext_build/nanogui)
 set_property(TARGET nanogui glfw glfw_objects PROPERTY FOLDER "dependencies")
 
-## Compile BSDF visualizer with various compiler warnings turned on
-#if(MSVC)
-#  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-#    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-#  else()
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-#  endif()
-#elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter")
-#  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-anonymous-struct -Wno-c99-extensions -Wno-nested-anon-types")
-#  endif()
-#endif()
+# Compile tekari with various compiler warnings turned on
+if(MSVC)
+  if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
+    string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+  else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+  endif()
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter")
+  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-anonymous-struct -Wno-c99-extensions -Wno-nested-anon-types")
+  endif()
+endif()
 
 # Header file directories of dependency libraries
 include_directories(
@@ -98,13 +94,10 @@ include_directories(
   # qhull
   ${CMAKE_CURRENT_SOURCE_DIR}/ext/qhull/src
 
-  # delaunay
-  #${CMAKE_CURRENT_SOURCE_DIR}/ext/delaunay
-
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-add_executable(BSDFVisualizer
+add_executable(tekari
   "src/main.cpp"
   "include/tekari/BSDFApplication.h"            "src/BSDFApplication.cpp"
   "include/tekari/BSDFCanvas.h"                 "src/BSDFCanvas.cpp"
@@ -129,6 +122,6 @@ add_executable(BSDFVisualizer
   )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
-target_link_libraries(BSDFVisualizer qhullcpp qhullstatic_r qhullstatic nanogui ${NANOGUI_EXTRA_LIBS})
+target_link_libraries(tekari qhullcpp qhullstatic_r qhullstatic nanogui ${NANOGUI_EXTRA_LIBS})
 
-set_target_properties(BSDFVisualizer PROPERTIES OUTPUT_NAME "BSDF Visualizer")
+set_target_properties(tekari PROPERTIES OUTPUT_NAME "tekari")

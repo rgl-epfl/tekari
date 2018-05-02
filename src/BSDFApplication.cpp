@@ -24,7 +24,7 @@ using namespace std;
 TEKARI_NAMESPACE_BEGIN
 
 BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths)
-:   nanogui::Screen(Vector2i(1200, 750), "BSDF Visualizer", true)
+:   nanogui::Screen(Vector2i(1200, 750), "Tekari", true)
 ,   m_SelectedDataSample(nullptr)
 ,	m_MetadataWindow(nullptr)
 ,   m_HelpWindow(nullptr)

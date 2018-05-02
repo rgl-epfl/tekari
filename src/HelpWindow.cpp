@@ -153,7 +153,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
 
         addSpacer(about, 15);
 
-        addText(about, "BSDF Visualizer Tool", "sans-bold", 46);
+        addText(about, "Tekari", "sans-bold", 46);
 
         addSpacer(about, 60);
 
