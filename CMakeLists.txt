@@ -110,7 +110,6 @@ add_executable(tekari
   "include/tekari/RadialGrid.h"                 "src/RadialGrid.cpp"
   "include/tekari/DataSampleButton.h"           "src/DataSampleButton.cpp"
   "include/tekari/Metadata.h"                   "src/Metadata.cpp"
-  "include/tekari/BitMap.h"                     "src/BitMap.cpp"
   "include/tekari/ColorMap.h"                   "src/ColorMap.cpp" 
   "include/tekari/ColorMapSelectionWindow.h"    "src/ColorMapSelectionWindow.cpp" 
   "include/tekari/ColorMapButton.h"             "src/ColorMapButton.cpp"

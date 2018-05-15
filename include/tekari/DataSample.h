@@ -10,7 +10,6 @@
 #include "Metadata.h"
 #include "ColorMap.h"
 #include "DataPoint.h"
-#include "BitMap.h"
 #include "SelectionBox.h"
 #include "Axis.h"
 #include "DataSampleSelection.h"
@@ -62,40 +61,22 @@ public:
     inline const PointSampleInfo& selectedPointsInfo() const { return m_SelectedPointsInfo; }
     inline const Metadata& metadata()                  const { return m_Metadata; }
 
-    // Selection
-    void selectPoints(const nanogui::Matrix4f& mvp,
-        const SelectionBox& selectionBox,
-        const nanogui::Vector2i & canvasSize,
-        SelectionMode mode)
-    {
-        select_points(m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H, m_SelectedPoints, mvp, selectionBox, canvasSize, mode);
-        updatePointSelection();
-    }
-    void selectSinglePoint(const nanogui::Matrix4f& mvp,
-        const nanogui::Vector2i& mousePos,
-        const nanogui::Vector2i & canvasSize)
-    {
-        select_closest_point(m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H, m_SelectedPoints, mvp, mousePos, canvasSize);
-        updatePointSelection();
-    }
-    void deselectAllPoints()
-    {
-        deselect_all_points(m_SelectedPoints);
-        updatePointSelection();
-    }
-    void selectHighestPoint()
-    {
-        select_highest_point(m_PointsInfo, m_SelectedPointsInfo, m_SelectedPoints);
-        updatePointSelection();
-    }
+    inline const std::vector<float>& H()                const { return m_DisplayAsLog ? m_LH : m_H; }
+    inline const std::vector<nanogui::Vector3f>& N()    const { return m_DisplayAsLog ? m_LN : m_N; }
+    inline const std::vector<del_point2d_t>& V2D()      const { return m_V2D; }
+    inline const std::vector<uint8_t>& selectedPoints() const { return m_SelectedPoints; }
+    inline const std::vector<nanogui::Vector3f>& rawPoints() const { return m_RawPoints; }
 
+    inline std::vector<float>& H()                 { return m_DisplayAsLog ? m_LH : m_H; }
+    inline std::vector<nanogui::Vector3f>& N()     { return m_DisplayAsLog ? m_LN : m_N; }
+    inline std::vector<del_point2d_t>& V2D()       { return m_V2D; }
+    inline std::vector<uint8_t>& selectedPoints()  { return m_SelectedPoints; }
+    inline std::vector<nanogui::Vector3f>& rawPoints() { return m_RawPoints; }
+
+    // Selection
     nanogui::Vector3f selectionCenter();
     bool deleteSelectedPoints();
-    void movePointsAlongPath(bool up)
-    {
-        move_selection_along_path(up, m_SelectedPoints);
-        updatePointSelection();
-    }
+    void updatePointSelection();
 
     void save(const std::string& path) const;
 private:
@@ -107,7 +88,6 @@ private:
     inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
     void computeNormals();
-    void updatePointSelection();
     //void updateSelectionInfo();
 
     inline static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
@@ -150,7 +130,6 @@ private:
 
     // Selected point
     std::vector<uint8_t>   m_SelectedPoints;
-    //BitMap              m_SelectedPoints;
     PointSampleInfo     m_SelectedPointsInfo;
 };
 

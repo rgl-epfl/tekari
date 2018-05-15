@@ -54,18 +54,31 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         for (auto& dataSample : m_DataSamples)
         {
             if (dataSample != m_SelectedDataSample)
-                dataSample->deselectAllPoints();
+            {
+                deselect_all_points(dataSample->selectedPoints());
+                dataSample->updatePointSelection();
+            }
         }
         if (hasSelectedDataSample())
         {
             if (selectionBox.empty())
             {
-                m_SelectedDataSample->selectSinglePoint(mvp, selectionBox.topLeft, canvasSize);
+                select_closest_point(   m_SelectedDataSample->rawPoints(),
+                                        m_SelectedDataSample->V2D(),
+                                        m_SelectedDataSample->H(),
+                                        m_SelectedDataSample->selectedPoints(),
+                                        mvp, selectionBox.topLeft, canvasSize);
+                m_SelectedDataSample->updatePointSelection();
                 toggleSelectionInfoWindow();
             }
             else
             {
-                m_SelectedDataSample->selectPoints(mvp, selectionBox, canvasSize, mode);
+                select_points(  m_SelectedDataSample->rawPoints(),
+                                m_SelectedDataSample->V2D(),
+                                m_SelectedDataSample->H(),
+                                m_SelectedDataSample->selectedPoints(),
+                                mvp, selectionBox, canvasSize, mode);
+                m_SelectedDataSample->updatePointSelection();
                 toggleSelectionInfoWindow();
             }
         }
@@ -336,7 +349,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 case GLFW_KEY_H:
                     if (m_SelectedDataSample)
                     {
-                        m_SelectedDataSample->selectHighestPoint();
+                        select_highest_point(m_SelectedDataSample->pointsInfo(), m_SelectedDataSample->selectedPointsInfo(), m_SelectedDataSample->selectedPoints());
+                        m_SelectedDataSample->updatePointSelection();
                         // if selection window already visible, hide it
                         if(m_SelectionInfoWindow) toggleSelectionInfoWindow();
                         // show selection window
@@ -372,7 +386,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_ESCAPE:
                 if (hasSelectedDataSample())
                 {
-                    m_SelectedDataSample->deselectAllPoints();
+                    deselect_all_points(m_SelectedDataSample->selectedPoints());
+                    m_SelectedDataSample->updatePointSelection();
                     if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
                 }
                 return true;
@@ -462,7 +477,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_KP_SUBTRACT:
                 if (m_SelectedDataSample)
                 {
-                    m_SelectedDataSample->movePointsAlongPath(key == GLFW_KEY_KP_ADD);
+                    move_selection_along_path(key == GLFW_KEY_KP_ADD, m_SelectedDataSample->selectedPoints());
+                    m_SelectedDataSample->updatePointSelection();
                     // if selection window already visible, hide it
                     if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
                     // show selection window
