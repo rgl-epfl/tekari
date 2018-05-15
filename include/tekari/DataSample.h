@@ -58,7 +58,7 @@ public:
 
     void linkDataToShaders();
     void initShaders();
-    void computeNormalizedIntensities();
+    void computeNormalizedHeights();
 
     // data sample info accessors
     const std::string name()                    const { return m_Metadata.sampleName(); }
@@ -97,18 +97,18 @@ private:
     static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
     {
         return del_point2d_t{ (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
-                                (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
+            (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
     }
 
 private:
     // Raw sample data
     bool m_ShaderLinked;
     tri_delaunay2d_t*               m_DelaunayTriangulation;
-    std::vector<del_point2d_t>      m_2DPoints;
-    std::vector<float>				m_Heights;
-    std::vector<float>              m_LogHeights;
-    std::vector<nanogui::Vector3f>  m_Normals;
-    std::vector<nanogui::Vector3f>  m_LogNormals;
+    std::vector<del_point2d_t>      m_2DV;
+    std::vector<float>				m_H;
+    std::vector<float>              m_LH;
+    std::vector<nanogui::Vector3f>  m_N;
+    std::vector<nanogui::Vector3f>  m_LN;
     std::vector<unsigned int>       m_PathSegments;
     // Untransformed data
     std::vector<nanogui::Vector3f>  m_RawPoints;        // theta, phi, intensity

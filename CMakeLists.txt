@@ -65,6 +65,17 @@ set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui ext_build/nanogui)
 set_property(TARGET nanogui glfw glfw_objects PROPERTY FOLDER "dependencies")
 
+# Build TBB
+set(TBB_BUILD_STATIC ON CACHE BOOL " " FORCE)
+set(TBB_BUILD_SHARED OFF CACHE BOOL " " FORCE)
+set(TBB_BUILD_TBBMALLOC OFF CACHE BOOL " " FORCE)
+set(TBB_BUILD_TBBMALLOC_PROXY OFF CACHE BOOL " " FORCE)
+set(TBB_BUILD_TESTS OFF CACHE BOOL " " FORCE)
+
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb ext_build/tbb)
+set_property(TARGET tbb_static tbb_def_files PROPERTY FOLDER "dependencies")
+
+
 # Compile tekari with various compiler warnings turned on
 if(MSVC)
   if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
@@ -85,6 +96,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui/include
   # NanoGUI dependencies (Eigen, GLFW, NanoVG, GLAD?)
   ${NANOGUI_EXTRA_INCS}
+  # Intel Thread Building Blocks
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb/include
 
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
@@ -104,9 +117,12 @@ add_executable(tekari
   "include/tekari/MetadataWindow.h"             "src/MetadataWindow.cpp"
   "include/tekari/HelpWindow.h"                 "src/HelpWindow.cpp"
   "include/tekari/Axis.h"                       "src/Axis.cpp"
-  "include/tekari/PointSampleInfo.h"            "src/PointSampleInfo.cpp"
   "include/tekari/delaunay.h"                   "src/delaunay.c"
+  "include/tekari/PointSampleInfo.h"            "src/PointSampleInfo.cpp"
+#  "include/tekari/DataSampleSelection.h"        "src/DataSampleSelection.cpp"
+#  "include/tekari/DataSampleIO.h"               "src/DataSampleIO.cpp"
   "include/tekari/MetadataElement.h"
+  "include/tekari/ThreadPool.h"
   "include/tekari/SelectionBox.h"
   "include/tekari/SharedQueue.h"
   "include/tekari/common.h"
@@ -114,6 +130,6 @@ add_executable(tekari
   )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
-target_link_libraries(tekari nanogui ${NANOGUI_EXTRA_LIBS})
+target_link_libraries(tekari tbb_static nanogui ${NANOGUI_EXTRA_LIBS})
 
 set_target_properties(tekari PROPERTIES OUTPUT_NAME "tekari")

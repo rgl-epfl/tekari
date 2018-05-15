@@ -267,8 +267,6 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
 BSDFApplication::~BSDFApplication()
 {
-    if (m_LoadDataSampleThread)
-        m_LoadDataSampleThread->join();
     m_Framebuffer.free();
 
     for (size_t i = 0; i < BSDFCanvas::MOUSE_MODE_COUNT; i++)
@@ -502,12 +500,6 @@ void BSDFApplication::drawContents() {
                 newDataSample->dataSample->linkDataToShaders();
                 addDataSample(m_DataSamples.size(), newDataSample->dataSample);
             }
-
-            if (m_LoadDataSampleThread)
-            {
-                m_LoadDataSampleThread->join();
-                m_LoadDataSampleThread = nullptr;
-            }
         }
     }
     catch (runtime_error) {
@@ -563,19 +555,14 @@ void BSDFApplication::openDataSampleDialog()
 
 void BSDFApplication::openFiles(const std::vector<std::string>& dataSamplePaths)
 {
-    if (dataSamplePaths.empty())
-        return;
-
-    if (m_LoadDataSampleThread)
-        m_LoadDataSampleThread->join();
-    m_LoadDataSampleThread = make_unique<thread>([this, dataSamplePaths]() {
-        for (const auto& dataSamplePath : dataSamplePaths)
-        {
+    for (const auto& dataSamplePath : dataSamplePaths)
+    {
+        m_ThreadPool.addTask([this, dataSamplePath]() {
             auto newDataSample = make_shared<DataSampleToAdd>();
             tryLoadDataSample(dataSamplePath, newDataSample);
             m_DataSamplesToAdd.push(newDataSample);
-        }
-    });
+        });
+    }
 }
 
 void BSDFApplication::saveSelectedDataSample()

@@ -12,6 +12,7 @@
 #include "HelpWindow.h"
 #include "ColorMap.h"
 #include "SharedQueue.h"
+#include "ThreadPool.h"
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -121,7 +122,8 @@ private:
 
     SharedQueue<std::shared_ptr<DataSampleToAdd>> m_DataSamplesToAdd;
 
-    std::unique_ptr<std::thread> m_LoadDataSampleThread;
+    // threadpool
+    ThreadPool<8> m_ThreadPool;
 };
 
 TEKARI_NAMESPACE_END

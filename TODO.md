@@ -17,9 +17,6 @@ TODO:
 // To do:
 - spectral data
 
-- predicted outgoing angle	
-- use terminal input for files (options)
-
 // issues:
 - delete points random crashes + not threaded
 - can't figure out how to draw grid info behind datasample

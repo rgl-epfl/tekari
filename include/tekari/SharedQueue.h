@@ -1,59 +1,54 @@
-// This file was developed by Thomas Müller <thomas94@gmx.net>.
-// It is published under the BSD 3-Clause License within the LICENSE file.
-
 #pragma once
-
-#include <deque>
 #include <mutex>
-#include <condition_variable>
+#include <queue>
 
 template <typename T>
-class SharedQueue {
+class SharedQueue
+{
 public:
-    bool empty() const {
-        std::lock_guard<std::mutex> lock{ mMutex };
-        return mRawQueue.empty();
+    SharedQueue() = default;
+
+    void push(const T& value)
+    {
+        std::lock_guard<std::mutex> lock{ m_QueueMutex };
+        m_RawQueue.push(value);
     }
 
-    size_t size() const {
-        std::lock_guard<std::mutex> lock{ mMutex };
-        return mRawQueue.size();
+    T pop()
+    {
+        std::lock_guard<std::mutex> lock{ m_QueueMutex };
+        T retVal = m_RawQueue.front();
+        m_RawQueue.pop();
+        return retVal;
     }
 
-    void push(T newElem) {
-        std::lock_guard<std::mutex> lock{ mMutex };
-        mRawQueue.push_back(newElem);
-        mDataCondition.notify_one();
-    }
-
-    T waitAndPop() {
-        std::unique_lock<std::mutex> lock{ mMutex };
-
-        while (mRawQueue.empty()) {
-            mDataCondition.wait(lock);
+    T tryPop()
+    {
+        std::lock_guard<std::mutex> lock{ m_QueueMutex };
+        if (m_RawQueue.empty())
+        {
+            throw std::runtime_error("Pop from empty stack");
         }
-
-        T result = std::move(mRawQueue.front());
-        mRawQueue.pop_front();
-
-        return result;
+        T retVal = std::move(m_RawQueue.front());
+        m_RawQueue.pop();
+        return retVal;
     }
 
-    T tryPop() {
-        std::unique_lock<std::mutex> lock{ mMutex };
+    bool emtpy()
+    {
+        std::lock_guard<std::mutex> lock{ m_QueueMutex };
+        return m_RawQueue.empty();
+    }
 
-        if (mRawQueue.empty()) {
-            throw std::runtime_error{ "Could not pop." };
-        }
-
-        T result = std::move(mRawQueue.front());
-        mRawQueue.pop_front();
-
-        return result;
+    size_t size()
+    {
+        std::lock_guard<std::mutex> lock{ m_QueueMutex };
+        return m_RawQueue.size();
     }
 
 private:
-    std::deque<T> mRawQueue;
-    mutable std::mutex mMutex;
-    std::condition_variable mDataCondition;
+    std::queue<T> m_RawQueue;
+    std::mutex m_QueueMutex;
+
+    unsigned int m_Size = 0;
 };

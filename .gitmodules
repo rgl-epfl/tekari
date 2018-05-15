@@ -7,3 +7,6 @@
 [submodule "ext/delaunay"]
 	path = ext/delaunay
 	url = git@github.com:eloraiby/delaunay.git
+[submodule "tbb"]
+	path = tbb
+	url = https://github.com/wjakob/tbb.git
