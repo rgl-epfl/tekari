@@ -147,7 +147,7 @@ void DataSample::triangulateData()
 
     // triangulate vertx data
     delaunay2d_t *delaunay;
-    delaunay = delaunay2d_from(m_2DV.data(), m_2DV.size());
+    delaunay = delaunay2d_from(m_V2D.data(), m_V2D.size());
     m_DelaunayTriangulation = tri_delaunay2d_from(delaunay);
     delaunay2d_release(delaunay);
 }
@@ -188,7 +188,7 @@ void DataSample::readDataset(const string &filePath)
                 if (m_Metadata.pointsInFile() >= 0)
                 {
                     // as soon as we know the total size of the dataset, reserve enough space for it
-                    m_2DV.reserve(m_Metadata.pointsInFile());
+                    m_V2D.reserve(m_Metadata.pointsInFile());
                     m_SelectedPoints.reserve(m_Metadata.pointsInFile());
                     m_RawPoints.reserve(m_Metadata.pointsInFile());
                 }
@@ -204,9 +204,9 @@ void DataSample::readDataset(const string &filePath)
             Vector3f rawPoint = Vector3f{ theta, phi, intensity };
             del_point2d_t transformedPoint = transformRawPoint(rawPoint);
             m_RawPoints.push_back(rawPoint);
-            m_2DV.push_back(transformedPoint);
+            m_V2D.push_back(transformedPoint);
             m_SelectedPoints.push_back(false);
-            m_PointsInfo.addPoint(m_2DV.size() - 1, rawPoint, Vector3f{ transformedPoint.x, intensity, transformedPoint.y });
+            m_PointsInfo.addPoint(m_V2D.size() - 1, rawPoint, Vector3f{ transformedPoint.x, intensity, transformedPoint.y });
         }
     }
     fclose(datasetFile);
@@ -259,18 +259,18 @@ bool DataSample::deleteSelectedPoints()
         if (!m_SelectedPoints[i])
         {
             // move undeleted point to last valid position
-            m_2DV[lastValid] = m_2DV[i];
+            m_V2D[lastValid] = m_V2D[i];
             m_RawPoints[lastValid] = m_RawPoints[i];
             m_SelectedPoints[lastValid] = 0;
             ++lastValid;
 
             // update point info
-            m_PointsInfo.addPoint(i, m_RawPoints[i], Vector3f{ m_2DV[i].x, m_H[i], m_2DV[i].y });
+            m_PointsInfo.addPoint(i, m_RawPoints[i], Vector3f{ m_V2D[i].x, m_H[i], m_V2D[i].y });
         }
     }
 
     // resize vectors
-    m_2DV.resize(m_PointsInfo.pointsCount());
+    m_V2D.resize(m_PointsInfo.pointsCount());
     m_RawPoints.resize(m_PointsInfo.pointsCount());
     m_SelectedPoints.resize(m_PointsInfo.pointsCount());
 
@@ -296,11 +296,11 @@ void DataSample::computePathSegments()
     m_PathSegments.clear();
     // path segments must always contain the first point
     m_PathSegments.push_back(0);
-    for (unsigned int i = 1; i < m_2DV.size(); ++i)
+    for (unsigned int i = 1; i < m_V2D.size(); ++i)
     {
         // if two last points are too far appart, a new path segments begins
-        const del_point2d_t& current = m_2DV[i];
-        const del_point2d_t& prev = m_2DV[i-1];
+        const del_point2d_t& current = m_V2D[i];
+        const del_point2d_t& prev = m_V2D[i-1];
         float dx = prev.x - current.x;
         float dz = prev.y - current.y;
         if (dx * dx + dz * dz > MAX_SAMPLING_DISTANCE)
@@ -309,7 +309,7 @@ void DataSample::computePathSegments()
         }
     }
     // path segments must always contain the last point
-    m_PathSegments.push_back(m_2DV.size());
+    m_PathSegments.push_back(m_V2D.size());
 }
 
 void DataSample::initShaders()
@@ -351,7 +351,7 @@ void DataSample::linkDataToShaders()
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_pos2d");
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
-    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
+    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(uint8_t), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
     Vector3f pos{ 0.0f, 0.0f, 0.0f };
     del_point2d_t origin = transformRawPoint({ m_Metadata.incidentTheta(), m_Metadata.incidentPhi(), 0.0f });
@@ -393,147 +393,17 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
 
-    updateSelectionInfo();
+    update_selection_info(m_SelectedPointsInfo, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
     m_Axis.setOrigin(selectionCenter());
-}
-
-void DataSample::selectPoints(const Matrix4f & mvp, const SelectionBox& selectionBox,
-    const Vector2i & canvasSize, SelectionMode mode)
-{
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)m_DelaunayTriangulation->num_points, GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
-        for (uint32_t i = range.begin(); i < range.end(); ++i)
-        {
-            Vector3f point = getVertex(i, m_DisplayAsLog);
-            Vector4f projPoint = projectOnScreen(point, canvasSize, mvp);
-
-            bool inSelection = selectionBox.contains(Vector2i{ projPoint[0], projPoint[1] });
-
-            switch (mode)
-            {
-            case STANDARD:
-                m_SelectedPoints[i] = inSelection;
-                break;
-            case ADD:
-                m_SelectedPoints[i] = inSelection || m_SelectedPoints[i];
-                break;
-            case SUBTRACT:
-                m_SelectedPoints[i] = !inSelection && m_SelectedPoints[i];
-                break;
-            }
-        }
-    });
-    updateSelectionInfo();
-    m_Axis.setOrigin(selectionCenter());
-
-    updatePointSelection();
-}
-
-
-void DataSample::selectSinglePoint(const nanogui::Matrix4f& mvp,
-    const nanogui::Vector2i & mousePos,
-    const nanogui::Vector2i & canvasSize)
-{
-    m_SelectedPointsInfo = PointSampleInfo();
-
-    float smallestDistance = MAX_SELECTION_DISTANCE * MAX_SELECTION_DISTANCE;
-    int closestPointIndex = -1;
-    for (unsigned int i = 0; i < m_DelaunayTriangulation->num_points; ++i)
-    {
-        Vector3f point = getVertex(i, m_DisplayAsLog);
-        Vector4f projPoint = projectOnScreen(point, canvasSize, mvp);
-
-        float distSqr = Vector2f{ projPoint[0] - mousePos[0], projPoint[1] - mousePos[1] }.squaredNorm();
-        
-        if (smallestDistance > distSqr)
-        {
-            closestPointIndex = i;
-            smallestDistance = distSqr;
-        }
-
-        m_SelectedPoints[i] = false;
-    }
-    if (closestPointIndex != -1)
-    {
-        m_SelectedPoints[closestPointIndex] = true;
-        m_SelectedPointsInfo.addPoint(closestPointIndex, m_RawPoints[closestPointIndex], getVertex(closestPointIndex, m_DisplayAsLog));
-        m_SelectedPointsInfo.normalize();
-    }
-
-    m_Axis.setOrigin(selectionCenter());
-    updatePointSelection();
 }
 
 void DataSample::updatePointSelection()
 {
     m_Shaders[POINTS].bind();
-    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(unsigned char), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
-}
+    m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(uint8_t), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
-void DataSample::deselectAllPoints()
-{
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)m_DelaunayTriangulation->num_points, GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
-        for (uint32_t i = range.begin(); i < range.end(); ++i)
-            m_SelectedPoints[i] = 0;
-    });
-    updatePointSelection();
-
-    m_SelectedPointsInfo = PointSampleInfo();
+    update_selection_info(m_SelectedPointsInfo, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
     m_Axis.setOrigin(selectionCenter());
-}
-
-void DataSample::movePointsAlongPath(bool up)
-{
-    unsigned char extremity;
-    if (up)
-    {
-        extremity = m_SelectedPoints.back();
-        memmove(m_SelectedPoints.data()+1, m_SelectedPoints.data(), m_SelectedPoints.size() - 1);
-        m_SelectedPoints.front() = extremity;
-    }
-    else
-    {
-        extremity = m_SelectedPoints.front();
-        memmove(m_SelectedPoints.data(), m_SelectedPoints.data()+1, m_SelectedPoints.size() - 1);
-        m_SelectedPoints.back() = extremity;
-    }
-    updatePointSelection();
-    updateSelectionInfo();
-    m_Axis.setOrigin(selectionCenter());
-}
-
-void DataSample::selectHighestPoint()
-{
-    int highestPointIndex = m_SelectedPointsInfo.pointsCount() == 0 ?
-                            m_PointsInfo.highestPointIndex() :
-                            m_SelectedPointsInfo.highestPointIndex();
-
-    m_SelectedPointsInfo = PointSampleInfo();
-
-    memset(m_SelectedPoints.data(), 0, sizeof(unsigned char) * m_SelectedPoints.size());
-    m_SelectedPoints[highestPointIndex] = 1;
-    updatePointSelection();
-
-    m_SelectedPointsInfo.addPoint(  highestPointIndex,
-                                    m_RawPoints[highestPointIndex],
-                                    getVertex(highestPointIndex, false));
-
-    m_SelectedPointsInfo.normalize();
-    m_Axis.setOrigin(selectionCenter());
-}
-
-void DataSample::updateSelectionInfo()
-{
-    m_SelectedPointsInfo = PointSampleInfo();
-    for (unsigned int i = 0; i < m_SelectedPoints.size(); ++i)
-    {
-        if (m_SelectedPoints[i])
-        {
-            m_SelectedPointsInfo.addPoint(i, m_RawPoints[i], getVertex(i, m_DisplayAsLog));
-        }
-    }
-    m_SelectedPointsInfo.normalize();
 }
 
 nanogui::Vector3f DataSample::selectionCenter()

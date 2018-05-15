@@ -19,18 +19,16 @@ PointSampleInfo::PointSampleInfo()
 
 void PointSampleInfo::addPoint(unsigned int index, const Vector3f& rawPoint, const Vector3f& transformedPoint)
 {
-    float new_min_intensity = min(m_MinIntensity, rawPoint[2]);
-    float new_max_intensity = max(m_MaxIntensity, rawPoint[2]);
-    if (new_min_intensity < m_MinIntensity)
+    if (rawPoint[2] < m_MinIntensity)
     {
         m_LowestPointIndex = index;
+        m_MinIntensity = rawPoint[2];
     }
-    if (new_max_intensity > m_MaxIntensity)
+    if (rawPoint[2] > m_MaxIntensity)
     {
         m_HighestPointIndex = index;
+        m_MaxIntensity = rawPoint[2];
     }
-    m_MinIntensity = new_min_intensity;
-    m_MaxIntensity = new_max_intensity;
 
     m_AveragePoint += transformedPoint;
     m_AverageRawPoint += rawPoint;

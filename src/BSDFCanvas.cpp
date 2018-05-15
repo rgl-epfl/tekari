@@ -85,9 +85,9 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
 
             SelectionBox selectionBox = getSelectionBox();
             
-            DataSample::SelectionMode           mode = DataSample::SelectionMode::STANDARD;
-            if (modifiers & GLFW_MOD_SHIFT)     mode = DataSample::SelectionMode::ADD;
-            else if (modifiers & GLFW_MOD_ALT)  mode = DataSample::SelectionMode::SUBTRACT;
+            SelectionMode                       mode = SelectionMode::STANDARD;
+            if (modifiers & GLFW_MOD_SHIFT)     mode = SelectionMode::ADD;
+            else if (modifiers & GLFW_MOD_ALT)  mode = SelectionMode::SUBTRACT;
 
             m_SelectCallback(mvp, selectionBox, mSize, mode);
             m_SelectionRegion = make_pair(Vector2i(0, 0), Vector2i(0, 0));

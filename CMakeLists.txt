@@ -119,7 +119,7 @@ add_executable(tekari
   "include/tekari/Axis.h"                       "src/Axis.cpp"
   "include/tekari/delaunay.h"                   "src/delaunay.c"
   "include/tekari/PointSampleInfo.h"            "src/PointSampleInfo.cpp"
-#  "include/tekari/DataSampleSelection.h"        "src/DataSampleSelection.cpp"
+  "include/tekari/DataSampleSelection.h"        "src/DataSampleSelection.cpp"
 #  "include/tekari/DataSampleIO.h"               "src/DataSampleIO.cpp"
   "include/tekari/MetadataElement.h"
   "include/tekari/ThreadPool.h"

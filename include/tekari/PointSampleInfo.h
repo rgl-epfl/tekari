@@ -12,9 +12,9 @@ class PointSampleInfo
 public:
     PointSampleInfo();
 
-    void addPoint(  unsigned int index,
-                    const nanogui::Vector3f& rawPoint,
-                    const nanogui::Vector3f& transformedPoint);
+    void addPoint(unsigned int index,
+        const nanogui::Vector3f& rawPoint,
+        const nanogui::Vector3f& transformedPoint);
 
     void normalizeAverage() { m_AveragePoint[1] = (m_AveragePoint[1] - m_MinIntensity) / (m_MaxIntensity - m_MinIntensity); }
     void normalize();

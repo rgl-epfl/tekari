@@ -60,7 +60,7 @@ public:
     void setOrthoMode(bool orthoMode) { m_OrthoMode = orthoMode; }
     void setViewAngle(ViewAngles viewAngle);
     void setSelectionCallback(std::function<void(const nanogui::Matrix4f&, const SelectionBox&,
-        const nanogui::Vector2i&, DataSample::SelectionMode)> callback) { m_SelectCallback = callback; }
+        const nanogui::Vector2i&, SelectionMode)> callback) { m_SelectCallback = callback; }
 
     // Setters/Getters
     const RadialGrid& grid() const { return m_Grid; }
@@ -102,7 +102,7 @@ private:
     // selection
     std::pair<nanogui::Vector2i, nanogui::Vector2i> m_SelectionRegion;
     std::function<void(const nanogui::Matrix4f&, const SelectionBox&,
-        const nanogui::Vector2i&, DataSample::SelectionMode)> m_SelectCallback;
+        const nanogui::Vector2i&, SelectionMode)> m_SelectCallback;
 
     // global state for sample display
     int m_DrawFlags;

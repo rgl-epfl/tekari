@@ -13,6 +13,7 @@
 #include "BitMap.h"
 #include "SelectionBox.h"
 #include "Axis.h"
+#include "DataSampleSelection.h"
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -31,12 +32,7 @@ public:
         INCIDENT_ANGLE,
         VIEW_COUNT
     };
-    enum SelectionMode
-    {
-        STANDARD,
-        ADD,
-        SUBTRACT
-    };
+
     // constructors/destructors, assignement operators
     DataSample(const std::string& sampleDataPath);
     DataSample(const DataSample&) = delete;
@@ -53,33 +49,53 @@ public:
                 std::shared_ptr<ColorMap> colorMap);
 
     void setDisplayAsLog(bool displayAsLog);
-    void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }
-    bool displayView(Views view) const { return m_DisplayViews[view]; }
+    inline void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }
+    inline bool displayView(Views view) const { return m_DisplayViews[view]; }
 
     void linkDataToShaders();
     void initShaders();
     void computeNormalizedHeights();
 
     // data sample info accessors
-    const std::string name()                    const { return m_Metadata.sampleName(); }
-    const PointSampleInfo& pointsInfo()         const { return m_PointsInfo; }
-    const PointSampleInfo& selectedPointsInfo() const { return m_SelectedPointsInfo; }
-
-    const Metadata& metadata() const { return m_Metadata; }
+    inline const std::string name()                    const { return m_Metadata.sampleName(); }
+    inline const PointSampleInfo& pointsInfo()         const { return m_PointsInfo; }
+    inline const PointSampleInfo& selectedPointsInfo() const { return m_SelectedPointsInfo; }
+    inline const Metadata& metadata()                  const { return m_Metadata; }
 
     // Selection
     void selectPoints(const nanogui::Matrix4f& mvp,
         const SelectionBox& selectionBox,
         const nanogui::Vector2i & canvasSize,
-        SelectionMode mode);
+        SelectionMode mode)
+    {
+        select_points(m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H, m_SelectedPoints, mvp, selectionBox, canvasSize, mode);
+        updatePointSelection();
+    }
     void selectSinglePoint(const nanogui::Matrix4f& mvp,
         const nanogui::Vector2i& mousePos,
-        const nanogui::Vector2i & canvasSize);
-    void deselectAllPoints();
-    void selectHighestPoint();
+        const nanogui::Vector2i & canvasSize)
+    {
+        select_closest_point(m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H, m_SelectedPoints, mvp, mousePos, canvasSize);
+        updatePointSelection();
+    }
+    void deselectAllPoints()
+    {
+        deselect_all_points(m_SelectedPoints);
+        updatePointSelection();
+    }
+    void selectHighestPoint()
+    {
+        select_highest_point(m_PointsInfo, m_SelectedPointsInfo, m_SelectedPoints);
+        updatePointSelection();
+    }
+
     nanogui::Vector3f selectionCenter();
     bool deleteSelectedPoints();
-    void movePointsAlongPath(bool up);
+    void movePointsAlongPath(bool up)
+    {
+        move_selection_along_path(up, m_SelectedPoints);
+        updatePointSelection();
+    }
 
     void save(const std::string& path) const;
 private:
@@ -92,9 +108,9 @@ private:
     void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
     void computeNormals();
     void updatePointSelection();
-    void updateSelectionInfo();
+    //void updateSelectionInfo();
 
-    static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
+    inline static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
     {
         return del_point2d_t{ (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
             (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
@@ -104,7 +120,7 @@ private:
     // Raw sample data
     bool m_ShaderLinked;
     tri_delaunay2d_t*               m_DelaunayTriangulation;
-    std::vector<del_point2d_t>      m_2DV;
+    std::vector<del_point2d_t>      m_V2D;
     std::vector<float>				m_H;
     std::vector<float>              m_LH;
     std::vector<nanogui::Vector3f>  m_N;
@@ -133,7 +149,7 @@ private:
     Axis m_Axis;
 
     // Selected point
-    std::vector<unsigned char>   m_SelectedPoints;
+    std::vector<uint8_t>   m_SelectedPoints;
     //BitMap              m_SelectedPoints;
     PointSampleInfo     m_SelectedPointsInfo;
 };

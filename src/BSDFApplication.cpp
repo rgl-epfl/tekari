@@ -45,7 +45,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
     m_BSDFCanvas = new BSDFCanvas{ m_3DView };
     m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
     m_BSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const SelectionBox& selectionBox,
-        const Vector2i& canvasSize, DataSample::SelectionMode mode) {
+        const Vector2i& canvasSize, SelectionMode mode) {
         if (m_SelectionInfoWindow)
         {
             toggleSelectionInfoWindow();
@@ -373,6 +373,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 if (hasSelectedDataSample())
                 {
                     m_SelectedDataSample->deselectAllPoints();
+                    if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
                 }
                 return true;
             case GLFW_KEY_Q:

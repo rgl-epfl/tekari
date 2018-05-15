@@ -1,6 +1,7 @@
 #pragma once
 
 #include <nanogui/glutil.h>
+#include "delaunay.h"
 
 #if defined(_WIN32)
 #	define NOMINMAX  // Remove min/max macros when building on windows
@@ -29,6 +30,8 @@
 #define TEKARI_NAMESPACE_BEGIN namespace tekari {
 #define TEKARI_NAMESPACE_END }
 
+#define GRAIN_SIZE 100u
+
 TEKARI_NAMESPACE_BEGIN
 
 inline nanogui::Vector4f projectOnScreen(const nanogui::Vector3f &point,
@@ -43,6 +46,18 @@ inline nanogui::Vector4f projectOnScreen(const nanogui::Vector3f &point,
     projectedPoint[0] = (projectedPoint[0] + 1.0f) * 0.5f * canvasSize.x();
     projectedPoint[1] = canvasSize.y() - (projectedPoint[1] + 1.0f) * 0.5f * canvasSize.y();
     return projectedPoint;
+}
+
+inline nanogui::Vector3f get3DPoint(const std::vector<del_point2d_t> &points2D,
+    const std::vector<float> &heights, unsigned int index)
+{
+    return { points2D[index].x, heights[index], points2D[index].y };
+}
+
+inline del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
+{
+    return del_point2d_t{ (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
+        (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
 }
 
 TEKARI_NAMESPACE_END
