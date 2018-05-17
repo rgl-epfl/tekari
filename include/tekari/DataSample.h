@@ -6,13 +6,13 @@
 #include <memory>
 #include <functional>
 #include "delaunay.h"
-#include "PointSampleInfo.h"
+#include "points_stats.h"
 #include "Metadata.h"
 #include "ColorMap.h"
 #include "DataPoint.h"
 #include "SelectionBox.h"
 #include "Axis.h"
-#include "DataSampleSelection.h"
+#include "selections.h"
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -57,37 +57,38 @@ public:
 
     // data sample info accessors
     inline const std::string name()                    const { return m_Metadata.sampleName(); }
-    inline const PointSampleInfo& pointsInfo()         const { return m_PointsInfo; }
-    inline const PointSampleInfo& selectedPointsInfo() const { return m_SelectedPointsInfo; }
     inline const Metadata& metadata()                  const { return m_Metadata; }
+    inline const PointsStats& pointsInfo()         const { return m_PointsStats; }
+    inline bool hasSelection()                         const { return m_SelectionStats.pointsCount() > 0; }
+    inline const PointsStats& selectedPointsInfo() const { return m_SelectionStats; }
+    inline PointsStats& selectedPointsInfo()             { return m_SelectionStats; }
 
-    inline const std::vector<float>& H()                const { return m_DisplayAsLog ? m_LH : m_H; }
-    inline const std::vector<nanogui::Vector3f>& N()    const { return m_DisplayAsLog ? m_LN : m_N; }
-    inline const std::vector<del_point2d_t>& V2D()      const { return m_V2D; }
-    inline const std::vector<uint8_t>& selectedPoints() const { return m_SelectedPoints; }
+    inline const std::vector<float>& H()                     const { return m_DisplayAsLog ? m_LH : m_H; }
+    inline const std::vector<nanogui::Vector3f>& N()         const { return m_DisplayAsLog ? m_LN : m_N; }
+    inline const std::vector<del_point2d_t>& V2D()           const { return m_V2D; }
+    inline const std::vector<uint8_t>& selectedPoints()      const { return m_SelectedPoints; }
     inline const std::vector<nanogui::Vector3f>& rawPoints() const { return m_RawPoints; }
 
-    inline std::vector<float>& H()                 { return m_DisplayAsLog ? m_LH : m_H; }
-    inline std::vector<nanogui::Vector3f>& N()     { return m_DisplayAsLog ? m_LN : m_N; }
-    inline std::vector<del_point2d_t>& V2D()       { return m_V2D; }
-    inline std::vector<uint8_t>& selectedPoints()  { return m_SelectedPoints; }
-    inline std::vector<nanogui::Vector3f>& rawPoints() { return m_RawPoints; }
+    inline std::vector<float>& H()                      { return m_DisplayAsLog ? m_LH : m_H; }
+    inline std::vector<nanogui::Vector3f>& N()          { return m_DisplayAsLog ? m_LN : m_N; }
+    inline std::vector<del_point2d_t>& V2D()            { return m_V2D; }
+    inline std::vector<uint8_t>& selectedPoints()       { return m_SelectedPoints; }
+    inline std::vector<nanogui::Vector3f>& rawPoints()  { return m_RawPoints; }
 
     // Selection
     nanogui::Vector3f selectionCenter();
-    bool deleteSelectedPoints();
+    void deleteSelectedPoints();
     void updatePointSelection();
 
     void save(const std::string& path) const;
 private:
 
+    void recomputeData();
+
     // helper methods for data loading/computing
     void readDataset(const std::string &filePath);
     void triangulateData();
     void computePathSegments();
-    inline nanogui::Vector3f getVertex(unsigned int i, bool logged) const;
-    void computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged);
-    void computeNormals();
     //void updateSelectionInfo();
 
     inline static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
@@ -108,7 +109,7 @@ private:
     std::vector<unsigned int>       m_PathSegments;
     // Untransformed data
     std::vector<nanogui::Vector3f>  m_RawPoints;        // theta, phi, intensity
-    PointSampleInfo                 m_PointsInfo;
+    PointsStats                     m_PointsStats;
 
     // display Shaders
     nanogui::GLShader m_MeshShader;
@@ -130,7 +131,7 @@ private:
 
     // Selected point
     std::vector<uint8_t>   m_SelectedPoints;
-    PointSampleInfo     m_SelectedPointsInfo;
+    PointsStats            m_SelectionStats;
 };
 
 TEKARI_NAMESPACE_END

@@ -9,6 +9,7 @@
 #include <istream>
 #include <tbb/tbb.h>
 
+#include "tekari/normals.h"
 #include "tekari/delaunay.h"
 #include "tekari/stop_watch.h"
 
@@ -25,8 +26,8 @@ DataSample::DataSample(const string& sampleDataPath)
 ,   m_DisplayViews{ false, false, true }
 ,   m_ShaderLinked(false)
 ,	m_DelaunayTriangulation(nullptr)
-,   m_PointsInfo()
-,   m_SelectedPointsInfo()
+,   m_PointsStats()
+,   m_SelectionStats()
 ,   m_Axis{Vector3f{0.0f, 0.0f, 0.0f}}
 {    
     m_DrawFunctions[PATH] = [this](const Vector3f&, const Matrix4f&,
@@ -72,9 +73,7 @@ DataSample::DataSample(const string& sampleDataPath)
     // load vertex data from file
     PROFILE(readDataset(sampleDataPath));
 
-    PROFILE(triangulateData());
-    PROFILE(computePathSegments());
-    PROFILE(computeNormals());
+    recomputeData();
 }
 
 DataSample::~DataSample()
@@ -206,17 +205,25 @@ void DataSample::readDataset(const string &filePath)
             m_RawPoints.push_back(rawPoint);
             m_V2D.push_back(transformedPoint);
             m_SelectedPoints.push_back(false);
-            m_PointsInfo.addPoint(m_V2D.size() - 1, rawPoint, Vector3f{ transformedPoint.x, intensity, transformedPoint.y });
         }
     }
     fclose(datasetFile);
-
-    m_PointsInfo.normalize();
-    m_PointsInfo.normalizeAverage();
-
-    computeNormalizedHeights();
-    m_Axis.setOrigin(selectionCenter());
 }
+
+//void DataSample::computePointStats()
+//{
+//    m_PointsStats = PointsStats();
+//
+//    for (unsigned int i = 0; i < m_RawPoints.size(); ++i)
+//    {
+//        m_PointsStats.addPoint(i, m_RawPoints[i], Vector3f{ m_V2D[i].x, m_RawPoints[i][2], m_V2D[i].y });
+//    }
+//
+//    m_PointsStats.normalize();
+//    m_PointsStats.normalizeAverage();
+//
+//    m_Axis.setOrigin(m_PointsStats.averagePoint());
+//}
 
 void DataSample::computeNormalizedHeights()
 {
@@ -224,8 +231,8 @@ void DataSample::computeNormalizedHeights()
     m_LH.resize(m_RawPoints.size());
 
     // normalize intensities
-    float min_intensity = m_PointsInfo.minIntensity();
-    float max_intensity = m_PointsInfo.maxIntensity();
+    float min_intensity = m_PointsStats.minIntensity();
+    float max_intensity = m_PointsStats.maxIntensity();
     float correction_factor = 0.0f;
     if (min_intensity <= 0.0f)
         correction_factor = -min_intensity + 1e-10f;
@@ -243,52 +250,28 @@ void DataSample::computeNormalizedHeights()
     );
 }
 
-bool DataSample::deleteSelectedPoints()
+void DataSample::recomputeData()
 {
-    // if no points selected, there's nothing to do
-    if (m_SelectedPointsInfo.pointsCount() == 0)
-        return false;
+    update_points_stats(m_PointsStats, m_RawPoints, m_V2D);
+    m_Axis.setOrigin(m_PointsStats.averagePoint());
 
-    // delete per vertex data
-    m_PointsInfo = PointSampleInfo();
-    m_SelectedPointsInfo = PointSampleInfo();
-    
-    unsigned int lastValid = 0;
-    for (unsigned int i = 0; i < m_SelectedPoints.size(); ++i)
-    {
-        if (!m_SelectedPoints[i])
-        {
-            // move undeleted point to last valid position
-            m_V2D[lastValid] = m_V2D[i];
-            m_RawPoints[lastValid] = m_RawPoints[i];
-            m_SelectedPoints[lastValid] = 0;
-            ++lastValid;
-
-            // update point info
-            m_PointsInfo.addPoint(i, m_RawPoints[i], Vector3f{ m_V2D[i].x, m_H[i], m_V2D[i].y });
-        }
-    }
-
-    // resize vectors
-    m_V2D.resize(m_PointsInfo.pointsCount());
-    m_RawPoints.resize(m_PointsInfo.pointsCount());
-    m_SelectedPoints.resize(m_PointsInfo.pointsCount());
-
-    computeNormalizedHeights();
-
-    m_PointsInfo.normalize();
-    m_Axis.setOrigin(m_PointsInfo.averagePoint());
-
+    PROFILE(computeNormalizedHeights());
     // recompute mesh
-    tri_delaunay2d_release(m_DelaunayTriangulation);
-    m_DelaunayTriangulation = nullptr;
+    if (m_DelaunayTriangulation)
+    {
+        tri_delaunay2d_release(m_DelaunayTriangulation);
+        m_DelaunayTriangulation = nullptr;
+    }
     PROFILE(triangulateData());
     PROFILE(computePathSegments());
-    PROFILE(computeNormals());
+    PROFILE(compute_normals(m_DelaunayTriangulation, m_V2D, m_H, m_LH, m_N, m_LN));
+}
 
+void DataSample::deleteSelectedPoints()
+{
+    recomputeData();
     m_ShaderLinked = false;
     linkDataToShaders();
-    return true;
 }
 
 void DataSample::computePathSegments()
@@ -393,7 +376,7 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
 
-    update_selection_info(m_SelectedPointsInfo, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
+    update_selection_stats(m_SelectionStats, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
     m_Axis.setOrigin(selectionCenter());
 }
 
@@ -402,63 +385,56 @@ void DataSample::updatePointSelection()
     m_Shaders[POINTS].bind();
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(uint8_t), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
-    update_selection_info(m_SelectedPointsInfo, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
+    update_selection_stats(m_SelectionStats, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
     m_Axis.setOrigin(selectionCenter());
 }
 
 nanogui::Vector3f DataSample::selectionCenter()
 {
-    return m_SelectedPointsInfo.pointsCount() == 0 ? m_PointsInfo.averagePoint() : m_SelectedPointsInfo.averagePoint();
+    return m_SelectionStats.pointsCount() == 0 ? m_PointsStats.averagePoint() : m_SelectionStats.averagePoint();
 }
 
-Vector3f DataSample::getVertex(unsigned int i, bool logged) const
-{
-    return {	m_DelaunayTriangulation->points[i].x,
-                logged ? m_LH[i] : m_H[i],
-                m_DelaunayTriangulation->points[i].y };
-}
+//void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged)
+//{
+//    const Vector3f e01 = (get3DPoint(m_V2D, H(), i1) - get3DPoint(m_V2D, H(), i0)).normalized();
+//    const Vector3f e12 = (get3DPoint(m_V2D, H(), i2) - get3DPoint(m_V2D, H(), i1)).normalized();
+//    const Vector3f e20 = (get3DPoint(m_V2D, H(), i0) - get3DPoint(m_V2D, H(), i2)).normalized();
+//
+//    Vector3f faceNormal = e12.cross(-e01).normalized();
+//
+//    float w0 = (float)acos(max(-1.0f, min(1.0f, e01.dot(-e20))));
+//    float w1 = (float)acos(max(-1.0f, min(1.0f, e12.dot(-e01))));
+//    float w2 = (float)acos(max(-1.0f, min(1.0f, e20.dot(-e12))));
+//
+//    vector<Vector3f> &normals = logged ? m_LN : m_N;
+//    normals[i0] += w0 * faceNormal;
+//    normals[i1] += w1 * faceNormal;
+//    normals[i2] += w2 * faceNormal;
+//}
 
-void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged)
-{
-    const Vector3f e01 = (getVertex(i1, logged) - getVertex(i0, logged)).normalized();
-    const Vector3f e12 = (getVertex(i2, logged) - getVertex(i1, logged)).normalized();
-    const Vector3f e20 = (getVertex(i0, logged) - getVertex(i2, logged)).normalized();
-
-    Vector3f faceNormal = e12.cross(-e01).normalized();
-
-    float w0 = (float)acos(max(-1.0f, min(1.0f, e01.dot(-e20))));
-    float w1 = (float)acos(max(-1.0f, min(1.0f, e12.dot(-e01))));
-    float w2 = (float)acos(max(-1.0f, min(1.0f, e20.dot(-e12))));
-
-    vector<Vector3f> &normals = logged ? m_LN : m_N;
-    normals[i0] += w0 * faceNormal;
-    normals[i1] += w1 * faceNormal;
-    normals[i2] += w2 * faceNormal;
-}
-
-void DataSample::computeNormals()
-{
-    m_N.resize(m_DelaunayTriangulation->num_points);
-    m_LN.resize(m_DelaunayTriangulation->num_points);
-    memset(m_N.data(),     0, sizeof(Vector3f) * m_N.size());
-    memset(m_LN.data(),  0, sizeof(Vector3f) * m_LN.size());
-
-    for (unsigned int i = 0; i < m_DelaunayTriangulation->num_triangles; ++i)
-    {
-        const unsigned int &i0 = m_DelaunayTriangulation->tris[3 * i];
-        const unsigned int &i1 = m_DelaunayTriangulation->tris[3 * i + 1];
-        const unsigned int &i2 = m_DelaunayTriangulation->tris[3 * i + 2];
-
-        computeTriangleNormal(i0, i1, i2, false);
-        computeTriangleNormal(i0, i1, i2, true);
-    }
-
-    for (size_t i = 0; i < m_N.size(); ++i)
-    {
-        m_N[i].normalize();
-        m_LN[i].normalize();
-    }
-}
+//void DataSample::computeNormals()
+//{
+//    m_N.resize(m_DelaunayTriangulation->num_points);
+//    m_LN.resize(m_DelaunayTriangulation->num_points);
+//    memset(m_N.data(),     0, sizeof(Vector3f) * m_N.size());
+//    memset(m_LN.data(),  0, sizeof(Vector3f) * m_LN.size());
+//
+//    for (unsigned int i = 0; i < m_DelaunayTriangulation->num_triangles; ++i)
+//    {
+//        const unsigned int &i0 = m_DelaunayTriangulation->tris[3 * i];
+//        const unsigned int &i1 = m_DelaunayTriangulation->tris[3 * i + 1];
+//        const unsigned int &i2 = m_DelaunayTriangulation->tris[3 * i + 2];
+//
+//        computeTriangleNormal(i0, i1, i2, false);
+//        computeTriangleNormal(i0, i1, i2, true);
+//    }
+//
+//    for (size_t i = 0; i < m_N.size(); ++i)
+//    {
+//        m_N[i].normalize();
+//        m_LN[i].normalize();
+//    }
+//}
 
 void DataSample::save(const std::string& path) const
 {

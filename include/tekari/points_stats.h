@@ -7,10 +7,10 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-class PointSampleInfo
+class PointsStats
 {
 public:
-    PointSampleInfo();
+    PointsStats();
 
     void addPoint(unsigned int index,
         const nanogui::Vector3f& rawPoint,
@@ -35,5 +35,20 @@ private:
     unsigned int m_LowestPointIndex;
     unsigned int m_HighestPointIndex;
 };
+
+extern void update_selection_stats(
+    PointsStats &selectionStats,
+    const std::vector<uint8_t> &selectedPoints,
+    const std::vector<nanogui::Vector3f> &rawPoints,
+    const std::vector<del_point2d_t> &V2D,
+    const std::vector<float> &H
+);
+
+extern void update_points_stats(
+    PointsStats &pointsStats,
+    const std::vector<nanogui::Vector3f> &rawPoints,
+    const std::vector<del_point2d_t> &V2D
+);
+
 
 TEKARI_NAMESPACE_END
