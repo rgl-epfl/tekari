@@ -1,4 +1,4 @@
-#include "tekari/DataSampleSelection.h"
+#include "tekari/selections.h"
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -94,8 +94,8 @@ void select_closest_point(
 }
 
 void select_highest_point(
-    const PointSampleInfo &pointsInfo,
-    const PointSampleInfo &selectionInfo,
+    const PointsStats &pointsInfo,
+    const PointsStats &selectionInfo,
     vector<uint8_t> &selectedPoints
 )
 {
@@ -114,24 +114,6 @@ void deselect_all_points(vector<uint8_t> &selectedPoints)
         for (uint32_t i = range.begin(); i < range.end(); ++i)
             selectedPoints[i] = 0;
     });
-}
-
-void update_selection_info(
-    PointSampleInfo &selectionInfo,
-    const vector<uint8_t> &selectedPoints,
-    const vector<Vector3f> &rawPoints,
-    const vector<del_point2d_t> &V2D,
-    const vector<float> &H)
-{
-    selectionInfo = PointSampleInfo();
-    for (unsigned int i = 0; i < selectedPoints.size(); ++i)
-    {
-        if (selectedPoints[i])
-        {
-            selectionInfo.addPoint(i, rawPoints[i], get3DPoint(V2D, H, i));
-        }
-    }
-    selectionInfo.normalize();
 }
 
 void move_selection_along_path(
@@ -157,9 +139,12 @@ void move_selection_along_path(
 void delete_selected_points(
     vector<uint8_t> &selectedPoints,
     vector<Vector3f> &rawPoints,
-    vector<del_point2d_t> &V2D
+    vector<del_point2d_t> &V2D,
+    PointsStats &selectionInfo
 )
 {
+    selectionInfo = PointsStats();
+
     unsigned int lastValid = 0;
     for (unsigned int i = 0; i < selectedPoints.size(); ++i)
     {

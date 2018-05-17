@@ -59,7 +59,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
                 dataSample->updatePointSelection();
             }
         }
-        if (hasSelectedDataSample())
+        if (m_SelectedDataSample)
         {
             if (selectionBox.empty())
             {
@@ -384,7 +384,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
             case GLFW_KEY_ESCAPE:
-                if (hasSelectedDataSample())
+                if (m_SelectedDataSample)
                 {
                     deselect_all_points(m_SelectedDataSample->selectedPoints());
                     m_SelectedDataSample->updatePointSelection();
@@ -402,15 +402,18 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 deleteDataSample(m_SelectedDataSample);
                 return true;
             case GLFW_KEY_D:
-                if (m_SelectedDataSample)
+                if (m_SelectedDataSample && m_SelectedDataSample->hasSelection())
                 {
-                    if (m_SelectedDataSample->deleteSelectedPoints())
-                    {
-                        toggleSelectionInfoWindow();
-                        selectDataSample(m_SelectedDataSample);
-                    }
+                    delete_selected_points( m_SelectedDataSample->selectedPoints(),
+                                            m_SelectedDataSample->rawPoints(),
+                                            m_SelectedDataSample->V2D(),
+                                            m_SelectedDataSample->selectedPointsInfo());
+                    m_SelectedDataSample->deleteSelectedPoints();
+                    if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
+                    selectDataSample(m_SelectedDataSample);
                     return true;
                 }
+                return false;
             case GLFW_KEY_UP: case GLFW_KEY_W:
                 selectDataSample(selectedDataSampleIndex() - 1, false);
                 return true;
@@ -418,7 +421,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 selectDataSample(selectedDataSampleIndex() + 1, false);
                 return true;
             case GLFW_KEY_ENTER:
-                if (hasSelectedDataSample())
+                if (m_SelectedDataSample)
                 {
                     correspondingButton(m_SelectedDataSample)->toggleView();
                     return true;
@@ -629,9 +632,9 @@ void BSDFApplication::toggleMetadataWindow()
 {
     toggleWindow(m_MetadataWindow, [this]() {
         Window *window;
-        if (hasSelectedDataSample())
+        if (m_SelectedDataSample)
         {
-            window = new MetadataWindow(this, &selectedDataSample()->metadata(), [this]() { toggleMetadataWindow(); });
+            window = new MetadataWindow(this, &m_SelectedDataSample->metadata(), [this]() { toggleMetadataWindow(); });
         }
         else
         {
@@ -731,7 +734,7 @@ void BSDFApplication::selectDataSample(int index, bool clamped)
 void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 {
     // de-select previously selected button
-    if (hasSelectedDataSample())
+    if (m_SelectedDataSample)
     {
         DataSampleButton* oldButton = correspondingButton(m_SelectedDataSample);
         oldButton->setIsSelected(false);
@@ -740,7 +743,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 
     m_SelectedDataSample = dataSample;
     m_BSDFCanvas->selectDataSample(dataSample);
-    if (hasSelectedDataSample())
+    if (m_SelectedDataSample)
     {
         auto button = correspondingButton(m_SelectedDataSample);
         button->setIsSelected(true);
@@ -837,7 +840,7 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
     selectDataSample(dataSample);
 
     // by default toggle view for the new data samples
-    m_BSDFCanvas->addDataSample(selectedDataSample());
+    m_BSDFCanvas->addDataSample(m_SelectedDataSample);
 }
 
 void BSDFApplication::toggleToolButton(nanogui::Button* button)

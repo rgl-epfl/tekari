@@ -50,9 +50,6 @@ public:
     void selectDataSample(int index, bool clamped = true);
 
     int dataSampleIndex(const std::shared_ptr<const DataSample> dataSample) const;
-    bool hasSelectedDataSample() const                  { return m_SelectedDataSample != nullptr; }
-    std::shared_ptr<DataSample> selectedDataSample()    { return m_SelectedDataSample; }
-    const std::shared_ptr<const DataSample> selectedDataSample() const { return m_SelectedDataSample; }
     int selectedDataSampleIndex() const { return dataSampleIndex(m_SelectedDataSample); }
 
     DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample);

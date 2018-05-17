@@ -3,7 +3,7 @@
 #include <nanogui/opengl.h>
 #include <tbb/parallel_for.h>
 #include "SelectionBox.h"
-#include "PointSampleInfo.h"
+#include "points_stats.h"
 #include "delaunay.h"
 
 TEKARI_NAMESPACE_BEGIN
@@ -37,20 +37,12 @@ extern void select_closest_point(
 );
 
 extern void select_highest_point(
-    const PointSampleInfo &pointsInfo,
-    const PointSampleInfo &selectionInfo,
+    const PointsStats &pointsInfo,
+    const PointsStats &selectionInfo,
     std::vector<uint8_t> &selectedPoints
 );
 
 extern void deselect_all_points(std::vector<uint8_t> &selectedPoints);
-
-extern void update_selection_info(
-    PointSampleInfo &selectionInfo,
-    const std::vector<uint8_t> &selectedPoints,
-    const std::vector<nanogui::Vector3f> &rawPoints,
-    const std::vector<del_point2d_t> &V2D,
-    const std::vector<float> &H
-);
 
 extern void move_selection_along_path(
     bool up,
@@ -60,7 +52,8 @@ extern void move_selection_along_path(
 extern void delete_selected_points(
     std::vector<uint8_t> &selectedPoints,
     std::vector<nanogui::Vector3f> &rawPoints,
-    std::vector<del_point2d_t> &V2D
+    std::vector<del_point2d_t> &V2D,
+    PointsStats &selectionInfo
 );
 
 TEKARI_NAMESPACE_END
