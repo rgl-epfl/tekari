@@ -10,9 +10,7 @@
 #include "Metadata.h"
 #include "ColorMap.h"
 #include "DataPoint.h"
-#include "SelectionBox.h"
 #include "Axis.h"
-#include "selections.h"
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -53,43 +51,45 @@ public:
 
     void linkDataToShaders();
     void initShaders();
-    void computeNormalizedHeights();
 
     // data sample info accessors
-    inline const std::string name()                    const { return m_Metadata.sampleName(); }
-    inline const Metadata& metadata()                  const { return m_Metadata; }
-    inline const PointsStats& pointsInfo()         const { return m_PointsStats; }
-    inline bool hasSelection()                         const { return m_SelectionStats.pointsCount() > 0; }
-    inline const PointsStats& selectedPointsInfo() const { return m_SelectionStats; }
-    inline PointsStats& selectedPointsInfo()             { return m_SelectionStats; }
+    inline const std::string name()             const { return m_Metadata.sampleName(); }
+    inline const Metadata& metadata()           const { return m_Metadata; }
+    inline bool hasSelection()                  const { return m_SelectionStats.pointsCount() > 0; }
+    inline const PointsStats& pointsStats()     const { return m_PointsStats; }
+    inline const PointsStats& selectionStats()  const { return m_SelectionStats; }
+    inline PointsStats& pointsStats()                 { return m_PointsStats; }
+    inline PointsStats& selectionStats()              { return m_SelectionStats; }
 
-    inline const std::vector<float>& H()                     const { return m_DisplayAsLog ? m_LH : m_H; }
-    inline const std::vector<nanogui::Vector3f>& N()         const { return m_DisplayAsLog ? m_LN : m_N; }
+    inline const std::vector<float>& currH()                 const { return m_DisplayAsLog ? m_LH : m_H; }
+    inline const std::vector<nanogui::Vector3f>& currN()     const { return m_DisplayAsLog ? m_LN : m_N; }
     inline const std::vector<del_point2d_t>& V2D()           const { return m_V2D; }
     inline const std::vector<uint8_t>& selectedPoints()      const { return m_SelectedPoints; }
     inline const std::vector<nanogui::Vector3f>& rawPoints() const { return m_RawPoints; }
 
-    inline std::vector<float>& H()                      { return m_DisplayAsLog ? m_LH : m_H; }
-    inline std::vector<nanogui::Vector3f>& N()          { return m_DisplayAsLog ? m_LN : m_N; }
+    inline std::vector<float>& currH()                  { return m_DisplayAsLog ? m_LH : m_H; }
+    inline std::vector<float>& H()                      { return m_H; }
+    inline std::vector<float>& LH()                     { return m_LH; }
+    inline std::vector<nanogui::Vector3f>& currN()      { return m_DisplayAsLog ? m_LN : m_N; }
+    inline std::vector<nanogui::Vector3f>& N()          { return m_N; }
+    inline std::vector<nanogui::Vector3f>& LN()         { return m_LN; }
     inline std::vector<del_point2d_t>& V2D()            { return m_V2D; }
     inline std::vector<uint8_t>& selectedPoints()       { return m_SelectedPoints; }
     inline std::vector<nanogui::Vector3f>& rawPoints()  { return m_RawPoints; }
+    inline std::vector<unsigned int>& pathSegments()    { return m_PathSegments; }
+
+    inline tri_delaunay2d_t** triangulation()           { return &m_DelaunayTriangulation; }
 
     // Selection
-    nanogui::Vector3f selectionCenter();
-    void deleteSelectedPoints();
+    void centerAxisToSelection();
+    nanogui::Vector3f selectionCenter() const;
     void updatePointSelection();
 
     void save(const std::string& path) const;
 private:
 
-    void recomputeData();
-
     // helper methods for data loading/computing
     void readDataset(const std::string &filePath);
-    void triangulateData();
-    void computePathSegments();
-    //void updateSelectionInfo();
 
     inline static del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
     {
@@ -99,7 +99,6 @@ private:
 
 private:
     // Raw sample data
-    bool m_ShaderLinked;
     tri_delaunay2d_t*               m_DelaunayTriangulation;
     std::vector<del_point2d_t>      m_V2D;
     std::vector<float>				m_H;

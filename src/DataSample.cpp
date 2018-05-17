@@ -9,14 +9,12 @@
 #include <istream>
 #include <tbb/tbb.h>
 
-#include "tekari/normals.h"
 #include "tekari/delaunay.h"
 #include "tekari/stop_watch.h"
 
 using namespace std;
 using namespace nanogui;
 
-#define MAX_SAMPLING_DISTANCE 0.05f
 #define MAX_SELECTION_DISTANCE 30.0f
 
 TEKARI_NAMESPACE_BEGIN
@@ -24,7 +22,6 @@ TEKARI_NAMESPACE_BEGIN
 DataSample::DataSample(const string& sampleDataPath)
 :	m_DisplayAsLog(false)
 ,   m_DisplayViews{ false, false, true }
-,   m_ShaderLinked(false)
 ,	m_DelaunayTriangulation(nullptr)
 ,   m_PointsStats()
 ,   m_SelectionStats()
@@ -72,8 +69,6 @@ DataSample::DataSample(const string& sampleDataPath)
 
     // load vertex data from file
     PROFILE(readDataset(sampleDataPath));
-
-    recomputeData();
 }
 
 DataSample::~DataSample()
@@ -137,20 +132,6 @@ void DataSample::drawGL(
 
 }
 
-void DataSample::triangulateData()
-{
-    if (m_DelaunayTriangulation)
-    {
-        throw runtime_error("ERROR: cannot triangulate data twice!");
-    }
-
-    // triangulate vertx data
-    delaunay2d_t *delaunay;
-    delaunay = delaunay2d_from(m_V2D.data(), m_V2D.size());
-    m_DelaunayTriangulation = tri_delaunay2d_from(delaunay);
-    delaunay2d_release(delaunay);
-}
-
 void DataSample::readDataset(const string &filePath)
 {
     // try open file
@@ -210,91 +191,6 @@ void DataSample::readDataset(const string &filePath)
     fclose(datasetFile);
 }
 
-//void DataSample::computePointStats()
-//{
-//    m_PointsStats = PointsStats();
-//
-//    for (unsigned int i = 0; i < m_RawPoints.size(); ++i)
-//    {
-//        m_PointsStats.addPoint(i, m_RawPoints[i], Vector3f{ m_V2D[i].x, m_RawPoints[i][2], m_V2D[i].y });
-//    }
-//
-//    m_PointsStats.normalize();
-//    m_PointsStats.normalizeAverage();
-//
-//    m_Axis.setOrigin(m_PointsStats.averagePoint());
-//}
-
-void DataSample::computeNormalizedHeights()
-{
-    m_H.resize(m_RawPoints.size());
-    m_LH.resize(m_RawPoints.size());
-
-    // normalize intensities
-    float min_intensity = m_PointsStats.minIntensity();
-    float max_intensity = m_PointsStats.maxIntensity();
-    float correction_factor = 0.0f;
-    if (min_intensity <= 0.0f)
-        correction_factor = -min_intensity + 1e-10f;
-    float min_log_intensity = log(min_intensity + correction_factor);
-    float max_log_intensity = log(max_intensity);
-    
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)m_RawPoints.size(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
-            for (uint32_t i = range.begin(); i < range.end(); ++i)
-            {
-                m_H[i] = (m_RawPoints[i][2] - min_intensity) / (max_intensity - min_intensity);
-                m_LH[i] = (log(m_RawPoints[i][2] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
-            }
-        }
-    );
-}
-
-void DataSample::recomputeData()
-{
-    update_points_stats(m_PointsStats, m_RawPoints, m_V2D);
-    m_Axis.setOrigin(m_PointsStats.averagePoint());
-
-    PROFILE(computeNormalizedHeights());
-    // recompute mesh
-    if (m_DelaunayTriangulation)
-    {
-        tri_delaunay2d_release(m_DelaunayTriangulation);
-        m_DelaunayTriangulation = nullptr;
-    }
-    PROFILE(triangulateData());
-    PROFILE(computePathSegments());
-    PROFILE(compute_normals(m_DelaunayTriangulation, m_V2D, m_H, m_LH, m_N, m_LN));
-}
-
-void DataSample::deleteSelectedPoints()
-{
-    recomputeData();
-    m_ShaderLinked = false;
-    linkDataToShaders();
-}
-
-void DataSample::computePathSegments()
-{
-    m_PathSegments.clear();
-    // path segments must always contain the first point
-    m_PathSegments.push_back(0);
-    for (unsigned int i = 1; i < m_V2D.size(); ++i)
-    {
-        // if two last points are too far appart, a new path segments begins
-        const del_point2d_t& current = m_V2D[i];
-        const del_point2d_t& prev = m_V2D[i-1];
-        float dx = prev.x - current.x;
-        float dz = prev.y - current.y;
-        if (dx * dx + dz * dz > MAX_SAMPLING_DISTANCE)
-        {
-            m_PathSegments.push_back(i);
-        }
-    }
-    // path segments must always contain the last point
-    m_PathSegments.push_back(m_V2D.size());
-}
-
 void DataSample::initShaders()
 {
     const string shader_path = "../resources/shaders/";
@@ -311,10 +207,6 @@ void DataSample::linkDataToShaders()
     if (!m_DelaunayTriangulation)
     {
         throw runtime_error("ERROR: cannot link data to shader before loading data.");
-    }
-    if (m_ShaderLinked)
-    {
-        throw runtime_error("ERROR: cannot link data to shader twice.");
     }
 
     m_MeshShader.setUniform("color_map", 0);
@@ -354,8 +246,6 @@ void DataSample::linkDataToShaders()
     m_PredictedOutgoingAngleShader.setUniform("length", 1.0f);
 
     m_Axis.loadShader();
-
-    m_ShaderLinked = true;
 }
 
 void DataSample::setDisplayAsLog(bool displayAsLog)
@@ -377,7 +267,7 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
     m_Shaders[POINTS].shareAttrib(m_MeshShader, "in_height");
 
     update_selection_stats(m_SelectionStats, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
-    m_Axis.setOrigin(selectionCenter());
+    centerAxisToSelection();
 }
 
 void DataSample::updatePointSelection()
@@ -386,55 +276,18 @@ void DataSample::updatePointSelection()
     m_Shaders[POINTS].uploadAttrib("in_selected", m_SelectedPoints.size(), 1, sizeof(uint8_t), GL_BYTE, GL_FALSE, (const void*)m_SelectedPoints.data());
 
     update_selection_stats(m_SelectionStats, m_SelectedPoints, m_RawPoints, m_V2D, m_DisplayAsLog ? m_LH : m_H);
-    m_Axis.setOrigin(selectionCenter());
+    centerAxisToSelection();
 }
 
-nanogui::Vector3f DataSample::selectionCenter()
+Vector3f DataSample::selectionCenter() const
 {
     return m_SelectionStats.pointsCount() == 0 ? m_PointsStats.averagePoint() : m_SelectionStats.averagePoint();
 }
 
-//void DataSample::computeTriangleNormal(unsigned int i0, unsigned int i1, unsigned int i2, bool logged)
-//{
-//    const Vector3f e01 = (get3DPoint(m_V2D, H(), i1) - get3DPoint(m_V2D, H(), i0)).normalized();
-//    const Vector3f e12 = (get3DPoint(m_V2D, H(), i2) - get3DPoint(m_V2D, H(), i1)).normalized();
-//    const Vector3f e20 = (get3DPoint(m_V2D, H(), i0) - get3DPoint(m_V2D, H(), i2)).normalized();
-//
-//    Vector3f faceNormal = e12.cross(-e01).normalized();
-//
-//    float w0 = (float)acos(max(-1.0f, min(1.0f, e01.dot(-e20))));
-//    float w1 = (float)acos(max(-1.0f, min(1.0f, e12.dot(-e01))));
-//    float w2 = (float)acos(max(-1.0f, min(1.0f, e20.dot(-e12))));
-//
-//    vector<Vector3f> &normals = logged ? m_LN : m_N;
-//    normals[i0] += w0 * faceNormal;
-//    normals[i1] += w1 * faceNormal;
-//    normals[i2] += w2 * faceNormal;
-//}
-
-//void DataSample::computeNormals()
-//{
-//    m_N.resize(m_DelaunayTriangulation->num_points);
-//    m_LN.resize(m_DelaunayTriangulation->num_points);
-//    memset(m_N.data(),     0, sizeof(Vector3f) * m_N.size());
-//    memset(m_LN.data(),  0, sizeof(Vector3f) * m_LN.size());
-//
-//    for (unsigned int i = 0; i < m_DelaunayTriangulation->num_triangles; ++i)
-//    {
-//        const unsigned int &i0 = m_DelaunayTriangulation->tris[3 * i];
-//        const unsigned int &i1 = m_DelaunayTriangulation->tris[3 * i + 1];
-//        const unsigned int &i2 = m_DelaunayTriangulation->tris[3 * i + 2];
-//
-//        computeTriangleNormal(i0, i1, i2, false);
-//        computeTriangleNormal(i0, i1, i2, true);
-//    }
-//
-//    for (size_t i = 0; i < m_N.size(); ++i)
-//    {
-//        m_N[i].normalize();
-//        m_LN[i].normalize();
-//    }
-//}
+void DataSample::centerAxisToSelection()
+{
+    m_Axis.setOrigin(selectionCenter());
+}
 
 void DataSample::save(const std::string& path) const
 {

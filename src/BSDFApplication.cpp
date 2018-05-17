@@ -17,7 +17,8 @@
 #include <bitset>
 #include <string>
 
-#include "tekari/SelectionBox.h"
+#include "tekari/selections.h"
+#include "tekari/normals.h"
 
 using namespace nanogui;
 using namespace std;
@@ -65,7 +66,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
             {
                 select_closest_point(   m_SelectedDataSample->rawPoints(),
                                         m_SelectedDataSample->V2D(),
-                                        m_SelectedDataSample->H(),
+                                        m_SelectedDataSample->currH(),
                                         m_SelectedDataSample->selectedPoints(),
                                         mvp, selectionBox.topLeft, canvasSize);
                 m_SelectedDataSample->updatePointSelection();
@@ -75,7 +76,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
             {
                 select_points(  m_SelectedDataSample->rawPoints(),
                                 m_SelectedDataSample->V2D(),
-                                m_SelectedDataSample->H(),
+                                m_SelectedDataSample->currH(),
                                 m_SelectedDataSample->selectedPoints(),
                                 mvp, selectionBox, canvasSize, mode);
                 m_SelectedDataSample->updatePointSelection();
@@ -349,7 +350,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 case GLFW_KEY_H:
                     if (m_SelectedDataSample)
                     {
-                        select_highest_point(m_SelectedDataSample->pointsInfo(), m_SelectedDataSample->selectedPointsInfo(), m_SelectedDataSample->selectedPoints());
+                        select_highest_point(m_SelectedDataSample->pointsStats(), m_SelectedDataSample->selectionStats(), m_SelectedDataSample->selectedPoints());
                         m_SelectedDataSample->updatePointSelection();
                         // if selection window already visible, hide it
                         if(m_SelectionInfoWindow) toggleSelectionInfoWindow();
@@ -404,11 +405,26 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_D:
                 if (m_SelectedDataSample && m_SelectedDataSample->hasSelection())
                 {
-                    delete_selected_points( m_SelectedDataSample->selectedPoints(),
-                                            m_SelectedDataSample->rawPoints(),
-                                            m_SelectedDataSample->V2D(),
-                                            m_SelectedDataSample->selectedPointsInfo());
-                    m_SelectedDataSample->deleteSelectedPoints();
+                    delete_selected_points( 
+                        m_SelectedDataSample->selectedPoints(),
+                        m_SelectedDataSample->rawPoints(),
+                        m_SelectedDataSample->V2D(),
+                        m_SelectedDataSample->selectionStats()
+                    );
+
+                    recompute_data(
+                        m_SelectedDataSample->rawPoints(),
+                        m_SelectedDataSample->pointsStats(),
+                        m_SelectedDataSample->triangulation(),
+                        m_SelectedDataSample->pathSegments(),
+                        m_SelectedDataSample->V2D(),
+                        m_SelectedDataSample->H(),
+                        m_SelectedDataSample->LH(),
+                        m_SelectedDataSample->N(),
+                        m_SelectedDataSample->LN()
+                    );
+                    m_SelectedDataSample->linkDataToShaders();
+
                     if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
                     selectDataSample(m_SelectedDataSample);
                     return true;
@@ -660,15 +676,15 @@ void BSDFApplication::toggleSelectionInfoWindow()
             new Label{ window, value };
         };
 
-        unsigned int points_count = m_SelectedDataSample->selectedPointsInfo().pointsCount();
+        unsigned int points_count = m_SelectedDataSample->selectionStats().pointsCount();
         string min_intensity = "-";
         string max_intensity = "-";
         string average_intensity = "-";
         if (points_count != 0)
         {
-            min_intensity = to_string(m_SelectedDataSample->selectedPointsInfo().minIntensity());
-            max_intensity = to_string(m_SelectedDataSample->selectedPointsInfo().maxIntensity());
-            average_intensity = to_string(m_SelectedDataSample->selectedPointsInfo().averageIntensity());
+            min_intensity = to_string(m_SelectedDataSample->selectionStats().minIntensity());
+            max_intensity = to_string(m_SelectedDataSample->selectionStats().maxIntensity());
+            average_intensity = to_string(m_SelectedDataSample->selectionStats().averageIntensity());
         }
 
         makeSelectionInfoLabels("Points In Selection :", to_string(points_count));
@@ -750,8 +766,8 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         button->showPopup(true);
 
         m_DataSampleName->setCaption(m_SelectedDataSample->name());
-        m_DataSamplePointsCount->setCaption(to_string(m_SelectedDataSample->pointsInfo().pointsCount()));
-        m_DataSampleAverageHeight->setCaption(to_string(m_SelectedDataSample->pointsInfo().averageIntensity()));
+        m_DataSamplePointsCount->setCaption(to_string(m_SelectedDataSample->pointsStats().pointsCount()));
+        m_DataSampleAverageHeight->setCaption(to_string(m_SelectedDataSample->pointsStats().averageIntensity()));
     }
     else
     {
@@ -893,7 +909,19 @@ void BSDFApplication::toggleCanvasDrawFlags(int flag, CheckBox *checkbox)
 void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)
 {
     try {
-        dataSampleToAdd->dataSample = make_shared<DataSample>(filePath);
+        shared_ptr<DataSample> ds = make_shared<DataSample>(filePath);
+
+        recompute_data( ds->rawPoints(),
+                        ds->pointsStats(),
+                        ds->triangulation(),
+                        ds->pathSegments(),
+                        ds->V2D(),
+                        ds->H(),
+                        ds->LH(),
+                        ds->N(),
+                        ds->LN());
+
+        dataSampleToAdd->dataSample = ds;
     }
     catch (exception e) {
         string errorMsg = "Could not open data sample at " + filePath + " : " + e.what();

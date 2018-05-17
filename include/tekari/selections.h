@@ -2,7 +2,6 @@
 
 #include <nanogui/opengl.h>
 #include <tbb/parallel_for.h>
-#include "SelectionBox.h"
 #include "points_stats.h"
 #include "delaunay.h"
 
@@ -13,6 +12,20 @@ enum SelectionMode
     STANDARD,
     ADD,
     SUBTRACT
+};
+
+struct SelectionBox
+{
+    nanogui::Vector2i topLeft;
+    nanogui::Vector2i size;
+
+    inline bool empty() const { return size[0] == 0 || size[1] == 0; }
+
+    inline bool contains(const nanogui::Vector2i& point) const
+    {
+        return  point[0] >= topLeft[0] && point[0] <= topLeft[0] + size[0] &&
+                point[1] >= topLeft[1] && point[1] <= topLeft[1] + size[1];
+    }
 };
 
 extern void select_points(

@@ -8,7 +8,7 @@
 #include "common.h"
 #include "Axis.h"
 #include "RadialGrid.h"
-#include "SelectionBox.h"
+#include "selections.h"
 #include "DataSample.h"
 
 TEKARI_NAMESPACE_BEGIN
