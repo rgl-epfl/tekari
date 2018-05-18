@@ -30,7 +30,7 @@ public:
     };
 
     // constructors/destructors, assignement operators
-    DataSample(const std::string& sampleDataPath);
+    DataSample();
     DataSample(const DataSample&) = delete;
     DataSample(DataSample&&) = default;
     ~DataSample();
@@ -57,8 +57,10 @@ public:
     inline bool hasSelection()                  const { return mSelectionStats.pointsCount() > 0; }
     inline const PointsStats& pointsStats()     const { return mPointsStats; }
     inline const PointsStats& selectionStats()  const { return mSelectionStats; }
-    inline PointsStats& pointsStats()                 { return mPointsStats; }
-    inline PointsStats& selectionStats()              { return mSelectionStats; }
+
+    inline PointsStats& pointsStats()   { return mPointsStats; }
+    inline Metadata& metadata()         { return mMetadata; }
+    inline PointsStats& selectionStats(){ return mSelectionStats; }
 
     // accessors
     inline const VectorXf& currH()           const { return mDisplayAsLog ? mLH : mH; }
@@ -84,12 +86,6 @@ public:
     void centerAxisToSelection();
     Vector3f selectionCenter() const;
     void updatePointSelection();
-
-    void save(const std::string& path) const;
-private:
-
-    // helper methods for data loading/computing
-    void readDataset(const std::string &filePath);
 
 private:
     // Raw sample data

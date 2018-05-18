@@ -19,7 +19,7 @@ using namespace nanogui;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSample::DataSample(const string& sampleDataPath)
+DataSample::DataSample()
 :	mDisplayAsLog(false)
 ,   mDisplayViews{ false, false, true }
 ,   mPointsStats()
@@ -65,9 +65,6 @@ DataSample::DataSample(const string& sampleDataPath)
             glDisable(GL_DEPTH_TEST);
         }
     };
-
-    // load vertex data from file
-    PROFILE(readDataset(sampleDataPath));
 }
 
 DataSample::~DataSample()
@@ -120,67 +117,6 @@ void DataSample::drawGL(
     {
         mAxis.drawGL(mvp);
     }
-}
-
-void DataSample::readDataset(const string &filePath)
-{
-    // try open file
-    FILE* datasetFile = fopen(filePath.c_str(), "r");
-    if (!datasetFile)
-        throw runtime_error("Unable to open file " + filePath);
-
-    unsigned int lineNumber = 0;
-    unsigned int pointN = 0;
-    const size_t MAX_LENGTH = 512;
-    char line[MAX_LENGTH];
-    bool readingMetadata = true;
-    while (!feof(datasetFile) && !ferror(datasetFile) && fgets(line, MAX_LENGTH, datasetFile))
-    {
-        ++lineNumber;
-        
-        // remove any trailing spaces (this will detect full of spaces lines)
-        const char* head = line;
-        while (isspace(*head)) ++head;
-
-        if (*head == '\0')
-        {
-            // skip empty lines
-        }
-        else if (*head == '#' && readingMetadata)
-        {
-            mMetadata.addLine(head);
-        }
-        else
-        {
-            if (readingMetadata)
-            {
-                readingMetadata = false;
-                mMetadata.initInfos();
-                if (mMetadata.pointsInFile() >= 0)
-                {
-                    // as soon as we know the total size of the dataset, reserve enough space for it
-                    mV2D.resize(2, mMetadata.pointsInFile());
-                    mSelectedPoints.resize(mMetadata.pointsInFile());
-                    mRawPoints.resize(3, mMetadata.pointsInFile());
-                }
-            }
-            float phi, theta, intensity;
-            if (sscanf(head, "%f %f %f", &theta, &phi, &intensity) != 3)
-            {
-                fclose(datasetFile);
-                ostringstream errorMsg;
-                errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
-                throw runtime_error(errorMsg.str());
-            }
-            Vector3f rawPoint = Vector3f{ theta, phi, intensity };
-            Vector2f transformedPoint = transformRawPoint(rawPoint);
-            mRawPoints.col(pointN) = rawPoint;
-            mV2D.col(pointN) = transformedPoint;
-            mSelectedPoints(pointN) = false;
-            ++pointN;
-        }
-    }
-    fclose(datasetFile);
 }
 
 void DataSample::initShaders()
@@ -275,24 +211,6 @@ Vector3f DataSample::selectionCenter() const
 void DataSample::centerAxisToSelection()
 {
     mAxis.setOrigin(selectionCenter());
-}
-
-void DataSample::save(const std::string& path) const
-{
-    // try open file
-    FILE* datasetFile = fopen(path.c_str(), "w");
-    if (!datasetFile)
-        throw runtime_error("Unable to open file " + path);
-
-    // save metadata
-    fprintf(datasetFile, "%s", mMetadata.toString().c_str());
-
-    //!feof(datasetFile) && !ferror(datasetFile))
-    for (Eigen::Index i = 0; i < mRawPoints.cols(); ++i)
-    {
-        fprintf(datasetFile, "%lf %lf %lf\n", mRawPoints(0, i), mRawPoints(1, i), mRawPoints(2, i));
-    }
-    fclose(datasetFile);
 }
 
 TEKARI_NAMESPACE_END

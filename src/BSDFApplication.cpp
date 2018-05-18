@@ -19,6 +19,7 @@
 
 #include "tekari/selections.h"
 #include "tekari/raw_data_processing.h"
+#include "tekari/data_io.h"
 
 using namespace nanogui;
 using namespace std;
@@ -610,7 +611,7 @@ void BSDFApplication::saveSelectedDataSample()
         if (path.empty())
             return;
 
-        mSelectedDS->save(path);
+        save_data_sample(path, mSelectedDS->rawPoints(), mSelectedDS->metadata());
     }
 }
 
@@ -906,7 +907,13 @@ void BSDFApplication::toggleCanvasDrawFlags(int flag, CheckBox *checkbox)
 void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)
 {
     try {
-        shared_ptr<DataSample> ds = make_shared<DataSample>(filePath);
+        shared_ptr<DataSample> ds = make_shared<DataSample>();
+
+        load_data_sample(filePath,
+                         ds->rawPoints(),
+                         ds->V2D(),
+                         ds->selectedPoints(),
+                         ds->metadata());
 
         recompute_data( ds->rawPoints(),
                         ds->pointsStats(),
