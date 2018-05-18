@@ -18,27 +18,27 @@ TEKARI_NAMESPACE_BEGIN
 
 DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
 :   Widget{ parent }
-,   m_Label{ label }
-,   m_DisplayLabel{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
-,	m_IsSelected(false)
-,   m_IsVisible(true)
-,   m_ToggleViewButtonPos{ 155, 15 }
-,   m_DeleteButtonPos{ 155 + 2*BUTTON_RADIUS + 2, 15 }
-,   m_ToggleViewButtonHovered(false)
-,   m_DeleteButtonHovered(false)
+,   mLabel{ label }
+,   mDisplayLabel{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
+,	mIsSelected(false)
+,   mIsVisible(true)
+,   mToggleViewButtonPos{ 155, 15 }
+,   mDeleteButtonPos{ 155 + 2*BUTTON_RADIUS + 2, 15 }
+,   mToggleViewButtonHovered(false)
+,   mDeleteButtonHovered(false)
 {
-    setTooltip(m_Label);
+    setTooltip(mLabel);
 
     Window *parentWindow = window();
 
-    m_Popup = new Popup{ parentWindow->parent(), window() };
-    m_Popup->setVisible(false);
-    m_Popup->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
+    mPopup = new Popup{ parentWindow->parent(), window() };
+    mPopup->setVisible(false);
+    mPopup->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
 
-    new Label{ m_Popup, "View Modes" , "sans-bold", 18};
-    m_DisplayAsLog = new CheckBox{ m_Popup, "Display as log" };
+    new Label{ mPopup, "View Modes" , "sans-bold", 18};
+    mDisplayAsLog = new CheckBox{ mPopup, "Display as log" };
 
-    auto buttonContainer = new Widget{ m_Popup };
+    auto buttonContainer = new Widget{ mPopup };
     buttonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
 
     auto makeViewButton = [this, buttonContainer](const string& label, const string& tooltip, bool pushed) {
@@ -48,9 +48,9 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
         button->setPushed(pushed);
         return button;
     };
-    m_ViewToggles[DataSample::Views::PATH]   = makeViewButton("Path", "Show/Hide path for this data sample (P)", false);
-    m_ViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample (Shift + P)", false);
-    m_ViewToggles[DataSample::Views::INCIDENT_ANGLE] = makeViewButton("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
+    mViewToggles[DataSample::Views::PATH]   = makeViewButton("Path", "Show/Hide path for this data sample (P)", false);
+    mViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample (Shift + P)", false);
+    mViewToggles[DataSample::Views::INCIDENT_ANGLE] = makeViewButton("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
 }
 
 bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, bool down, int modifiers)
@@ -66,7 +66,7 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
     if (button == GLFW_MOUSE_BUTTON_1) {
         if (InDeleteButton(p))
         {
-            m_DeleteCallback();
+            mDeleteCallback();
             return true;
         }
         else if (InToggleViewButton(p))
@@ -74,9 +74,9 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
             toggleView();
             return true;
         }
-        else if (m_Callback)
+        else if (mCallback)
         {
-            m_Callback();
+            mCallback();
             return true;
         }
     }
@@ -87,8 +87,8 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
 bool DataSampleButton::mouseEnterEvent(const nanogui::Vector2i & p, bool enter)
 {
     Widget::mouseEnterEvent(p, enter);
-    m_DeleteButtonHovered = false;
-    m_ToggleViewButtonHovered = false;
+    mDeleteButtonHovered = false;
+    mToggleViewButtonHovered = false;
     return false;
 }
 
@@ -98,19 +98,19 @@ bool DataSampleButton::mouseMotionEvent(const Vector2i &p, const Vector2i &rel, 
         return true;
     }
 
-    m_DeleteButtonHovered = InDeleteButton(p);
-    m_ToggleViewButtonHovered = InToggleViewButton(p);
+    mDeleteButtonHovered = InDeleteButton(p);
+    mToggleViewButtonHovered = InToggleViewButton(p);
     return false;
 }
 
 void DataSampleButton::draw(NVGcontext * ctx)
 {
-    if (!window()->focused() && !m_Popup->focused())
-        m_Popup->setVisible(false);
+    if (!window()->focused() && !mPopup->focused())
+        mPopup->setVisible(false);
 
-    Color fillColor = m_IsSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) : Color(1.0f, mMouseFocus ? 0.25f : 0.2f);
-    float deleteButtonFillOpacity = m_DeleteButtonHovered ? 0.4f : 0.2f;
-    float toggleViewButtonFillOpacity = m_ToggleViewButtonHovered ? 0.4f : m_IsVisible ? 0.5f : 0.2f;
+    Color fillColor = mIsSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) : Color(1.0f, mMouseFocus ? 0.25f : 0.2f);
+    float deleteButtonFillOpacity = mDeleteButtonHovered ? 0.4f : 0.2f;
+    float toggleViewButtonFillOpacity = mToggleViewButtonHovered ? 0.4f : mIsVisible ? 0.5f : 0.2f;
 
     // save current nvg state
     nvgSave(ctx);
@@ -133,9 +133,9 @@ void DataSampleButton::draw(NVGcontext * ctx)
     nvgFontFace(ctx, "sans");
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
     nvgFillColor(ctx, Color(0.0f, 0.8f));
-    nvgText(ctx, 5, mSize.y() * 0.5f - 1.0f, m_DisplayLabel.c_str(), nullptr);
+    nvgText(ctx, 5, mSize.y() * 0.5f - 1.0f, mDisplayLabel.c_str(), nullptr);
     nvgFillColor(ctx, Color(1.0f, 0.8f));
-    nvgText(ctx, 5, mSize.y() * 0.5f, m_DisplayLabel.c_str(), nullptr);
+    nvgText(ctx, 5, mSize.y() * 0.5f, mDisplayLabel.c_str(), nullptr);
 
     // font settings for icons
     nvgFontSize(ctx, BUTTON_RADIUS * 1.3f);
@@ -154,8 +154,8 @@ void DataSampleButton::draw(NVGcontext * ctx)
         nvgFillColor(ctx, Color(1.0f, 0.8f));
         nvgText(ctx, pos.x(), pos.y(), iconData.data(), nullptr);
     };
-    makeToolButton(deleteButtonFillOpacity, ENTYPO_ICON_CROSS, m_DeleteButtonPos);
-    makeToolButton(toggleViewButtonFillOpacity, m_IsVisible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, m_ToggleViewButtonPos);
+    makeToolButton(deleteButtonFillOpacity, ENTYPO_ICON_CROSS, mDeleteButtonPos);
+    makeToolButton(toggleViewButtonFillOpacity, mIsVisible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, mToggleViewButtonPos);
 
     nvgRestore(ctx);
 }
@@ -167,44 +167,44 @@ void DataSampleButton::performLayout(NVGcontext * ctx)
     const Window *parentWindow = window();
 
     int posY = absolutePosition().y() - parentWindow->position().y() + mSize.y() / 2;
-    if (m_Popup->side() == Popup::Right)
-        m_Popup->setAnchorPos(Vector2i(parentWindow->width() + 15, posY));
+    if (mPopup->side() == Popup::Right)
+        mPopup->setAnchorPos(Vector2i(parentWindow->width() + 15, posY));
     else
-        m_Popup->setAnchorPos(Vector2i(0 - 15, posY));
+        mPopup->setAnchorPos(Vector2i(0 - 15, posY));
 }
 
 void DataSampleButton::toggleView()
 {
-    m_IsVisible = !m_IsVisible;
-    m_ToggleViewCallback(m_IsVisible);
+    mIsVisible = !mIsVisible;
+    mToggleViewCallback(mIsVisible);
 }
 
 void DataSampleButton::toggleView(DataSample::Views view, bool check)
 {
-    m_ViewToggles[static_cast<int>(view)]->setPushed(check);
+    mViewToggles[static_cast<int>(view)]->setPushed(check);
 }
 
 bool DataSampleButton::isViewToggled(DataSample::Views view)
 {
-    return m_ViewToggles[static_cast<int>(view)]->pushed();
+    return mViewToggles[static_cast<int>(view)]->pushed();
 }
 
 void DataSampleButton::setDisplayAsLog(bool value)
 {
-    m_DisplayAsLog->setChecked(value);
+    mDisplayAsLog->setChecked(value);
 }
 
 void DataSampleButton::setViewTogglesCallback(std::function<void(bool)> callback) {
     for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
     {
         DataSample::Views view = static_cast<DataSample::Views>(i);
-        m_ViewToggles[view]->setChangeCallback(callback);
+        mViewToggles[view]->setChangeCallback(callback);
     }
 }
 
 void DataSampleButton::setDisplayAsLogCallback(std::function<void(bool)> callback)
 {
-    m_DisplayAsLog->setCallback(callback);
+    mDisplayAsLog->setCallback(callback);
 }
 
 TEKARI_NAMESPACE_END

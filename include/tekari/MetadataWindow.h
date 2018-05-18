@@ -14,7 +14,7 @@ public:
 
     bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
 private:
-    std::function<void(void)> m_CloseCallback;
+    std::function<void(void)> mCloseCallback;
 };
 
 TEKARI_NAMESPACE_END

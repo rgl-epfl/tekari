@@ -21,22 +21,22 @@ public:
 
     void setCloseCallback(std::function<void()> closeCallback)
     {
-        m_CloseCallback = closeCallback;
-        m_CloseButton->setCallback(m_CloseCallback);
+        mCloseCallback = closeCallback;
+        mCloseButton->setCallback(mCloseCallback);
     }
-    void setSelectionCallback(std::function<void(std::shared_ptr<ColorMap> colorMap)> selectionCallback) { m_SelectionCallback = selectionCallback; }
-    void setSelectedButton(size_t index) { m_ColorMapButtons[index]->setSelected(true); }
+    void setSelectionCallback(std::function<void(std::shared_ptr<ColorMap> colorMap)> selectionCallback) { mSelectionCallback = selectionCallback; }
+    void setSelectedButton(size_t index) { mColorMapButtons[index]->setSelected(true); }
 
 private:
     int colorMapButtonIndex(const ColorMapButton* button) const;
 
-    std::function<void(void)> m_CloseCallback;
-    std::function<void(std::shared_ptr<ColorMap>)> m_SelectionCallback;
+    std::function<void(void)> mCloseCallback;
+    std::function<void(std::shared_ptr<ColorMap>)> mSelectionCallback;
 
-    unsigned int m_SelectedColorMapIndex;
-    std::vector<ColorMapButton*> m_ColorMapButtons;
+    unsigned int mSelectedColorMapIndex;
+    std::vector<ColorMapButton*> mColorMapButtons;
 
-    nanogui::Button *m_CloseButton;
+    nanogui::Button *mCloseButton;
 };
 
 TEKARI_NAMESPACE_END

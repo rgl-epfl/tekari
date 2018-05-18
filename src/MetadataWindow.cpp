@@ -13,10 +13,10 @@ TEKARI_NAMESPACE_BEGIN
 
 MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::function<void(void)> closeCallback)
     : Window(parent, "Metadata")
-    , m_CloseCallback(closeCallback)
+    , mCloseCallback(closeCallback)
 {
     auto closeButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
-    closeButton->setCallback(m_CloseCallback);
+    closeButton->setCallback(mCloseCallback);
 
     setLayout(new GroupLayout{});
 
@@ -77,7 +77,7 @@ bool MetadataWindow::keyboardEvent(int key, int scancode, int action, int modifi
     }
 
     if (key == GLFW_KEY_ESCAPE) {
-        m_CloseCallback();
+        mCloseCallback();
         return true;
     }
 

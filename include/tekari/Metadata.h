@@ -17,11 +17,11 @@ public:
     void addLine(const std::string& line);
     void initInfos();
 
-    bool isSpectralData() const { return m_IsPectralData; }
-    float incidentTheta() const { return m_InTheta; }
-    float incidentPhi() const { return m_InPhi; }
-    const std::string& sampleName() const { return m_SampleName; }
-    int pointsInFile() const { return m_PointsInFile; }
+    bool isSpectralData() const { return mIsPectralData; }
+    float incidentTheta() const { return mInTheta; }
+    float incidentPhi() const { return mInPhi; }
+    const std::string& sampleName() const { return mSampleName; }
+    int pointsInFile() const { return mPointsInFile; }
 
     std::string toString() const;
 
@@ -30,12 +30,12 @@ private:
     const std::string* findLineStartingWith(const std::string &target) const;
     static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2);; }
 
-    std::vector<std::string> m_RawMetaData;
-    bool m_IsPectralData;
-    float m_InTheta;
-    float m_InPhi;
-    std::string m_SampleName;
-    int m_PointsInFile;
+    std::vector<std::string> mRawMetaData;
+    bool mIsPectralData;
+    float mInTheta;
+    float mInPhi;
+    std::string mSampleName;
+    int mPointsInFile;
 };
 
 TEKARI_NAMESPACE_END

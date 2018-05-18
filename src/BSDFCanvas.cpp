@@ -29,15 +29,15 @@ const Matrix4f BSDFCanvas::VIEW{ lookAt(VIEW_ORIGIN, Vector3f{ 0.0f,0.0f,0.0f },
 
 BSDFCanvas::BSDFCanvas(Widget *parent)
 :   GLCanvas(parent)
-,   m_Translation(0, 0, 0)
-,	m_Zoom(0)
-,   m_PointSizeScale(1.0f)
-,	m_OrthoMode(false)
-,   m_SelectionRegion(make_pair(Vector2i(0,0), Vector2i(0,0)))
-,   m_DrawFlags(DISPLAY_AXIS | USES_SHADOWS)
-,   m_MouseMode(ROTATE)
+,   mTranslation(0, 0, 0)
+,	mZoom(0)
+,   mPointSizeScale(1.0f)
+,	mOrthoMode(false)
+,   mSelectionRegion(make_pair(Vector2i(0,0), Vector2i(0,0)))
+,   mDrawFlags(DISPLAY_AXIS | USES_SHADOWS)
+,   mMouseMode(ROTATE)
 {
-    m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(static_cast<float>(M_PI / 4.0), Vector3f::UnitX())));
+    mArcball.setState(Quaternionf(Eigen::AngleAxisf(static_cast<float>(M_PI / 4.0), Vector3f::UnitX())));
 }
 
 bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
@@ -48,18 +48,18 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
     
     if (button == rotationMouseButton(true))
     {
-        m_Arcball.motion(p);
+        mArcball.motion(p);
         return true;
     }
     else if (button == selectionMouseButton(true))
     {
-        m_SelectionRegion.second = p;
+        mSelectionRegion.second = p;
     }
     else if (button == translationMouseButton(true))
     {
-        float moveSpeed = 0.04f / (m_Zoom + MAX_ZOOM + 0.1f);
-        Vector3f translation = m_Arcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * moveSpeed * VIEW_RIGHT + rel[1] * moveSpeed * VIEW_UP);
-        m_Translation += translation;
+        float moveSpeed = 0.04f / (mZoom + MAX_ZOOM + 0.1f);
+        Vector3f translation = mArcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * moveSpeed * VIEW_RIGHT + rel[1] * moveSpeed * VIEW_UP);
+        mTranslation += translation;
         return true;
     }
     return false;
@@ -71,14 +71,14 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
 
     if (button == rotationMouseButton(false))
     {
-        m_Arcball.button(p, down);
+        mArcball.button(p, down);
         return true;
     }
     else if (button == selectionMouseButton(false))
     {
-        if (!down && m_SelectedDataSample)
+        if (!down && mSelectedDataSample)
         {
-            Matrix4f model = m_Arcball.matrix() * translate(-m_Translation);
+            Matrix4f model = mArcball.matrix() * translate(-mTranslation);
             Matrix4f proj = getProjectionMatrix();
 
             Matrix4f mvp = proj * VIEW * model;
@@ -89,12 +89,12 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
             if (modifiers & GLFW_MOD_SHIFT)     mode = SelectionMode::ADD;
             else if (modifiers & GLFW_MOD_ALT)  mode = SelectionMode::SUBTRACT;
 
-            m_SelectCallback(mvp, selectionBox, mSize, mode);
-            m_SelectionRegion = make_pair(Vector2i(0, 0), Vector2i(0, 0));
+            mSelectCallback(mvp, selectionBox, mSize, mode);
+            mSelectionRegion = make_pair(Vector2i(0, 0), Vector2i(0, 0));
         }
         else
         {
-            m_SelectionRegion = make_pair(p, p);
+            mSelectionRegion = make_pair(p, p);
         }
         return true;
     }
@@ -102,23 +102,23 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
 }
 int BSDFCanvas::rotationMouseButton(bool dragging) const
 {
-    return BUTTON_MAPPINGS[dragging][m_MouseMode];
+    return BUTTON_MAPPINGS[dragging][mMouseMode];
 }
 int BSDFCanvas::translationMouseButton(bool dragging) const
 {
-    return BUTTON_MAPPINGS[dragging][(m_MouseMode + 2) % MOUSE_MODE_COUNT];
+    return BUTTON_MAPPINGS[dragging][(mMouseMode + 2) % MOUSE_MODE_COUNT];
 }
 int BSDFCanvas::selectionMouseButton(bool dragging) const
 {
-    return BUTTON_MAPPINGS[dragging][(m_MouseMode + 1) % MOUSE_MODE_COUNT];
+    return BUTTON_MAPPINGS[dragging][(mMouseMode + 1) % MOUSE_MODE_COUNT];
 }
 
 bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
 {
     if (!GLCanvas::scrollEvent(p, rel))
     {
-        m_Zoom += rel[1] * 0.2f;
-        m_Zoom = min(MAX_ZOOM, max(MIN_ZOOM, m_Zoom));
+        mZoom += rel[1] * 0.2f;
+        mZoom = min(MAX_ZOOM, max(MIN_ZOOM, mZoom));
     }
     return true;
 }
@@ -127,10 +127,10 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 {
     GLCanvas::draw(ctx);
 
-    Matrix4f model = m_Arcball.matrix() * translate(-m_Translation);
+    Matrix4f model = mArcball.matrix() * translate(-mTranslation);
     Matrix4f proj = getProjectionMatrix();
 
-    m_Grid.draw(ctx, mSize, model, VIEW, proj);
+    mGrid.draw(ctx, mSize, model, VIEW, proj);
 
     // draw selection region
     SelectionBox selectionBox = getSelectionBox();
@@ -144,42 +144,42 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 }
 
 void BSDFCanvas::drawGL() {
-    Matrix4f model = m_Arcball.matrix() * translate(-m_Translation);
+    Matrix4f model = mArcball.matrix() * translate(-mTranslation);
     Matrix4f proj = getProjectionMatrix();
 
-    float pointSizeFactor = (m_Zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-    glPointSize(pointSizeFactor * pointSizeFactor * pointSizeFactor * m_PointSizeScale);
-    for (const auto& dataSample: m_DataSamplesToDraw)
+    float pointSizeFactor = (mZoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
+    glPointSize(pointSizeFactor * pointSizeFactor * pointSizeFactor * mPointSizeScale);
+    for (const auto& dataSample: mDataSamplesToDraw)
     {
-        dataSample->drawGL(VIEW_ORIGIN, model, VIEW, proj, m_DrawFlags, m_ColorMap);
+        dataSample->drawGL(VIEW_ORIGIN, model, VIEW, proj, mDrawFlags, mColorMap);
     }
-    m_Grid.drawGL(model, VIEW, proj);
+    mGrid.drawGL(model, VIEW, proj);
 }
 
 void BSDFCanvas::selectDataSample(shared_ptr<DataSample> dataSample) {
-    m_SelectedDataSample = dataSample;
+    mSelectedDataSample = dataSample;
 }
 
 void BSDFCanvas::addDataSample(shared_ptr<DataSample> dataSample)
 {
-    if (find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample) == m_DataSamplesToDraw.end())
+    if (find(mDataSamplesToDraw.begin(), mDataSamplesToDraw.end(), dataSample) == mDataSamplesToDraw.end())
     {
-        m_DataSamplesToDraw.push_back(dataSample);
+        mDataSamplesToDraw.push_back(dataSample);
     }
 }
 void BSDFCanvas::removeDataSample(shared_ptr<DataSample> dataSample)
 {
-    auto dataSampleToErase = find(m_DataSamplesToDraw.begin(), m_DataSamplesToDraw.end(), dataSample);
-    if (dataSampleToErase != m_DataSamplesToDraw.end())
+    auto dataSampleToErase = find(mDataSamplesToDraw.begin(), mDataSamplesToDraw.end(), dataSample);
+    if (dataSampleToErase != mDataSamplesToDraw.end())
     {
-        m_DataSamplesToDraw.erase(dataSampleToErase);
+        mDataSamplesToDraw.erase(dataSampleToErase);
     }
 }
 
 void BSDFCanvas::snapToSelectionCenter()
 {
-    m_Translation = !m_SelectedDataSample ? Vector3f{ 0.0f, 0.0f, 0.0f } :
-                                            m_SelectedDataSample->selectionCenter();
+    mTranslation = !mSelectedDataSample ? Vector3f{ 0.0f, 0.0f, 0.0f } :
+                                            mSelectedDataSample->selectionCenter();
 }
 
 void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
@@ -190,17 +190,17 @@ void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
     case UP:
         dir = (float)M_PI;
     case DOWN:
-        m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(-M_PI * 0.5f + dir, Vector3f::UnitX())));
+        mArcball.setState(Quaternionf(Eigen::AngleAxisf(-M_PI * 0.5f + dir, Vector3f::UnitX())));
         break;
     case LEFT:
         dir = (float)M_PI;
     case RIGHT:
-        m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(- M_PI * 0.5f + dir, Vector3f::UnitY())));
+        mArcball.setState(Quaternionf(Eigen::AngleAxisf(- M_PI * 0.5f + dir, Vector3f::UnitY())));
         break;
     case BACK:
         dir = (float)M_PI;
     case FRONT:
-        m_Arcball.setState(Quaternionf(Eigen::AngleAxisf(dir, Vector3f::UnitY())));
+        mArcball.setState(Quaternionf(Eigen::AngleAxisf(dir, Vector3f::UnitY())));
         break;
     }
 }
@@ -208,9 +208,9 @@ void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
 nanogui::Matrix4f BSDFCanvas::getProjectionMatrix() const
 {
     float near = 0.01f, far = 100.0f;
-    float zoomFactor = (m_Zoom + 10.0f) / 20.0f + 0.01f;
+    float zoomFactor = (mZoom + 10.0f) / 20.0f + 0.01f;
     float sizeRatio = (float)mSize.x() / (float)mSize.y();
-    if (m_OrthoMode)
+    if (mOrthoMode)
     {
         zoomFactor = (1.02f - zoomFactor) * 2.0f;
         return ortho(-zoomFactor * sizeRatio, zoomFactor * sizeRatio,
@@ -228,10 +228,10 @@ nanogui::Matrix4f BSDFCanvas::getProjectionMatrix() const
 SelectionBox BSDFCanvas::getSelectionBox() const
 {
     SelectionBox res;
-    res.topLeft = { min(m_SelectionRegion.first[0], m_SelectionRegion.second[0]),
-                    min(m_SelectionRegion.first[1], m_SelectionRegion.second[1]) };
-    res.size    = { abs(m_SelectionRegion.first[0] - m_SelectionRegion.second[0]),
-                    abs(m_SelectionRegion.first[1] - m_SelectionRegion.second[1]) };
+    res.topLeft = { min(mSelectionRegion.first[0], mSelectionRegion.second[0]),
+                    min(mSelectionRegion.first[1], mSelectionRegion.second[1]) };
+    res.size    = { abs(mSelectionRegion.first[0] - mSelectionRegion.second[0]),
+                    abs(mSelectionRegion.first[1] - mSelectionRegion.second[1]) };
     return res;
 }
 

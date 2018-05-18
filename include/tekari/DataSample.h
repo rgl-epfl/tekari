@@ -46,40 +46,40 @@ public:
                 std::shared_ptr<ColorMap> colorMap);
 
     void setDisplayAsLog(bool displayAsLog);
-    inline void toggleView(Views view, bool toggle) { m_DisplayViews[view] = toggle; }
-    inline bool displayView(Views view) const { return m_DisplayViews[view]; }
+    inline void toggleView(Views view, bool toggle) { mDisplayViews[view] = toggle; }
+    inline bool displayView(Views view) const { return mDisplayViews[view]; }
 
     void linkDataToShaders();
     void initShaders();
 
     // info accessors
-    inline const std::string name()             const { return m_Metadata.sampleName(); }
-    inline const Metadata& metadata()           const { return m_Metadata; }
-    inline bool hasSelection()                  const { return m_SelectionStats.pointsCount() > 0; }
-    inline const PointsStats& pointsStats()     const { return m_PointsStats; }
-    inline const PointsStats& selectionStats()  const { return m_SelectionStats; }
-    inline PointsStats& pointsStats()                 { return m_PointsStats; }
-    inline PointsStats& selectionStats()              { return m_SelectionStats; }
+    inline const std::string name()             const { return mMetadata.sampleName(); }
+    inline const Metadata& metadata()           const { return mMetadata; }
+    inline bool hasSelection()                  const { return mSelectionStats.pointsCount() > 0; }
+    inline const PointsStats& pointsStats()     const { return mPointsStats; }
+    inline const PointsStats& selectionStats()  const { return mSelectionStats; }
+    inline PointsStats& pointsStats()                 { return mPointsStats; }
+    inline PointsStats& selectionStats()              { return mSelectionStats; }
 
     // accessors
-    inline const std::vector<float>& currH()                 const { return m_DisplayAsLog ? m_LH : m_H; }
-    inline const std::vector<nanogui::Vector3f>& currN()     const { return m_DisplayAsLog ? m_LN : m_N; }
-    inline const std::vector<del_point2d_t>& V2D()           const { return m_V2D; }
-    inline const std::vector<uint8_t>& selectedPoints()      const { return m_SelectedPoints; }
-    inline const std::vector<nanogui::Vector3f>& rawPoints() const { return m_RawPoints; }
+    inline const VectorXf& currH()                           const { return mDisplayAsLog ? mLH : mH; }
+    inline const std::vector<nanogui::Vector3f>& currN()     const { return mDisplayAsLog ? mLN : mN; }
+    inline const std::vector<del_point2d_t>& V2D()           const { return mV2D; }
+    inline const std::vector<uint8_t>& selectedPoints()      const { return mSelectedPoints; }
+    inline const std::vector<nanogui::Vector3f>& rawPoints() const { return mRawPoints; }
 
-    inline std::vector<float>& currH()                  { return m_DisplayAsLog ? m_LH : m_H; }
-    inline std::vector<float>& H()                      { return m_H; }
-    inline std::vector<float>& LH()                     { return m_LH; }
-    inline std::vector<nanogui::Vector3f>& currN()      { return m_DisplayAsLog ? m_LN : m_N; }
-    inline std::vector<nanogui::Vector3f>& N()          { return m_N; }
-    inline std::vector<nanogui::Vector3f>& LN()         { return m_LN; }
-    inline std::vector<del_point2d_t>& V2D()            { return m_V2D; }
-    inline std::vector<uint8_t>& selectedPoints()       { return m_SelectedPoints; }
-    inline std::vector<nanogui::Vector3f>& rawPoints()  { return m_RawPoints; }
-    inline std::vector<unsigned int>& pathSegments()    { return m_PathSegments; }
+    inline VectorXf& currH()                            { return mDisplayAsLog ? mLH : mH; }
+    inline VectorXf& H()                                { return mH; }
+    inline VectorXf& LH()                               { return mLH; }
+    inline std::vector<nanogui::Vector3f>& currN()      { return mDisplayAsLog ? mLN : mN; }
+    inline std::vector<nanogui::Vector3f>& N()          { return mN; }
+    inline std::vector<nanogui::Vector3f>& LN()         { return mLN; }
+    inline std::vector<del_point2d_t>& V2D()            { return mV2D; }
+    inline std::vector<uint8_t>& selectedPoints()       { return mSelectedPoints; }
+    inline std::vector<nanogui::Vector3f>& rawPoints()  { return mRawPoints; }
+    inline std::vector<unsigned int>& pathSegments()    { return mPathSegments; }
 
-    inline tri_delaunay2d_t** triangulation()           { return &m_DelaunayTriangulation; }
+    inline tri_delaunay2d_t** triangulation()           { return &mDelaunayTriangulation; }
 
     // Selection
     void centerAxisToSelection();
@@ -100,38 +100,38 @@ private:
 
 private:
     // Raw sample data
-    tri_delaunay2d_t*               m_DelaunayTriangulation;
-    std::vector<del_point2d_t>      m_V2D;
-    std::vector<float>				m_H;
-    std::vector<float>              m_LH;
-    std::vector<nanogui::Vector3f>  m_N;
-    std::vector<nanogui::Vector3f>  m_LN;
-    std::vector<unsigned int>       m_PathSegments;
+    tri_delaunay2d_t*               mDelaunayTriangulation;
+    std::vector<del_point2d_t>      mV2D;
+    VectorXf				        mH;
+    VectorXf              mLH;
+    std::vector<nanogui::Vector3f>  mN;
+    std::vector<nanogui::Vector3f>  mLN;
+    std::vector<unsigned int>       mPathSegments;
     // Untransformed data
-    std::vector<nanogui::Vector3f>  m_RawPoints;        // theta, phi, intensity
-    PointsStats                     m_PointsStats;
+    std::vector<nanogui::Vector3f>  mRawPoints;        // theta, phi, intensity
+    PointsStats                     mPointsStats;
 
     // display Shaders
-    nanogui::GLShader m_MeshShader;
-    nanogui::GLShader m_Shaders[VIEW_COUNT];
+    nanogui::GLShader mMeshShader;
+    nanogui::GLShader mShaders[VIEW_COUNT];
     std::function<void(
         const nanogui::Vector3f&,   // view origin
         const nanogui::Matrix4f&,   // model matrix
         const nanogui::Matrix4f&,   // mvp matrix
-        bool, std::shared_ptr<ColorMap>)> m_DrawFunctions[VIEW_COUNT];
-    nanogui::GLShader m_PredictedOutgoingAngleShader;
+        bool, std::shared_ptr<ColorMap>)> mDrawFunctions[VIEW_COUNT];
+    nanogui::GLShader mPredictedOutgoingAngleShader;
 
     // display options
-    bool m_DisplayAsLog;
-    bool m_DisplayViews[VIEW_COUNT];
+    bool mDisplayAsLog;
+    bool mDisplayViews[VIEW_COUNT];
 
     // metadata
-    Metadata m_Metadata;
-    Axis m_Axis;
+    Metadata mMetadata;
+    Axis mAxis;
 
     // Selected point
-    std::vector<uint8_t>   m_SelectedPoints;
-    PointsStats            m_SelectionStats;
+    std::vector<uint8_t>   mSelectedPoints;
+    PointsStats            mSelectionStats;
 };
 
 TEKARI_NAMESPACE_END

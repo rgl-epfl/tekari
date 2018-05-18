@@ -34,6 +34,9 @@
 
 TEKARI_NAMESPACE_BEGIN
 
+using MatrixXf = nanogui::MatrixXf;
+using VectorXf = nanogui::VectorXf;
+
 inline nanogui::Vector4f projectOnScreen(const nanogui::Vector3f &point,
     const nanogui::Vector2i &canvasSize,
     const nanogui::Matrix4f &mvp)
@@ -49,7 +52,7 @@ inline nanogui::Vector4f projectOnScreen(const nanogui::Vector3f &point,
 }
 
 inline nanogui::Vector3f get3DPoint(const std::vector<del_point2d_t> &points2D,
-    const std::vector<float> &heights, unsigned int index)
+    const VectorXf &heights, unsigned int index)
 {
     return { points2D[index].x, heights[index], points2D[index].y };
 }

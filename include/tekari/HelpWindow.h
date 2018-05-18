@@ -19,9 +19,9 @@ public:
     static std::string ALT;
 
 private:
-    std::function<void()> m_CloseCallback;
+    std::function<void()> mCloseCallback;
 
-    nanogui::VScrollPanel *m_ScrollPanel;
+    nanogui::VScrollPanel *mScrollPanel;
 };
 
 TEKARI_NAMESPACE_END

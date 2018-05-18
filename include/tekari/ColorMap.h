@@ -18,12 +18,12 @@ public:
     void bind(unsigned int target = 0);
     void unbind(unsigned int target = 0);
 
-    unsigned int id() const { return m_RenderId; }
-    const std::string& name() const { return m_Name; }
+    unsigned int id() const { return mRenderId; }
+    const std::string& name() const { return mName; }
 
 private:
-    unsigned int m_RenderId;
-    std::string m_Name;
+    unsigned int mRenderId;
+    std::string mName;
 };
 
 TEKARI_NAMESPACE_END

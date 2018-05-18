@@ -10,7 +10,7 @@ using namespace nanogui;
 void select_points(
     const vector<Vector3f> &rawPoints,
     const vector<del_point2d_t> &V2D,
-    const vector<float> &H,
+    const VectorXf &H,
     vector<uint8_t> &selectedPoints,
     const Matrix4f & mvp,
     const SelectionBox& selectionBox,
@@ -45,7 +45,7 @@ void select_points(
 void select_closest_point(
     const vector<Vector3f> &rawPoints,
     const vector<del_point2d_t> &V2D,
-    const vector<float> &heights,
+    const VectorXf &H,
     vector<uint8_t> &selectedPoints,
     const nanogui::Matrix4f& mvp,
     const nanogui::Vector2i & mousePos,
@@ -60,7 +60,7 @@ void select_closest_point(
         unsigned int threadId = range.begin() / GRAIN_SIZE;
         for (uint32_t i = range.begin(); i < range.end(); ++i)
         {
-            Vector3f point = get3DPoint(V2D, heights, i);
+            Vector3f point = get3DPoint(V2D, H, i);
             Vector4f projPoint = projectOnScreen(point, canvasSize, mvp);
 
             float distSqr = Vector2f{ projPoint[0] - mousePos[0], projPoint[1] - mousePos[1] }.squaredNorm();

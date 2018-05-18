@@ -29,11 +29,11 @@ string HelpWindow::ALT = "Alt";
 
 HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
 :   Window{ parent, "Help" }
-,   m_CloseCallback{ closeCallback }
+,   mCloseCallback{ closeCallback }
 {
     setFixedWidth(600);
     auto closeButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
-    closeButton->setCallback(m_CloseCallback);
+    closeButton->setCallback(mCloseCallback);
     setLayout(new GroupLayout{});
 
     TabWidget* tabWidget = new TabWidget{ this };
@@ -43,10 +43,10 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         Widget* shortcuts = tabWidget->createTab("Keybindings");
         shortcuts->setLayout(new GroupLayout{});
 
-        m_ScrollPanel = new VScrollPanel{ shortcuts };
-        auto scrollContent = new Widget{ m_ScrollPanel };
+        mScrollPanel = new VScrollPanel{ shortcuts };
+        auto scrollContent = new Widget{ mScrollPanel };
         scrollContent->setLayout(new GroupLayout{});
-        m_ScrollPanel->setFixedHeight(500);
+        mScrollPanel->setFixedHeight(500);
 
         auto addShortcutSection = [&scrollContent](const std::string& label, const std::string& tooltip="") {
             auto l = new Label{ scrollContent, label, "sans-bold", 18 };
@@ -180,7 +180,7 @@ bool HelpWindow::keyboardEvent(int key, int scancode, int action, int modifiers)
     }
 
     if (key == GLFW_KEY_ESCAPE) {
-        m_CloseCallback();
+        mCloseCallback();
         return true;
     }
 
@@ -190,7 +190,7 @@ bool HelpWindow::keyboardEvent(int key, int scancode, int action, int modifiers)
 void HelpWindow::performLayout(NVGcontext *ctx)
 {
     nanogui::Window::performLayout(ctx);
-    //m_ScrollPanel->setFixedHeight(mParent->height() / 2);
+    //mScrollPanel->setFixedHeight(mParent->height() / 2);
     center();
 }
 

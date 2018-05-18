@@ -20,20 +20,20 @@ public:
     virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
     void draw(NVGcontext *ctx) override;
 
-    void setCallback(std::function<void(ColorMapButton*)> callback) { m_Callback = callback; }
+    void setCallback(std::function<void(ColorMapButton*)> callback) { mCallback = callback; }
 
-    bool selected() const { return m_Selected; }
-    void setSelected(bool selected) { m_Selected = selected; }
+    bool selected() const { return mSelected; }
+    void setSelected(bool selected) { mSelected = selected; }
 
-    std::shared_ptr<ColorMap> colorMap() { return m_ColorMap; }
+    std::shared_ptr<ColorMap> colorMap() { return mColorMap; }
 
 private:
-    nanogui::GLShader m_ColorMapShader;
-    std::shared_ptr<ColorMap> m_ColorMap;
+    nanogui::GLShader mColorMapShader;
+    std::shared_ptr<ColorMap> mColorMap;
 
-    std::function<void(ColorMapButton*)> m_Callback;
+    std::function<void(ColorMapButton*)> mCallback;
 
-    bool m_Selected;
+    bool mSelected;
 };
 
 TEKARI_NAMESPACE_END

@@ -49,7 +49,7 @@ void update_selection_stats(
     const vector<uint8_t> &selectedPoints,
     const vector<Vector3f> &rawPoints,
     const vector<del_point2d_t> &V2D,
-    const vector<float> &H)
+    const VectorXf &H)
 {
     selectionStats = PointsStats();
     for (unsigned int i = 0; i < selectedPoints.size(); ++i)

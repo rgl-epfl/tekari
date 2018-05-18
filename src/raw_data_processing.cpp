@@ -13,15 +13,15 @@ using namespace nanogui;
 void compute_normals(
     const tri_delaunay2d_t *triangulation,
     const vector<del_point2d_t> &V2D,
-    const vector<float> &H,
-    const vector<float> &LH,
+    const VectorXf &H,
+    const VectorXf &LH,
     vector<Vector3f> &N,
     vector<Vector3f> &LN
 );
 
 void compute_triangle_normal(
     const vector<del_point2d_t> &V2D,
-    const vector<float> &H,
+    const VectorXf &H,
     vector<Vector3f> &N,
     unsigned int i0,
     unsigned int i1,
@@ -31,8 +31,8 @@ void compute_triangle_normal(
 void compute_normalized_heights(
     const vector<Vector3f> &rawPoints,
     const PointsStats &pointsStats,
-    vector<float> &H,
-    vector<float> &LH
+    VectorXf &H,
+    VectorXf &LH
 );
 
 void triangulate_data(
@@ -51,8 +51,8 @@ void recompute_data(
     tri_delaunay2d_t **triangulation,
     vector<unsigned int> &pathSegments,
     vector<del_point2d_t> &V2D,
-    vector<float> &H,
-    vector<float> &LH,
+    VectorXf &H,
+    VectorXf &LH,
     vector<Vector3f> &N,
     vector<Vector3f> &LN
 )
@@ -67,8 +67,8 @@ void recompute_data(
 void compute_normals(
     const tri_delaunay2d_t *triangulation,
     const vector<del_point2d_t> &V2D,
-    const vector<float> &H,
-    const vector<float> &LH,
+    const VectorXf &H,
+    const VectorXf &LH,
     vector<Vector3f> &N,
     vector<Vector3f> &LN
 )
@@ -97,7 +97,7 @@ void compute_normals(
 
 void compute_triangle_normal(
     const vector<del_point2d_t> &V2D,
-    const vector<float> &H,
+    const VectorXf &H,
     vector<Vector3f> &N,
     unsigned int i0,
     unsigned int i1,
@@ -122,8 +122,8 @@ void compute_triangle_normal(
 void compute_normalized_heights(
     const vector<Vector3f> &rawPoints,
     const PointsStats &pointsStats,
-    vector<float> &H,
-    vector<float> &LH
+    VectorXf &H,
+    VectorXf &LH
 )
 {
     H.resize(rawPoints.size());

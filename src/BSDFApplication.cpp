@@ -27,72 +27,72 @@ TEKARI_NAMESPACE_BEGIN
 
 BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths)
 :   nanogui::Screen(Vector2i(1200, 750), "Tekari", true)
-,   m_SelectedDataSample(nullptr)
-,	m_MetadataWindow(nullptr)
-,   m_HelpWindow(nullptr)
-,   m_SelectionInfoWindow(nullptr)
-,	m_ColorMapSelectionWindow(nullptr)
+,   mSelectedDataSample(nullptr)
+,	mMetadataWindow(nullptr)
+,   mHelpWindow(nullptr)
+,   mSelectionInfoWindow(nullptr)
+,	mColorMapSelectionWindow(nullptr)
 {
     // load color maps
     for (auto& p : ColorMap::PREDEFINED_MAPS)
     {
-        m_ColorMaps.push_back(make_shared<ColorMap>(p.first, ColorMap::FOLDER_PATH + p.second));
+        mColorMaps.push_back(make_shared<ColorMap>(p.first, ColorMap::FOLDER_PATH + p.second));
     }
 
-    m_3DView = new Widget{this};
-    m_3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
+    m3DView = new Widget{this};
+    m3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
 
     // canvas
-    m_BSDFCanvas = new BSDFCanvas{ m_3DView };
-    m_BSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
-    m_BSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const SelectionBox& selectionBox,
+    mBSDFCanvas = new BSDFCanvas{ m3DView };
+    mBSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
+    mBSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const SelectionBox& selectionBox,
         const Vector2i& canvasSize, SelectionMode mode) {
-        if (m_SelectionInfoWindow)
+        if (mSelectionInfoWindow)
         {
             toggleSelectionInfoWindow();
         }
 
-        for (auto& dataSample : m_DataSamples)
+        for (auto& dataSample : mDataSamples)
         {
-            if (dataSample != m_SelectedDataSample)
+            if (dataSample != mSelectedDataSample)
             {
                 deselect_all_points(dataSample->selectedPoints());
                 dataSample->updatePointSelection();
             }
         }
-        if (m_SelectedDataSample)
+        if (mSelectedDataSample)
         {
             if (selectionBox.empty())
             {
-                select_closest_point(   m_SelectedDataSample->rawPoints(),
-                                        m_SelectedDataSample->V2D(),
-                                        m_SelectedDataSample->currH(),
-                                        m_SelectedDataSample->selectedPoints(),
+                select_closest_point(   mSelectedDataSample->rawPoints(),
+                                        mSelectedDataSample->V2D(),
+                                        mSelectedDataSample->currH(),
+                                        mSelectedDataSample->selectedPoints(),
                                         mvp, selectionBox.topLeft, canvasSize);
-                m_SelectedDataSample->updatePointSelection();
+                mSelectedDataSample->updatePointSelection();
                 toggleSelectionInfoWindow();
             }
             else
             {
-                select_points(  m_SelectedDataSample->rawPoints(),
-                                m_SelectedDataSample->V2D(),
-                                m_SelectedDataSample->currH(),
-                                m_SelectedDataSample->selectedPoints(),
+                select_points(  mSelectedDataSample->rawPoints(),
+                                mSelectedDataSample->V2D(),
+                                mSelectedDataSample->currH(),
+                                mSelectedDataSample->selectedPoints(),
                                 mvp, selectionBox, canvasSize, mode);
-                m_SelectedDataSample->updatePointSelection();
+                mSelectedDataSample->updatePointSelection();
                 toggleSelectionInfoWindow();
             }
         }
     });
-    m_BSDFCanvas->setColorMap(m_ColorMaps[0]);
+    mBSDFCanvas->setColorMap(mColorMaps[0]);
 
     // Footer
     {
-        m_Footer = new Widget{ m_3DView };
-        m_Footer->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill});
+        mFooter = new Widget{ m3DView };
+        mFooter->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill});
     
         auto makeFooterInfo = [this](string label) {
-            auto container = new Widget{ m_Footer };
+            auto container = new Widget{ mFooter };
             container->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
             container->setFixedWidth(width() / 3);
             new Label{ container, label };
@@ -100,28 +100,28 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
             return info;
         };
 
-        m_DataSampleName = makeFooterInfo("Data Sample Name : ");
-        m_DataSamplePointsCount = makeFooterInfo("Points Count : ");
-        m_DataSampleAverageHeight = makeFooterInfo("AverageIntensity : ");
+        mDataSampleName = makeFooterInfo("Data Sample Name : ");
+        mDataSamplePointsCount = makeFooterInfo("Points Count : ");
+        mDataSampleAverageHeight = makeFooterInfo("AverageIntensity : ");
     }
 
-    m_ToolWindow = new Window(this, "Tools");
-    m_ToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
-    m_ToolWindow->setVisible(true);
-    m_ToolWindow->setPosition({ 20, 20 });
+    mToolWindow = new Window(this, "Tools");
+    mToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
+    mToolWindow->setVisible(true);
+    mToolWindow->setPosition({ 20, 20 });
 
-    m_HelpButton = new Button(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
-    m_HelpButton->setCallback([this]() { toggleHelpWindow(); });
-    m_HelpButton->setFontSize(15);
-    m_HelpButton->setTooltip("Information about using BSDF Vidualizer (H)");
-    m_HelpButton->setPosition({20, 0});
+    mHelpButton = new Button(mToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
+    mHelpButton->setCallback([this]() { toggleHelpWindow(); });
+    mHelpButton->setFontSize(15);
+    mHelpButton->setTooltip("Information about using BSDF Vidualizer (H)");
+    mHelpButton->setPosition({20, 0});
 
     // Hidden options
     {
-        m_HiddenOptionsButton = new PopupButton(m_ToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
-        m_HiddenOptionsButton->setBackgroundColor(Color{0.4f, 0.1f, 0.1f, 1.0f});
-        m_HiddenOptionsButton->setTooltip("More view options");
-        auto hiddenOptionsPopup = m_HiddenOptionsButton->popup();
+        mHiddenOptionsButton = new PopupButton(mToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
+        mHiddenOptionsButton->setBackgroundColor(Color{0.4f, 0.1f, 0.1f, 1.0f});
+        mHiddenOptionsButton->setTooltip("More view options");
+        auto hiddenOptionsPopup = mHiddenOptionsButton->popup();
         hiddenOptionsPopup->setLayout(new GroupLayout{});
 
         auto addHiddenOptionToggle = [hiddenOptionsPopup](const string& label, const string& tooltip,
@@ -133,27 +133,27 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         };
 
         new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
-        m_UseShadowsCheckbox = addHiddenOptionToggle("Shadows", "Enable/Disable shadows (Shift+S)",
+        mUseShadowsCheckbox = addHiddenOptionToggle("Shadows", "Enable/Disable shadows (Shift+S)",
             [this](bool checked) {
-            m_BSDFCanvas->setDrawFlag(USES_SHADOWS, checked);
+            mBSDFCanvas->setDrawFlag(USES_SHADOWS, checked);
         }, true);
-        m_DisplayCenterAxis = addHiddenOptionToggle("Center Axis", "Show/Hide Center Axis (A)",
+        mDisplayCenterAxis = addHiddenOptionToggle("Center Axis", "Show/Hide Center Axis (A)",
             [this](bool checked) {
-            m_BSDFCanvas->setDrawFlag(DISPLAY_AXIS, checked);
+            mBSDFCanvas->setDrawFlag(DISPLAY_AXIS, checked);
         }, true);
-        m_DisplayPredictedOutgoingAngleCheckbox = addHiddenOptionToggle("Predicted Outgoing Angle", "Show/Hide Predicted Outgoing Angle (Ctrl+I)",
+        mDisplayPredictedOutgoingAngleCheckbox = addHiddenOptionToggle("Predicted Outgoing Angle", "Show/Hide Predicted Outgoing Angle (Ctrl+I)",
             [this](bool checked) {
-            m_BSDFCanvas->setDrawFlag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
+            mBSDFCanvas->setDrawFlag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
         });
-        m_DisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
-            [this](bool checked) { m_BSDFCanvas->grid().setShowDegrees(checked); }, true);
+        mDisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
+            [this](bool checked) { mBSDFCanvas->grid().setShowDegrees(checked); }, true);
 
         new Label{ hiddenOptionsPopup , "Point Size" };
         auto pointSizeSlider = new Slider{ hiddenOptionsPopup };
         pointSizeSlider->setRange(make_pair(0.1f, 10.0f));
         pointSizeSlider->setValue(1.0f);
         pointSizeSlider->setCallback([this](float value) {
-            m_BSDFCanvas->setPointSizeScale(value);
+            mBSDFCanvas->setPointSizeScale(value);
         });
 
         auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };
@@ -165,41 +165,41 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
     // mouse mode
     {
-        new Label{ m_ToolWindow, "Mouse Mode", "sans-bold", 25};
-        m_MouseModeSelector = new ComboBox{ m_ToolWindow, {"Rotation", "Translation", "Box Selection"} };
-        m_MouseModeSelector->setCallback([this](int index) {
-            m_BSDFCanvas->setMouseMode(static_cast<BSDFCanvas::MouseMode>(index));
-            glfwSetCursor(mGLFWWindow, m_Cursors[index]);
+        new Label{ mToolWindow, "Mouse Mode", "sans-bold", 25};
+        mMouseModeSelector = new ComboBox{ mToolWindow, {"Rotation", "Translation", "Box Selection"} };
+        mMouseModeSelector->setCallback([this](int index) {
+            mBSDFCanvas->setMouseMode(static_cast<BSDFCanvas::MouseMode>(index));
+            glfwSetCursor(mGLFWWindow, mCursors[index]);
         });
-        m_MouseModeSelector->setTooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
+        mMouseModeSelector->setTooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
 
-        m_Cursors[BSDFCanvas::MouseMode::ROTATE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        m_Cursors[BSDFCanvas::MouseMode::TRANSLATE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-        m_Cursors[BSDFCanvas::MouseMode::SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-        glfwSetCursor(mGLFWWindow, m_Cursors[m_BSDFCanvas->mouseMode()]);
+        mCursors[BSDFCanvas::MouseMode::ROTATE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        mCursors[BSDFCanvas::MouseMode::TRANSLATE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+        mCursors[BSDFCanvas::MouseMode::SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+        glfwSetCursor(mGLFWWindow, mCursors[mBSDFCanvas->mouseMode()]);
     }
 
     // grid view otpions
     {
-        auto label = new Label(m_ToolWindow, "View Options", "sans-bold", 25);
+        auto label = new Label(mToolWindow, "View Options", "sans-bold", 25);
         label->setTooltip(
             "Various view modes. Hover on them to learn what they do."
         );
 
-        auto panel = new Widget(m_ToolWindow);
+        auto panel = new Widget(mToolWindow);
         panel->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
 
-        m_GridViewToggle = new Button(panel, "Grid");
-        m_GridViewToggle->setFlags(Button::Flags::ToggleButton);
-        m_GridViewToggle->setTooltip("Display/Hide grid (G)");
-        m_GridViewToggle->setChangeCallback( [this] (bool checked) { m_BSDFCanvas->grid().setVisible(checked); });
-        m_GridViewToggle->setPushed(true);
+        mGridViewToggle = new Button(panel, "Grid");
+        mGridViewToggle->setFlags(Button::Flags::ToggleButton);
+        mGridViewToggle->setTooltip("Display/Hide grid (G)");
+        mGridViewToggle->setChangeCallback( [this] (bool checked) { mBSDFCanvas->grid().setVisible(checked); });
+        mGridViewToggle->setPushed(true);
 
-        m_OrthoViewToggle = new Button(panel, "Ortho");
-        m_OrthoViewToggle->setFlags(Button::Flags::ToggleButton);
-        m_OrthoViewToggle->setTooltip("Enable/Disable orthogonal projection (O)");
-        m_OrthoViewToggle->setChangeCallback([this](bool checked) { m_BSDFCanvas->setOrthoMode(checked); });
-        m_OrthoViewToggle->setPushed(false);
+        mOrthoViewToggle = new Button(panel, "Ortho");
+        mOrthoViewToggle->setFlags(Button::Flags::ToggleButton);
+        mOrthoViewToggle->setTooltip("Enable/Disable orthogonal projection (O)");
+        mOrthoViewToggle->setChangeCallback([this](bool checked) { mBSDFCanvas->setOrthoMode(checked); });
+        mOrthoViewToggle->setPushed(false);
 
         auto gridColorPopupButton = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
 
@@ -213,14 +213,14 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
             popup->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 10});
 
             new Label{popup, "Grid Color"};
-            auto colorwheel = new ColorWheel{popup, m_BSDFCanvas->grid().color()};
+            auto colorwheel = new ColorWheel{popup, mBSDFCanvas->grid().color()};
 
             new Label{popup, "Grid Alpha"};
             auto gridAlphaSlider = new Slider{popup};
             gridAlphaSlider->setRange({0.0f, 1.0f});
             gridAlphaSlider->setCallback([this](float value) {
-                auto col = m_BSDFCanvas->grid().color();
-                m_BSDFCanvas->grid().setColor(Color{
+                auto col = mBSDFCanvas->grid().color();
+                mBSDFCanvas->grid().setColor(Color{
                     col.r(),
                     col.g(),
                     col.b(),
@@ -231,7 +231,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
             gridAlphaSlider->setValue(1.0);
 
             colorwheel->setCallback([gridAlphaSlider, this](const Color& value) {
-                m_BSDFCanvas->grid().setColor(Color{
+                mBSDFCanvas->grid().setColor(Color{
                     value.r(),
                     value.g(),
                     value.b(),
@@ -243,8 +243,8 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
     // Open, save screenshot, save data
     {
-        new Label(m_ToolWindow, "Data Samples", "sans-bold", 25);
-        auto tools = new Widget{ m_ToolWindow };
+        new Label(mToolWindow, "Data Samples", "sans-bold", 25);
+        auto tools = new Widget{ mToolWindow };
         tools->setLayout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
 
         auto makeToolButton = [&](bool enabled, function<void()> callback, int icon = 0, string tooltip = "") {
@@ -264,13 +264,13 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
     // Data sample selection
     {
-        m_DataSamplesScrollPanel = new VScrollPanel{ m_ToolWindow };
+        mDataSamplesScrollPanel = new VScrollPanel{ mToolWindow };
 
-        m_ScrollContent = new Widget{ m_DataSamplesScrollPanel };
-        m_ScrollContent->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill));
+        mScrollContent = new Widget{ mDataSamplesScrollPanel };
+        mScrollContent->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill));
 
-        m_DataSampleButtonContainer = new Widget{ m_ScrollContent };
-        m_DataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
+        mDataSampleButtonContainer = new Widget{ mScrollContent };
+        mDataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
@@ -281,11 +281,11 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
 BSDFApplication::~BSDFApplication()
 {
-    m_Framebuffer.free();
+    mFramebuffer.free();
 
     for (size_t i = 0; i < BSDFCanvas::MOUSE_MODE_COUNT; i++)
     {
-        glfwDestroyCursor(m_Cursors[i]);
+        glfwDestroyCursor(mCursors[i]);
     }
 }
 
@@ -312,18 +312,18 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 return true;
             case GLFW_KEY_1: if (!alt) break;
             case GLFW_KEY_KP_1:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::BACK);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::BACK);
                 return true;
             case GLFW_KEY_3: if (!alt) break;
             case GLFW_KEY_KP_3:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::RIGHT);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::RIGHT);
                 return true;
             case GLFW_KEY_7: if (!alt) break;
             case GLFW_KEY_KP_7:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
                 return true;
             case GLFW_KEY_I:
-                toggleCanvasDrawFlags(DISPLAY_PREDICTED_OUTGOING_ANGLE, m_DisplayPredictedOutgoingAngleCheckbox);
+                toggleCanvasDrawFlags(DISPLAY_PREDICTED_OUTGOING_ANGLE, mDisplayPredictedOutgoingAngleCheckbox);
                 return true;
             }
         }
@@ -332,28 +332,28 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
                 case GLFW_KEY_S:
-                    toggleCanvasDrawFlags(USES_SHADOWS, m_UseShadowsCheckbox);
+                    toggleCanvasDrawFlags(USES_SHADOWS, mUseShadowsCheckbox);
                     return true;
                 case GLFW_KEY_G:
                 {
-                    int showDegrees = !m_BSDFCanvas->grid().showDegrees();
-                    m_DisplayDegreesCheckbox->setChecked(showDegrees);
-                    m_BSDFCanvas->grid().setShowDegrees(showDegrees);
+                    int showDegrees = !mBSDFCanvas->grid().showDegrees();
+                    mDisplayDegreesCheckbox->setChecked(showDegrees);
+                    mBSDFCanvas->grid().setShowDegrees(showDegrees);
                     return true;
                 }
                 case GLFW_KEY_P:
-                    toggleView(DataSample::Views::POINTS, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::POINTS));
+                    toggleView(DataSample::Views::POINTS, mSelectedDataSample, !mSelectedDataSample->displayView(DataSample::Views::POINTS));
                     return true;
                 case GLFW_KEY_I:
-                    toggleView(DataSample::Views::INCIDENT_ANGLE, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::INCIDENT_ANGLE));
+                    toggleView(DataSample::Views::INCIDENT_ANGLE, mSelectedDataSample, !mSelectedDataSample->displayView(DataSample::Views::INCIDENT_ANGLE));
                     return true;
                 case GLFW_KEY_H:
-                    if (m_SelectedDataSample)
+                    if (mSelectedDataSample)
                     {
-                        select_highest_point(m_SelectedDataSample->pointsStats(), m_SelectedDataSample->selectionStats(), m_SelectedDataSample->selectedPoints());
-                        m_SelectedDataSample->updatePointSelection();
+                        select_highest_point(mSelectedDataSample->pointsStats(), mSelectedDataSample->selectionStats(), mSelectedDataSample->selectedPoints());
+                        mSelectedDataSample->updatePointSelection();
                         // if selection window already visible, hide it
-                        if(m_SelectionInfoWindow) toggleSelectionInfoWindow();
+                        if(mSelectionInfoWindow) toggleSelectionInfoWindow();
                         // show selection window
                         toggleSelectionInfoWindow();
                     }
@@ -367,16 +367,16 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
             case GLFW_KEY_1:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
                 return true;
             case GLFW_KEY_3:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
                 return true;
             case GLFW_KEY_7:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
                 return true;
             case GLFW_KEY_5:
-                toggleToolButton(m_OrthoViewToggle);
+                toggleToolButton(mOrthoViewToggle);
                 return true;
             }
         }
@@ -385,11 +385,11 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
             case GLFW_KEY_ESCAPE:
-                if (m_SelectedDataSample)
+                if (mSelectedDataSample)
                 {
-                    deselect_all_points(m_SelectedDataSample->selectedPoints());
-                    m_SelectedDataSample->updatePointSelection();
-                    if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
+                    deselect_all_points(mSelectedDataSample->selectedPoints());
+                    mSelectedDataSample->updatePointSelection();
+                    if (mSelectionInfoWindow) toggleSelectionInfoWindow();
                 }
                 return true;
             case GLFW_KEY_Q:
@@ -400,33 +400,33 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 selectDataSample(key - GLFW_KEY_1);
                 return true;
             case GLFW_KEY_DELETE:
-                deleteDataSample(m_SelectedDataSample);
+                deleteDataSample(mSelectedDataSample);
                 return true;
             case GLFW_KEY_D:
-                if (m_SelectedDataSample && m_SelectedDataSample->hasSelection())
+                if (mSelectedDataSample && mSelectedDataSample->hasSelection())
                 {
-                    delete_selected_points( 
-                        m_SelectedDataSample->selectedPoints(),
-                        m_SelectedDataSample->rawPoints(),
-                        m_SelectedDataSample->V2D(),
-                        m_SelectedDataSample->selectionStats()
+                    delete_selected_points(
+                        mSelectedDataSample->selectedPoints(),
+                        mSelectedDataSample->rawPoints(),
+                        mSelectedDataSample->V2D(),
+                        mSelectedDataSample->selectionStats()
                     );
 
                     recompute_data(
-                        m_SelectedDataSample->rawPoints(),
-                        m_SelectedDataSample->pointsStats(),
-                        m_SelectedDataSample->triangulation(),
-                        m_SelectedDataSample->pathSegments(),
-                        m_SelectedDataSample->V2D(),
-                        m_SelectedDataSample->H(),
-                        m_SelectedDataSample->LH(),
-                        m_SelectedDataSample->N(),
-                        m_SelectedDataSample->LN()
+                        mSelectedDataSample->rawPoints(),
+                        mSelectedDataSample->pointsStats(),
+                        mSelectedDataSample->triangulation(),
+                        mSelectedDataSample->pathSegments(),
+                        mSelectedDataSample->V2D(),
+                        mSelectedDataSample->H(),
+                        mSelectedDataSample->LH(),
+                        mSelectedDataSample->N(),
+                        mSelectedDataSample->LN()
                     );
-                    m_SelectedDataSample->linkDataToShaders();
+                    mSelectedDataSample->linkDataToShaders();
 
-                    if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
-                    selectDataSample(m_SelectedDataSample);
+                    if (mSelectionInfoWindow) toggleSelectionInfoWindow();
+                    selectDataSample(mSelectedDataSample);
                     return true;
                 }
                 return false;
@@ -437,69 +437,69 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 selectDataSample(selectedDataSampleIndex() + 1, false);
                 return true;
             case GLFW_KEY_ENTER:
-                if (m_SelectedDataSample)
+                if (mSelectedDataSample)
                 {
-                    correspondingButton(m_SelectedDataSample)->toggleView();
+                    correspondingButton(mSelectedDataSample)->toggleView();
                     return true;
                 }
                 break;
             case GLFW_KEY_N:
-                setDisplayAsLog(m_SelectedDataSample, false);
+                setDisplayAsLog(mSelectedDataSample, false);
                 return true;
             case GLFW_KEY_L:
-                setDisplayAsLog(m_SelectedDataSample, true);
+                setDisplayAsLog(mSelectedDataSample, true);
                 return true;
             case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
             {
                 BSDFCanvas::MouseMode mode = BSDFCanvas::MouseMode::ROTATE;
                 if (key == GLFW_KEY_T) mode = BSDFCanvas::MouseMode::TRANSLATE;
                 if (key == GLFW_KEY_B) mode = BSDFCanvas::MouseMode::SELECTION;
-                m_MouseModeSelector->setSelectedIndex(mode);
-                m_BSDFCanvas->setMouseMode(mode);
-                glfwSetCursor(mGLFWWindow, m_Cursors[mode]);
+                mMouseModeSelector->setSelectedIndex(mode);
+                mBSDFCanvas->setMouseMode(mode);
+                glfwSetCursor(mGLFWWindow, mCursors[mode]);
                 return true;
             }
             case GLFW_KEY_P:
-                toggleView(DataSample::Views::PATH, m_SelectedDataSample, !m_SelectedDataSample->displayView(DataSample::Views::PATH));
+                toggleView(DataSample::Views::PATH, mSelectedDataSample, !mSelectedDataSample->displayView(DataSample::Views::PATH));
                 return true;
             case GLFW_KEY_G:
-                toggleToolButton(m_GridViewToggle);
+                toggleToolButton(mGridViewToggle);
                 return true;
             case GLFW_KEY_O: case GLFW_KEY_KP_5:
-                toggleToolButton(m_OrthoViewToggle);
+                toggleToolButton(mOrthoViewToggle);
                 return true;
             case GLFW_KEY_I:
                 toggleMetadataWindow();
                 return true;
             case GLFW_KEY_C:
-                m_BSDFCanvas->snapToSelectionCenter();
+                mBSDFCanvas->snapToSelectionCenter();
                 return true;
             case GLFW_KEY_M:
                 toggleColorMapSelectionWindow();
                 return true;
             case GLFW_KEY_A:
-                toggleCanvasDrawFlags(DISPLAY_AXIS, m_DisplayCenterAxis);
+                toggleCanvasDrawFlags(DISPLAY_AXIS, mDisplayCenterAxis);
                 return true;
             case GLFW_KEY_H:
                 toggleHelpWindow();
                 return true;
             case GLFW_KEY_KP_1:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
                 return true;
             case GLFW_KEY_KP_3:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
                 return true;
             case GLFW_KEY_KP_7:
-                m_BSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
+                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
                 return true;
             case GLFW_KEY_KP_ADD:
             case GLFW_KEY_KP_SUBTRACT:
-                if (m_SelectedDataSample)
+                if (mSelectedDataSample)
                 {
-                    move_selection_along_path(key == GLFW_KEY_KP_ADD, m_SelectedDataSample->selectedPoints());
-                    m_SelectedDataSample->updatePointSelection();
+                    move_selection_along_path(key == GLFW_KEY_KP_ADD, mSelectedDataSample->selectedPoints());
+                    mSelectedDataSample->updatePointSelection();
                     // if selection window already visible, hide it
-                    if (m_SelectionInfoWindow) toggleSelectionInfoWindow();
+                    if (mSelectionInfoWindow) toggleSelectionInfoWindow();
                     // show selection window
                     toggleSelectionInfoWindow();
                 }
@@ -513,15 +513,15 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
 }
 
 void BSDFApplication::drawContents() {
-    if (m_RequiresLayoutUpdate)
+    if (mRequiresLayoutUpdate)
     {
         updateLayout();
-        m_RequiresLayoutUpdate = false;
+        mRequiresLayoutUpdate = false;
     }
 
     try {
         while (true) {
-            auto newDataSample = m_DataSamplesToAdd.tryPop();
+            auto newDataSample = mDataSamplesToAdd.tryPop();
             if (!newDataSample->dataSample)
             {
                 auto errorMsgDialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error",
@@ -534,7 +534,7 @@ void BSDFApplication::drawContents() {
             {
                 newDataSample->dataSample->initShaders();
                 newDataSample->dataSample->linkDataToShaders();
-                addDataSample(m_DataSamples.size(), newDataSample->dataSample);
+                addDataSample(mDataSamples.size(), newDataSample->dataSample);
             }
         }
     }
@@ -554,17 +554,17 @@ void BSDFApplication::draw(NVGcontext * ctx)
 
 void BSDFApplication::updateLayout()
 {
-    m_3DView->setFixedSize(mSize);
+    m3DView->setFixedSize(mSize);
     
-    m_Footer->setFixedSize(Vector2i{ mSize.x(), 20 });
-    for(auto& footerInfos: m_Footer->children())
+    mFooter->setFixedSize(Vector2i{ mSize.x(), 20 });
+    for(auto& footerInfos: mFooter->children())
         footerInfos->setFixedWidth(width() / 3);
 
-    m_BSDFCanvas->setFixedSize(Vector2i{ mSize.x(), mSize.y() - 20 });
-    m_ToolWindow->setFixedSize({ 210, 400 });
+    mBSDFCanvas->setFixedSize(Vector2i{ mSize.x(), mSize.y() - 20 });
+    mToolWindow->setFixedSize({ 210, 400 });
 
-    m_DataSamplesScrollPanel->setFixedHeight(
-        m_ToolWindow->height() - m_DataSamplesScrollPanel->position().y()
+    mDataSamplesScrollPanel->setFixedHeight(
+        mToolWindow->height() - mDataSamplesScrollPanel->position().y()
     );
 
     performLayout();
@@ -593,17 +593,17 @@ void BSDFApplication::openFiles(const std::vector<std::string>& dataSamplePaths)
 {
     for (const auto& dataSamplePath : dataSamplePaths)
     {
-        m_ThreadPool.addTask([this, dataSamplePath]() {
+        mThreadPool.addTask([this, dataSamplePath]() {
             auto newDataSample = make_shared<DataSampleToAdd>();
             tryLoadDataSample(dataSamplePath, newDataSample);
-            m_DataSamplesToAdd.push(newDataSample);
+            mDataSamplesToAdd.push(newDataSample);
         });
     }
 }
 
 void BSDFApplication::saveSelectedDataSample()
 {
-    if (m_SelectedDataSample)
+    if (mSelectedDataSample)
     {
         string path = file_dialog(
         {
@@ -613,20 +613,20 @@ void BSDFApplication::saveSelectedDataSample()
         if (path.empty())
             return;
 
-        m_SelectedDataSample->save(path);
+        mSelectedDataSample->save(path);
     }
 }
 
 void BSDFApplication::saveScreenShot()
 {
-    if (!m_Framebuffer.ready())
+    if (!mFramebuffer.ready())
     {
-        m_Framebuffer.init(m_BSDFCanvas->size(), 1);
+        mFramebuffer.init(mBSDFCanvas->size(), 1);
     }
-    m_Framebuffer.bind();
-    m_BSDFCanvas->draw(nvgContext());
-    m_Framebuffer.downloadTGA("test.tga");
-    m_Framebuffer.release();
+    mFramebuffer.bind();
+    mBSDFCanvas->draw(nvgContext());
+    mFramebuffer.downloadTGA("test.tga");
+    mFramebuffer.release();
 }
 
 void BSDFApplication::toggleWindow(nanogui::Window *& window, function<nanogui::Window*(void)> createWindow)
@@ -646,17 +646,17 @@ void BSDFApplication::toggleWindow(nanogui::Window *& window, function<nanogui::
 
 void BSDFApplication::toggleMetadataWindow()
 {
-    toggleWindow(m_MetadataWindow, [this]() {
+    toggleWindow(mMetadataWindow, [this]() {
         Window *window;
-        if (m_SelectedDataSample)
+        if (mSelectedDataSample)
         {
-            window = new MetadataWindow(this, &m_SelectedDataSample->metadata(), [this]() { toggleMetadataWindow(); });
+            window = new MetadataWindow(this, &mSelectedDataSample->metadata(), [this]() { toggleMetadataWindow(); });
         }
         else
         {
             auto errorWindow = new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
                 "No data sample selected.", "close");
-            errorWindow->setCallback([this](int) { m_MetadataWindow = nullptr; });
+            errorWindow->setCallback([this](int) { mMetadataWindow = nullptr; });
             window = errorWindow;
         }
         window->center();
@@ -666,7 +666,7 @@ void BSDFApplication::toggleMetadataWindow()
 
 void BSDFApplication::toggleSelectionInfoWindow()
 {
-    toggleWindow(m_SelectionInfoWindow, [this]() {
+    toggleWindow(mSelectionInfoWindow, [this]() {
 
         auto window = new Window{ this, "Selection Info" };
         window->setLayout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 5, 5 });
@@ -676,15 +676,15 @@ void BSDFApplication::toggleSelectionInfoWindow()
             new Label{ window, value };
         };
 
-        unsigned int points_count = m_SelectedDataSample->selectionStats().pointsCount();
+        unsigned int points_count = mSelectedDataSample->selectionStats().pointsCount();
         string min_intensity = "-";
         string max_intensity = "-";
         string average_intensity = "-";
         if (points_count != 0)
         {
-            min_intensity = to_string(m_SelectedDataSample->selectionStats().minIntensity());
-            max_intensity = to_string(m_SelectedDataSample->selectionStats().maxIntensity());
-            average_intensity = to_string(m_SelectedDataSample->selectionStats().averageIntensity());
+            min_intensity = to_string(mSelectedDataSample->selectionStats().minIntensity());
+            max_intensity = to_string(mSelectedDataSample->selectionStats().maxIntensity());
+            average_intensity = to_string(mSelectedDataSample->selectionStats().averageIntensity());
         }
 
         makeSelectionInfoLabels("Points In Selection :", to_string(points_count));
@@ -700,7 +700,7 @@ void BSDFApplication::toggleSelectionInfoWindow()
 
 void BSDFApplication::toggleHelpWindow()
 {
-    toggleWindow(m_HelpWindow, [this]() {
+    toggleWindow(mHelpWindow, [this]() {
         auto window = new HelpWindow(this, [this]() {toggleHelpWindow(); });
         window->center();
         return window;
@@ -709,14 +709,14 @@ void BSDFApplication::toggleHelpWindow()
 
 void BSDFApplication::toggleColorMapSelectionWindow()
 {
-    toggleWindow(m_ColorMapSelectionWindow, [this]() {
+    toggleWindow(mColorMapSelectionWindow, [this]() {
         auto window = new ColorMapSelectionWindow{
             this,
-            m_ColorMaps,
+            mColorMaps,
         };
         window->setCloseCallback([this]() { toggleColorMapSelectionWindow(); });
         window->setSelectionCallback([this](shared_ptr<ColorMap> colorMap) { selectColorMap(colorMap); });
-        auto pos = distance(m_ColorMaps.begin(), find(m_ColorMaps.begin(), m_ColorMaps.end(), m_BSDFCanvas->colorMap()));
+        auto pos = distance(mColorMaps.begin(), find(mColorMaps.begin(), mColorMaps.end(), mBSDFCanvas->colorMap()));
         window->setSelectedButton(static_cast<size_t>(pos));
         window->center();
         return dynamic_cast<Window*>(window);
@@ -725,55 +725,55 @@ void BSDFApplication::toggleColorMapSelectionWindow()
 
 void BSDFApplication::selectColorMap(shared_ptr<ColorMap> colorMap)
 {
-    m_BSDFCanvas->setColorMap(colorMap);
+    mBSDFCanvas->setColorMap(colorMap);
 }
 
 int BSDFApplication::dataSampleIndex(const shared_ptr<const DataSample> dataSample) const
 {
-    auto pos = static_cast<size_t>(distance(m_DataSamples.begin(), find(m_DataSamples.begin(), m_DataSamples.end(), dataSample)));
-    return pos >= m_DataSamples.size() ? -1 : static_cast<int>(pos);
+    auto pos = static_cast<size_t>(distance(mDataSamples.begin(), find(mDataSamples.begin(), mDataSamples.end(), dataSample)));
+    return pos >= mDataSamples.size() ? -1 : static_cast<int>(pos);
 }
 
 void BSDFApplication::selectDataSample(int index, bool clamped)
 {
-    if (m_DataSamples.empty())
+    if (mDataSamples.empty())
         return;
 
     if (clamped)
-        index = max(0, min(static_cast<int>(m_DataSamples.size()-1), index));
-    else if (index < 0 || index >= static_cast<int>(m_DataSamples.size()))
+        index = max(0, min(static_cast<int>(mDataSamples.size()-1), index));
+    else if (index < 0 || index >= static_cast<int>(mDataSamples.size()))
         return;
 
-    selectDataSample(m_DataSamples[index]);
+    selectDataSample(mDataSamples[index]);
 }
 
 void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 {
     // de-select previously selected button
-    if (m_SelectedDataSample)
+    if (mSelectedDataSample)
     {
-        DataSampleButton* oldButton = correspondingButton(m_SelectedDataSample);
+        DataSampleButton* oldButton = correspondingButton(mSelectedDataSample);
         oldButton->setIsSelected(false);
         oldButton->showPopup(false);
     }
 
-    m_SelectedDataSample = dataSample;
-    m_BSDFCanvas->selectDataSample(dataSample);
-    if (m_SelectedDataSample)
+    mSelectedDataSample = dataSample;
+    mBSDFCanvas->selectDataSample(dataSample);
+    if (mSelectedDataSample)
     {
-        auto button = correspondingButton(m_SelectedDataSample);
+        auto button = correspondingButton(mSelectedDataSample);
         button->setIsSelected(true);
         button->showPopup(true);
 
-        m_DataSampleName->setCaption(m_SelectedDataSample->name());
-        m_DataSamplePointsCount->setCaption(to_string(m_SelectedDataSample->pointsStats().pointsCount()));
-        m_DataSampleAverageHeight->setCaption(to_string(m_SelectedDataSample->pointsStats().averageIntensity()));
+        mDataSampleName->setCaption(mSelectedDataSample->name());
+        mDataSamplePointsCount->setCaption(to_string(mSelectedDataSample->pointsStats().pointsCount()));
+        mDataSampleAverageHeight->setCaption(to_string(mSelectedDataSample->pointsStats().averageIntensity()));
     }
     else
     {
-        m_DataSampleName->setCaption("-");
-        m_DataSamplePointsCount->setCaption("-");
-        m_DataSampleAverageHeight->setCaption("-");
+        mDataSampleName->setCaption("-");
+        mDataSamplePointsCount->setCaption("-");
+        mDataSampleAverageHeight->setCaption("-");
     }
     
     requestLayoutUpdate();
@@ -788,10 +788,10 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
     // erase data sample and corresponding button
     auto button = correspondingButton(dataSample);
     button->removePopupFromParent();
-    m_DataSampleButtonContainer->removeChild(index);
+    mDataSampleButtonContainer->removeChild(index);
     
-    m_BSDFCanvas->removeDataSample(dataSample);
-    m_DataSamples.erase(find(m_DataSamples.begin(), m_DataSamples.end(), dataSample));
+    mBSDFCanvas->removeDataSample(dataSample);
+    mDataSamples.erase(find(mDataSamples.begin(), mDataSamples.end(), dataSample));
 
     // clear focus path and drag widget pointer, since it may refer to deleted button
     mDragWidget = nullptr;
@@ -799,16 +799,16 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
     mFocusPath.clear();
 
     // update selected datasample, if we just deleted the selected data sample
-    if (dataSample == m_SelectedDataSample)
+    if (dataSample == mSelectedDataSample)
     {
         shared_ptr<DataSample> dataSampleToSelect = nullptr;
-        if (index >= static_cast<int>(m_DataSamples.size())) --index;
+        if (index >= static_cast<int>(mDataSamples.size())) --index;
         if (index >= 0)
         {
-            dataSampleToSelect = m_DataSamples[index];
+            dataSampleToSelect = mDataSamples[index];
         }
         // Make sure no button is selected
-        m_SelectedDataSample = nullptr;
+        mSelectedDataSample = nullptr;
         selectDataSample(dataSampleToSelect);
     }
     requestLayoutUpdate();
@@ -822,7 +822,7 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
 
     string cleanName = dataSample->name();
     replace(cleanName.begin(), cleanName.end(), '_', ' ');
-    auto dataSampleButton = new DataSampleButton(m_DataSampleButtonContainer, cleanName);
+    auto dataSampleButton = new DataSampleButton(mDataSampleButtonContainer, cleanName);
     dataSampleButton->setFixedHeight(30);
 
 
@@ -836,8 +836,8 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
 
     dataSampleButton->setToggleViewCallback([this, dataSample](bool checked) {
         int index = dataSampleIndex(dataSample);
-        if (checked)    m_BSDFCanvas->addDataSample(m_DataSamples[index]);
-        else            m_BSDFCanvas->removeDataSample(m_DataSamples[index]);
+        if (checked)    mBSDFCanvas->addDataSample(mDataSamples[index]);
+        else            mBSDFCanvas->removeDataSample(mDataSamples[index]);
     });
 
     dataSampleButton->setViewTogglesCallback([this, dataSample, dataSampleButton](bool) {
@@ -852,11 +852,11 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
         setDisplayAsLog(dataSample, checked);
     });
 
-    m_DataSamples.push_back(dataSample);
+    mDataSamples.push_back(dataSample);
     selectDataSample(dataSample);
 
     // by default toggle view for the new data samples
-    m_BSDFCanvas->addDataSample(m_SelectedDataSample);
+    mBSDFCanvas->addDataSample(mSelectedDataSample);
 }
 
 void BSDFApplication::toggleToolButton(nanogui::Button* button)
@@ -888,7 +888,7 @@ DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<const Da
     int index = dataSampleIndex(dataSample);
     if (index == -1)
         return nullptr;
-    return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
+    return dynamic_cast<DataSampleButton*>(mDataSampleButtonContainer->childAt(index));
 }
 
 const DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<const DataSample> dataSample) const
@@ -896,14 +896,14 @@ const DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<co
     int index = dataSampleIndex(dataSample);
     if (index == -1)
         return nullptr;
-    return dynamic_cast<DataSampleButton*>(m_DataSampleButtonContainer->childAt(index));
+    return dynamic_cast<DataSampleButton*>(mDataSampleButtonContainer->childAt(index));
 }
 
 void BSDFApplication::toggleCanvasDrawFlags(int flag, CheckBox *checkbox)
 {
-    int flags = m_BSDFCanvas->drawFlags() ^ flag;
+    int flags = mBSDFCanvas->drawFlags() ^ flag;
     checkbox->setChecked(static_cast<bool>(flags & flag));
-    m_BSDFCanvas->setDrawFlags(flags);
+    mBSDFCanvas->setDrawFlags(flags);
 }
 
 void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)

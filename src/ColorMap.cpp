@@ -25,10 +25,10 @@ const std::vector<std::pair<const std::string, const std::string>> ColorMap::PRE
 };
 
 ColorMap::ColorMap(const std::string& name, const std::string& filePath)
-:   m_Name(name)
+:   mName(name)
 {
-    glGenTextures(1, &m_RenderId);
-    glBindTexture(GL_TEXTURE_1D, m_RenderId);
+    glGenTextures(1, &mRenderId);
+    glBindTexture(GL_TEXTURE_1D, mRenderId);
 
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -57,7 +57,7 @@ ColorMap::ColorMap(const std::string& name, const std::string& filePath)
 void ColorMap::bind(unsigned int target)
 {
     glActiveTexture(GL_TEXTURE0 + target);
-    glBindTexture(GL_TEXTURE_1D, m_RenderId);
+    glBindTexture(GL_TEXTURE_1D, mRenderId);
 }
 void ColorMap::unbind(unsigned int target)
 {

@@ -31,7 +31,7 @@ public:
 
     void drawContents() override;
     void draw(NVGcontext *ctx) override;
-    void requestLayoutUpdate() { m_RequiresLayoutUpdate = true; }
+    void requestLayoutUpdate() { mRequiresLayoutUpdate = true; }
 
     void openDataSampleDialog();
     void saveScreenShot();
@@ -50,7 +50,7 @@ public:
     void selectDataSample(int index, bool clamped = true);
 
     int dataSampleIndex(const std::shared_ptr<const DataSample> dataSample) const;
-    int selectedDataSampleIndex() const { return dataSampleIndex(m_SelectedDataSample); }
+    int selectedDataSampleIndex() const { return dataSampleIndex(mSelectedDataSample); }
 
     DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample);
     const DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample) const;
@@ -70,57 +70,57 @@ private:
     void toggleCanvasDrawFlags(int flag, nanogui::CheckBox *checkbox);
 
 private:
-    bool m_RequiresLayoutUpdate = false;
+    bool mRequiresLayoutUpdate = false;
 
-    nanogui::Window* m_ToolWindow;
-    nanogui::Widget* m_3DView;
+    nanogui::Window* mToolWindow;
+    nanogui::Widget* m3DView;
 
-    nanogui::PopupButton* m_HiddenOptionsButton;
-    nanogui::CheckBox* m_UseShadowsCheckbox;
-    nanogui::CheckBox* m_DisplayCenterAxis;
-    nanogui::CheckBox* m_DisplayDegreesCheckbox;
-    nanogui::CheckBox* m_DisplayPredictedOutgoingAngleCheckbox;
+    nanogui::PopupButton* mHiddenOptionsButton;
+    nanogui::CheckBox* mUseShadowsCheckbox;
+    nanogui::CheckBox* mDisplayCenterAxis;
+    nanogui::CheckBox* mDisplayDegreesCheckbox;
+    nanogui::CheckBox* mDisplayPredictedOutgoingAngleCheckbox;
 
     // footer
-    nanogui::Widget* m_Footer;
-    nanogui::Label* m_DataSampleName;
-    nanogui::Label* m_DataSamplePointsCount;
-    nanogui::Label* m_DataSampleAverageHeight;
+    nanogui::Widget* mFooter;
+    nanogui::Label* mDataSampleName;
+    nanogui::Label* mDataSamplePointsCount;
+    nanogui::Label* mDataSampleAverageHeight;
 
     // data sample scroll panel
-    nanogui::VScrollPanel* m_DataSamplesScrollPanel;
-    nanogui::Widget* m_ScrollContent;
-    nanogui::Widget* m_DataSampleButtonContainer;
+    nanogui::VScrollPanel* mDataSamplesScrollPanel;
+    nanogui::Widget* mScrollContent;
+    nanogui::Widget* mDataSampleButtonContainer;
 
     // tool buttons
-    nanogui::Button* m_HelpButton;
-    nanogui::Button* m_GridViewToggle;
-    nanogui::Button* m_OrthoViewToggle;
+    nanogui::Button* mHelpButton;
+    nanogui::Button* mGridViewToggle;
+    nanogui::Button* mOrthoViewToggle;
 
     // dialog windows
-    nanogui::Window* m_MetadataWindow;
-    nanogui::Window* m_HelpWindow;
-    nanogui::Window* m_ColorMapSelectionWindow;
-    nanogui::Window* m_SelectionInfoWindow;
+    nanogui::Window* mMetadataWindow;
+    nanogui::Window* mHelpWindow;
+    nanogui::Window* mColorMapSelectionWindow;
+    nanogui::Window* mSelectionInfoWindow;
 
     // canvas
-    BSDFCanvas *m_BSDFCanvas;
+    BSDFCanvas *mBSDFCanvas;
 
     // cursors and mouse mode
-    nanogui::ComboBox *m_MouseModeSelector;
-    GLFWcursor* m_Cursors[BSDFCanvas::MOUSE_MODE_COUNT];
+    nanogui::ComboBox *mMouseModeSelector;
+    GLFWcursor* mCursors[BSDFCanvas::MOUSE_MODE_COUNT];
 
-    std::vector<std::shared_ptr<DataSample>> m_DataSamples;
-    std::shared_ptr<DataSample> m_SelectedDataSample;
-    std::vector<std::shared_ptr<ColorMap>> m_ColorMaps;
+    std::vector<std::shared_ptr<DataSample>> mDataSamples;
+    std::shared_ptr<DataSample> mSelectedDataSample;
+    std::vector<std::shared_ptr<ColorMap>> mColorMaps;
 
     // offscreen buffer
-    nanogui::GLFramebuffer m_Framebuffer;
+    nanogui::GLFramebuffer mFramebuffer;
 
-    SharedQueue<std::shared_ptr<DataSampleToAdd>> m_DataSamplesToAdd;
+    SharedQueue<std::shared_ptr<DataSampleToAdd>> mDataSamplesToAdd;
 
     // threadpool
-    ThreadPool<8> m_ThreadPool;
+    ThreadPool<8> mThreadPool;
 };
 
 TEKARI_NAMESPACE_END

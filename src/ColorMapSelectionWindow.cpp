@@ -16,10 +16,10 @@ TEKARI_NAMESPACE_BEGIN
 
 ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_ptr<ColorMap>> colorMaps)
 :   Window{ parent, "Color Maps" }
-,   m_SelectedColorMapIndex(0)
+,   mSelectedColorMapIndex(0)
 {
     setFixedWidth(200);
-    m_CloseButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
+    mCloseButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
     setLayout(new GroupLayout{});
 
     new Label{ this, "Available Color Maps :", "sans-bold", 18 };
@@ -33,21 +33,21 @@ ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_p
         colorMapButton->setFixedHeight(10);
         colorMapButton->setCallback([this](ColorMapButton* colorMapButton) {
             deselectAllColorMapsButton();
-            m_SelectedColorMapIndex = colorMapButtonIndex(colorMapButton);
-            m_SelectionCallback(colorMapButton->colorMap());
+            mSelectedColorMapIndex = colorMapButtonIndex(colorMapButton);
+            mSelectionCallback(colorMapButton->colorMap());
         });
 
-        m_ColorMapButtons.push_back(colorMapButton);
+        mColorMapButtons.push_back(colorMapButton);
     }
 }
 
 int ColorMapSelectionWindow::colorMapButtonIndex(const ColorMapButton* button) const
 {
-    auto buttonIter = find(m_ColorMapButtons.begin(), m_ColorMapButtons.end(), button);
-    if (buttonIter == m_ColorMapButtons.end())
+    auto buttonIter = find(mColorMapButtons.begin(), mColorMapButtons.end(), button);
+    if (buttonIter == mColorMapButtons.end())
         return -1;
 
-    return static_cast<int>(buttonIter - m_ColorMapButtons.begin());
+    return static_cast<int>(buttonIter - mColorMapButtons.begin());
 }
 
 bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, int modifiers) {
@@ -59,7 +59,7 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
         switch (key)
         {
         case GLFW_KEY_ESCAPE:
-            m_CloseCallback();
+            mCloseCallback();
             return true;
         case GLFW_KEY_UP: case GLFW_KEY_W:
         case GLFW_KEY_DOWN: case GLFW_KEY_S:
@@ -67,12 +67,12 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
             int increment = (key == GLFW_KEY_UP || key == GLFW_KEY_W) ? -1 : 1;
             deselectAllColorMapsButton();
 
-            int selectedColorMapIndex = m_SelectedColorMapIndex + increment;
-            if (selectedColorMapIndex < 0) selectedColorMapIndex += m_ColorMapButtons.size();
-            m_SelectedColorMapIndex = selectedColorMapIndex % m_ColorMapButtons.size();
-            auto colorMapButton = m_ColorMapButtons[m_SelectedColorMapIndex];
+            int selectedColorMapIndex = mSelectedColorMapIndex + increment;
+            if (selectedColorMapIndex < 0) selectedColorMapIndex += mColorMapButtons.size();
+            mSelectedColorMapIndex = selectedColorMapIndex % mColorMapButtons.size();
+            auto colorMapButton = mColorMapButtons[mSelectedColorMapIndex];
             colorMapButton->setSelected(true);
-            m_SelectionCallback(colorMapButton->colorMap());
+            mSelectionCallback(colorMapButton->colorMap());
             return true;
         }
         }
@@ -83,7 +83,7 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
 
 void ColorMapSelectionWindow::deselectAllColorMapsButton()
 {
-    for (auto colorMapButton : m_ColorMapButtons)
+    for (auto colorMapButton : mColorMapButtons)
     {
         colorMapButton->setSelected(false);
     }

@@ -13,24 +13,24 @@ class ThreadPool
 public:
 
     ThreadPool()
-        : m_TasksAvailable(0)
-        , m_ShouldTerminate(false)
+        : mTasksAvailable(0)
+        , mShouldTerminate(false)
     {
         for (unsigned int i = 0; i < N; i++)
         {
-            m_Threads.emplace_back([this](void) {
-                while (!m_ShouldTerminate) {
-                    std::unique_lock<std::mutex> lock{ m_TasksMutex };
-                    while (!m_ShouldTerminate && m_TasksAvailable <= 0) {
-                        m_TasksCond.wait(lock);
+            mThreads.emplace_back([this](void) {
+                while (!mShouldTerminate) {
+                    std::unique_lock<std::mutex> lock{ mTasksMutex };
+                    while (!mShouldTerminate && mTasksAvailable <= 0) {
+                        mTasksCond.wait(lock);
                     }
                     // if we didn't quit te waiting loop because we should terminate
-                    if (!m_ShouldTerminate)
+                    if (!mShouldTerminate)
                     {
-                        auto task = m_TaskQueue.pop();
-                        --m_TasksAvailable;
+                        auto task = mTaskQueue.pop();
+                        --mTasksAvailable;
                         lock.unlock();
-                        m_TasksCond.notify_all();
+                        mTasksCond.notify_all();
                         task();
                     }
                     else
@@ -43,26 +43,26 @@ public:
     }
 
     ~ThreadPool() {
-        std::unique_lock<std::mutex> lock{ m_TasksMutex };
-        m_ShouldTerminate = true;
-        m_TasksCond.notify_all();
+        std::unique_lock<std::mutex> lock{ mTasksMutex };
+        mShouldTerminate = true;
+        mTasksCond.notify_all();
         lock.unlock();
 
-        for (auto& thread : m_Threads)
+        for (auto& thread : mThreads)
             thread.join();
     }
 
     void addTask(const std::function<void(void)> task) {
-        std::unique_lock<std::mutex> lock{ m_TasksMutex };
-        m_TaskQueue.push(task);
-        ++m_TasksAvailable;
-        m_TasksCond.notify_one();
+        std::unique_lock<std::mutex> lock{ mTasksMutex };
+        mTaskQueue.push(task);
+        ++mTasksAvailable;
+        mTasksCond.notify_one();
     }
 
     void waitForTasks() {
-        std::unique_lock<std::mutex> lock{ m_TasksMutex };
-        while (m_TasksAvailable) {
-            m_TasksCond.wait(lock);
+        std::unique_lock<std::mutex> lock{ mTasksMutex };
+        while (mTasksAvailable) {
+            mTasksCond.wait(lock);
         }
     }
 
@@ -70,12 +70,12 @@ public:
 
 private:
 
-    std::vector<std::thread> m_Threads;
-    SharedQueue<std::function<void(void)>> m_TaskQueue;
+    std::vector<std::thread> mThreads;
+    SharedQueue<std::function<void(void)>> mTaskQueue;
 
-    std::mutex m_TasksMutex;
-    std::condition_variable m_TasksCond;
-    int m_TasksAvailable;
+    std::mutex mTasksMutex;
+    std::condition_variable mTasksCond;
+    int mTasksAvailable;
 
-    bool m_ShouldTerminate;
+    bool mShouldTerminate;
 };

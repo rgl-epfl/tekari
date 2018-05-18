@@ -6,11 +6,11 @@ using namespace std;
 TEKARI_NAMESPACE_BEGIN
 
 RadialGrid::RadialGrid()
-:	m_Color(200, 200, 200, 200)
-,	m_Visible(true)
-,   m_ShowDegrees(true)
+:	mColor(200, 200, 200, 200)
+,	mVisible(true)
+,   mShowDegrees(true)
 {
-    m_Shader.initFromFiles("grid",
+    mShader.initFromFiles("grid",
         "../resources/shaders/radial_grid.vert",
         "../resources/shaders/radial_grid.frag");
 
@@ -33,7 +33,7 @@ RadialGrid::RadialGrid()
         if (theta != 0)
         {
             Vector3f &pos = vertices[i*VERTEX_PER_CIRCLE_COUNT];
-            m_ThetaLabels.push_back(make_pair(to_string(theta), pos + Vector3f{0.02f, 0.02f, -0.02f}));
+            mThetaLabels.push_back(make_pair(to_string(theta), pos + Vector3f{0.02f, 0.02f, -0.02f}));
         }
     }
 
@@ -44,17 +44,17 @@ RadialGrid::RadialGrid()
         vertices[index] = { (float)cos(angle), 0, (float)sin(angle) };
         vertices[index + 1] = -vertices[index];
 
-        m_PhiLabels.push_back(make_pair(to_string(180 * i / LINE_COUNT), vertices[index] + vertices[index].normalized() * 0.04f));
-        m_PhiLabels.push_back(make_pair(to_string(180 * i / LINE_COUNT + 180), vertices[index+1] + vertices[index + 1].normalized() * 0.04f));
+        mPhiLabels.push_back(make_pair(to_string(180 * i / LINE_COUNT), vertices[index] + vertices[index].normalized() * 0.04f));
+        mPhiLabels.push_back(make_pair(to_string(180 * i / LINE_COUNT + 180), vertices[index+1] + vertices[index + 1].normalized() * 0.04f));
     }
 
-    m_Shader.bind();
-    m_Shader.uploadAttrib("in_pos", vertices.size(), 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)vertices.data());
+    mShader.bind();
+    mShader.uploadAttrib("in_pos", vertices.size(), 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)vertices.data());
 }
 
 RadialGrid::~RadialGrid()
 {
-    m_Shader.free();
+    mShader.free();
 }
 
 void RadialGrid::drawGL(
@@ -62,24 +62,24 @@ void RadialGrid::drawGL(
     const Matrix4f& view,
     const Matrix4f& proj)
 {
-    if (m_Visible)
+    if (mVisible)
     {
         Matrix4f mvp = proj * view * model;
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        m_Shader.bind();
-        m_Shader.setUniform("modelViewProj", mvp);
+        mShader.bind();
+        mShader.setUniform("modelViewProj", mvp);
 
         for (size_t j = 0; j < 2; j++)
         {
             glDepthFunc(j % 2 == 0 ? GL_LESS : GL_GREATER);
-            m_Shader.setUniform("in_color", j % 2 == 0 ? m_Color : m_Color * 0.6);
+            mShader.setUniform("in_color", j % 2 == 0 ? mColor : mColor * 0.6);
             for (unsigned int i = 0; i < CIRCLE_COUNT; ++i)
             {
-                m_Shader.drawArray(GL_LINE_LOOP, i*VERTEX_PER_CIRCLE_COUNT, VERTEX_PER_CIRCLE_COUNT);
+                mShader.drawArray(GL_LINE_LOOP, i*VERTEX_PER_CIRCLE_COUNT, VERTEX_PER_CIRCLE_COUNT);
             }
-            m_Shader.drawArray(GL_LINES, CIRCLE_COUNT*VERTEX_PER_CIRCLE_COUNT, LINE_COUNT*VERTEX_PER_LINE_COUNT);
+            mShader.drawArray(GL_LINES, CIRCLE_COUNT*VERTEX_PER_CIRCLE_COUNT, LINE_COUNT*VERTEX_PER_LINE_COUNT);
         }
 
         // Restore opengl settings
@@ -95,19 +95,19 @@ void RadialGrid::draw(  NVGcontext *ctx,
                         const Matrix4f &view,
                         const Matrix4f &proj)
 {
-    if (m_Visible && m_ShowDegrees)
+    if (mVisible && mShowDegrees)
     {
         Matrix4f mvp = proj * view * model;
         nvgFontSize(ctx, 15.0f);
         nvgFontFace(ctx, "sans");
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgFillColor(ctx, Color(1.0f, 0.8f));
-        for (const auto& phiLabel : m_PhiLabels)
+        for (const auto& phiLabel : mPhiLabels)
         {
             Vector4f projectedPoint = projectOnScreen(phiLabel.second, canvasSize, mvp);
             nvgText(ctx, projectedPoint[0], projectedPoint[1], phiLabel.first.c_str(), nullptr);
         }
-        for (const auto& thetaLabel : m_ThetaLabels)
+        for (const auto& thetaLabel : mThetaLabels)
         {
             Vector4f projectedPoint = projectOnScreen(thetaLabel.second, canvasSize, mvp);
             nvgText(ctx, projectedPoint[0], projectedPoint[1], thetaLabel.first.c_str(), nullptr);

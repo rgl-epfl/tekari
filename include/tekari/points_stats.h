@@ -41,7 +41,7 @@ extern void update_selection_stats(
     const std::vector<uint8_t> &selectedPoints,
     const std::vector<nanogui::Vector3f> &rawPoints,
     const std::vector<del_point2d_t> &V2D,
-    const std::vector<float> &H
+    const VectorXf &H
 );
 
 extern void update_points_stats(

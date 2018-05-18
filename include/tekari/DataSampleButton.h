@@ -22,18 +22,18 @@ public:
 
     void toggleView();
 
-    bool isSelected() const { return m_IsSelected; }
-    void setIsSelected(bool isSelected) { m_IsSelected = isSelected; }
+    bool isSelected() const { return mIsSelected; }
+    void setIsSelected(bool isSelected) { mIsSelected = isSelected; }
 
-    void setCallback            (std::function<void(void)> callback) { m_Callback = callback; }
-    void setDeleteCallback      (std::function<void(void)> callback) { m_DeleteCallback = callback; }
-    void setToggleViewCallback  (std::function<void(bool)> callback) { m_ToggleViewCallback = callback; }
+    void setCallback            (std::function<void(void)> callback) { mCallback = callback; }
+    void setDeleteCallback      (std::function<void(void)> callback) { mDeleteCallback = callback; }
+    void setToggleViewCallback  (std::function<void(bool)> callback) { mToggleViewCallback = callback; }
 
     void setDisplayAsLogCallback(std::function<void(bool)> callback);
     void setViewTogglesCallback(std::function<void(bool)> callback);
   
-    void showPopup(bool visible) { m_Popup->setVisible(visible); }
-    void removePopupFromParent() { m_Popup->parent()->removeChild(m_Popup); }
+    void showPopup(bool visible) { mPopup->setVisible(visible); }
+    void removePopupFromParent() { mPopup->parent()->removeChild(mPopup); }
 
     void toggleView(DataSample::Views view, bool check);
     bool isViewToggled(DataSample::Views view);
@@ -42,32 +42,32 @@ public:
 
 private:
     bool InToggleViewButton(const nanogui::Vector2i& p) const {
-        return (p - mPos - m_ToggleViewButtonPos).squaredNorm() <= BUTTON_RADIUS*BUTTON_RADIUS;
+        return (p - mPos - mToggleViewButtonPos).squaredNorm() <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
     bool InDeleteButton(const nanogui::Vector2i& p) const {
-        return (p - mPos - m_DeleteButtonPos).squaredNorm() <= BUTTON_RADIUS*BUTTON_RADIUS;
+        return (p - mPos - mDeleteButtonPos).squaredNorm() <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
 
     static constexpr float BUTTON_RADIUS = 10.0f;
 
-    std::string m_Label;
-    std::string m_DisplayLabel;
-    bool m_IsSelected;
-    bool m_IsVisible;
+    std::string mLabel;
+    std::string mDisplayLabel;
+    bool mIsSelected;
+    bool mIsVisible;
 
-    nanogui::Vector2i m_ToggleViewButtonPos;
-    nanogui::Vector2i m_DeleteButtonPos;
-    bool m_ToggleViewButtonHovered;
-    bool m_DeleteButtonHovered;
+    nanogui::Vector2i mToggleViewButtonPos;
+    nanogui::Vector2i mDeleteButtonPos;
+    bool mToggleViewButtonHovered;
+    bool mDeleteButtonHovered;
 
-    std::function<void(void)> m_Callback;
-    std::function<void(bool)> m_ToggleViewCallback;
-    std::function<void(void)> m_DeleteCallback;
+    std::function<void(void)> mCallback;
+    std::function<void(bool)> mToggleViewCallback;
+    std::function<void(void)> mDeleteCallback;
 
-    //std::shared_ptr<DataSample> m_DataSample;
-    nanogui::Popup *m_Popup;
-    nanogui::CheckBox* m_DisplayAsLog;
-    nanogui::Button* m_ViewToggles[DataSample::Views::VIEW_COUNT];
+    //std::shared_ptr<DataSample> mDataSample;
+    nanogui::Popup *mPopup;
+    nanogui::CheckBox* mDisplayAsLog;
+    nanogui::Button* mViewToggles[DataSample::Views::VIEW_COUNT];
 };
 
 TEKARI_NAMESPACE_END

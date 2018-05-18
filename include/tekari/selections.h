@@ -31,7 +31,7 @@ struct SelectionBox
 extern void select_points(
     const std::vector<nanogui::Vector3f> &rawPoints,
     const std::vector<del_point2d_t> &V2D,
-    const std::vector<float> &H,
+    const VectorXf &H,
     std::vector<uint8_t> &selectedPoints,
     const nanogui::Matrix4f & mvp,
     const SelectionBox& selectionBox,
@@ -42,7 +42,7 @@ extern void select_points(
 extern void select_closest_point(
     const std::vector<nanogui::Vector3f> &rawPoints,
     const std::vector<del_point2d_t> &V2D,
-    const std::vector<float> &heights,
+    const VectorXf &H,
     std::vector<uint8_t> &selectedPoints,
     const nanogui::Matrix4f& mvp,
     const nanogui::Vector2i & mousePos,

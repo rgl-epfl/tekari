@@ -45,7 +45,7 @@ public:
                                   int button, int modifiers) override;
     virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
     virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
-    virtual void performLayout(NVGcontext*) override { m_Arcball.setSize(mSize); }
+    virtual void performLayout(NVGcontext*) override { mArcball.setSize(mSize); }
     virtual void draw(NVGcontext* ctx) override;
     virtual void drawGL() override;
 
@@ -57,26 +57,26 @@ public:
     void snapToSelectionCenter();
 
 
-    void setOrthoMode(bool orthoMode) { m_OrthoMode = orthoMode; }
+    void setOrthoMode(bool orthoMode) { mOrthoMode = orthoMode; }
     void setViewAngle(ViewAngles viewAngle);
     void setSelectionCallback(std::function<void(const nanogui::Matrix4f&, const SelectionBox&,
-        const nanogui::Vector2i&, SelectionMode)> callback) { m_SelectCallback = callback; }
+        const nanogui::Vector2i&, SelectionMode)> callback) { mSelectCallback = callback; }
 
     // Setters/Getters
-    const RadialGrid& grid() const { return m_Grid; }
-    RadialGrid& grid() { return m_Grid; }
+    const RadialGrid& grid() const { return mGrid; }
+    RadialGrid& grid() { return mGrid; }
 
-    int drawFlags() const { return m_DrawFlags; }
-    void setDrawFlags(int flags) { m_DrawFlags = flags; }
-    void setDrawFlag(int flag, bool state) { m_DrawFlags = state ? m_DrawFlags | flag : m_DrawFlags & ~flag; }
+    int drawFlags() const { return mDrawFlags; }
+    void setDrawFlags(int flags) { mDrawFlags = flags; }
+    void setDrawFlag(int flag, bool state) { mDrawFlags = state ? mDrawFlags | flag : mDrawFlags & ~flag; }
 
-    void setColorMap(std::shared_ptr<ColorMap> colorMap) { m_ColorMap = colorMap; }
-    const std::shared_ptr<const ColorMap> colorMap() const { return m_ColorMap; }
+    void setColorMap(std::shared_ptr<ColorMap> colorMap) { mColorMap = colorMap; }
+    const std::shared_ptr<const ColorMap> colorMap() const { return mColorMap; }
 
-    void setPointSizeScale(float pointSizeScale) { m_PointSizeScale = pointSizeScale; }
+    void setPointSizeScale(float pointSizeScale) { mPointSizeScale = pointSizeScale; }
 
-    void setMouseMode(MouseMode mode) { m_MouseMode = mode; }
-    MouseMode mouseMode() const { return m_MouseMode; }
+    void setMouseMode(MouseMode mode) { mMouseMode = mode; }
+    MouseMode mouseMode() const { return mMouseMode; }
 
 private:
     SelectionBox getSelectionBox() const;
@@ -86,27 +86,27 @@ private:
     int selectionMouseButton(bool dragging) const;
 
     // data samples
-    std::vector<std::shared_ptr<DataSample>>    m_DataSamplesToDraw;
-    std::shared_ptr<DataSample>                 m_SelectedDataSample;
+    std::vector<std::shared_ptr<DataSample>>    mDataSamplesToDraw;
+    std::shared_ptr<DataSample>                 mSelectedDataSample;
 
-    RadialGrid          m_Grid;
-    nanogui::Arcball    m_Arcball;
+    RadialGrid          mGrid;
+    nanogui::Arcball    mArcball;
 
     // view state
-    nanogui::Vector3f m_Translation;
-    float m_Zoom;
-    float m_PointSizeScale;
-    bool m_OrthoMode;
-    MouseMode m_MouseMode;
+    nanogui::Vector3f mTranslation;
+    float mZoom;
+    float mPointSizeScale;
+    bool mOrthoMode;
+    MouseMode mMouseMode;
 
     // selection
-    std::pair<nanogui::Vector2i, nanogui::Vector2i> m_SelectionRegion;
+    std::pair<nanogui::Vector2i, nanogui::Vector2i> mSelectionRegion;
     std::function<void(const nanogui::Matrix4f&, const SelectionBox&,
-        const nanogui::Vector2i&, SelectionMode)> m_SelectCallback;
+        const nanogui::Vector2i&, SelectionMode)> mSelectCallback;
 
     // global state for sample display
-    int m_DrawFlags;
-    std::shared_ptr<ColorMap> m_ColorMap;
+    int mDrawFlags;
+    std::shared_ptr<ColorMap> mColorMap;
 
 };
 

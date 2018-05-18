@@ -9,10 +9,10 @@ TEKARI_NAMESPACE_BEGIN
 
 ColorMapButton::ColorMapButton(nanogui::Widget * parent, std::shared_ptr<ColorMap> colorMap)
 :   Widget(parent)
-,   m_ColorMap(colorMap)
-,   m_Selected(false)
+,   mColorMap(colorMap)
+,   mSelected(false)
 {
-    m_ColorMapShader.initFromFiles("color_map_viewer", "../resources/shaders/color_map.vert",
+    mColorMapShader.initFromFiles("color_map_viewer", "../resources/shaders/color_map.vert",
         "../resources/shaders/color_map.frag");
 
     MatrixXu indices(3, 2);
@@ -25,17 +25,17 @@ ColorMapButton::ColorMapButton(nanogui::Widget * parent, std::shared_ptr<ColorMa
     vertices.col(2) << 0, 1;
     vertices.col(3) << 1, 1;
 
-    m_ColorMapShader.bind();
-    m_ColorMapShader.uploadIndices(indices);
-    m_ColorMapShader.uploadAttrib("in_pos", vertices);
-    m_ColorMapShader.setUniform("color_map", 0);
+    mColorMapShader.bind();
+    mColorMapShader.uploadIndices(indices);
+    mColorMapShader.uploadAttrib("in_pos", vertices);
+    mColorMapShader.setUniform("color_map", 0);
 
-    setTooltip(m_ColorMap->name());
+    setTooltip(mColorMap->name());
 }
 
 ColorMapButton::~ColorMapButton()
 {
-    m_ColorMapShader.free();
+    mColorMapShader.free();
 }
 
 bool ColorMapButton::mouseButtonEvent(const nanogui::Vector2i & p, int button, bool down, int modifiers)
@@ -49,10 +49,10 @@ bool ColorMapButton::mouseButtonEvent(const nanogui::Vector2i & p, int button, b
     }
 
     if (button == GLFW_MOUSE_BUTTON_1) {
-        if (m_Callback)
+        if (mCallback)
         {
-            m_Callback(this);
-            m_Selected = true;
+            mCallback(this);
+            mSelected = true;
             return true;
         }
     }
@@ -72,14 +72,14 @@ void ColorMapButton::draw(NVGcontext * ctx)
     Vector2f positionInScreen = absolutePosition().cast<float>();
     Vector2f imagePosition = positionInScreen.cwiseQuotient(screenSize);
 
-    m_ColorMapShader.bind();
-    m_ColorMap->bind();
-    m_ColorMapShader.setUniform("scale", scaleFactor);
-    m_ColorMapShader.setUniform("offset", imagePosition);
-    m_ColorMapShader.drawIndexed(GL_TRIANGLES, 0, 2);
+    mColorMapShader.bind();
+    mColorMap->bind();
+    mColorMapShader.setUniform("scale", scaleFactor);
+    mColorMapShader.setUniform("offset", imagePosition);
+    mColorMapShader.drawIndexed(GL_TRIANGLES, 0, 2);
 
     // draw border
-    if (mMouseFocus || m_Selected)
+    if (mMouseFocus || mSelected)
     {
         nvgBeginPath(ctx);
         nvgStrokeWidth(ctx, 1);

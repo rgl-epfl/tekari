@@ -11,8 +11,8 @@ extern void recompute_data(
     tri_delaunay2d_t **triangulation,
     std::vector<unsigned int> &pathSegments,
     std::vector<del_point2d_t> &V2D,
-    std::vector<float> &H,
-    std::vector<float> &LH,
+    VectorXf &H,
+    VectorXf &LH,
     std::vector<nanogui::Vector3f> &N,
     std::vector<nanogui::Vector3f> &LN
 );
