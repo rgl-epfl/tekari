@@ -8,16 +8,15 @@ using namespace std;
 using namespace nanogui;
 
 void select_points(
-    const vector<Vector3f> &rawPoints,
-    const vector<del_point2d_t> &V2D,
+    const MatrixXf &V2D,
     const VectorXf &H,
-    vector<uint8_t> &selectedPoints,
+    VectorXu8 &selectedPoints,
     const Matrix4f & mvp,
     const SelectionBox& selectionBox,
     const Vector2i & canvasSize,
     SelectionMode mode)
 {
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)rawPoints.size(), GRAIN_SIZE),
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.cols(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t> &range) {
         for (uint32_t i = range.begin(); i < range.end(); ++i)
         {
@@ -29,13 +28,13 @@ void select_points(
             switch (mode)
             {
             case STANDARD:
-                selectedPoints[i] = inSelection;
+                selectedPoints(i) = inSelection;
                 break;
             case ADD:
-                selectedPoints[i] = inSelection || selectedPoints[i];
+                selectedPoints(i) = inSelection || selectedPoints[i];
                 break;
             case SUBTRACT:
-                selectedPoints[i] = !inSelection && selectedPoints[i];
+                selectedPoints(i) = !inSelection && selectedPoints[i];
                 break;
             }
         }
@@ -43,21 +42,20 @@ void select_points(
 }
 
 void select_closest_point(
-    const vector<Vector3f> &rawPoints,
-    const vector<del_point2d_t> &V2D,
+    const MatrixXf &V2D,
     const VectorXf &H,
-    vector<uint8_t> &selectedPoints,
-    const nanogui::Matrix4f& mvp,
-    const nanogui::Vector2i & mousePos,
-    const nanogui::Vector2i & canvasSize)
+    VectorXu8 &selectedPoints,
+    const Matrix4f& mvp,
+    const Vector2i & mousePos,
+    const Vector2i & canvasSize)
 {
-    size_t n_threads = rawPoints.size() / GRAIN_SIZE + ((rawPoints.size() % GRAIN_SIZE) > 0);
+    size_t n_threads = V2D.cols() / GRAIN_SIZE + ((V2D.cols() % GRAIN_SIZE) > 0);
     vector<float> smallestDistances(n_threads, MAX_SELECTION_DISTANCE * MAX_SELECTION_DISTANCE);
     vector<int> closestPointIndices(n_threads, -1);
 
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)rawPoints.size(), GRAIN_SIZE),
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.cols(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t> &range) {
-        unsigned int threadId = range.begin() / GRAIN_SIZE;
+        uint32_t threadId = range.begin() / GRAIN_SIZE;
         for (uint32_t i = range.begin(); i < range.end(); ++i)
         {
             Vector3f point = get3DPoint(V2D, H, i);
@@ -71,7 +69,7 @@ void select_closest_point(
                 smallestDistances[threadId]     = distSqr;
             }
 
-            selectedPoints[i] = false;
+            selectedPoints(i) = false;
         }
     });
 
@@ -89,14 +87,14 @@ void select_closest_point(
 
     if (closestPointIndex != -1)
     {
-        selectedPoints[closestPointIndex] = true;
+        selectedPoints(closestPointIndex) = true;
     }
 }
 
 void select_highest_point(
     const PointsStats &pointsInfo,
     const PointsStats &selectionInfo,
-    vector<uint8_t> &selectedPoints
+    VectorXu8 &selectedPoints
 )
 {
     int highestPointIndex = selectionInfo.pointsCount() == 0 ?
@@ -104,42 +102,40 @@ void select_highest_point(
         selectionInfo.highestPointIndex();
 
     deselect_all_points(selectedPoints);
-    selectedPoints[highestPointIndex] = 1;
+    selectedPoints(highestPointIndex) = 1;
 }
 
-void deselect_all_points(vector<uint8_t> &selectedPoints)
+void deselect_all_points(VectorXu8 &selectedPoints)
 {
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)selectedPoints.size(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t> &range) {
         for (uint32_t i = range.begin(); i < range.end(); ++i)
-            selectedPoints[i] = 0;
+            selectedPoints(i) = 0;
     });
 }
 
-void move_selection_along_path(
-    bool up,
-    vector<uint8_t> &selectedPoints
+void move_selection_along_path(bool up, VectorXu8 &selectedPoints
 )
 {
     uint8_t extremity;
     if (up)
     {
-        extremity = selectedPoints.back();
+        extremity = selectedPoints.head(1)(0);
         memmove(selectedPoints.data() + 1, selectedPoints.data(), selectedPoints.size() - 1);
-        selectedPoints.front() = extremity;
+        selectedPoints.tail(1)(0) = extremity;
     }
     else
     {
-        extremity = selectedPoints.front();
+        extremity = selectedPoints.head(1)(0);
         memmove(selectedPoints.data(), selectedPoints.data() + 1, selectedPoints.size() - 1);
-        selectedPoints.back() = extremity;
+        selectedPoints.tail(1)(0) = extremity;
     }
 }
 
 void delete_selected_points(
-    vector<uint8_t> &selectedPoints,
-    vector<Vector3f> &rawPoints,
-    vector<del_point2d_t> &V2D,
+    VectorXu8 &selectedPoints,
+    MatrixXf &rawPoints,
+    MatrixXf &V2D,
     PointsStats &selectionInfo
 )
 {
@@ -148,20 +144,23 @@ void delete_selected_points(
     unsigned int lastValid = 0;
     for (unsigned int i = 0; i < selectedPoints.size(); ++i)
     {
-        if (!selectedPoints[i])
+        if (!selectedPoints(i))
         {
-            // move undeleted point to last valid position
-            V2D[lastValid] = V2D[i];
-            rawPoints[lastValid] = rawPoints[i];
-            selectedPoints[lastValid] = 0;
+            if (lastValid != i)         // prevent unnecessary copies
+            {
+                // move undeleted point to last valid position
+                V2D.col(lastValid) = V2D.col(i);
+                rawPoints.col(lastValid) = rawPoints.col(i);
+                selectedPoints(lastValid) = 0;
+            }
             ++lastValid;
         }
     }
 
     // resize vectors
-    V2D.resize(lastValid);
-    rawPoints.resize(lastValid);
-    selectedPoints.resize(lastValid);
+    V2D.conservativeResize(2, lastValid);
+    rawPoints.conservativeResize(3, lastValid);
+    selectedPoints.conservativeResize(lastValid);
 }
 
 TEKARI_NAMESPACE_END

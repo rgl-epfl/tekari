@@ -84,7 +84,7 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
     return false;
 }
 
-bool DataSampleButton::mouseEnterEvent(const nanogui::Vector2i & p, bool enter)
+bool DataSampleButton::mouseEnterEvent(const Vector2i & p, bool enter)
 {
     Widget::mouseEnterEvent(p, enter);
     mDeleteButtonHovered = false;
@@ -143,7 +143,7 @@ void DataSampleButton::draw(NVGcontext * ctx)
     nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
     // draw delete button
-    auto makeToolButton = [this, &ctx](float opacity, int icon, const nanogui::Vector2i& pos) {
+    auto makeToolButton = [this, &ctx](float opacity, int icon, const Vector2i& pos) {
         nvgBeginPath(ctx);
         nvgCircle(ctx, pos.x(), pos.y(), BUTTON_RADIUS);
         nvgFillColor(ctx, Color(0.0f, opacity));

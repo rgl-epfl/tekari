@@ -189,7 +189,7 @@ bool HelpWindow::keyboardEvent(int key, int scancode, int action, int modifiers)
 
 void HelpWindow::performLayout(NVGcontext *ctx)
 {
-    nanogui::Window::performLayout(ctx);
+    Window::performLayout(ctx);
     //mScrollPanel->setFixedHeight(mParent->height() / 2);
     center();
 }

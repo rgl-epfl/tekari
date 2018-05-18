@@ -6,15 +6,13 @@
 TEKARI_NAMESPACE_BEGIN
 
 extern void recompute_data(
-    const std::vector<nanogui::Vector3f> &rawPoints,
+    const MatrixXf &rawPoints,
     PointsStats &pointsStats,
-    tri_delaunay2d_t **triangulation,
-    std::vector<unsigned int> &pathSegments,
-    std::vector<del_point2d_t> &V2D,
-    VectorXf &H,
-    VectorXf &LH,
-    std::vector<nanogui::Vector3f> &N,
-    std::vector<nanogui::Vector3f> &LN
+    VectorXu &pathSegments,
+    MatrixXu &F,
+    MatrixXf &V2D,
+    VectorXf &H, VectorXf &LH,
+    MatrixXf &N, MatrixXf &LN
 );
 
 

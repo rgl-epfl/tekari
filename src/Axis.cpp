@@ -24,8 +24,7 @@ void Axis::loadShader()
     mShader.initFromFiles("axis", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
     mShader.bind();
     mShader.setUniform("length", 0.15f);
-    const float pos[] = { 0.0f, 0.0f, 0.0f };
-    mShader.uploadAttrib("pos", 1, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)pos);
+    mShader.uploadAttrib("pos", Vector3f{ 0, 0, 0 });
     mShader.setUniform("origin", mOrigin);
 }
 

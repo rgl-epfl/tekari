@@ -22,7 +22,6 @@ TEKARI_NAMESPACE_BEGIN
 DataSample::DataSample(const string& sampleDataPath)
 :	mDisplayAsLog(false)
 ,   mDisplayViews{ false, false, true }
-,	mDelaunayTriangulation(nullptr)
 ,   mPointsStats()
 ,   mSelectionStats()
 ,   mAxis{Vector3f{0.0f, 0.0f, 0.0f}}
@@ -35,7 +34,7 @@ DataSample::DataSample(const string& sampleDataPath)
             glEnable(GL_DEPTH_TEST);
             mShaders[PATH].bind();
             mShaders[PATH].setUniform("modelViewProj", mvp);
-            for (unsigned int i = 0; i < mPathSegments.size() - 1; ++i)
+            for (Eigen::Index i = 0; i < mPathSegments.size() - 1; ++i)
             {
                 int offset = mPathSegments[i];
                 int count = mPathSegments[i + 1] - mPathSegments[i] - 1;
@@ -52,7 +51,7 @@ DataSample::DataSample(const string& sampleDataPath)
         mShaders[POINTS].bind();
         mShaders[POINTS].setUniform("modelViewProj", mvp);
         mShaders[POINTS].setUniform("showAllPoints", mDisplayViews[POINTS]);
-        mShaders[POINTS].drawArray(GL_POINTS, 0, mDelaunayTriangulation->num_points);
+        mShaders[POINTS].drawArray(GL_POINTS, 0, mF.cols());
         glDisable(GL_BLEND);
     };
     mDrawFunctions[INCIDENT_ANGLE] = [this](const Vector3f&, const Matrix4f&,
@@ -79,11 +78,6 @@ DataSample::~DataSample()
     {
         mShaders[i].free();
     }
-
-    if (mDelaunayTriangulation)
-    {
-        tri_delaunay2d_release(mDelaunayTriangulation);
-    }
 }
 
 void DataSample::drawGL(
@@ -94,42 +88,38 @@ void DataSample::drawGL(
     int flags,
     shared_ptr<ColorMap> colorMap)
 {
-    if (mDelaunayTriangulation)
+    Matrix4f mvp = proj * view * model;
+
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glEnable(GL_DEPTH_TEST);
+    glPolygonOffset(2.0, 2.0);
+    mMeshShader.bind();
+    colorMap->bind();
+    mMeshShader.setUniform("modelViewProj", mvp);
+    mMeshShader.setUniform("model", model);
+    mMeshShader.setUniform("view", viewOrigin);
+    mMeshShader.setUniform("useShadows", flags & USES_SHADOWS);
+    mMeshShader.drawIndexed(GL_TRIANGLES, 0, mF.cols());
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
-        Matrix4f mvp = proj * view * model;
-
-        glEnable(GL_POLYGON_OFFSET_FILL);
         glEnable(GL_DEPTH_TEST);
-        glPolygonOffset(2.0, 2.0);
-        mMeshShader.bind();
-        colorMap->bind();
-        mMeshShader.setUniform("modelViewProj", mvp);
-        mMeshShader.setUniform("model", model);
-        mMeshShader.setUniform("view", viewOrigin);
-        mMeshShader.setUniform("useShadows", flags & USES_SHADOWS);
-        mMeshShader.drawIndexed(GL_TRIANGLES, 0, mDelaunayTriangulation->num_triangles);
+        mPredictedOutgoingAngleShader.bind();
+        mPredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
+        mPredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
         glDisable(GL_DEPTH_TEST);
-        glDisable(GL_POLYGON_OFFSET_FILL);
-
-        if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
-        {
-            glEnable(GL_DEPTH_TEST);
-            mPredictedOutgoingAngleShader.bind();
-            mPredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
-            mPredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
-            glDisable(GL_DEPTH_TEST);
-        }
-
-        for (int i = 0; i != VIEW_COUNT; ++i)
-        {
-            mDrawFunctions[i](viewOrigin, model, mvp, flags & USES_SHADOWS, colorMap);
-        }
-        if (flags & DISPLAY_AXIS)
-        {
-            mAxis.drawGL(mvp);
-        }
     }
 
+    for (int i = 0; i != VIEW_COUNT; ++i)
+    {
+        mDrawFunctions[i](viewOrigin, model, mvp, flags & USES_SHADOWS, colorMap);
+    }
+    if (flags & DISPLAY_AXIS)
+    {
+        mAxis.drawGL(mvp);
+    }
 }
 
 void DataSample::readDataset(const string &filePath)
@@ -140,6 +130,7 @@ void DataSample::readDataset(const string &filePath)
         throw runtime_error("Unable to open file " + filePath);
 
     unsigned int lineNumber = 0;
+    unsigned int pointN = 0;
     const size_t MAX_LENGTH = 512;
     char line[MAX_LENGTH];
     bool readingMetadata = true;
@@ -168,9 +159,9 @@ void DataSample::readDataset(const string &filePath)
                 if (mMetadata.pointsInFile() >= 0)
                 {
                     // as soon as we know the total size of the dataset, reserve enough space for it
-                    mV2D.reserve(mMetadata.pointsInFile());
-                    mSelectedPoints.reserve(mMetadata.pointsInFile());
-                    mRawPoints.reserve(mMetadata.pointsInFile());
+                    mV2D.resize(2, mMetadata.pointsInFile());
+                    mSelectedPoints.resize(mMetadata.pointsInFile());
+                    mRawPoints.resize(3, mMetadata.pointsInFile());
                 }
             }
             float phi, theta, intensity;
@@ -182,10 +173,11 @@ void DataSample::readDataset(const string &filePath)
                 throw runtime_error(errorMsg.str());
             }
             Vector3f rawPoint = Vector3f{ theta, phi, intensity };
-            del_point2d_t transformedPoint = transformRawPoint(rawPoint);
-            mRawPoints.push_back(rawPoint);
-            mV2D.push_back(transformedPoint);
-            mSelectedPoints.push_back(false);
+            Vector2f transformedPoint = transformRawPoint(rawPoint);
+            mRawPoints.col(pointN) = rawPoint;
+            mV2D.col(pointN) = transformedPoint;
+            mSelectedPoints(pointN) = false;
+            ++pointN;
         }
     }
     fclose(datasetFile);
@@ -204,20 +196,18 @@ void DataSample::initShaders()
 
 void DataSample::linkDataToShaders()
 {
-    if (!mDelaunayTriangulation)
+    if (mF.size() == 0)
     {
         throw runtime_error("ERROR: cannot link data to shader before loading data.");
     }
 
     mMeshShader.setUniform("color_map", 0);
 
-    VectorXf& heights = mDisplayAsLog ? mLH : mH;
-
     mMeshShader.bind();
-    mMeshShader.uploadAttrib("in_normal", mDelaunayTriangulation->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)mN.data());
-    mMeshShader.uploadAttrib("in_pos2d", mDelaunayTriangulation->num_points, 2, sizeof(del_point2d_t), GL_FLOAT, GL_FALSE, (const void*)mDelaunayTriangulation->points);
-    mMeshShader.uploadAttrib("in_height", mDelaunayTriangulation->num_points, 1, sizeof(float), GL_FLOAT, GL_FALSE, (const void*)heights.data());
-    mMeshShader.uploadAttrib("indices", mDelaunayTriangulation->num_triangles, 3, 3 * sizeof(unsigned int), GL_UNSIGNED_INT, GL_FALSE, mDelaunayTriangulation->tris);
+    mMeshShader.uploadAttrib("in_pos2d", mV2D);
+    mMeshShader.uploadAttrib("in_normal", currN());
+    mMeshShader.uploadAttrib("in_height", currH());
+    mMeshShader.uploadIndices(mF);
 
     mShaders[PATH].bind();
     mShaders[PATH].shareAttrib(mMeshShader, "in_pos2d");
@@ -226,21 +216,21 @@ void DataSample::linkDataToShaders()
     mShaders[POINTS].bind();
     mShaders[POINTS].shareAttrib(mMeshShader, "in_pos2d");
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
-    mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints.size(), 1, sizeof(uint8_t), GL_BYTE, GL_FALSE, (const void*)mSelectedPoints.data());
+    mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
 
-    Vector3f pos{ 0.0f, 0.0f, 0.0f };
-    del_point2d_t origin = transformRawPoint({ mMetadata.incidentTheta(), mMetadata.incidentPhi(), 0.0f });
+    Vector2f origin2D = transformRawPoint({ mMetadata.incidentTheta(), mMetadata.incidentPhi(), 0.0f });
+    Vector3f origin3D = Vector3f{ origin2D(0), 0.0f, origin2D(1) };
     mShaders[INCIDENT_ANGLE].bind();
-    mShaders[INCIDENT_ANGLE].uploadAttrib("pos", 1, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)&pos);
-    mShaders[INCIDENT_ANGLE].setUniform("origin", Vector3f{ origin.x, 0.0f, origin.y });
+    mShaders[INCIDENT_ANGLE].uploadAttrib("pos", Vector3f{ 0, 0, 0 });
+    mShaders[INCIDENT_ANGLE].setUniform("origin", origin3D);
     mShaders[INCIDENT_ANGLE].setUniform("direction", Vector3f{ 0, 1, 0 });
     mShaders[INCIDENT_ANGLE].setUniform("color", Vector3f{ 1, 0, 1 });
     mShaders[INCIDENT_ANGLE].setUniform("length", 1.0f);
 
-    origin = { -origin.x, -origin.y };
+    origin3D = -origin3D;
     mPredictedOutgoingAngleShader.bind();
-    mPredictedOutgoingAngleShader.uploadAttrib("pos", 1, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)&pos);
-    mPredictedOutgoingAngleShader.setUniform("origin", Vector3f{ origin.x, 0.0f, origin.y });
+    mPredictedOutgoingAngleShader.uploadAttrib("pos", Vector3f{ 0, 0, 0 });
+    mPredictedOutgoingAngleShader.setUniform("origin", origin3D);
     mPredictedOutgoingAngleShader.setUniform("direction", Vector3f{ 0, 1, 0 });
     mPredictedOutgoingAngleShader.setUniform("color", Vector3f{ 0, 0.1f, 0.8f });
     mPredictedOutgoingAngleShader.setUniform("length", 1.0f);
@@ -256,8 +246,8 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
     mDisplayAsLog = displayAsLog;
 
     mMeshShader.bind();
-    mMeshShader.uploadAttrib("in_normal", mDelaunayTriangulation->num_points, 3, sizeof(Vector3f), GL_FLOAT, GL_FALSE, (const void*)currN().data());
-    mMeshShader.uploadAttrib("in_height", mDelaunayTriangulation->num_points, 1, sizeof(float),    GL_FLOAT, GL_FALSE, (const void*)currH().data());
+    mMeshShader.uploadAttrib("in_normal", currN());
+    mMeshShader.uploadAttrib("in_height", currH());
     
     mShaders[PATH].bind();
     mShaders[PATH].shareAttrib(mMeshShader, "in_height");
@@ -271,9 +261,9 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
 void DataSample::updatePointSelection()
 {
     mShaders[POINTS].bind();
-    mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints.size(), 1, sizeof(uint8_t), GL_BYTE, GL_FALSE, (const void*)mSelectedPoints.data());
+    mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
 
-    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
+    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, currH());
     centerAxisToSelection();
 }
 
@@ -298,9 +288,9 @@ void DataSample::save(const std::string& path) const
     fprintf(datasetFile, "%s", mMetadata.toString().c_str());
 
     //!feof(datasetFile) && !ferror(datasetFile))
-    for (unsigned int i = 0; i < mRawPoints.size(); ++i)
+    for (Eigen::Index i = 0; i < mRawPoints.cols(); ++i)
     {
-        fprintf(datasetFile, "%lf %lf %lf\n", mRawPoints[i][0], mRawPoints[i][1], mRawPoints[i][2]);
+        fprintf(datasetFile, "%lf %lf %lf\n", mRawPoints(0, i), mRawPoints(1, i), mRawPoints(2, i));
     }
     fclose(datasetFile);
 }

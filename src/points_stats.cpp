@@ -46,9 +46,9 @@ void PointsStats::normalize()
 
 void update_selection_stats(
     PointsStats &selectionStats,
-    const vector<uint8_t> &selectedPoints,
-    const vector<Vector3f> &rawPoints,
-    const vector<del_point2d_t> &V2D,
+    const VectorXu8 &selectedPoints,
+    const MatrixXf &rawPoints,
+    const MatrixXf &V2D,
     const VectorXf &H)
 {
     selectionStats = PointsStats();
@@ -56,7 +56,7 @@ void update_selection_stats(
     {
         if (selectedPoints[i])
         {
-            selectionStats.addPoint(i, rawPoints[i], get3DPoint(V2D, H, i));
+            selectionStats.addPoint(i, rawPoints.col(i), get3DPoint(V2D, H, i));
         }
     }
     selectionStats.normalize();
@@ -64,15 +64,15 @@ void update_selection_stats(
 
 void update_points_stats(
     PointsStats &pointsStats,
-    const vector<Vector3f> &rawPoints,
-    const vector<del_point2d_t> &V2D
+    const MatrixXf &rawPoints,
+    const MatrixXf &V2D
 )
 {
     pointsStats = PointsStats();
 
-    for (unsigned int i = 0; i < rawPoints.size(); ++i)
+    for (Eigen::Index i = 0; i < rawPoints.cols(); ++i)
     {
-        pointsStats.addPoint(i, rawPoints[i], Vector3f{ V2D[i].x, rawPoints[i][2], V2D[i].y });
+        pointsStats.addPoint(i, rawPoints.col(i), Vector3f{ V2D(0, i), rawPoints(2, i), V2D(1, i) });
     }
 
     pointsStats.normalize();

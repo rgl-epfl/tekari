@@ -7,7 +7,7 @@ using namespace nanogui;
 
 TEKARI_NAMESPACE_BEGIN
 
-ColorMapButton::ColorMapButton(nanogui::Widget * parent, std::shared_ptr<ColorMap> colorMap)
+ColorMapButton::ColorMapButton(Widget * parent, std::shared_ptr<ColorMap> colorMap)
 :   Widget(parent)
 ,   mColorMap(colorMap)
 ,   mSelected(false)
@@ -38,7 +38,7 @@ ColorMapButton::~ColorMapButton()
     mColorMapShader.free();
 }
 
-bool ColorMapButton::mouseButtonEvent(const nanogui::Vector2i & p, int button, bool down, int modifiers)
+bool ColorMapButton::mouseButtonEvent(const Vector2i & p, int button, bool down, int modifiers)
 {
     if (Widget::mouseButtonEvent(p, button, down, modifiers)) {
         return true;

@@ -31,20 +31,20 @@ public:
 
 private:
     // view state constants
-    static const nanogui::Vector3f VIEW_ORIGIN;
-    static const nanogui::Vector3f VIEW_UP;
-    static const nanogui::Vector3f VIEW_RIGHT;
-    static const nanogui::Matrix4f VIEW;
+    static const Vector3f VIEW_ORIGIN;
+    static const Vector3f VIEW_UP;
+    static const Vector3f VIEW_RIGHT;
+    static const Matrix4f VIEW;
 
 public:
-    BSDFCanvas(Widget *parent);
+    BSDFCanvas(nanogui::Widget *parent);
 
     // nanogui specific methods
-    virtual bool mouseMotionEvent(const nanogui::Vector2i &p,
-                                  const nanogui::Vector2i &rel,
+    virtual bool mouseMotionEvent(const Vector2i &p,
+                                  const Vector2i &rel,
                                   int button, int modifiers) override;
-    virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
-    virtual bool scrollEvent(const nanogui::Vector2i &p, const nanogui::Vector2f &rel) override;
+    virtual bool mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) override;
+    virtual bool scrollEvent(const Vector2i &p, const Vector2f &rel) override;
     virtual void performLayout(NVGcontext*) override { mArcball.setSize(mSize); }
     virtual void draw(NVGcontext* ctx) override;
     virtual void drawGL() override;
@@ -59,8 +59,8 @@ public:
 
     void setOrthoMode(bool orthoMode) { mOrthoMode = orthoMode; }
     void setViewAngle(ViewAngles viewAngle);
-    void setSelectionCallback(std::function<void(const nanogui::Matrix4f&, const SelectionBox&,
-        const nanogui::Vector2i&, SelectionMode)> callback) { mSelectCallback = callback; }
+    void setSelectionCallback(std::function<void(const Matrix4f&, const SelectionBox&,
+        const Vector2i&, SelectionMode)> callback) { mSelectCallback = callback; }
 
     // Setters/Getters
     const RadialGrid& grid() const { return mGrid; }
@@ -80,7 +80,7 @@ public:
 
 private:
     SelectionBox getSelectionBox() const;
-    nanogui::Matrix4f getProjectionMatrix() const;
+    Matrix4f getProjectionMatrix() const;
     int rotationMouseButton(bool dragging) const;
     int translationMouseButton(bool dragging) const;
     int selectionMouseButton(bool dragging) const;
@@ -93,16 +93,16 @@ private:
     nanogui::Arcball    mArcball;
 
     // view state
-    nanogui::Vector3f mTranslation;
+    Vector3f mTranslation;
     float mZoom;
     float mPointSizeScale;
     bool mOrthoMode;
     MouseMode mMouseMode;
 
     // selection
-    std::pair<nanogui::Vector2i, nanogui::Vector2i> mSelectionRegion;
-    std::function<void(const nanogui::Matrix4f&, const SelectionBox&,
-        const nanogui::Vector2i&, SelectionMode)> mSelectCallback;
+    std::pair<Vector2i, Vector2i> mSelectionRegion;
+    std::function<void(const Matrix4f&, const SelectionBox&,
+        const Vector2i&, SelectionMode)> mSelectCallback;
 
     // global state for sample display
     int mDrawFlags;

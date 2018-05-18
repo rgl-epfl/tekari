@@ -205,7 +205,7 @@ void BSDFCanvas::setViewAngle(ViewAngles viewAngle)
     }
 }
 
-nanogui::Matrix4f BSDFCanvas::getProjectionMatrix() const
+Matrix4f BSDFCanvas::getProjectionMatrix() const
 {
     float near = 0.01f, far = 100.0f;
     float zoomFactor = (mZoom + 10.0f) / 20.0f + 0.01f;

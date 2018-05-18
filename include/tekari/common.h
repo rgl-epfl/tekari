@@ -34,16 +34,25 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-using MatrixXf = nanogui::MatrixXf;
-using VectorXf = nanogui::VectorXf;
+using MatrixXf  = nanogui::MatrixXf;
+using MatrixXu  = nanogui::MatrixXu;
+using VectorXu  = Eigen::Matrix<unsigned int, 1, Eigen::Dynamic>;
+using VectorXu8 = Eigen::Matrix<uint8_t, 1, Eigen::Dynamic>;
+using VectorXf  = Eigen::Matrix<float, 1, Eigen::Dynamic>;
 
-inline nanogui::Vector4f projectOnScreen(const nanogui::Vector3f &point,
-    const nanogui::Vector2i &canvasSize,
-    const nanogui::Matrix4f &mvp)
+using nanogui::Matrix4f;
+using nanogui::Vector4f;
+using nanogui::Vector3f;
+using nanogui::Vector2f;
+using nanogui::Vector2i;
+
+inline Vector4f projectOnScreen(const Vector3f &point,
+    const Vector2i &canvasSize,
+    const Matrix4f &mvp)
 {
-    nanogui::Vector4f homogeneousPoint;
+    Vector4f homogeneousPoint;
     homogeneousPoint << point, 1.0f;
-    nanogui::Vector4f projectedPoint{ mvp * homogeneousPoint };
+    Vector4f projectedPoint{ mvp * homogeneousPoint };
 
     projectedPoint /= projectedPoint[3];
     projectedPoint[0] = (projectedPoint[0] + 1.0f) * 0.5f * canvasSize.x();
@@ -51,16 +60,15 @@ inline nanogui::Vector4f projectOnScreen(const nanogui::Vector3f &point,
     return projectedPoint;
 }
 
-inline nanogui::Vector3f get3DPoint(const std::vector<del_point2d_t> &points2D,
-    const VectorXf &heights, unsigned int index)
+inline Vector3f get3DPoint(const MatrixXf &V2D, const VectorXf &heights, unsigned int index)
 {
-    return { points2D[index].x, heights[index], points2D[index].y };
+    return { V2D(0, index), heights(index), V2D(1, index) };
 }
 
-inline del_point2d_t transformRawPoint(const nanogui::Vector3f& rawPoint)
+inline Vector2f transformRawPoint(const Vector3f& rawPoint)
 {
-    return del_point2d_t{ (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
-        (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
+    return Vector2f{   (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
+                                (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
 }
 
 TEKARI_NAMESPACE_END

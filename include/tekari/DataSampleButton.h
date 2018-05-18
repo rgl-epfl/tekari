@@ -14,9 +14,9 @@ class DataSampleButton : public nanogui::Widget
 public:
     DataSampleButton(nanogui::Widget* parent, const std::string &label);
 
-    virtual bool mouseButtonEvent(const nanogui::Vector2i &p, int button, bool down, int modifiers) override;
-    virtual bool mouseEnterEvent(const nanogui::Vector2i &p, bool enter) override;
-    virtual bool mouseMotionEvent(const nanogui::Vector2i &p, const nanogui::Vector2i &rel, int button, int modifiers) override;
+    virtual bool mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) override;
+    virtual bool mouseEnterEvent(const Vector2i &p, bool enter) override;
+    virtual bool mouseMotionEvent(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
     virtual void draw(NVGcontext *ctx) override;
     virtual void performLayout(NVGcontext *ctx) override;
 
@@ -41,10 +41,10 @@ public:
     void setDisplayAsLog(bool value);
 
 private:
-    bool InToggleViewButton(const nanogui::Vector2i& p) const {
+    bool InToggleViewButton(const Vector2i& p) const {
         return (p - mPos - mToggleViewButtonPos).squaredNorm() <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
-    bool InDeleteButton(const nanogui::Vector2i& p) const {
+    bool InDeleteButton(const Vector2i& p) const {
         return (p - mPos - mDeleteButtonPos).squaredNorm() <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
 
@@ -55,8 +55,8 @@ private:
     bool mIsSelected;
     bool mIsVisible;
 
-    nanogui::Vector2i mToggleViewButtonPos;
-    nanogui::Vector2i mDeleteButtonPos;
+    Vector2i mToggleViewButtonPos;
+    Vector2i mDeleteButtonPos;
     bool mToggleViewButtonHovered;
     bool mDeleteButtonHovered;
 

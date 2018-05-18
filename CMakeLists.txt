@@ -120,7 +120,7 @@ add_executable(tekari
   "include/tekari/selections.h"                 "src/selections.cpp"
   "include/tekari/raw_data_processing.h"        "src/raw_data_processing.cpp"
   "include/tekari/points_stats.h"               "src/points_stats.cpp"
-#  "include/tekari/DataSampleIO.h"               "src/DataSampleIO.cpp"
+  "include/tekari/data_io.h"                    "src/data_io.cpp"
   "include/tekari/MetadataElement.h"
   "include/tekari/ThreadPool.h"
   "include/tekari/SharedQueue.h"

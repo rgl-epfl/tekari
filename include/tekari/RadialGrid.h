@@ -13,15 +13,15 @@ public:
     ~RadialGrid();
 
     void drawGL(
-        const nanogui::Matrix4f& model,
-        const nanogui::Matrix4f& view,
-        const nanogui::Matrix4f& proj);
+        const Matrix4f& model,
+        const Matrix4f& view,
+        const Matrix4f& proj);
 
     void draw(NVGcontext *ctx,
-        const nanogui::Vector2i& canvasSize,
-        const nanogui::Matrix4f& model,
-        const nanogui::Matrix4f& view,
-        const nanogui::Matrix4f& proj);
+        const Vector2i& canvasSize,
+        const Matrix4f& model,
+        const Matrix4f& view,
+        const Matrix4f& proj);
 
     void setVisible(bool visible) { mVisible = visible; }
     bool visible() const { return mVisible; }
@@ -40,8 +40,8 @@ private:
 
     nanogui::GLShader mShader;
     nanogui::Color mColor;
-    std::vector<std::pair<std::string, nanogui::Vector3f>> mPhiLabels;
-    std::vector<std::pair<std::string, nanogui::Vector3f>> mThetaLabels;
+    std::vector<std::pair<std::string, Vector3f>> mPhiLabels;
+    std::vector<std::pair<std::string, Vector3f>> mThetaLabels;
     bool mVisible;
     bool mShowDegrees;
 };
