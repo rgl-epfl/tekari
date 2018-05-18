@@ -52,7 +52,7 @@ public:
     void linkDataToShaders();
     void initShaders();
 
-    // data sample info accessors
+    // info accessors
     inline const std::string name()             const { return m_Metadata.sampleName(); }
     inline const Metadata& metadata()           const { return m_Metadata; }
     inline bool hasSelection()                  const { return m_SelectionStats.pointsCount() > 0; }
@@ -61,6 +61,7 @@ public:
     inline PointsStats& pointsStats()                 { return m_PointsStats; }
     inline PointsStats& selectionStats()              { return m_SelectionStats; }
 
+    // accessors
     inline const std::vector<float>& currH()                 const { return m_DisplayAsLog ? m_LH : m_H; }
     inline const std::vector<nanogui::Vector3f>& currN()     const { return m_DisplayAsLog ? m_LN : m_N; }
     inline const std::vector<del_point2d_t>& V2D()           const { return m_V2D; }

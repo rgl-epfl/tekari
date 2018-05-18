@@ -1,4 +1,4 @@
-#include "tekari/normals.h"
+#include "tekari/raw_data_processing.h"
 #include "tekari/stop_watch.h"
 
 #include <tbb/parallel_for.h>

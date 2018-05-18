@@ -18,7 +18,7 @@
 #include <string>
 
 #include "tekari/selections.h"
-#include "tekari/normals.h"
+#include "tekari/raw_data_processing.h"
 
 using namespace nanogui;
 using namespace std;
