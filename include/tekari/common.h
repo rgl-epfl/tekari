@@ -19,6 +19,8 @@
 #undef M_PI // make sure we don't define M_PI twice
 #define M_PI 3.141592653589793238463
 
+#define ENABLE_PROFILING
+
 // Define command key for windows/mac/linux
 #if defined(__APPLE__) || defined(DOXYGEN_DOCUMENTATION_BUILD)
 	/// If on OSX, maps to ``GLFW_MOD_SUPER``.  Otherwise, maps to ``GLFW_MOD_CONTROL``.

@@ -1,5 +1,7 @@
 #include "tekari/selections.h"
 
+#include "tekari/stop_watch.h"
+
 TEKARI_NAMESPACE_BEGIN
 
 #define MAX_SELECTION_DISTANCE 30.0f
@@ -16,6 +18,7 @@ void select_points(
     const Vector2i & canvasSize,
     SelectionMode mode)
 {
+    START_PROFILING("Selecting points");
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.cols(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t> &range) {
         for (uint32_t i = range.begin(); i < range.end(); ++i)
@@ -39,6 +42,7 @@ void select_points(
             }
         }
     });
+    END_PROFILING();
 }
 
 void select_closest_point(
@@ -49,6 +53,7 @@ void select_closest_point(
     const Vector2i & mousePos,
     const Vector2i & canvasSize)
 {
+    START_PROFILING("Selecting closest point");
     size_t n_threads = V2D.cols() / GRAIN_SIZE + ((V2D.cols() % GRAIN_SIZE) > 0);
     vector<float> smallestDistances(n_threads, MAX_SELECTION_DISTANCE * MAX_SELECTION_DISTANCE);
     vector<int> closestPointIndices(n_threads, -1);
@@ -89,6 +94,7 @@ void select_closest_point(
     {
         selectedPoints(closestPointIndex) = true;
     }
+    END_PROFILING();
 }
 
 void select_highest_point(
@@ -98,26 +104,31 @@ void select_highest_point(
     unsigned int waveLengthIndex
 )
 {
+    START_PROFILING("Selecting highest point");
     int highestPointIndex = selectionInfo.pointsCount() == 0 ?
                             pointsInfo.highestPointIndex(waveLengthIndex) :
                             selectionInfo.highestPointIndex(waveLengthIndex);
 
     deselect_all_points(selectedPoints);
     selectedPoints(highestPointIndex) = 1;
+    END_PROFILING();
 }
 
 void deselect_all_points(VectorXu8 &selectedPoints)
 {
+    START_PROFILING("Deselecting all points");
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)selectedPoints.size(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t> &range) {
         for (uint32_t i = range.begin(); i < range.end(); ++i)
             selectedPoints(i) = 0;
     });
+    END_PROFILING();
 }
 
 void move_selection_along_path(bool up, VectorXu8 &selectedPoints
 )
 {
+    START_PROFILING("Moving selection along path");
     uint8_t extremity;
     if (up)
     {
@@ -131,6 +142,7 @@ void move_selection_along_path(bool up, VectorXu8 &selectedPoints
         memmove(selectedPoints.data(), selectedPoints.data() + 1, selectedPoints.size() - 1);
         selectedPoints.tail(1)(0) = extremity;
     }
+    END_PROFILING();
 }
 
 void delete_selected_points(
@@ -140,10 +152,11 @@ void delete_selected_points(
     PointsStats &selectionInfo
 )
 {
+    START_PROFILING("Deleting selection");
     selectionInfo = PointsStats();
 
-    unsigned int lastValid = 0;
-    for (unsigned int i = 0; i < selectedPoints.size(); ++i)
+    Eigen::Index lastValid = 0;
+    for (Eigen::Index i = 0; i < selectedPoints.size(); ++i)
     {
         if (!selectedPoints(i))
         {
@@ -152,7 +165,6 @@ void delete_selected_points(
                 // move undeleted point to last valid position
                 V2D.col(lastValid) = V2D.col(i);
                 rawPoints.col(lastValid) = rawPoints.col(i);
-                selectedPoints(lastValid) = 0;
             }
             ++lastValid;
         }
@@ -162,6 +174,20 @@ void delete_selected_points(
     V2D.conservativeResize(2, lastValid);
     rawPoints.conservativeResize(3, lastValid);
     selectedPoints.conservativeResize(lastValid);
+    selectedPoints.setZero();
+
+    END_PROFILING();
+}
+
+unsigned int count_selected_points(const VectorXu8 &selectedPoints)
+{
+    unsigned int count = 0;
+    START_PROFILING("Counting selected points");
+    for (Eigen::Index i = 0; i < selectedPoints.size(); ++i) {
+        count += (selectedPoints(i) != 0);
+    }
+    END_PROFILING();
+    return count;
 }
 
 TEKARI_NAMESPACE_END

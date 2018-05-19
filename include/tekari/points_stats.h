@@ -21,8 +21,9 @@ public:
     float           maxIntensity        (unsigned int waveLengthIndex) const { return mMaxIntensity(waveLengthIndex); }
     unsigned int    highestPointIndex   (unsigned int waveLengthIndex) const { return mHighestPointIndex(waveLengthIndex); }
 
+    void addIntensity(unsigned int index, const VectorXf &rawPoint);
 private:
-    void addPoint(unsigned int index, const VectorXf& rawPoint, const MatrixXf& transformedPoint);
+    void addPoint(const VectorXf& rawPoint, const MatrixXf& transformedPoint);
 
     void normalizeAverage();
     void normalize();
@@ -47,7 +48,12 @@ private:
         PointsStats &pointsStats,
         const MatrixXf &rawPoints,
         const MatrixXf &V2D,
-        unsigned int waveLengthIndex
+        const std::vector<VectorXf> &H
+    );
+
+    friend void compute_min_max_intensities(
+        PointsStats &pointsStats,
+        const MatrixXf &rawPoints
     );
 };
 
@@ -59,11 +65,16 @@ extern void update_selection_stats(
     const std::vector<VectorXf> &H
 );
 
+extern void compute_min_max_intensities(
+    PointsStats &pointsStats,
+    const MatrixXf &rawPoints
+);
+
 extern void update_points_stats(
     PointsStats &pointsStats,
     const MatrixXf &rawPoints,
     const MatrixXf &V2D,
-    unsigned int waveLengthIndex = 0
+    const std::vector<VectorXf> &H
 );
 
 

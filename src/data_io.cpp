@@ -1,5 +1,7 @@
 #include "tekari/data_io.h"
 
+#include "tekari/stop_watch.h"
+
 TEKARI_NAMESPACE_BEGIN
 
 using namespace std;
@@ -13,6 +15,7 @@ void load_data_sample(
     Metadata &metadata
 )
 {
+    START_PROFILING("Loading data sample");
     // try open file
     FILE* datasetFile = fopen(fileName.c_str(), "r");
     if (!datasetFile)
@@ -71,6 +74,7 @@ void load_data_sample(
         }
     }
     fclose(datasetFile);
+    END_PROFILING();
 }
 
 void save_data_sample(
@@ -79,6 +83,7 @@ void save_data_sample(
     const Metadata &metadata
 )
 {
+    START_PROFILING("Save data sample");
     // try open file
     FILE* datasetFile = fopen(path.c_str(), "w");
     if (!datasetFile)
@@ -93,6 +98,7 @@ void save_data_sample(
         fprintf(datasetFile, "%lf %lf %lf\n", rawPoints(0, i), rawPoints(1, i), rawPoints(2, i));
     }
     fclose(datasetFile);
+    END_PROFILING();
 }
 
 TEKARI_NAMESPACE_END

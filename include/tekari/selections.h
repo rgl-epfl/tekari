@@ -65,4 +65,8 @@ extern void delete_selected_points(
     PointsStats &selectionInfo
 );
 
+extern unsigned int count_selected_points(
+    const VectorXu8 &selectedPoints
+);
+
 TEKARI_NAMESPACE_END

@@ -138,7 +138,6 @@ void DataSample::linkDataToShaders()
         throw runtime_error("ERROR: cannot link data to shader before loading data.");
     }
 
-
     mMeshShader.bind();
     mMeshShader.setUniform("color_map", 0);
     mMeshShader.uploadAttrib("in_pos2d", mV2D);
@@ -192,7 +191,8 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
     mShaders[POINTS].bind();
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
 
-    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
+    if (hasSelection())
+        update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
     centerAxisToSelection();
 }
 

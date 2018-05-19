@@ -1,6 +1,8 @@
 #include "tekari/points_stats.h"
 
 #include <iostream>
+#include "tekari/selections.h"
+#include "tekari/stop_watch.h"
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -28,26 +30,27 @@ void PointsStats::setSize(unsigned int nWaveLengths)
     mHighestPointIndex.setConstant(0);
 }
 
-void PointsStats::addPoint(unsigned int index, const VectorXf& rawPoint, const MatrixXf& transformedPoint)
+void PointsStats::addPoint(const VectorXf& rawPoint, const MatrixXf& transformedPoint)
 {
-    for (size_t i = 0; i < rawPoint.size() - 2; i++)
-    {
-        if (rawPoint(2 + i) < mMinIntensity(i))
-        {
-            mLowestPointIndex(i) = index;
-            mMinIntensity(i) = rawPoint[2];
-        }
-        if (rawPoint(2 + i) > mMaxIntensity(i))
-        {
-            mHighestPointIndex(i) = index;
-            mMaxIntensity(i) = rawPoint[2];
-        }
-    }
-
     mAveragePoint += transformedPoint;
     mAverageRawPoint += rawPoint;
-
     ++mPointsCount;
+}
+void PointsStats::addIntensity(unsigned int index, const VectorXf &rawPoint)
+{
+    for (Eigen::Index i = 0; i < rawPoint.size() - 2; i++)
+    {
+        if (rawPoint(i + 2) < mMinIntensity(i))
+        {
+            mLowestPointIndex(i) = index;
+            mMinIntensity(i) = rawPoint(i + 2);
+        }
+        if (rawPoint(i + 2) > mMaxIntensity(i))
+        {
+            mHighestPointIndex(i) = index;
+            mMaxIntensity(i) = rawPoint(i + 2);
+        }
+    }
 }
 
 void PointsStats::normalize()
@@ -60,7 +63,7 @@ void PointsStats::normalize()
 
 void PointsStats::normalizeAverage()
 {
-    for (size_t i = 0; i < mAveragePoint.cols(); i++)
+    for (Eigen::Index i = 0; i < mAveragePoint.cols(); i++)
     {
         mAveragePoint(1, i) = (mAveragePoint(1, i) - mMinIntensity(i)) / (mMaxIntensity(i) - mMinIntensity(i));
     }
@@ -73,41 +76,55 @@ void update_selection_stats(
     const MatrixXf &V2D,
     const vector<VectorXf> &H)
 {
+    START_PROFILING("Updating selection statistics");
     selectionStats.mPointsCount = 0;
     selectionStats.setSize(rawPoints.rows() - 2);
-    for (unsigned int i = 0; i < selectedPoints.size(); ++i)
+    for (Eigen::Index i = 0; i < selectedPoints.size(); ++i)
     {
         if (selectedPoints[i])
         {
-            selectionStats.addPoint(i, rawPoints.col(i), get3DPoints(V2D, H, i));
+            selectionStats.addPoint(rawPoints.col(i), get3DPoints(V2D, H, i));
         }
     }
     selectionStats.normalize();
+    END_PROFILING();
+}
+
+void compute_min_max_intensities(
+    PointsStats &pointsStats,
+    const MatrixXf &rawPoints
+)
+{
+    START_PROFILING("Computing minimum/maximum intensities");
+
+    pointsStats.setSize(rawPoints.rows() - 2);
+    for (Eigen::Index i = 0; i < rawPoints.cols() - 2; ++i)
+    {
+        pointsStats.addIntensity(i, rawPoints.col(i));
+    }
+
+    END_PROFILING();
 }
 
 void update_points_stats(
     PointsStats &pointsStats,
     const MatrixXf &rawPoints,
     const MatrixXf &V2D,
-    unsigned int waveLengthIndex
+    const vector<VectorXf> &H
 )
 {
-    pointsStats.mPointsCount = 0;
-    pointsStats.setSize(rawPoints.rows() - 2);
+    START_PROFILING("Updating points statistics");
 
+    pointsStats.mPointsCount = 0;
     for (Eigen::Index i = 0; i < rawPoints.cols(); ++i)
     {
-        MatrixXf result;
-        result.resize(3, rawPoints.rows() - 2);
-        for (size_t j = 0; j < result.cols(); j++)
-        {
-            result.col(j) = Vector3f{ V2D(0, j), rawPoints(2 + waveLengthIndex, j), V2D(1, j) };
-        }
-        pointsStats.addPoint(i, rawPoints.col(i), result);
+        pointsStats.addPoint(rawPoints.col(i), get3DPoints(V2D, H, i));
     }
 
     pointsStats.normalize();
     pointsStats.normalizeAverage();
+
+    END_PROFILING();
 }
 
 TEKARI_NAMESPACE_END

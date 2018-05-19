@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <string>
-#include "tekari/delaunay.h"
 
 int main(int argc, char ** argv) {
     std::vector<std::string> dataSamplePaths;

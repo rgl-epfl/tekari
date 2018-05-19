@@ -30,7 +30,7 @@ void compute_triangle_normal(
 
 void compute_normalized_heights(
     const MatrixXf &rawPoints,
-    const PointsStats &pointsStats,
+    PointsStats &pointsStats,
     vector<VectorXf> &H,
     vector<VectorXf> &LH
 );
@@ -55,11 +55,12 @@ void recompute_data(
     vector<MatrixXf> &N, vector<MatrixXf> &LN
 )
 {
-    PROFILE(update_points_stats(pointsStats, rawPoints, V2D));
-    PROFILE(compute_normalized_heights(rawPoints, pointsStats, H, LH));
-    PROFILE(triangulate_data(F, V2D));
-    PROFILE(compute_path_segments(pathSegments, V2D));
-    PROFILE(compute_normals(F, V2D, H, LH, N, LN));
+    compute_min_max_intensities(pointsStats, rawPoints);
+    compute_normalized_heights(rawPoints, pointsStats, H, LH);
+    triangulate_data(F, V2D);
+    compute_path_segments(pathSegments, V2D);
+    compute_normals(F, V2D, H, LH, N, LN);
+    update_points_stats(pointsStats, rawPoints, V2D, H);
 }
 
 void compute_normals(
@@ -71,6 +72,7 @@ void compute_normals(
     vector<MatrixXf> &LN
 )
 {
+    START_PROFILING("Computing normals");
     N.resize(H.size());
     LN.resize(LH.size());
     for (size_t j = 0; j < N.size(); ++j)
@@ -80,7 +82,7 @@ void compute_normals(
         LN[j].resize(3, V2D.cols());
         LN[j].setZero();
 
-        for (unsigned int i = 0; i < F.cols(); ++i)
+        for (Eigen::Index i = 0; i < F.cols(); ++i)
         {
             const unsigned int &i0 = F(0, i);
             const unsigned int &i1 = F(1, i);
@@ -99,6 +101,7 @@ void compute_normals(
             }
         );
     }
+    END_PROFILING();
 }
 
 void compute_triangle_normal(
@@ -127,10 +130,12 @@ void compute_triangle_normal(
 
 void compute_normalized_heights(
     const MatrixXf &rawPoints,
-    const PointsStats &pointsStats,
+    PointsStats &pointsStats,
     vector<VectorXf> &H, vector<VectorXf> &LH
 )
 {
+    START_PROFILING("Computing normalized heights");
+
     H.resize(rawPoints.rows() - 2);
     LH.resize(rawPoints.rows() - 2);
     for (size_t j = 0; j < H.size(); ++j)
@@ -158,10 +163,12 @@ void compute_normalized_heights(
         }
         );
     }
+    END_PROFILING();
 }
 
 void triangulate_data(MatrixXu &F, MatrixXf &V2D)
 {
+    START_PROFILING("Triangulating data");
     // triangulate vertx data
     delaunay2d_t *delaunay = delaunay2d_from((del_point2d_t*)V2D.data(), V2D.cols());
     tri_delaunay2d_t *tri_delaunay = tri_delaunay2d_from(delaunay);
@@ -171,14 +178,16 @@ void triangulate_data(MatrixXu &F, MatrixXf &V2D)
 
     delaunay2d_release(delaunay);
     tri_delaunay2d_release(tri_delaunay);
+    END_PROFILING();
 }
 
 void compute_path_segments(VectorXu &pathSegments, const MatrixXf &V2D)
 {
+    START_PROFILING("Computing path segments");
     vector<unsigned int> pathSegs;
     // path segments must always contain the first point
     pathSegs.push_back(0);
-    for (unsigned int i = 1; i < V2D.cols(); ++i)
+    for (Eigen::Index i = 1; i < V2D.cols(); ++i)
     {
         // if two last points are too far appart, a new path segments begins
         const Vector2f& current = V2D.col(i);
@@ -193,6 +202,7 @@ void compute_path_segments(VectorXu &pathSegments, const MatrixXf &V2D)
 
     pathSegments.resize(pathSegs.size());
     memcpy(pathSegments.data(), pathSegs.data(), pathSegs.size() * sizeof(unsigned int));
+    END_PROFILING();
 }
 
 

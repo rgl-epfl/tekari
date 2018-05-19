@@ -21,6 +21,7 @@
 #endif
 
 #include <iostream>
+#include <iomanip>
 
 //== USEFULL MACRO FOR PROFILING ==============================================
 #define PROFILE(f)      \
@@ -33,6 +34,26 @@
         std::cout << " took :" << sw.elapsed() << std::endl; \
     } while(0)
 
+#ifdef ENABLE_PROFILING
+#define START_PROFILING(msg) \
+    { \
+        StopWatch sw; \
+        sw.start(); \
+        do { std::cout << std::setw(40) << std::left << ##msg "..." << std::setw(0); } while(0)
+#else
+#define START_PROFILING(msg)
+#endif
+
+#ifdef ENABLE_PROFILING
+#define END_PROFILING() \
+        sw.stop(); \
+        std::cout << " done: " << sw.elapsed() << std::endl; \
+    } \
+    do {} while(0)
+#else
+#define END_PROFILING()
+#endif
+    
 
 //== CLASS DEFINITION =========================================================
 
