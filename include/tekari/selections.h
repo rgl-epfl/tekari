@@ -50,7 +50,8 @@ extern void select_closest_point(
 extern void select_highest_point(
     const PointsStats &pointsInfo,
     const PointsStats &selectionInfo,
-    VectorXu8 &selectedPoints
+    VectorXu8 &selectedPoints,
+    unsigned int waveLengthIndex
 );
 
 extern void deselect_all_points(VectorXu8 &selectedPoints);

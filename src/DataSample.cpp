@@ -20,14 +20,14 @@ using namespace nanogui;
 TEKARI_NAMESPACE_BEGIN
 
 DataSample::DataSample()
-:	mDisplayAsLog(false)
+:   mWaveLengthIndex(0)
+,   mDisplayAsLog(false)
 ,   mDisplayViews{ false, false, true }
 ,   mPointsStats()
 ,   mSelectionStats()
 ,   mAxis{Vector3f{0.0f, 0.0f, 0.0f}}
 {    
-    mDrawFunctions[PATH] = [this](const Vector3f&, const Matrix4f&,
-        const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
+    mDrawFunctions[PATH] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
         if (mDisplayViews[PATH])
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -44,18 +44,19 @@ DataSample::DataSample()
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
-    mDrawFunctions[POINTS] = [this](const Vector3f&, const Matrix4f&,
-        const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
+    mDrawFunctions[POINTS] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap> colorMap) {
+        glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         mShaders[POINTS].bind();
+        colorMap->bind();
         mShaders[POINTS].setUniform("modelViewProj", mvp);
         mShaders[POINTS].setUniform("showAllPoints", mDisplayViews[POINTS]);
         mShaders[POINTS].drawArray(GL_POINTS, 0, mF.cols());
         glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
     };
-    mDrawFunctions[INCIDENT_ANGLE] = [this](const Vector3f&, const Matrix4f&,
-        const Matrix4f &mvp, bool, shared_ptr<ColorMap>) {
+    mDrawFunctions[INCIDENT_ANGLE] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
         if (mDisplayViews[INCIDENT_ANGLE])
         {
             glEnable(GL_DEPTH_TEST);
@@ -109,9 +110,9 @@ void DataSample::drawGL(
         glDisable(GL_DEPTH_TEST);
     }
 
-    for (int i = 0; i != VIEW_COUNT; ++i)
+    for (const auto& drawFunc: mDrawFunctions)
     {
-        mDrawFunctions[i](viewOrigin, model, mvp, flags & USES_SHADOWS, colorMap);
+        drawFunc(mvp, colorMap);
     }
     if (flags & DISPLAY_AXIS)
     {
@@ -137,9 +138,9 @@ void DataSample::linkDataToShaders()
         throw runtime_error("ERROR: cannot link data to shader before loading data.");
     }
 
-    mMeshShader.setUniform("color_map", 0);
 
     mMeshShader.bind();
+    mMeshShader.setUniform("color_map", 0);
     mMeshShader.uploadAttrib("in_pos2d", mV2D);
     mMeshShader.uploadAttrib("in_normal", currN());
     mMeshShader.uploadAttrib("in_height", currH());
@@ -150,6 +151,7 @@ void DataSample::linkDataToShaders()
     mShaders[PATH].shareAttrib(mMeshShader, "in_height");
 
     mShaders[POINTS].bind();
+    mShaders[POINTS].setUniform("color_map", 0);
     mShaders[POINTS].shareAttrib(mMeshShader, "in_pos2d");
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
     mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
@@ -190,7 +192,7 @@ void DataSample::setDisplayAsLog(bool displayAsLog)
     mShaders[POINTS].bind();
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
 
-    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, currH());
+    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
     centerAxisToSelection();
 }
 
@@ -199,18 +201,38 @@ void DataSample::updatePointSelection()
     mShaders[POINTS].bind();
     mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
 
-    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, currH());
+    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
     centerAxisToSelection();
 }
 
 Vector3f DataSample::selectionCenter() const
 {
-    return mSelectionStats.pointsCount() == 0 ? mPointsStats.averagePoint() : mSelectionStats.averagePoint();
+    return mSelectionStats.pointsCount() == 0 ? mPointsStats.averagePoint(mWaveLengthIndex) :
+                                                mSelectionStats.averagePoint(mWaveLengthIndex);
 }
 
 void DataSample::centerAxisToSelection()
 {
     mAxis.setOrigin(selectionCenter());
+}
+
+void DataSample::setDisplayedWaveLength(unsigned int displayedWaveLength)
+{
+    if (mWaveLengthIndex == displayedWaveLength)
+        return;
+
+    mWaveLengthIndex = displayedWaveLength;
+
+    mMeshShader.bind();
+    mMeshShader.uploadAttrib("in_normal", currN());
+    mMeshShader.uploadAttrib("in_height", currH());
+
+    mShaders[PATH].bind();
+    mShaders[PATH].shareAttrib(mMeshShader, "in_height");
+    mShaders[POINTS].bind();
+    mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
+
+    centerAxisToSelection();
 }
 
 TEKARI_NAMESPACE_END

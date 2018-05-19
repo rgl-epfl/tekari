@@ -5,6 +5,8 @@
 #include <vector>
 #include <memory>
 #include <functional>
+
+#include "common.h"
 #include "delaunay.h"
 #include "points_stats.h"
 #include "Metadata.h"
@@ -58,23 +60,29 @@ public:
     inline const PointsStats& pointsStats()     const { return mPointsStats; }
     inline const PointsStats& selectionStats()  const { return mSelectionStats; }
 
-    inline PointsStats& pointsStats()   { return mPointsStats; }
-    inline Metadata& metadata()         { return mMetadata; }
-    inline PointsStats& selectionStats(){ return mSelectionStats; }
+    inline PointsStats& pointsStats()    { return mPointsStats; }
+    inline Metadata& metadata()          { return mMetadata; }
+    inline PointsStats& selectionStats() { return mSelectionStats; }
+    inline float selectionMinIntensity()        const { return mSelectionStats.minIntensity(mWaveLengthIndex); }
+    inline float selectionMaxIntensity()        const { return mSelectionStats.maxIntensity(mWaveLengthIndex); }
+    inline float selectionAverageIntensity()    const { return mSelectionStats.averageIntensity(mWaveLengthIndex); }
+
+    inline float averageIntensity()    const { return mPointsStats.averageIntensity(mWaveLengthIndex); }
 
     // accessors
-    inline const VectorXf& currH()           const { return mDisplayAsLog ? mLH : mH; }
-    inline const MatrixXf& currN()           const { return mDisplayAsLog ? mLN : mN; }
+    inline unsigned int waveLengthIndex()    const { return mWaveLengthIndex; }
+    inline const VectorXf& currH()           const { return mDisplayAsLog ? mLH[mWaveLengthIndex] : mH[mWaveLengthIndex]; }
+    inline const MatrixXf& currN()           const { return mDisplayAsLog ? mLN[mWaveLengthIndex] : mN[mWaveLengthIndex]; }
     inline const MatrixXf& V2D()             const { return mV2D; }
     inline const MatrixXf& rawPoints()       const { return mRawPoints; }
     inline const VectorXu8& selectedPoints() const { return mSelectedPoints; }
 
-    inline VectorXf& currH()            { return mDisplayAsLog ? mLH : mH; }
-    inline VectorXf& H()                { return mH; }
-    inline VectorXf& LH()               { return mLH; }
-    inline MatrixXf& currN()            { return mDisplayAsLog ? mLN : mN; }
-    inline MatrixXf& N()                { return mN; }
-    inline MatrixXf& LN()               { return mLN; }
+    inline VectorXf& currH()            { return mDisplayAsLog ? mLH[mWaveLengthIndex] : mH[mWaveLengthIndex]; }
+    inline MatrixXf& currN()            { return mDisplayAsLog ? mLN[mWaveLengthIndex] : mN[mWaveLengthIndex]; }
+    inline std::vector<VectorXf>& H()   { return mH; }
+    inline std::vector<VectorXf>& LH()  { return mLH; }
+    inline std::vector<MatrixXf>& N()   { return mN; }
+    inline std::vector<MatrixXf>& LN()  { return mLN; }
     inline MatrixXf& V2D()              { return mV2D; }
     inline MatrixXf& rawPoints()        { return mRawPoints; }
     inline VectorXu& pathSegments()     { return mPathSegments; }
@@ -87,27 +95,26 @@ public:
     Vector3f selectionCenter() const;
     void updatePointSelection();
 
+    void setDisplayedWaveLength(unsigned int displayedWaveLength);
+
 private:
     // Raw sample data
     MatrixXu    mF;
     MatrixXf    mV2D;
-    VectorXf    mH;
-    VectorXf    mLH;
-    MatrixXf    mN;
-    MatrixXf    mLN;
+    unsigned int             mWaveLengthIndex;
+    std::vector<VectorXf>    mH;
+    std::vector<VectorXf>    mLH;
+    std::vector<MatrixXf>    mN;
+    std::vector<MatrixXf>    mLN;
     VectorXu    mPathSegments;
     // Untransformed data
-    MatrixXf    mRawPoints;        // theta, phi, intensity
+    MatrixXf    mRawPoints;        // theta, phi, intensity0, intensity1, ...
     PointsStats mPointsStats;
 
     // display Shaders
     nanogui::GLShader mMeshShader;
     nanogui::GLShader mShaders[VIEW_COUNT];
-    std::function<void(
-        const Vector3f&,   // view origin
-        const Matrix4f&,   // model matrix
-        const Matrix4f&,   // mvp matrix
-        bool, std::shared_ptr<ColorMap>)> mDrawFunctions[VIEW_COUNT];
+    std::function<void(const Matrix4f&, std::shared_ptr<ColorMap>)> mDrawFunctions[VIEW_COUNT];
     nanogui::GLShader mPredictedOutgoingAngleShader;
 
     // display options

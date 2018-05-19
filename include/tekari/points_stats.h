@@ -12,41 +12,42 @@ class PointsStats
 public:
     PointsStats();
 
-    Vector3f   averagePoint()      const { return m_AveragePoint; }
-    unsigned int        pointsCount()       const { return m_PointCount; }
-    float               averageIntensity()  const { return m_AverageRawPoint[2]; }
-    float               minIntensity()      const { return m_MinIntensity; }
-    float               maxIntensity()      const { return m_MaxIntensity; }
-    unsigned int        highestPointIndex() const { return m_HighestPointIndex; }
+    void setSize(unsigned int nWaveLengths);
+
+    unsigned int    pointsCount () const { return mPointsCount; }
+    Vector3f        averagePoint        (unsigned int waveLengthIndex) const { return mAveragePoint.col(waveLengthIndex); }
+    float           averageIntensity    (unsigned int waveLengthIndex) const { return mAverageRawPoint(waveLengthIndex + 2); }
+    float           minIntensity        (unsigned int waveLengthIndex) const { return mMinIntensity(waveLengthIndex); }
+    float           maxIntensity        (unsigned int waveLengthIndex) const { return mMaxIntensity(waveLengthIndex); }
+    unsigned int    highestPointIndex   (unsigned int waveLengthIndex) const { return mHighestPointIndex(waveLengthIndex); }
 
 private:
-    void addPoint(unsigned int index,
-        const Vector3f& rawPoint,
-        const Vector3f& transformedPoint);
+    void addPoint(unsigned int index, const VectorXf& rawPoint, const MatrixXf& transformedPoint);
 
-    void normalizeAverage() { m_AveragePoint[1] = (m_AveragePoint[1] - m_MinIntensity) / (m_MaxIntensity - m_MinIntensity); }
+    void normalizeAverage();
     void normalize();
 
-    unsigned int m_PointCount;
-    Vector3f m_AveragePoint;
-    Vector3f m_AverageRawPoint;
-    float m_MinIntensity;
-    float m_MaxIntensity;
-    unsigned int m_LowestPointIndex;
-    unsigned int m_HighestPointIndex;
+    unsigned int mPointsCount;
+    MatrixXf mAveragePoint;
+    VectorXf mAverageRawPoint;
+    VectorXf mMinIntensity;
+    VectorXf mMaxIntensity;
+    VectorXu mLowestPointIndex;
+    VectorXu mHighestPointIndex;
 
     friend void update_selection_stats(
         PointsStats &selectionStats,
         const VectorXu8 &selectedPoints,
         const MatrixXf &rawPoints,
         const MatrixXf &V2D,
-        const VectorXf &H
+        const std::vector<VectorXf> &H
     );
 
     friend void update_points_stats(
         PointsStats &pointsStats,
         const MatrixXf &rawPoints,
-        const MatrixXf &V2D
+        const MatrixXf &V2D,
+        unsigned int waveLengthIndex
     );
 };
 
@@ -55,13 +56,14 @@ extern void update_selection_stats(
     const VectorXu8 &selectedPoints,
     const MatrixXf &rawPoints,
     const MatrixXf &V2D,
-    const VectorXf &H
+    const std::vector<VectorXf> &H
 );
 
 extern void update_points_stats(
     PointsStats &pointsStats,
     const MatrixXf &rawPoints,
-    const MatrixXf &V2D
+    const MatrixXf &V2D,
+    unsigned int waveLengthIndex = 0
 );
 
 

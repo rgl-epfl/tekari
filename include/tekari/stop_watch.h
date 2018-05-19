@@ -25,11 +25,12 @@
 //== USEFULL MACRO FOR PROFILING ==============================================
 #define PROFILE(f)      \
     do {                    \
+        std::cout << "Computing " #f "..."; \
         StopWatch sw;       \
         sw.start();         \
         f;                  \
         sw.stop();          \
-        std::cout << #f " took : " << sw.elapsed() << std::endl; \
+        std::cout << " took :" << sw.elapsed() << std::endl; \
     } while(0)
 
 

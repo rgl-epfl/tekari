@@ -60,9 +60,20 @@ inline Vector4f projectOnScreen(const Vector3f &point,
     return projectedPoint;
 }
 
-inline Vector3f get3DPoint(const MatrixXf &V2D, const VectorXf &heights, unsigned int index)
+inline MatrixXf get3DPoint(const MatrixXf &V2D, const VectorXf &H, unsigned int index)
 {
-    return { V2D(0, index), heights(index), V2D(1, index) };
+    return Vector3f{ V2D(0, index), H(index), V2D(1, index) };
+}
+
+inline MatrixXf get3DPoints(const MatrixXf &V2D, const std::vector<VectorXf> &H, unsigned int index)
+{
+    MatrixXf result;
+    result.resize(3, H.size());
+    for (size_t i = 0; i < H.size(); i++)
+    {
+        result.col(i) = get3DPoint(V2D, H[i], index);
+    }
+    return result;
 }
 
 inline Vector2f transformRawPoint(const Vector3f& rawPoint)

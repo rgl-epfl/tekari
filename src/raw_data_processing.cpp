@@ -13,15 +13,15 @@ using namespace nanogui;
 void compute_normals(
     const MatrixXu &F,
     const MatrixXf &V2D,
-    const VectorXf &H,
-    const VectorXf &LH,
-    MatrixXf &N,
-    MatrixXf &LN
+    const vector<VectorXf> &H,
+    const vector<VectorXf> &LH,
+    vector<MatrixXf> &N,
+    vector<MatrixXf> &LN
 );
 
 void compute_triangle_normal(
     const MatrixXf &V2D,
-    const VectorXf &H, 
+    const VectorXf &H,
     MatrixXf &N,
     unsigned int i0,
     unsigned int i1,
@@ -31,8 +31,8 @@ void compute_triangle_normal(
 void compute_normalized_heights(
     const MatrixXf &rawPoints,
     const PointsStats &pointsStats,
-    VectorXf &H,
-    VectorXf &LH
+    vector<VectorXf> &H,
+    vector<VectorXf> &LH
 );
 
 void triangulate_data(
@@ -51,8 +51,8 @@ void recompute_data(
     VectorXu &pathSegments,
     MatrixXu &F,
     MatrixXf &V2D,
-    VectorXf &H, VectorXf &LH,
-    MatrixXf &N, MatrixXf &LN
+    vector<VectorXf> &H, vector<VectorXf> &LH,
+    vector<MatrixXf> &N, vector<MatrixXf> &LN
 )
 {
     PROFILE(update_points_stats(pointsStats, rawPoints, V2D));
@@ -65,33 +65,40 @@ void recompute_data(
 void compute_normals(
     const MatrixXu &F,
     const MatrixXf &V2D,
-    const VectorXf &H, const VectorXf &LH,
-    MatrixXf &N, MatrixXf &LN
+    const vector<VectorXf> &H,
+    const vector<VectorXf> &LH,
+    vector<MatrixXf> &N,
+    vector<MatrixXf> &LN
 )
 {
-    N.resize(3, V2D.cols());
-    N.setZero();
-    LN.resize(3, V2D.cols());
-    LN.setZero();
-    
-    for (unsigned int i = 0; i < F.cols(); ++i)
+    N.resize(H.size());
+    LN.resize(LH.size());
+    for (size_t j = 0; j < N.size(); ++j)
     {
-        const unsigned int &i0 = F(0, i);
-        const unsigned int &i1 = F(1, i);
-        const unsigned int &i2 = F(2, i);
+        N[j].resize(3, V2D.cols());
+        N[j].setZero();
+        LN[j].resize(3, V2D.cols());
+        LN[j].setZero();
 
-        compute_triangle_normal(V2D, H, N, i0, i1, i2);
-        compute_triangle_normal(V2D, LH, LN, i0, i1, i2);
-    }
+        for (unsigned int i = 0; i < F.cols(); ++i)
+        {
+            const unsigned int &i0 = F(0, i);
+            const unsigned int &i1 = F(1, i);
+            const unsigned int &i2 = F(2, i);
 
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N.cols(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
-            for (uint32_t i = range.begin(); i != range.end(); ++i) {
-                N.col(i).normalize();
-                LN.col(i).normalize();
-            }
+            compute_triangle_normal(V2D, H[j], N[j], i0, i1, i2);
+            compute_triangle_normal(V2D, LH[j], LN[j], i0, i1, i2);
         }
-    );
+
+        tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N[j].cols(), GRAIN_SIZE),
+            [&](const tbb::blocked_range<uint32_t> &range) {
+                for (uint32_t i = range.begin(); i != range.end(); ++i) {
+                    N[j].col(i).normalize();
+                    LN[j].col(i).normalize();
+                }
+            }
+        );
+    }
 }
 
 void compute_triangle_normal(
@@ -121,31 +128,36 @@ void compute_triangle_normal(
 void compute_normalized_heights(
     const MatrixXf &rawPoints,
     const PointsStats &pointsStats,
-    VectorXf &H, VectorXf &LH
+    vector<VectorXf> &H, vector<VectorXf> &LH
 )
 {
-    H.resize(rawPoints.cols());
-    LH.resize(rawPoints.cols());
+    H.resize(rawPoints.rows() - 2);
+    LH.resize(rawPoints.rows() - 2);
+    for (size_t j = 0; j < H.size(); ++j)
+    {
+        H[j].resize(rawPoints.cols());
+        LH[j].resize(rawPoints.cols());
 
-    // normalize intensities
-    float min_intensity = pointsStats.minIntensity();
-    float max_intensity = pointsStats.maxIntensity();
-    float correction_factor = 0.0f;
-    if (min_intensity <= 0.0f)
-        correction_factor = -min_intensity + 1e-10f;
-    float min_log_intensity = log(min_intensity + correction_factor);
-    float max_log_intensity = log(max_intensity);
+        // normalize intensities
+        float min_intensity = pointsStats.minIntensity(j);
+        float max_intensity = pointsStats.maxIntensity(j);
+        float correction_factor = 0.0f;
+        if (min_intensity <= 0.0f)
+            correction_factor = -min_intensity + 1e-10f;
+        float min_log_intensity = log(min_intensity + correction_factor);
+        float max_log_intensity = log(max_intensity);
 
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)rawPoints.cols(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range)
+        tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)rawPoints.cols(), GRAIN_SIZE),
+            [&](const tbb::blocked_range<uint32_t> &range)
         {
             for (uint32_t i = range.begin(); i < range.end(); ++i)
             {
-                H(i) = (rawPoints(2, i) - min_intensity) / (max_intensity - min_intensity);
-                LH(i) = (log(rawPoints(2, i) + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+                H[j](i) = (rawPoints(2, i) - min_intensity) / (max_intensity - min_intensity);
+                LH[j](i) = (log(rawPoints(2, i) + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
             }
         }
-    );
+        );
+    }
 }
 
 void triangulate_data(MatrixXu &F, MatrixXf &V2D)

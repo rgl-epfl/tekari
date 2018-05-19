@@ -8,40 +8,62 @@ using namespace nanogui;
 using namespace std;
 
 PointsStats::PointsStats()
-    : m_PointCount(0)
-    , m_AveragePoint{ 0.0f, 0.0f, 0.0f }
-    , m_AverageRawPoint{ 0.0f, 0.0f, 0.0f }
-    , m_MinIntensity(numeric_limits<float>::max())
-    , m_MaxIntensity(numeric_limits<float>::min())
-    , m_LowestPointIndex(0)
-    , m_HighestPointIndex(0)
+    : mPointsCount(0)
 {}
 
-void PointsStats::addPoint(unsigned int index, const Vector3f& rawPoint, const Vector3f& transformedPoint)
+void PointsStats::setSize(unsigned int nWaveLengths)
 {
-    if (rawPoint[2] < m_MinIntensity)
+    mAveragePoint.resize(3, nWaveLengths);
+    mAverageRawPoint.resize(nWaveLengths + 2);
+    mMinIntensity.resize(nWaveLengths);
+    mMaxIntensity.resize(nWaveLengths);
+    mLowestPointIndex.resize(nWaveLengths);
+    mHighestPointIndex.resize(nWaveLengths);
+
+    mAveragePoint.setConstant(0.0f);
+    mAverageRawPoint.setConstant(0.0f);
+    mMinIntensity.setConstant(numeric_limits<float>::max());
+    mMaxIntensity.setConstant(numeric_limits<float>::min());
+    mLowestPointIndex.setConstant(0);
+    mHighestPointIndex.setConstant(0);
+}
+
+void PointsStats::addPoint(unsigned int index, const VectorXf& rawPoint, const MatrixXf& transformedPoint)
+{
+    for (size_t i = 0; i < rawPoint.size() - 2; i++)
     {
-        m_LowestPointIndex = index;
-        m_MinIntensity = rawPoint[2];
-    }
-    if (rawPoint[2] > m_MaxIntensity)
-    {
-        m_HighestPointIndex = index;
-        m_MaxIntensity = rawPoint[2];
+        if (rawPoint(2 + i) < mMinIntensity(i))
+        {
+            mLowestPointIndex(i) = index;
+            mMinIntensity(i) = rawPoint[2];
+        }
+        if (rawPoint(2 + i) > mMaxIntensity(i))
+        {
+            mHighestPointIndex(i) = index;
+            mMaxIntensity(i) = rawPoint[2];
+        }
     }
 
-    m_AveragePoint += transformedPoint;
-    m_AverageRawPoint += rawPoint;
+    mAveragePoint += transformedPoint;
+    mAverageRawPoint += rawPoint;
 
-    ++m_PointCount;
+    ++mPointsCount;
 }
 
 void PointsStats::normalize()
 {
-    if (m_PointCount == 0)
+    if (mPointsCount == 0)
         return;
-    m_AveragePoint /= m_PointCount;
-    m_AverageRawPoint /= m_PointCount;
+    mAveragePoint /= mPointsCount;
+    mAverageRawPoint /= mPointsCount;
+}
+
+void PointsStats::normalizeAverage()
+{
+    for (size_t i = 0; i < mAveragePoint.cols(); i++)
+    {
+        mAveragePoint(1, i) = (mAveragePoint(1, i) - mMinIntensity(i)) / (mMaxIntensity(i) - mMinIntensity(i));
+    }
 }
 
 void update_selection_stats(
@@ -49,14 +71,15 @@ void update_selection_stats(
     const VectorXu8 &selectedPoints,
     const MatrixXf &rawPoints,
     const MatrixXf &V2D,
-    const VectorXf &H)
+    const vector<VectorXf> &H)
 {
-    selectionStats = PointsStats();
+    selectionStats.mPointsCount = 0;
+    selectionStats.setSize(rawPoints.rows() - 2);
     for (unsigned int i = 0; i < selectedPoints.size(); ++i)
     {
         if (selectedPoints[i])
         {
-            selectionStats.addPoint(i, rawPoints.col(i), get3DPoint(V2D, H, i));
+            selectionStats.addPoint(i, rawPoints.col(i), get3DPoints(V2D, H, i));
         }
     }
     selectionStats.normalize();
@@ -65,14 +88,22 @@ void update_selection_stats(
 void update_points_stats(
     PointsStats &pointsStats,
     const MatrixXf &rawPoints,
-    const MatrixXf &V2D
+    const MatrixXf &V2D,
+    unsigned int waveLengthIndex
 )
 {
-    pointsStats = PointsStats();
+    pointsStats.mPointsCount = 0;
+    pointsStats.setSize(rawPoints.rows() - 2);
 
     for (Eigen::Index i = 0; i < rawPoints.cols(); ++i)
     {
-        pointsStats.addPoint(i, rawPoints.col(i), Vector3f{ V2D(0, i), rawPoints(2, i), V2D(1, i) });
+        MatrixXf result;
+        result.resize(3, rawPoints.rows() - 2);
+        for (size_t j = 0; j < result.cols(); j++)
+        {
+            result.col(j) = Vector3f{ V2D(0, j), rawPoints(2 + waveLengthIndex, j), V2D(1, j) };
+        }
+        pointsStats.addPoint(i, rawPoints.col(i), result);
     }
 
     pointsStats.normalize();

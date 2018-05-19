@@ -349,7 +349,10 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 case GLFW_KEY_H:
                     if (mSelectedDS)
                     {
-                        select_highest_point(mSelectedDS->pointsStats(), mSelectedDS->selectionStats(), mSelectedDS->selectedPoints());
+                        select_highest_point( mSelectedDS->pointsStats(),
+                                              mSelectedDS->selectionStats(),
+                                              mSelectedDS->selectedPoints(),
+                                              mSelectedDS->waveLengthIndex());
                         mSelectedDS->updatePointSelection();
                         // if selection window already visible, hide it
                         if(mSelectionInfoWindow) toggleSelectionInfoWindow();
@@ -680,9 +683,9 @@ void BSDFApplication::toggleSelectionInfoWindow()
         string average_intensity = "-";
         if (points_count != 0)
         {
-            min_intensity = to_string(mSelectedDS->selectionStats().minIntensity());
-            max_intensity = to_string(mSelectedDS->selectionStats().maxIntensity());
-            average_intensity = to_string(mSelectedDS->selectionStats().averageIntensity());
+            min_intensity = to_string(mSelectedDS->selectionMaxIntensity());
+            max_intensity = to_string(mSelectedDS->selectionMinIntensity());
+            average_intensity = to_string(mSelectedDS->selectionAverageIntensity());
         }
 
         makeSelectionInfoLabels("Points In Selection :", to_string(points_count));
@@ -765,7 +768,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 
         mDataSampleName->setCaption(mSelectedDS->name());
         mDataSamplePointsCount->setCaption(to_string(mSelectedDS->pointsStats().pointsCount()));
-        mDataSampleAverageHeight->setCaption(to_string(mSelectedDS->pointsStats().averageIntensity()));
+        mDataSampleAverageHeight->setCaption(to_string(mSelectedDS->averageIntensity()));
     }
     else
     {

@@ -11,8 +11,8 @@ extern void recompute_data(
     VectorXu &pathSegments,
     MatrixXu &F,
     MatrixXf &V2D,
-    VectorXf &H, VectorXf &LH,
-    MatrixXf &N, MatrixXf &LN
+    std::vector<VectorXf> &H, std::vector<VectorXf> &LH,
+    std::vector<MatrixXf> &N, std::vector<MatrixXf> &LN
 );
 
 
