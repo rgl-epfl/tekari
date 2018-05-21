@@ -306,6 +306,16 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_S:
                 cout << "Save data\n";
                 return true;
+            case GLFW_KEY_A:
+                if (mSelectedDS)
+                {
+                    select_all_points(mSelectedDS->selectedPoints());
+                    mSelectedDS->updatePointSelection();
+                    if (mSelectionInfoWindow) toggleSelectionInfoWindow();
+                    toggleSelectionInfoWindow();
+                    return true;
+                }
+                return false;
             case GLFW_KEY_P:
                 saveScreenShot();
                 return true;
@@ -392,8 +402,9 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                     deselect_all_points(mSelectedDS->selectedPoints());
                     mSelectedDS->updatePointSelection();
                     if (mSelectionInfoWindow) toggleSelectionInfoWindow();
+                    return true;
                 }
-                return true;
+                return false;
             case GLFW_KEY_Q:
                 setVisible(false);
                 return true;
@@ -543,16 +554,6 @@ void BSDFApplication::drawContents() {
     }
 }
 
-void BSDFApplication::draw(NVGcontext * ctx)
-{
-    Screen::draw(ctx);
-    /*nvgFontSize(ctx, 30.0f);
-    nvgFontFace(ctx, "sans");
-    nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-    nvgFillColor(ctx, Color(1.0f, 0.8f));
-    nvgText(ctx, mSize.x() / 2, mSize.y() / 2, "Hello world", nullptr);*/
-}
-
 void BSDFApplication::updateLayout()
 {
     m3DView->setFixedSize(mSize);
@@ -620,10 +621,12 @@ void BSDFApplication::saveSelectedDataSample()
 
 void BSDFApplication::saveScreenShot()
 {
-    if (!mFramebuffer.ready())
+    if (mFramebuffer.ready())
     {
-        mFramebuffer.init(mBSDFCanvas->size(), 1);
+        mFramebuffer.free();
     }
+    mFramebuffer.init(mBSDFCanvas->size(), 1);
+    glViewport(0, 0, mBSDFCanvas->size()[0], mBSDFCanvas->size()[1]);
     mFramebuffer.bind();
     mBSDFCanvas->draw(nvgContext());
     mFramebuffer.downloadTGA("test.tga");

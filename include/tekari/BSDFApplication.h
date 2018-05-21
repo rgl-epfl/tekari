@@ -41,7 +41,6 @@ public:
     virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
 
     void drawContents() override;
-    void draw(NVGcontext *ctx) override;
     void requestLayoutUpdate() { mRequiresLayoutUpdate = true; }
 
     void openDataSampleDialog();

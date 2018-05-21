@@ -114,6 +114,17 @@ void select_highest_point(
     END_PROFILING();
 }
 
+void select_all_points(VectorXu8 &selectedPoints)
+{
+    START_PROFILING("Selecting all points");
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)selectedPoints.size(), GRAIN_SIZE),
+        [&](const tbb::blocked_range<uint32_t> &range) {
+        for (uint32_t i = range.begin(); i < range.end(); ++i)
+            selectedPoints(i) = 1;
+    });
+    END_PROFILING();
+}
+
 void deselect_all_points(VectorXu8 &selectedPoints)
 {
     START_PROFILING("Deselecting all points");
