@@ -45,6 +45,8 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
                               int button, int modifiers) {
     if (GLCanvas::mouseMotionEvent(p, rel, button, modifiers))
         return true;
+    if (!focused())
+        return false;
     
     if (button == rotationMouseButton(true))
     {
@@ -68,6 +70,8 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
 bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) {
     if (GLCanvas::mouseButtonEvent(p, button, down, modifiers))
         return true;
+    if (!focused())
+        return false;
 
     if (button == rotationMouseButton(false))
     {
