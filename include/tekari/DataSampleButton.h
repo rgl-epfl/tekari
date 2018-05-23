@@ -1,11 +1,11 @@
 #pragma once
 
+#include "DataSample.h"
+
 #include <nanogui/widget.h>
 #include <nanogui/popup.h>
 #include <functional>
 #include <memory>
-
-#include "DataSample.h"
 
 TEKARI_NAMESPACE_BEGIN
 

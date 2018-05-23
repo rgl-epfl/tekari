@@ -1,11 +1,11 @@
 #pragma once
 
+#include "common.h"
 #include <nanogui/glcanvas.h>
 #include <nanogui/widget.h>
 #include <nanogui/label.h>
 #include <nanogui/window.h>
 #include <memory>
-#include "common.h"
 #include "Axis.h"
 #include "RadialGrid.h"
 #include "selections.h"

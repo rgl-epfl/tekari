@@ -22,12 +22,12 @@ void PointsStats::setSize(unsigned int nWaveLengths)
     mLowestPointIndex.resize(nWaveLengths);
     mHighestPointIndex.resize(nWaveLengths);
 
-    mAveragePoint.setConstant(0.0f);
-    mAverageRawPoint.setConstant(0.0f);
+    mAveragePoint.setZero();
+    mAverageRawPoint.setZero();
     mMinIntensity.setConstant(numeric_limits<float>::max());
     mMaxIntensity.setConstant(numeric_limits<float>::min());
-    mLowestPointIndex.setConstant(0);
-    mHighestPointIndex.setConstant(0);
+    mLowestPointIndex.setZero();
+    mHighestPointIndex.setZero();
 }
 
 void PointsStats::addPoint(const VectorXf& rawPoint, const MatrixXf& transformedPoint)
@@ -81,8 +81,9 @@ void update_selection_stats(
     selectionStats.setSize(rawPoints.rows() - 2);
     for (Eigen::Index i = 0; i < selectedPoints.size(); ++i)
     {
-        if (selectedPoints[i])
+        if (selectedPoints(i))
         {
+            selectionStats.addIntensity(i, rawPoints.col(i));
             selectionStats.addPoint(rawPoints.col(i), get3DPoints(V2D, H, i));
         }
     }
@@ -98,11 +99,10 @@ void compute_min_max_intensities(
     START_PROFILING("Computing minimum/maximum intensities");
 
     pointsStats.setSize(rawPoints.rows() - 2);
-    for (Eigen::Index i = 0; i < rawPoints.cols() - 2; ++i)
+    for (Eigen::Index i = 0; i < rawPoints.cols(); ++i)
     {
         pointsStats.addIntensity(i, rawPoints.col(i));
     }
-
     END_PROFILING();
 }
 

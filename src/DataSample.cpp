@@ -155,7 +155,7 @@ void DataSample::linkDataToShaders()
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
     mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
 
-    Vector2f origin2D = transformRawPoint({ mMetadata.incidentTheta(), mMetadata.incidentPhi(), 0.0f });
+    Vector2f origin2D = transformRawPoint({ mMetadata.incidentTheta(), mMetadata.incidentPhi() });
     Vector3f origin3D = Vector3f{ origin2D(0), 0.0f, origin2D(1) };
     mShaders[INCIDENT_ANGLE].bind();
     mShaders[INCIDENT_ANGLE].uploadAttrib("pos", Vector3f{ 0, 0, 0 });
@@ -216,8 +216,9 @@ void DataSample::centerAxisToSelection()
     mAxis.setOrigin(selectionCenter());
 }
 
-void DataSample::setDisplayedWaveLength(unsigned int displayedWaveLength)
+void DataSample::setWaveLengthIndex(unsigned int displayedWaveLength)
 {
+    displayedWaveLength = min(displayedWaveLength, mH.size());
     if (mWaveLengthIndex == displayedWaveLength)
         return;
 

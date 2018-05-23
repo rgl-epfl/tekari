@@ -1,9 +1,7 @@
 #pragma once
 
-#include <nanogui/glutil.h>
-#include <string>
-
 #include "common.h"
+#include <string>
 
 TEKARI_NAMESPACE_BEGIN
 

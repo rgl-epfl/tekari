@@ -70,12 +70,13 @@ bool BSDFCanvas::mouseMotionEvent(const Vector2i &p,
 bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) {
     if (GLCanvas::mouseButtonEvent(p, button, down, modifiers))
         return true;
-    if (!focused())
+    if (!focused() && !down)
         return false;
 
     if (button == rotationMouseButton(false))
     {
         mArcball.button(p, down);
+        requestFocus();
         return true;
     }
     else if (button == selectionMouseButton(false))
@@ -100,6 +101,7 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
         {
             mSelectionRegion = make_pair(p, p);
         }
+        requestFocus();
         return true;
     }
     return false;

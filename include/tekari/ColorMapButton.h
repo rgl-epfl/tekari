@@ -1,12 +1,12 @@
 #pragma once
 
+#include "common.h"
 #include <nanogui/widget.h>
 #include <nanogui/opengl.h>
 #include <nanogui/button.h>
 #include <functional>
 #include <memory>
 
-#include "common.h"
 #include "ColorMap.h"
 
 TEKARI_NAMESPACE_BEGIN

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <nanogui/glutil.h>
-#include "delaunay.h"
-
 #if defined(_WIN32)
 #	define NOMINMAX  // Remove min/max macros when building on windows
 #	include <Windows.h>
@@ -14,6 +11,9 @@
 #	pragma warning(disable : 4251) // warning C4251: class X needs to have dll-interface to be used by clients of class Y
 #	pragma warning(disable : 4714) // warning C4714: function X marked as __forceinline not inlined
 #endif
+
+#include <nanogui/glutil.h>
+#include "delaunay.h"
 
 // define M_PI locally since it's not necessarily defined on some platforms
 #undef M_PI // make sure we don't define M_PI twice
@@ -32,7 +32,7 @@
 #define TEKARI_NAMESPACE_BEGIN namespace tekari {
 #define TEKARI_NAMESPACE_END }
 
-#define GRAIN_SIZE 100u
+#define GRAIN_SIZE 1024u
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -78,10 +78,10 @@ inline MatrixXf get3DPoints(const MatrixXf &V2D, const std::vector<VectorXf> &H,
     return result;
 }
 
-inline Vector2f transformRawPoint(const Vector3f& rawPoint)
+inline Vector2f transformRawPoint(const Vector2f& raw2DPoint)
 {
-    return Vector2f{   (float)(rawPoint[0] * cos(rawPoint[1] * M_PI / 180.0f) / 90.0f),
-                                (float)(rawPoint[0] * sin(rawPoint[1] * M_PI / 180.0f) / 90.0f) };
+    return Vector2f{   (float)(raw2DPoint[0] * cos(raw2DPoint[1] * M_PI / 180.0f) / 90.0f),
+                       (float)(raw2DPoint[0] * sin(raw2DPoint[1] * M_PI / 180.0f) / 90.0f) };
 }
 
 TEKARI_NAMESPACE_END

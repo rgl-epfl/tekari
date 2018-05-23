@@ -17,11 +17,13 @@ public:
     void addLine(const std::string& line);
     void initInfos();
 
-    bool isSpectralData() const { return mIsPectralData; }
+    bool isSpectralData() const { return mIsSpectralData; }
     float incidentTheta() const { return mInTheta; }
     float incidentPhi() const { return mInPhi; }
     const std::string& sampleName() const { return mSampleName; }
     int pointsInFile() const { return mPointsInFile; }
+    void setPointsInFile(int pointsInFile) { mPointsInFile = pointsInFile; }
+    int dataPointsPerLoop() const { return mDataPointsPerLoop; }
 
     std::string toString() const;
 
@@ -31,11 +33,12 @@ private:
     static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2);; }
 
     std::vector<std::string> mRawMetaData;
-    bool mIsPectralData;
+    bool mIsSpectralData;
     float mInTheta;
     float mInPhi;
     std::string mSampleName;
     int mPointsInFile;
+    int mDataPointsPerLoop;
 };
 
 TEKARI_NAMESPACE_END

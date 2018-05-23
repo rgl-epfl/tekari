@@ -1,12 +1,11 @@
 #pragma once
 
+#include "common.h"
 #include <nanogui/common.h>
-#include <nanogui/glutil.h>
 #include <vector>
 #include <memory>
 #include <functional>
 
-#include "common.h"
 #include "delaunay.h"
 #include "points_stats.h"
 #include "Metadata.h"
@@ -71,6 +70,8 @@ public:
 
     // accessors
     inline unsigned int waveLengthIndex()    const { return mWaveLengthIndex; }
+    void setWaveLengthIndex(unsigned int displayedWaveLength);
+
     inline const VectorXf& currH()           const { return mDisplayAsLog ? mLH[mWaveLengthIndex] : mH[mWaveLengthIndex]; }
     inline const MatrixXf& currN()           const { return mDisplayAsLog ? mLN[mWaveLengthIndex] : mN[mWaveLengthIndex]; }
     inline const MatrixXf& V2D()             const { return mV2D; }
@@ -94,8 +95,6 @@ public:
     void centerAxisToSelection();
     Vector3f selectionCenter() const;
     void updatePointSelection();
-
-    void setDisplayedWaveLength(unsigned int displayedWaveLength);
 
 private:
     // Raw sample data

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <nanogui/glutil.h>
-#include "stb_image.h"
 #include "common.h"
+#include "stb_image.h"
 
 TEKARI_NAMESPACE_BEGIN
 
