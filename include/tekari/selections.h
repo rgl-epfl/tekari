@@ -54,6 +54,7 @@ extern void select_highest_point(
     unsigned int waveLengthIndex
 );
 
+extern void select_all_points(VectorXu8 &selectedPoints);
 extern void deselect_all_points(VectorXu8 &selectedPoints);
 
 extern void move_selection_along_path(bool up, VectorXu8 &selectedPoints);

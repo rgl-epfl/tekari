@@ -117,22 +117,14 @@ void select_highest_point(
 void select_all_points(VectorXu8 &selectedPoints)
 {
     START_PROFILING("Selecting all points");
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)selectedPoints.size(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
-        for (uint32_t i = range.begin(); i < range.end(); ++i)
-            selectedPoints(i) = 1;
-    });
+    selectedPoints.setOnes();
     END_PROFILING();
 }
 
 void deselect_all_points(VectorXu8 &selectedPoints)
 {
     START_PROFILING("Deselecting all points");
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)selectedPoints.size(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
-        for (uint32_t i = range.begin(); i < range.end(); ++i)
-            selectedPoints(i) = 0;
-    });
+    selectedPoints.setZero();
     END_PROFILING();
 }
 
@@ -143,9 +135,9 @@ void move_selection_along_path(bool up, VectorXu8 &selectedPoints
     uint8_t extremity;
     if (up)
     {
-        extremity = selectedPoints.head(1)(0);
+        extremity = selectedPoints.tail(1)(0);
         memmove(selectedPoints.data() + 1, selectedPoints.data(), selectedPoints.size() - 1);
-        selectedPoints.tail(1)(0) = extremity;
+        selectedPoints.head(1)(0) = extremity;
     }
     else
     {
