@@ -88,7 +88,7 @@ void DataSample::drawGL(
 {
     Matrix4f mvp = proj * view * model;
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glEnable(GL_DEPTH_TEST);
     glPolygonOffset(2.0, 2.0);

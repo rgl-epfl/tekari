@@ -9,6 +9,15 @@ TEKARI_NAMESPACE_BEGIN
 using namespace std;
 using namespace nanogui;
 
+struct Vector2fHash : unary_function<Vector2f, size_t>
+{
+    size_t operator()(const Vector2f &v) const {
+        size_t hash1 = std::hash<Vector2f::Scalar>()(v[0]);
+        size_t hash2 = std::hash<Vector2f::Scalar>()(v[1]);
+        return hash1 ^ (hash2 << 1);
+    }
+};
+
 void load_standard_data_sample(
     FILE* file,
     MatrixXf &rawPoints,
@@ -84,6 +93,8 @@ void load_standard_data_sample(
     Metadata &metadata
 )
 {
+    unordered_set<Vector2f, Vector2fHash> readVertices;
+
     V2D.resize(2, metadata.pointsInFile());
     rawPoints.resize(3, metadata.pointsInFile());
 
@@ -113,7 +124,14 @@ void load_standard_data_sample(
                 errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
                 throw runtime_error(errorMsg.str());
             }
-            Vector2f transformedPoint = transformRawPoint(Vector2f{ theta, phi });
+            Vector2f p2d = Vector2f{ theta, phi };
+            if (readVertices.count(p2d) != 0)
+            {
+                cerr << "Warning: found two points with exact same coordinates\n";
+                continue;
+            }
+            readVertices.insert(p2d);
+            Vector2f transformedPoint = transformRawPoint(p2d);
             rawPoints.col(nPoints) = Vector3f{ theta, phi, intensity };
             V2D.col(nPoints) = transformedPoint;
             ++nPoints;
@@ -134,14 +152,6 @@ void load_spectral_data_sample(
     vector<vector<float>> rawData;
     vector<Vector2f> v2d;
 
-    struct Vector2fHash : unary_function<Vector2f, size_t>
-    {
-        size_t operator()(const Vector2f &v) const {
-            size_t hash1 = std::hash<Vector2f::Scalar>()(v[0]);
-            size_t hash2 = std::hash<Vector2f::Scalar>()(v[1]);
-            return hash1 ^ (hash2 << 1);
-        }
-    };
     unordered_set<Vector2f, Vector2fHash> readVertices;
 
     unsigned int lineNumber = 0;
