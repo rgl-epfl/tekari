@@ -75,32 +75,36 @@ void compute_normals(
     START_PROFILING("Computing normals");
     N.resize(H.size());
     LN.resize(LH.size());
-    for (size_t j = 0; j < N.size(); ++j)
-    {
-        N[j].resize(3, V2D.cols());
-        N[j].setZero();
-        LN[j].resize(3, V2D.cols());
-        LN[j].setZero();
 
-        for (Eigen::Index i = 0; i < F.cols(); ++i)
-        {
-            const unsigned int &i0 = F(0, i);
-            const unsigned int &i1 = F(1, i);
-            const unsigned int &i2 = F(2, i);
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N.size(), 1),
+        [&](const tbb::blocked_range<uint32_t> &range) {
+            for (uint32_t j = range.begin(); j != range.end(); ++j) {
+                N[j].resize(3, V2D.cols());
+                N[j].setZero();
+                LN[j].resize(3, V2D.cols());
+                LN[j].setZero();
 
-            compute_triangle_normal(V2D, H[j], N[j], i0, i1, i2);
-            compute_triangle_normal(V2D, LH[j], LN[j], i0, i1, i2);
-        }
+                for (Eigen::Index i = 0; i < F.cols(); ++i)
+                {
+                    const unsigned int &i0 = F(0, i);
+                    const unsigned int &i1 = F(1, i);
+                    const unsigned int &i2 = F(2, i);
 
-        tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N[j].cols(), GRAIN_SIZE),
-            [&](const tbb::blocked_range<uint32_t> &range) {
-                for (uint32_t i = range.begin(); i != range.end(); ++i) {
-                    N[j].col(i).normalize();
-                    LN[j].col(i).normalize();
+                    compute_triangle_normal(V2D, H[j], N[j], i0, i1, i2);
+                    compute_triangle_normal(V2D, LH[j], LN[j], i0, i1, i2);
                 }
+
+                tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N[j].cols(), GRAIN_SIZE),
+                    [&](const tbb::blocked_range<uint32_t> &range) {
+                        for (uint32_t i = range.begin(); i != range.end(); ++i) {
+                            N[j].col(i).normalize();
+                            LN[j].col(i).normalize();
+                        }
+                    }
+                );
             }
-        );
-    }
+        }
+    );
     END_PROFILING();
 }
 

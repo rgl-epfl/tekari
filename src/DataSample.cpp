@@ -88,6 +88,7 @@ void DataSample::drawGL(
 {
     Matrix4f mvp = proj * view * model;
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glEnable(GL_DEPTH_TEST);
     glPolygonOffset(2.0, 2.0);
@@ -100,6 +101,7 @@ void DataSample::drawGL(
     mMeshShader.drawIndexed(GL_TRIANGLES, 0, mF.cols());
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_POLYGON_OFFSET_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
