@@ -1,12 +1,6 @@
-[submodule "qhull"]
-	path = ext/qhull
-	url = https://github.com/qhull/qhull.git
 [submodule "nanogui"]
 	path = ext/nanogui
 	url = https://github.com/wjakob/nanogui.git
-[submodule "ext/delaunay"]
-	path = ext/delaunay
-	url = git@github.com:eloraiby/delaunay.git
-[submodule "tbb"]
-	path = tbb
+[submodule "ext/tbb"]
+	path = ext/tbb
 	url = https://github.com/wjakob/tbb.git
