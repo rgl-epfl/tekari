@@ -15,8 +15,11 @@
 #include <nanogui/glutil.h>
 #include "delaunay.h"
 
-// define M_PI locally since it's not necessarily defined on some platforms
-#undef M_PI // make sure we don't define M_PI twice
+#define REAL float
+#include "triangle.h"
+
+// (re)define M_PI locally since it's not necessarily defined on some platforms
+#undef M_PI
 #define M_PI 3.141592653589793238463
 
 #define ENABLE_PROFILING

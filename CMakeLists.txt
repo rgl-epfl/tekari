@@ -75,6 +75,11 @@ set(TBB_BUILD_TESTS OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb ext_build/tbb)
 set_property(TARGET tbb_static tbb_def_files PROPERTY FOLDER "dependencies")
 
+# Build Triangle
+# Preprocessor constant to make triangle use floats instead of doubles
+add_definitions(-DSINGLE)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/triangle ext_build/triangle)
+set_property(TARGET triangle PROPERTY FOLDER "dependencies")
 
 # Compile tekari with various compiler warnings turned on
 if(MSVC)
@@ -98,6 +103,8 @@ include_directories(
   ${NANOGUI_EXTRA_INCS}
   # Intel Thread Building Blocks
   ${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb/include
+  # Triangle
+  ${CMAKE_CURRENT_SOURCE_DIR}/ext/triangle
 
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
@@ -129,6 +136,6 @@ add_executable(tekari
   )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})
-target_link_libraries(tekari tbb_static nanogui ${NANOGUI_EXTRA_LIBS})
+target_link_libraries(tekari tbb_static nanogui triangle ${NANOGUI_EXTRA_LIBS})
 
 set_target_properties(tekari PROPERTIES OUTPUT_NAME "tekari")
