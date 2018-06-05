@@ -13,10 +13,6 @@
 #endif
 
 #include <nanogui/glutil.h>
-#include "delaunay.h"
-
-#define REAL float
-#include "triangle.h"
 
 // (re)define M_PI locally since it's not necessarily defined on some platforms
 #undef M_PI

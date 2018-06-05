@@ -1,17 +1,5 @@
 #include "tekari/DataSample.h"
 
-#include <cstdint>
-#include <cstdlib>
-#include <cstdio>
-#include <cmath>
-#include <cstring>
-#include <iostream>
-#include <istream>
-#include <tbb/tbb.h>
-
-#include "tekari/delaunay.h"
-#include "tekari/stop_watch.h"
-
 using namespace std;
 using namespace nanogui;
 

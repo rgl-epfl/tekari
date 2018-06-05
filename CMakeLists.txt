@@ -78,6 +78,7 @@ set_property(TARGET tbb_static tbb_def_files PROPERTY FOLDER "dependencies")
 # Build Triangle
 # Preprocessor constant to make triangle use floats instead of doubles
 add_definitions(-DSINGLE)
+add_definitions(-DTRILIBRARY)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/triangle ext_build/triangle)
 set_property(TARGET triangle PROPERTY FOLDER "dependencies")
 
@@ -123,7 +124,6 @@ add_executable(tekari
   "include/tekari/MetadataWindow.h"             "src/MetadataWindow.cpp"
   "include/tekari/HelpWindow.h"                 "src/HelpWindow.cpp"
   "include/tekari/Axis.h"                       "src/Axis.cpp"
-  "include/tekari/delaunay.h"                   "src/delaunay.c"
   "include/tekari/selections.h"                 "src/selections.cpp"
   "include/tekari/raw_data_processing.h"        "src/raw_data_processing.cpp"
   "include/tekari/points_stats.h"               "src/points_stats.cpp"

@@ -1,6 +1,9 @@
 #include "tekari/raw_data_processing.h"
 #include "tekari/stop_watch.h"
 
+#define REAL float
+#include "triangle.h"
+
 #include <tbb/parallel_for.h>
 
 TEKARI_NAMESPACE_BEGIN
@@ -173,15 +176,21 @@ void compute_normalized_heights(
 void triangulate_data(MatrixXu &F, MatrixXf &V2D)
 {
     START_PROFILING("Triangulating data");
-    // triangulate vertx data
-    delaunay2d_t *delaunay = delaunay2d_from((del_point2d_t*)V2D.data(), V2D.cols());
-    tri_delaunay2d_t *tri_delaunay = tri_delaunay2d_from(delaunay);
 
-    F.resize(3, tri_delaunay->num_triangles);
-    memcpy(F.data(), tri_delaunay->tris, tri_delaunay->num_triangles * 3 * sizeof(unsigned int));
+	struct triangulateio in, out;
+	memset(&in, 0, sizeof(struct triangulateio));
+	memset(&out, 0, sizeof(struct triangulateio));
 
-    delaunay2d_release(delaunay);
-    tri_delaunay2d_release(tri_delaunay);
+	in.pointlist = V2D.data();
+	in.numberofpoints = V2D.cols();
+
+	triangulate("zQN", &in, &out, NULL);
+
+	F.resize(3, out.numberoftriangles);
+	memcpy(F.data(), out.trianglelist, out.numberoftriangles * 3 * sizeof(int));
+
+	free(out.trianglelist);
+
     END_PROFILING();
 }
 
