@@ -155,6 +155,7 @@ void delete_selected_points(
     PointsStats &selectionInfo
 )
 {
+	cout << V2D.cols() << " - " << selectionInfo.pointsCount() << " = ";
     START_PROFILING("Deleting selection");
     selectionInfo = PointsStats();
 
@@ -179,7 +180,9 @@ void delete_selected_points(
     selectedPoints.resize(lastValid);
     selectedPoints.setZero();
 
+	cout << lastValid << endl;
     END_PROFILING();
+	cout << V2D.size() << " = " << V2D.cols() << " * " << V2D.rows() << endl;
 }
 
 unsigned int count_selected_points(const VectorXu8 &selectedPoints)

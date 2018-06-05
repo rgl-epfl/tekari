@@ -19,7 +19,6 @@ DataSample::DataSample()
         if (mDisplayViews[PATH])
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glEnable(GL_DEPTH_TEST);
             mShaders[PATH].bind();
             mShaders[PATH].setUniform("modelViewProj", mvp);
             for (Eigen::Index i = 0; i < mPathSegments.size() - 1; ++i)
@@ -28,30 +27,25 @@ DataSample::DataSample()
                 int count = mPathSegments[i + 1] - mPathSegments[i] - 1;
                 mShaders[PATH].drawArray(GL_LINE_STRIP, offset, count);
             }
-            glDisable(GL_DEPTH_TEST);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
     mDrawFunctions[POINTS] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap> colorMap) {
-        glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         mShaders[POINTS].bind();
         colorMap->bind();
         mShaders[POINTS].setUniform("modelViewProj", mvp);
         mShaders[POINTS].setUniform("showAllPoints", mDisplayViews[POINTS]);
-        mShaders[POINTS].drawArray(GL_POINTS, 0, mF.cols());
+        mShaders[POINTS].drawArray(GL_POINTS, 0, mV2D.cols());
         glDisable(GL_BLEND);
-        glDisable(GL_DEPTH_TEST);
     };
     mDrawFunctions[INCIDENT_ANGLE] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
         if (mDisplayViews[INCIDENT_ANGLE])
         {
-            glEnable(GL_DEPTH_TEST);
             mShaders[INCIDENT_ANGLE].bind();
             mShaders[INCIDENT_ANGLE].setUniform("modelViewProj", mvp);
             mShaders[INCIDENT_ANGLE].drawArray(GL_POINTS, 0, 1);
-            glDisable(GL_DEPTH_TEST);
         }
     };
 }
@@ -74,11 +68,14 @@ void DataSample::drawGL(
     int flags,
     shared_ptr<ColorMap> colorMap)
 {
+    // Every draw call requires depth testing
+	glEnable(GL_DEPTH_TEST);
+
+	// Precompute mvp
     Matrix4f mvp = proj * view * model;
 
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// Draw the mesh
     glEnable(GL_POLYGON_OFFSET_FILL);
-    glEnable(GL_DEPTH_TEST);
     glPolygonOffset(2.0, 2.0);
     mMeshShader.bind();
     colorMap->bind();
@@ -87,27 +84,24 @@ void DataSample::drawGL(
     mMeshShader.setUniform("view", viewOrigin);
     mMeshShader.setUniform("useShadows", flags & USES_SHADOWS);
     mMeshShader.drawIndexed(GL_TRIANGLES, 0, mF.cols());
-    glDisable(GL_DEPTH_TEST);
     glDisable(GL_POLYGON_OFFSET_FILL);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	// draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
-        glEnable(GL_DEPTH_TEST);
         mPredictedOutgoingAngleShader.bind();
         mPredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
         mPredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
-        glDisable(GL_DEPTH_TEST);
     }
+	// Draw the axis
+    if (flags & DISPLAY_AXIS)
+        mAxis.drawGL(mvp);
 
     for (const auto& drawFunc: mDrawFunctions)
-    {
         drawFunc(mvp, colorMap);
-    }
-    if (flags & DISPLAY_AXIS)
-    {
-        mAxis.drawGL(mvp);
-    }
+
+	// Don't forget to disable depth testing for later opengl draw calls
+	glDisable(GL_DEPTH_TEST);
 }
 
 void DataSample::initShaders()
@@ -130,7 +124,7 @@ void DataSample::linkDataToShaders()
 
     mMeshShader.bind();
     mMeshShader.setUniform("color_map", 0);
-    mMeshShader.uploadAttrib("in_pos2d", mV2D);
+	mMeshShader.uploadAttrib("in_pos2d", mV2D);
     mMeshShader.uploadAttrib("in_normal", currN());
     mMeshShader.uploadAttrib("in_height", currH());
     mMeshShader.uploadIndices(mF);

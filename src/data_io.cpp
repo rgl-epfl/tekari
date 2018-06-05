@@ -22,14 +22,12 @@ void load_standard_data_sample(
     FILE* file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
-    VectorXu8 &selectedPoints,
     Metadata &metadata
 );
 void load_spectral_data_sample(
     FILE* file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
-    VectorXu8 &selectedPoints,
     Metadata &metadata
 );
 
@@ -48,7 +46,6 @@ void load_data_sample(
         throw runtime_error("Unable to open file " + fileName);
 
     unsigned int lineNumber = 0;
-    unsigned int pointN = 0;
     const size_t MAX_LENGTH = 512;
     char line[MAX_LENGTH];
     while (!feof(file) && !ferror(file) && fgets(line, MAX_LENGTH, file))
@@ -73,9 +70,9 @@ void load_data_sample(
 
             metadata.initInfos();
             if (metadata.isSpectralData())
-                load_spectral_data_sample(file, rawPoints, V2D, selectedPoints, metadata);
+                load_spectral_data_sample(file, rawPoints, V2D, metadata);
             else
-                load_standard_data_sample(file, rawPoints, V2D, selectedPoints, metadata);
+                load_standard_data_sample(file, rawPoints, V2D, metadata);
 
             selectedPoints.resize(metadata.pointsInFile());
             selectedPoints.setZero();
@@ -89,7 +86,6 @@ void load_standard_data_sample(
     FILE* file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
-    VectorXu8 &selectedPoints,
     Metadata &metadata
 )
 {
@@ -143,11 +139,9 @@ void load_spectral_data_sample(
     FILE* file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
-    VectorXu8 &selectedPoints,
     Metadata &metadata
 )
 {
-
     int nDataPointsPerLoop = metadata.dataPointsPerLoop();
     vector<vector<float>> rawData;
     vector<Vector2f> v2d;
