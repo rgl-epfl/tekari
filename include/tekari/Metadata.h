@@ -1,11 +1,8 @@
 #pragma once
 
 #include <string>
-#include <iostream>
-#include <memory>
 #include <vector>
 #include "common.h"
-#include "MetadataElement.h"
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -27,12 +24,14 @@ public:
 
     std::string toString() const;
 
+	inline const std::vector<std::string>& rawMetadata() const { return mRawMetadata; }
+
 private:
     const std::string* findLineContaining(const std::string &target) const;
     const std::string* findLineStartingWith(const std::string &target) const;
     static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2);; }
 
-    std::vector<std::string> mRawMetaData;
+    std::vector<std::string> mRawMetadata;
     bool mIsSpectralData;
     float mInTheta;
     float mInPhi;

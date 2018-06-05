@@ -20,7 +20,7 @@ Metadata::Metadata()
 
 void Metadata::addLine(const string& line)
 {
-    mRawMetaData.push_back(line);
+    mRawMetadata.push_back(line);
 }
 
 void Metadata::initInfos()
@@ -63,14 +63,14 @@ void Metadata::initInfos()
 string Metadata::toString() const
 {
     ostringstream result;
-    for (const auto& line : mRawMetaData)
+    for (const auto& line : mRawMetadata)
         result << line << '\n';
     return result.str();
 }
 
 const string* Metadata::findLineContaining(const string &target) const
 {
-    for (const auto& line : mRawMetaData)
+    for (const auto& line : mRawMetadata)
         if (line.find(target) != string::npos)
             return &line;
     return nullptr;
@@ -78,7 +78,7 @@ const string* Metadata::findLineContaining(const string &target) const
 
 const string* Metadata::findLineStartingWith(const string &target) const
 {
-    for (const auto& line : mRawMetaData)
+    for (const auto& line : mRawMetadata)
         if (line.find(target) == 0)
             return &line;
     return nullptr;

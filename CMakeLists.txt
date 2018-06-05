@@ -128,7 +128,6 @@ add_executable(tekari
   "include/tekari/raw_data_processing.h"        "src/raw_data_processing.cpp"
   "include/tekari/points_stats.h"               "src/points_stats.cpp"
   "include/tekari/data_io.h"                    "src/data_io.cpp"
-  "include/tekari/MetadataElement.h"
   "include/tekari/ThreadPool.h"
   "include/tekari/SharedQueue.h"
   "include/tekari/common.h"

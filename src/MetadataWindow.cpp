@@ -3,6 +3,7 @@
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
 #include <nanogui/layout.h>
+#include <nanogui/vscrollpanel.h>
 #include <nanogui/label.h>
 #include <nanogui/glutil.h>
 #include <functional>
@@ -20,55 +21,24 @@ MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::fu
 
     setLayout(new GroupLayout{});
 
-    auto infos = new Widget{this};
-    infos->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
+	auto scrollContainer = new VScrollPanel{ this };
+	scrollContainer->setFixedHeight(300);
+	auto container = new Widget{ scrollContainer };
+	container->setLayout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 15, 2 });
 
-    auto addInfoSection = [&infos](const std::string& label) {
-        new Label{ infos, label, "sans-bold", 18 };
-        auto section = new Widget{ infos };
-        section->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 0, 0 });
-        return section;
-    };
+	auto rawMeta = metadata->rawMetadata();
+	for (const std::string& line : rawMeta) {
+		auto pos = line.find_first_of("\t ");
+		if (pos == std::string::npos)
+			continue;
 
-    auto addSpacer = [&infos](unsigned int h) {
-        auto spacer = new Widget{infos};
-        spacer->setHeight(h);
-    };
+		std::string title = line.substr(1, pos);
+		std::string value = line.substr(pos + 1, line.length());
+		if (value.length() > 100) value = value.substr(0, 100);
 
-    auto addInfo = [this](Widget* section, const std::string& desc, const std::string& info) {
-        auto row = new Widget{ section };
-        row->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill});
-        auto indent = new Widget{ row };
-        indent->setFixedWidth(10);
-        auto descLabel = new Label{ row, desc + " : " };
-        descLabel->setFixedWidth(200);
-        new Label{row, info};
-    };
-
-    auto generalSection = addInfoSection("General");
-    //addInfo(generalSection, "Mountain Version", metadata->mountainVersion);
-    //addInfo(generalSection, "Measured At", metadata->measuredAt);
-    //addInfo(generalSection, "Read From Database At", metadata->dataReadFromDatabaseAt);
-    addSpacer(10);
-
-    auto sampleInfo = addInfoSection("Data Sample");
-    //addInfo(sampleInfo, "Sample Label", metadata->sampleLabel);
-    //addInfo(sampleInfo, "Sample Name", metadata->sampleName);
-    //addInfo(sampleInfo, "Datapoints In Sample", std::to_string(metadata->datapointsInFile));
-    addSpacer(10);
-
-    auto techInfo = addInfoSection("Technical Details");
-    //addInfo(techInfo, "Lamp Used", metadata->lamp);
-    //addInfo(techInfo, "Incident Theta", std::to_string(metadata->incidentTheta));
-    //addInfo(techInfo, "Incident Phi", std::to_string(metadata->incidentPhi));
-    addSpacer(10);
-
-    auto dbSection = addInfoSection("Database");
-    //addInfo(dbSection, "Database Host", metadata->databaseHost);
-    //addInfo(dbSection, "Database Name", metadata->databaseName);
-    //addInfo(dbSection, "Database Id", std::to_string(metadata->databaseId));
-    //addInfo(dbSection, "Datapoints In Database", std::to_string(metadata->datapointsInDatabase));
-    //addInfo(techInfo, "Front Integral", std::to_string(metadata->frontIntegral));
+		new Label(container, title, "sans-bold", 18);
+		new Label(container, value);
+	}
 }
 
 bool MetadataWindow::keyboardEvent(int key, int scancode, int action, int modifiers) {
