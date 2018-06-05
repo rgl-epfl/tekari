@@ -83,8 +83,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(fileLoading, "Delete", "Close Selected Data Sample");
 
         auto dataSampleViewOptions = addShortcutSection("Data Sample View Options", "For the currently selected datasample");
-        addRow(dataSampleViewOptions, "N", "Switch To Normal View");
-        addRow(dataSampleViewOptions, "L", "Switch To Logarithmic View");
+        addRow(dataSampleViewOptions, "L", "Toggle Logarithmic View");
         addRow(dataSampleViewOptions, "P", "Show/Hide Path");
         addRow(dataSampleViewOptions, "Shift+P", "Show/Hide All Points");
         addRow(dataSampleViewOptions, "Shift+I", "Show/Hide Incident Angle");

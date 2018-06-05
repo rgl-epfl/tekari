@@ -67,7 +67,7 @@ public:
 
 private:
     void toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample, bool toggle);
-    void setDisplayAsLog(std::shared_ptr<DataSample> dataSample, bool value);
+    void toggleLogView(std::shared_ptr<DataSample> dataSample);
 
     void updateLayout();
     void addDataSample(int index, std::shared_ptr<DataSample> dataSample);

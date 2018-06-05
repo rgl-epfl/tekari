@@ -38,7 +38,7 @@ public:
     void toggleView(DataSample::Views view, bool check);
     bool isViewToggled(DataSample::Views view);
 
-    void setDisplayAsLog(bool value);
+    void toggleLogView();
 
 private:
     bool InToggleViewButton(const Vector2i& p) const {

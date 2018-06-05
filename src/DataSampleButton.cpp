@@ -189,9 +189,9 @@ bool DataSampleButton::isViewToggled(DataSample::Views view)
     return mViewToggles[static_cast<int>(view)]->pushed();
 }
 
-void DataSampleButton::setDisplayAsLog(bool value)
+void DataSampleButton::toggleLogView()
 {
-    mDisplayAsLog->setChecked(value);
+    mDisplayAsLog->setChecked(!mDisplayAsLog->checked());
 }
 
 void DataSampleButton::setViewTogglesCallback(std::function<void(bool)> callback) {

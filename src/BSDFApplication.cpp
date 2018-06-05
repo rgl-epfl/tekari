@@ -455,11 +455,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                     return true;
                 }
                 break;
-            case GLFW_KEY_N:
-                setDisplayAsLog(mSelectedDS, false);
-                return true;
             case GLFW_KEY_L:
-                setDisplayAsLog(mSelectedDS, true);
+				toggleLogView(mSelectedDS);
                 return true;
             case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
             {
@@ -853,7 +850,7 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
     });
 
     dataSampleButton->setDisplayAsLogCallback([this, dataSample](bool checked) {
-        setDisplayAsLog(dataSample, checked);
+		dataSample->toggleLogView();
     });
 
     mDataSamples.push_back(dataSample);
@@ -878,12 +875,12 @@ void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> 
     }
 }
 
-void BSDFApplication::setDisplayAsLog(shared_ptr<DataSample> dataSample, bool value)
+void BSDFApplication::toggleLogView(shared_ptr<DataSample> dataSample)
 {
     if (dataSample)
     {
-        dataSample->setDisplayAsLog(value);
-        correspondingButton(dataSample)->setDisplayAsLog(value);
+        dataSample->toggleLogView();
+        correspondingButton(dataSample)->toggleLogView();
     }
 }
 

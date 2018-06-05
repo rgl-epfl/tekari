@@ -44,7 +44,7 @@ public:
                 int flags,
                 std::shared_ptr<ColorMap> colorMap);
 
-    void setDisplayAsLog(bool displayAsLog);
+    void toggleLogView();
     inline void toggleView(Views view, bool toggle) { mDisplayViews[view] = toggle; }
     inline bool displayView(Views view) const { return mDisplayViews[view]; }
 

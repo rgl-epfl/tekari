@@ -159,12 +159,9 @@ void DataSample::linkDataToShaders()
     mAxis.loadShader();
 }
 
-void DataSample::setDisplayAsLog(bool displayAsLog)
+void DataSample::toggleLogView()
 {
-    if (mDisplayAsLog == displayAsLog)
-        return;
-
-    mDisplayAsLog = displayAsLog;
+    mDisplayAsLog = !mDisplayAsLog;
 
     mMeshShader.bind();
     mMeshShader.uploadAttrib("in_normal", currN());
