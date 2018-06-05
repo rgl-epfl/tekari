@@ -94,6 +94,10 @@ public:
 	inline Vector3f selectionCenter() const { return mSelectionStats.averagePoint(mWaveLengthIndex); }
     void updatePointSelection();
 
+	// Dirty flag setter/accessor
+	inline bool dirty() const			{ return mDirty; }
+	inline void setDirty(bool dirty)	{ mDirty = dirty; }
+
 private:
     // Raw sample data
     MatrixXu    mF;
@@ -125,6 +129,9 @@ private:
     // Selected point
     VectorXu8       mSelectedPoints;
     PointsStats     mSelectionStats;
+
+	// dirty flag to indicate changes in the data
+	bool mDirty;
 };
 
 TEKARI_NAMESPACE_END

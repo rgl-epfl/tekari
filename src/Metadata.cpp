@@ -20,7 +20,7 @@ Metadata::Metadata()
 
 void Metadata::addLine(const string& line)
 {
-    mRawMetadata.push_back(line);
+    mRawMetadata.push_back(line.substr(0, line.length()-1));
 }
 
 void Metadata::initInfos()
@@ -60,28 +60,33 @@ void Metadata::initInfos()
     }
 }
 
-string Metadata::toString() const
+string* Metadata::findLineContaining(const string &target)
 {
-    ostringstream result;
-    for (const auto& line : mRawMetadata)
-        result << line << '\n';
-    return result.str();
-}
-
-const string* Metadata::findLineContaining(const string &target) const
-{
-    for (const auto& line : mRawMetadata)
+    for (auto& line : mRawMetadata)
         if (line.find(target) != string::npos)
             return &line;
     return nullptr;
 }
 
-const string* Metadata::findLineStartingWith(const string &target) const
+string* Metadata::findLineStartingWith(const string &target)
 {
-    for (const auto& line : mRawMetadata)
+    for (auto& line : mRawMetadata)
         if (line.find(target) == 0)
             return &line;
     return nullptr;
+}
+
+void Metadata::setPointsInFile(int pointsInFile)
+{
+	mPointsInFile = pointsInFile;
+
+	const string dpInFileStarter = "#datapoints_in_file\t";
+
+	string* pointsInFileLine = findLineStartingWith(dpInFileStarter);
+	if (pointsInFileLine == nullptr)
+		return;
+
+	*pointsInFileLine = dpInFileStarter + to_string(pointsInFile);
 }
 
 TEKARI_NAMESPACE_END

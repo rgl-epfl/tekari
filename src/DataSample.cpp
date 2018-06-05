@@ -14,6 +14,7 @@ DataSample::DataSample()
 ,   mPointsStats()
 ,   mSelectionStats()
 ,   mSelectionAxis{Vector3f{0.0f, 0.0f, 0.0f}}
+,	mDirty(false)
 {    
     mDrawFunctions[PATH] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
         if (mDisplayViews[PATH])

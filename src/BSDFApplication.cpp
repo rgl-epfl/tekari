@@ -32,6 +32,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 ,	mMetadataWindow(nullptr)
 ,   mHelpWindow(nullptr)
 ,   mSelectionInfoWindow(nullptr)
+,	mUnsavedDataWindow(nullptr)
 ,	mColorMapSelectionWindow(nullptr)
 {
     // load color maps
@@ -406,8 +407,19 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 }
                 return false;
             case GLFW_KEY_Q:
-                setVisible(false);
+			{
+				vector<string> dsNames;
+				for (const auto& ds: mDataSamples)
+				{
+					if (ds->dirty())
+					{
+						dsNames.push_back(ds->name());
+					}
+				}
+				if (dsNames.empty()) setVisible(false);
+				else toggleUnsavedDataWindow(dsNames);
                 return true;
+			}
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
             case GLFW_KEY_6: case GLFW_KEY_7: case GLFW_KEY_8: case GLFW_KEY_9:
                 selectDataSample(key - GLFW_KEY_1);
@@ -422,7 +434,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                         mSelectedDS->selectedPoints(),
                         mSelectedDS->rawPoints(),
                         mSelectedDS->V2D(),
-                        mSelectedDS->selectionStats()
+                        mSelectedDS->selectionStats(),
+						mSelectedDS->metadata()
                     );
 
                     recompute_data(
@@ -435,6 +448,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                         mSelectedDS->N(), mSelectedDS->LN()
                     );
                     mSelectedDS->linkDataToShaders();
+					mSelectedDS->setDirty(true);
 
                     if (mSelectionInfoWindow) toggleSelectionInfoWindow();
                     selectDataSample(mSelectedDS);
@@ -612,6 +626,7 @@ void BSDFApplication::saveSelectedDataSample()
             return;
 
         save_data_sample(path, mSelectedDS->rawPoints(), mSelectedDS->metadata());
+		mSelectedDS->setDirty(false);
     }
 }
 
@@ -654,8 +669,8 @@ void BSDFApplication::toggleMetadataWindow()
         }
         else
         {
-            auto errorWindow = new MessageDialog(this, MessageDialog::Type::Warning, "Metadata",
-                "No data sample selected.", "close");
+			auto errorWindow = new MessageDialog{ this, MessageDialog::Type::Warning, "Metadata",
+				"No data sample selected.", "close" };
             errorWindow->setCallback([this](int) { mMetadataWindow = nullptr; });
             window = errorWindow;
         }
@@ -698,6 +713,34 @@ void BSDFApplication::toggleSelectionInfoWindow()
     });
 }
 
+void BSDFApplication::toggleUnsavedDataWindow(const vector<string>& dataSampleNames)
+{
+	if (dataSampleNames.empty())
+		return;
+
+	toggleWindow(mUnsavedDataWindow, [this, &dataSampleNames]() {
+		ostringstream errorMsg;
+		errorMsg << dataSampleNames[0];
+		for (size_t i = 1; i < dataSampleNames.size(); ++i)
+			errorMsg << " and " << dataSampleNames[i];
+
+		errorMsg << (dataSampleNames.size() == 1 ? " has " : " have ");
+		errorMsg << "some unsaved changed. Are you sure you want to close tekari ?";
+
+		auto window = new MessageDialog{ this, MessageDialog::Type::Warning, "Unsaved Changes",
+			errorMsg.str(), "Cancel", "Quit anyway", true };
+
+		window->setCallback([this](int i) {
+			if (i == 0)
+				mUnsavedDataWindow = nullptr;
+			else
+				setVisible(false);
+		});
+		window->center();
+		return window;
+	});
+}
+
 void BSDFApplication::toggleHelpWindow()
 {
     toggleWindow(mHelpWindow, [this]() {
@@ -710,10 +753,7 @@ void BSDFApplication::toggleHelpWindow()
 void BSDFApplication::toggleColorMapSelectionWindow()
 {
     toggleWindow(mColorMapSelectionWindow, [this]() {
-        auto window = new ColorMapSelectionWindow{
-            this,
-            mColorMaps,
-        };
+        auto window = new ColorMapSelectionWindow{ this, mColorMaps };
         window->setCloseCallback([this]() { toggleColorMapSelectionWindow(); });
         window->setSelectionCallback([this](shared_ptr<ColorMap> colorMap) { selectColorMap(colorMap); });
         auto pos = distance(mColorMaps.begin(), find(mColorMaps.begin(), mColorMaps.end(), mBSDFCanvas->colorMap()));

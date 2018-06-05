@@ -231,7 +231,8 @@ void save_data_sample(
         throw runtime_error("Unable to open file " + path);
 
     // save metadata
-    fprintf(datasetFile, "%s", metadata.toString().c_str());
+	for(const auto& line: metadata.rawMetadata())
+		fprintf(datasetFile, "%s\n", line.c_str());
 
     //!feof(datasetFile) && !ferror(datasetFile))
     for (Eigen::Index i = 0; i < rawPoints.cols(); ++i)

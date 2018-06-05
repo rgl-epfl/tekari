@@ -50,7 +50,8 @@ public:
     void toggleWindow(Window* &window, std::function<Window*(void)> createWindow);
     void toggleMetadataWindow();
     void toggleHelpWindow();
-    void toggleSelectionInfoWindow();
+	void toggleSelectionInfoWindow();
+	void toggleUnsavedDataWindow(const std::vector<std::string>& dataSampleNames);
     void toggleColorMapSelectionWindow();
     
     void selectColorMap(std::shared_ptr<ColorMap> colorMap);
@@ -111,7 +112,8 @@ private:
     Window* mMetadataWindow;
     Window* mHelpWindow;
     Window* mColorMapSelectionWindow;
-    Window* mSelectionInfoWindow;
+	Window* mSelectionInfoWindow;
+	Window* mUnsavedDataWindow;
 
     // canvas
     BSDFCanvas *mBSDFCanvas;

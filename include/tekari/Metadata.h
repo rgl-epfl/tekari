@@ -19,17 +19,15 @@ public:
     float incidentPhi() const { return mInPhi; }
     const std::string& sampleName() const { return mSampleName; }
     int pointsInFile() const { return mPointsInFile; }
-    void setPointsInFile(int pointsInFile) { mPointsInFile = pointsInFile; }
     int dataPointsPerLoop() const { return mDataPointsPerLoop; }
-
-    std::string toString() const;
+	void setPointsInFile(int pointsInFile);
 
 	inline const std::vector<std::string>& rawMetadata() const { return mRawMetadata; }
 
 private:
-    const std::string* findLineContaining(const std::string &target) const;
-    const std::string* findLineStartingWith(const std::string &target) const;
-    static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2);; }
+    std::string* findLineContaining(const std::string &target);
+    std::string* findLineStartingWith(const std::string &target);
+    static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2); }
 
     std::vector<std::string> mRawMetadata;
     bool mIsSpectralData;
