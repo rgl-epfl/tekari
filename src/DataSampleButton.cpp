@@ -20,8 +20,9 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
 :   Widget{ parent }
 ,   mLabel{ label }
 ,   mDisplayLabel{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
-,	mIsSelected(false)
-,   mIsVisible(true)
+,	mSelected(false)
+,   mVisible(true)
+,	mDirty(false)
 ,   mToggleViewButtonPos{ 155, 15 }
 ,   mDeleteButtonPos{ 155 + 2*BUTTON_RADIUS + 2, 15 }
 ,   mToggleViewButtonHovered(false)
@@ -108,9 +109,9 @@ void DataSampleButton::draw(NVGcontext * ctx)
     if (!window()->focused() && !mPopup->focused())
         mPopup->setVisible(false);
 
-    Color fillColor = mIsSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) : Color(1.0f, mMouseFocus ? 0.25f : 0.2f);
+    Color fillColor = mSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) : Color(1.0f, mMouseFocus ? 0.25f : 0.2f);
     float deleteButtonFillOpacity = mDeleteButtonHovered ? 0.4f : 0.2f;
-    float toggleViewButtonFillOpacity = mToggleViewButtonHovered ? 0.4f : mIsVisible ? 0.5f : 0.2f;
+    float toggleViewButtonFillOpacity = mToggleViewButtonHovered ? 0.4f : mVisible ? 0.5f : 0.2f;
 
     // save current nvg state
     nvgSave(ctx);
@@ -129,13 +130,14 @@ void DataSampleButton::draw(NVGcontext * ctx)
     }
 
     // draw label
+	string label = mDirty ? mDisplayLabel + "*" : mDisplayLabel;
     nvgFontSize(ctx, 18.0f);
     nvgFontFace(ctx, "sans");
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
     nvgFillColor(ctx, Color(0.0f, 0.8f));
-    nvgText(ctx, 5, mSize.y() * 0.5f - 1.0f, mDisplayLabel.c_str(), nullptr);
+    nvgText(ctx, 5, mSize.y() * 0.5f - 1.0f, label.c_str(), nullptr);
     nvgFillColor(ctx, Color(1.0f, 0.8f));
-    nvgText(ctx, 5, mSize.y() * 0.5f, mDisplayLabel.c_str(), nullptr);
+    nvgText(ctx, 5, mSize.y() * 0.5f, label.c_str(), nullptr);
 
     // font settings for icons
     nvgFontSize(ctx, BUTTON_RADIUS * 1.3f);
@@ -155,7 +157,7 @@ void DataSampleButton::draw(NVGcontext * ctx)
         nvgText(ctx, pos.x(), pos.y(), iconData.data(), nullptr);
     };
     makeToolButton(deleteButtonFillOpacity, ENTYPO_ICON_CROSS, mDeleteButtonPos);
-    makeToolButton(toggleViewButtonFillOpacity, mIsVisible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, mToggleViewButtonPos);
+    makeToolButton(toggleViewButtonFillOpacity, mVisible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, mToggleViewButtonPos);
 
     nvgRestore(ctx);
 }
@@ -175,8 +177,8 @@ void DataSampleButton::performLayout(NVGcontext * ctx)
 
 void DataSampleButton::toggleView()
 {
-    mIsVisible = !mIsVisible;
-    mToggleViewCallback(mIsVisible);
+    mVisible = !mVisible;
+    mToggleViewCallback(mVisible);
 }
 
 void DataSampleButton::toggleView(DataSample::Views view, bool check)

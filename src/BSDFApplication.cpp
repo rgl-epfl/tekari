@@ -449,6 +449,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                     );
                     mSelectedDS->linkDataToShaders();
 					mSelectedDS->setDirty(true);
+					correspondingButton(mSelectedDS)->setDirty(true);
 
                     if (mSelectionInfoWindow) toggleSelectionInfoWindow();
                     selectDataSample(mSelectedDS);
@@ -627,6 +628,7 @@ void BSDFApplication::saveSelectedDataSample()
 
         save_data_sample(path, mSelectedDS->rawPoints(), mSelectedDS->metadata());
 		mSelectedDS->setDirty(false);
+		correspondingButton(mSelectedDS)->setDirty(false);
     }
 }
 
@@ -793,7 +795,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
     if (mSelectedDS)
     {
         DataSampleButton* oldButton = correspondingButton(mSelectedDS);
-        oldButton->setIsSelected(false);
+        oldButton->setSelected(false);
         oldButton->showPopup(false);
     }
 
@@ -802,12 +804,28 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
     if (mSelectedDS)
     {
         auto button = correspondingButton(mSelectedDS);
-        button->setIsSelected(true);
+        button->setSelected(true);
         button->showPopup(true);
 
         mDataSampleName->setCaption(mSelectedDS->name());
         mDataSamplePointsCount->setCaption(to_string(mSelectedDS->pointsStats().pointsCount()));
         mDataSampleAverageHeight->setCaption(to_string(mSelectedDS->averageIntensity()));
+
+		int buttonAbsY = button->absolutePosition()[1];
+		int scrollAbsY = mDataSamplesScrollPanel->absolutePosition()[1];
+		int buttonH = button->height();
+		int scrollH = mDataSamplesScrollPanel->height();
+
+		float scroll = mDataSamplesScrollPanel->scroll();
+		if (buttonAbsY < scrollAbsY)
+		{
+			scroll = static_cast<float>(button->position()[1]) / mDataSampleButtonContainer->height();
+		}
+		else if (buttonAbsY + buttonH > scrollAbsY + scrollH)
+		{
+			scroll = static_cast<float>(button->position()[1]) / (mDataSampleButtonContainer->height() - buttonH);
+		}
+		mDataSamplesScrollPanel->setScroll(scroll);
     }
     else
     {

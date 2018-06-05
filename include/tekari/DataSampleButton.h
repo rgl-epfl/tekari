@@ -22,8 +22,9 @@ public:
 
     void toggleView();
 
-    bool isSelected() const { return mIsSelected; }
-    void setIsSelected(bool isSelected) { mIsSelected = isSelected; }
+    bool selected() const { return mSelected; }
+	void setSelected(bool selected) { mSelected = selected; }
+	void setDirty(bool dirty) { mDirty = dirty; }
 
     void setCallback            (std::function<void(void)> callback) { mCallback = callback; }
     void setDeleteCallback      (std::function<void(void)> callback) { mDeleteCallback = callback; }
@@ -52,8 +53,9 @@ private:
 
     std::string mLabel;
     std::string mDisplayLabel;
-    bool mIsSelected;
-    bool mIsVisible;
+    bool mSelected;
+    bool mVisible;
+	bool mDirty;
 
     Vector2i mToggleViewButtonPos;
     Vector2i mDeleteButtonPos;
