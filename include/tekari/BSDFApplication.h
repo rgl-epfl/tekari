@@ -70,7 +70,7 @@ private:
     void toggleLogView(std::shared_ptr<DataSample> dataSample);
 
     void updateLayout();
-    void addDataSample(int index, std::shared_ptr<DataSample> dataSample);
+    void addDataSample(std::shared_ptr<DataSample> dataSample);
 
     void toggleToolButton(Button* button);
 

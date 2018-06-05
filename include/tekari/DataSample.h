@@ -91,8 +91,7 @@ public:
     inline MatrixXu& F()                { return mF; }
 
     // Selection
-    void centerAxisToSelection();
-    Vector3f selectionCenter() const;
+	inline Vector3f selectionCenter() const { return mSelectionStats.averagePoint(mWaveLengthIndex); }
     void updatePointSelection();
 
 private:
@@ -121,7 +120,7 @@ private:
 
     // metadata
     Metadata mMetadata;
-    Axis mAxis;
+    Axis mSelectionAxis;
 
     // Selected point
     VectorXu8       mSelectedPoints;

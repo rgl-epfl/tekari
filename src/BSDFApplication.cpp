@@ -434,7 +434,6 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                         mSelectedDS->H(), mSelectedDS->LH(),
                         mSelectedDS->N(), mSelectedDS->LN()
                     );
-                    mSelectedDS->centerAxisToSelection();
                     mSelectedDS->linkDataToShaders();
 
                     if (mSelectionInfoWindow) toggleSelectionInfoWindow();
@@ -543,7 +542,7 @@ void BSDFApplication::drawContents() {
             {
                 newDataSample->dataSample->initShaders();
                 newDataSample->dataSample->linkDataToShaders();
-                addDataSample(mDataSamples.size(), newDataSample->dataSample);
+                addDataSample(newDataSample->dataSample);
             }
         }
     }
@@ -683,8 +682,8 @@ void BSDFApplication::toggleSelectionInfoWindow()
         string average_intensity = "-";
         if (points_count != 0)
         {
-            min_intensity = to_string(mSelectedDS->selectionMaxIntensity());
-            max_intensity = to_string(mSelectedDS->selectionMinIntensity());
+            min_intensity = to_string(mSelectedDS->selectionMinIntensity());
+            max_intensity = to_string(mSelectedDS->selectionMaxIntensity());
             average_intensity = to_string(mSelectedDS->selectionAverageIntensity());
         }
 
@@ -815,7 +814,7 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
     requestLayoutUpdate();
 }
 
-void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample)
+void BSDFApplication::addDataSample(shared_ptr<DataSample> dataSample)
 {
     if (!dataSample) {
         throw invalid_argument{ "Data sample may not be null." };
@@ -849,7 +848,7 @@ void BSDFApplication::addDataSample(int index, shared_ptr<DataSample> dataSample
         }
     });
 
-    dataSampleButton->setDisplayAsLogCallback([this, dataSample](bool checked) {
+    dataSampleButton->setDisplayAsLogCallback([this, dataSample](bool /* unused */) {
 		dataSample->toggleLogView();
     });
 
@@ -911,7 +910,7 @@ void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleTo
 {
     try {
         shared_ptr<DataSample> ds = make_shared<DataSample>();
-
+		
         load_data_sample(filePath,
                          ds->rawPoints(),
                          ds->V2D(),
@@ -925,7 +924,6 @@ void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleTo
                         ds->V2D(),
                         ds->H(), ds->LH(),
                         ds->N(), ds->LN());
-        ds->centerAxisToSelection();
         dataSampleToAdd->dataSample = ds;
     }
     catch (exception e) {

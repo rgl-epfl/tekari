@@ -13,7 +13,7 @@ DataSample::DataSample()
 ,   mDisplayViews{ false, false, true }
 ,   mPointsStats()
 ,   mSelectionStats()
-,   mAxis{Vector3f{0.0f, 0.0f, 0.0f}}
+,   mSelectionAxis{Vector3f{0.0f, 0.0f, 0.0f}}
 {    
     mDrawFunctions[PATH] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
         if (mDisplayViews[PATH])
@@ -93,9 +93,9 @@ void DataSample::drawGL(
         mPredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
         mPredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
     }
-	// Draw the axis
-    if (flags & DISPLAY_AXIS)
-        mAxis.drawGL(mvp);
+	// Draw the axis if points are selected
+    if (flags & DISPLAY_AXIS && hasSelection())
+        mSelectionAxis.drawGL(mvp);
 
     for (const auto& drawFunc: mDrawFunctions)
         drawFunc(mvp, colorMap);
@@ -156,7 +156,7 @@ void DataSample::linkDataToShaders()
     mPredictedOutgoingAngleShader.setUniform("color", Vector3f{ 0, 0.1f, 0.8f });
     mPredictedOutgoingAngleShader.setUniform("length", 1.0f);
 
-    mAxis.loadShader();
+    mSelectionAxis.loadShader();
 }
 
 void DataSample::toggleLogView()
@@ -172,9 +172,10 @@ void DataSample::toggleLogView()
     mShaders[POINTS].bind();
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
 
-    if (hasSelection())
+	if (hasSelection()) {
         update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
-    centerAxisToSelection();
+		mSelectionAxis.setOrigin(selectionCenter());
+	}
 }
 
 void DataSample::updatePointSelection()
@@ -182,19 +183,8 @@ void DataSample::updatePointSelection()
     mShaders[POINTS].bind();
     mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
 
-    update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
-    centerAxisToSelection();
-}
-
-Vector3f DataSample::selectionCenter() const
-{
-    return mSelectionStats.pointsCount() == 0 ? mPointsStats.averagePoint(mWaveLengthIndex) :
-                                                mSelectionStats.averagePoint(mWaveLengthIndex);
-}
-
-void DataSample::centerAxisToSelection()
-{
-    mAxis.setOrigin(selectionCenter());
+	update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
+	mSelectionAxis.setOrigin(selectionCenter());
 }
 
 void DataSample::setWaveLengthIndex(unsigned int displayedWaveLength)
@@ -214,7 +204,10 @@ void DataSample::setWaveLengthIndex(unsigned int displayedWaveLength)
     mShaders[POINTS].bind();
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
 
-    centerAxisToSelection();
+	if (hasSelection()) {
+		update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
+		mSelectionAxis.setOrigin(selectionCenter());
+	}
 }
 
 TEKARI_NAMESPACE_END
