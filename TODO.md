@@ -7,9 +7,6 @@ TODO:
 --> run
 --> bt
 
-// Issues:
-- delaunay crashes for too big inputs
-
 // To do:
 - spectral data/loading
 - integrate intensities for spectral data
@@ -19,6 +16,5 @@ TODO:
 - look at instant meshes for framebuffers
 
 // issues:
-- delete points random crashes + not threaded
-- can't figure out how to draw grid info behind datasample
+- delete points not threaded
 - issue with point deletion (4 points appear selected in mid-air)

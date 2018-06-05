@@ -5,7 +5,6 @@
 #include <nanogui/opengl.h>
 #include "Metadata.h"
 #include "points_stats.h"
-#include "delaunay.h"
 
 TEKARI_NAMESPACE_BEGIN
 

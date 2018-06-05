@@ -176,7 +176,7 @@ void delete_selected_points(
     // resize vectors
     V2D.conservativeResize(2, lastValid);
     rawPoints.conservativeResize(3, lastValid);
-    selectedPoints.conservativeResize(lastValid);
+    selectedPoints.resize(lastValid);
     selectedPoints.setZero();
 
     END_PROFILING();

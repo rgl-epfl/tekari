@@ -6,7 +6,6 @@
 #include <memory>
 #include <functional>
 
-#include "delaunay.h"
 #include "points_stats.h"
 #include "Metadata.h"
 #include "ColorMap.h"

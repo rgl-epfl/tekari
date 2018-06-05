@@ -3,7 +3,6 @@
 #include <nanogui/opengl.h>
 #include <tbb/parallel_for.h>
 #include "points_stats.h"
-#include "delaunay.h"
 
 TEKARI_NAMESPACE_BEGIN
 
