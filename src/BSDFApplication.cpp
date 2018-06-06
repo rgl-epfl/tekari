@@ -90,7 +90,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
     {
         mFooter = new Widget{ m3DView };
         mFooter->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill});
-    
+
         auto makeFooterInfo = [this](string label) {
             auto container = new Widget{ mFooter };
             container->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
@@ -568,7 +568,7 @@ void BSDFApplication::drawContents() {
 void BSDFApplication::updateLayout()
 {
     m3DView->setFixedSize(mSize);
-    
+
     mFooter->setFixedSize(Vector2i{ mSize.x(), 20 });
     for(auto& footerInfos: mFooter->children())
         footerInfos->setFixedWidth(width() / 3);
@@ -638,8 +638,8 @@ void BSDFApplication::saveScreenShot()
     {
         mFramebuffer.free();
     }
-    mFramebuffer.init(mBSDFCanvas->size(), 1);
-    glViewport(0, 0, mBSDFCanvas->size()[0], mBSDFCanvas->size()[1]);
+    mFramebuffer.init((int)mPixelRatio*mBSDFCanvas->size(), 1);
+    glViewport(0, 0, mPixelRatio*mBSDFCanvas->size()[0], mPixelRatio*mBSDFCanvas->size()[1]);
     mFramebuffer.bind();
     mBSDFCanvas->draw(nvgContext());
     mFramebuffer.downloadTGA("test.tga");
@@ -833,7 +833,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         mDataSamplePointsCount->setCaption("-");
         mDataSampleAverageHeight->setCaption("-");
     }
-    
+
     requestLayoutUpdate();
 }
 
@@ -847,7 +847,7 @@ void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
     auto button = correspondingButton(dataSample);
     button->removePopupFromParent();
     mDataSampleButtonContainer->removeChild(index);
-    
+
     mBSDFCanvas->removeDataSample(dataSample);
     mDataSamples.erase(find(mDataSamples.begin(), mDataSamples.end(), dataSample));
 
@@ -968,7 +968,7 @@ void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleTo
 {
     try {
         shared_ptr<DataSample> ds = make_shared<DataSample>();
-		
+
         load_data_sample(filePath,
                          ds->rawPoints(),
                          ds->V2D(),
