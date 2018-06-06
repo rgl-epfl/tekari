@@ -12,10 +12,10 @@ You can launch **Tekari** in the command line and specify data samples to be loa
 ./tekari data_set1.txt data_set2.txt ...
 ```
 
-This will launch **Tekari** and open the specified files, assuming they are in the correct format (see [file format][#File-Format]).
+This will launch **Tekari** and open the specified files, assuming they are in the correct format (see [file format](#file-format)).
 
 ### Graphical User Interface
-To get started using **Tekari**, you first need to load a file, either using the [command line](#Command-Line), pressing the open file button (folder icon), or using Ctrl-O. Once you have a data sample loaded, you can interact with it in many ways:
+To get started using **Tekari**, you first need to load a file, either using the [command line](#command-line), pressing the open file button (folder icon), or using Ctrl-O. Once you have a data sample loaded, you can interact with it in many ways:
 - look at it from any angle (by left-dragging the mouse on the canvas)
 - zoom in and out (using the mouse wheel)
 - translate it (by middle-dragging the mouse)
