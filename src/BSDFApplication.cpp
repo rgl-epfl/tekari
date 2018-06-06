@@ -968,6 +968,9 @@ void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleTo
     try {
         shared_ptr<DataSample> ds = make_shared<DataSample>();
 
+		size_t pos = filePath.find_last_of("\\/");
+		string fileName = filePath.substr(pos+1, fileName.length());
+		cout << "====================== Loading " << fileName << " ======================\n";
         load_data_sample(filePath,
                          ds->rawPoints(),
                          ds->V2D(),
@@ -982,6 +985,7 @@ void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleTo
                         ds->H(), ds->LH(),
                         ds->N(), ds->LN());
         dataSampleToAdd->dataSample = ds;
+		cout << "================== Finished loading " << fileName << " =================\n";
     }
     catch (exception e) {
         string errorMsg = "Could not open data sample at " + filePath + " : " + e.what();

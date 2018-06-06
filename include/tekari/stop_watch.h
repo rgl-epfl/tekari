@@ -39,7 +39,7 @@
     { \
         StopWatch sw; \
         sw.start(); \
-        do { std::cout << std::setw(40) << std::left << #msg "..." << std::setw(0); } while(0)
+        do { std::cout << std::setw(45) << std::left << msg "..." << std::setw(0); } while(0)
 #else
 #define START_PROFILING(msg)
 #endif

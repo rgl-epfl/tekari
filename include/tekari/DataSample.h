@@ -93,7 +93,7 @@ public:
     inline MatrixXu& F()                { return mF; }
 
     // Selection
-	inline Vector3f selectionCenter() const { return mSelectionStats.averagePoint(mWaveLengthIndex); }
+	inline Vector3f selectionCenter() const { return hasSelection() ? mSelectionStats.averagePoint(mWaveLengthIndex) : Vector3f{ 0,0,0 }; }
     void updatePointSelection();
 
 	// Dirty flag setter/accessor
