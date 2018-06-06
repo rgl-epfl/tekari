@@ -2,6 +2,7 @@
 #include "tekari/stop_watch.h"
 
 #define REAL float
+#define VOID void
 #include "triangle.h"
 
 #include <tbb/parallel_for.h>
@@ -65,11 +66,6 @@ void recompute_data(
     compute_path_segments(pathSegments, V2D);
     compute_normals(F, V2D, H, LH, N, LN);
     update_points_stats(pointsStats, rawPoints, V2D, H);
-
-	for (size_t i = 0; i < rawPoints.rows(); i++)
-	{
-		cout << "Intensity : " << rawPoints(i, 0) << endl;
-	}
 }
 
 void compute_normals(
@@ -170,8 +166,8 @@ void compute_normalized_heights(
         {
             for (uint32_t i = range.begin(); i < range.end(); ++i)
             {
-                H[j](i) = (rawPoints(2, i) - min_intensity) / (max_intensity - min_intensity);
-                LH[j](i) = (log(rawPoints(2, i) + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+                H[j](i) = (rawPoints(2 + j, i) - min_intensity) / (max_intensity - min_intensity);
+                LH[j](i) = (log(rawPoints(2 + j, i) + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
             }
         }
         );

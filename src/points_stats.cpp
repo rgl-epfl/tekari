@@ -38,7 +38,7 @@ void PointsStats::addPoint(const VectorXf& rawPoint, const MatrixXf& transformed
 }
 void PointsStats::addIntensity(unsigned int index, const VectorXf &rawPoint)
 {
-    for (Eigen::Index i = 0; i < rawPoint.size() - 2; i++)
+    for (Eigen::Index i = 0; i < mMinIntensity.size(); i++)
     {
         if (rawPoint(i + 2) < mMinIntensity(i))
         {

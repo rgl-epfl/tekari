@@ -15,7 +15,7 @@ DataSample::DataSample()
 ,   mSelectionStats()
 ,   mSelectionAxis{Vector3f{0.0f, 0.0f, 0.0f}}
 ,	mDirty(false)
-{    
+{
     mDrawFunctions[PATH] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
         if (mDisplayViews[PATH])
         {
@@ -167,7 +167,7 @@ void DataSample::toggleLogView()
     mMeshShader.bind();
     mMeshShader.uploadAttrib("in_normal", currN());
     mMeshShader.uploadAttrib("in_height", currH());
-    
+
     mShaders[PATH].bind();
     mShaders[PATH].shareAttrib(mMeshShader, "in_height");
     mShaders[POINTS].bind();
@@ -188,9 +188,9 @@ void DataSample::updatePointSelection()
 	mSelectionAxis.setOrigin(selectionCenter());
 }
 
-void DataSample::setWaveLengthIndex(unsigned int displayedWaveLength)
+void DataSample::setWaveLengthIndex(size_t displayedWaveLength)
 {
-    displayedWaveLength = min(displayedWaveLength, mH.size()-1);
+    displayedWaveLength = std::min(displayedWaveLength, mH.size()-1);
     if (mWaveLengthIndex == displayedWaveLength)
         return;
 
@@ -205,7 +205,7 @@ void DataSample::setWaveLengthIndex(unsigned int displayedWaveLength)
     mShaders[POINTS].bind();
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
 
-	//mSelectionAxis.setOrigin(selectionCenter());
+	mSelectionAxis.setOrigin(selectionCenter());
 }
 
 TEKARI_NAMESPACE_END
