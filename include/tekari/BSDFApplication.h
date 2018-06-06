@@ -51,7 +51,7 @@ public:
     void toggleMetadataWindow();
     void toggleHelpWindow();
 	void toggleSelectionInfoWindow();
-	void toggleUnsavedDataWindow(const std::vector<std::string>& dataSampleNames);
+	void toggleUnsavedDataWindow(const std::vector<std::string>& dataSampleNames, std::function<void(void)> continueCallback);
     void toggleColorMapSelectionWindow();
     
     void selectColorMap(std::shared_ptr<ColorMap> colorMap);

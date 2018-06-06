@@ -417,7 +417,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
 					}
 				}
 				if (dsNames.empty()) setVisible(false);
-				else toggleUnsavedDataWindow(dsNames);
+				else toggleUnsavedDataWindow(dsNames, [this]() { setVisible(false); });
                 return true;
 			}
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
@@ -715,28 +715,28 @@ void BSDFApplication::toggleSelectionInfoWindow()
     });
 }
 
-void BSDFApplication::toggleUnsavedDataWindow(const vector<string>& dataSampleNames)
+void BSDFApplication::toggleUnsavedDataWindow(const vector<string>& dataSampleNames, function<void(void)> continueCallback)
 {
 	if (dataSampleNames.empty())
 		return;
 
-	toggleWindow(mUnsavedDataWindow, [this, &dataSampleNames]() {
+	toggleWindow(mUnsavedDataWindow, [this, &dataSampleNames, continueCallback]() {
 		ostringstream errorMsg;
 		errorMsg << dataSampleNames[0];
 		for (size_t i = 1; i < dataSampleNames.size(); ++i)
 			errorMsg << " and " << dataSampleNames[i];
 
 		errorMsg << (dataSampleNames.size() == 1 ? " has " : " have ");
-		errorMsg << "some unsaved changed. Are you sure you want to close tekari ?";
+		errorMsg << "some unsaved changed. Are you sure you want to continue ?";
 
 		auto window = new MessageDialog{ this, MessageDialog::Type::Warning, "Unsaved Changes",
-			errorMsg.str(), "Cancel", "Quit anyway", true };
+			errorMsg.str(), "Cancel", "Continue", true };
 
-		window->setCallback([this](int i) {
+		window->setCallback([this, continueCallback](int i) {
 			if (i == 0)
 				mUnsavedDataWindow = nullptr;
 			else
-				setVisible(false);
+				continueCallback();
 		});
 		window->center();
 		return window;
@@ -888,7 +888,13 @@ void BSDFApplication::addDataSample(shared_ptr<DataSample> dataSample)
     });
 
     dataSampleButton->setDeleteCallback([this, dataSample]() {
-        deleteDataSample(dataSample);
+		if (dataSample->dirty())
+		{
+			toggleUnsavedDataWindow({ dataSample->name() }, [this, dataSample]() { deleteDataSample(dataSample); });
+		}
+		else {
+			deleteDataSample(dataSample);
+		}
     });
 
     dataSampleButton->setToggleViewCallback([this, dataSample](bool checked) {
