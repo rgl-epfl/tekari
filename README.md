@@ -8,7 +8,8 @@ A BSDF-data visualization and editing tool.
 
 You can launch **Tekari** in the command line and specify data samples to be loaded as command-line arguments:
 
-``` ./tekari data_set1.txt data_set2.txt ...
+```
+./tekari data_set1.txt data_set2.txt ...
 ```
 
 This will launch **Tekari** and open the specified files, assuming they are in the correct format (see [file format][#File-Format]).
