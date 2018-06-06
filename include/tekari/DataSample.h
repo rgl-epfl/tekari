@@ -69,7 +69,7 @@ public:
 
     // accessors
     inline unsigned int waveLengthIndex()    const { return mWaveLengthIndex; }
-    void setWaveLengthIndex(unsigned int displayedWaveLength);
+    void setWaveLengthIndex(size_t displayedWaveLength);
 
     inline const VectorXf& currH()           const { return mDisplayAsLog ? mLH[mWaveLengthIndex] : mH[mWaveLengthIndex]; }
     inline const MatrixXf& currN()           const { return mDisplayAsLog ? mLN[mWaveLengthIndex] : mN[mWaveLengthIndex]; }

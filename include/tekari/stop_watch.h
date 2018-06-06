@@ -39,7 +39,7 @@
     { \
         StopWatch sw; \
         sw.start(); \
-        do { std::cout << std::setw(40) << std::left << ##msg "..." << std::setw(0); } while(0)
+        do { std::cout << std::setw(40) << std::left << #msg "..." << std::setw(0); } while(0)
 #else
 #define START_PROFILING(msg)
 #endif
@@ -53,7 +53,7 @@
 #else
 #define END_PROFILING()
 #endif
-    
+
 
 //== CLASS DEFINITION =========================================================
 
@@ -64,7 +64,7 @@
 class StopWatch
 {
 public:
-    
+
     /// Constructor
     StopWatch()
     {
@@ -72,8 +72,8 @@ public:
         QueryPerformanceFrequency(&freq_);
 #endif
     }
-    
-    
+
+
     /// Start time measurement
     void start()
     {
@@ -83,8 +83,8 @@ public:
         starttime_ = current_time();
 #endif
     }
-    
-    
+
+
     /// Stop time measurement, return elapsed time in ms
     double stop()
     {
@@ -95,8 +95,8 @@ public:
 #endif
         return elapsed();
     }
-    
-    
+
+
     /// Return elapsed time in ms (watch has to be stopped).
     double elapsed() const
     {
@@ -108,26 +108,26 @@ public:
                 (endtime_.tv_usec - starttime_.tv_usec)*0.001);
 #endif
     }
-    
-    
+
+
 private:
-    
+
 #ifdef _WIN32 // Windows
-    
+
     LARGE_INTEGER starttime_, endtime_;
     LARGE_INTEGER freq_;
-    
+
 #else // Unix
-    
+
     timeval current_time() const
     {
         struct timeval tv;
         gettimeofday(&tv, 0);
         return tv;
     }
-    
+
     timeval starttime_, endtime_;
-    
+
 #endif
 };
 

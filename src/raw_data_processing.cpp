@@ -2,6 +2,7 @@
 #include "tekari/stop_watch.h"
 
 #define REAL float
+#define VOID void
 #include "triangle.h"
 
 #include <tbb/parallel_for.h>
