@@ -12,7 +12,7 @@ TEKARI_NAMESPACE_BEGIN
 class DataSampleButton : public nanogui::Widget
 {
 public:
-    DataSampleButton(nanogui::Widget* parent, const std::string &label);
+    DataSampleButton(nanogui::Widget* parent, const std::string &label, std::shared_ptr<DataSample> dataSample);
 
     virtual bool mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) override;
     virtual bool mouseEnterEvent(const Vector2i &p, bool enter) override;

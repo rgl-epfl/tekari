@@ -8,6 +8,7 @@
 #include <nanogui/label.h>
 #include <nanogui/layout.h>
 #include <nanogui/entypo.h>
+#include <nanogui/slider.h>
 #include <nanogui/button.h>
 #include <nanogui/checkbox.h>
 
@@ -16,7 +17,7 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
+DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, shared_ptr<DataSample> dataSample)
 :   Widget{ parent }
 ,   mLabel{ label }
 ,   mDisplayLabel{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
@@ -52,6 +53,19 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label)
     mViewToggles[DataSample::Views::PATH]   = makeViewButton("Path", "Show/Hide path for this data sample (P)", false);
     mViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample (Shift + P)", false);
     mViewToggles[DataSample::Views::INCIDENT_ANGLE] = makeViewButton("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
+
+	if (dataSample->isSpectral())
+	{
+		auto waveLengthIndexLabel = new Label{ mPopup, "Wave length index : 0", "sans-bold", 18 };
+		auto waveLengthSlider = new Slider{ mPopup };
+		waveLengthSlider->setRange(make_pair(0, dataSample->maxWaveLengthIndex()));
+		waveLengthSlider->setCallback([waveLengthSlider, dataSample, waveLengthIndexLabel](float value) {
+			unsigned int waveLengthIndex = static_cast<unsigned int>(round(value));
+			waveLengthSlider->setValue(waveLengthIndex);
+			waveLengthIndexLabel->setCaption("Wave length index : " + to_string(waveLengthIndex));
+			dataSample->setWaveLengthIndex(waveLengthIndex);
+		});
+	}
 }
 
 bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, bool down, int modifiers)

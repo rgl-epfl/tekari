@@ -14,7 +14,7 @@ public:
     void addLine(const std::string& line);
     void initInfos();
 
-    bool isSpectralData() const { return mIsSpectralData; }
+    bool isSpectral() const { return mIsSpectral; }
     float incidentTheta() const { return mInTheta; }
     float incidentPhi() const { return mInPhi; }
     const std::string& sampleName() const { return mSampleName; }
@@ -30,7 +30,7 @@ private:
     static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2); }
 
     std::vector<std::string> mRawMetadata;
-    bool mIsSpectralData;
+    bool mIsSpectral;
     float mInTheta;
     float mInPhi;
     std::string mSampleName;

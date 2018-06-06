@@ -880,9 +880,8 @@ void BSDFApplication::addDataSample(shared_ptr<DataSample> dataSample)
 
     string cleanName = dataSample->name();
     replace(cleanName.begin(), cleanName.end(), '_', ' ');
-    auto dataSampleButton = new DataSampleButton(mDataSampleButtonContainer, cleanName);
+    auto dataSampleButton = new DataSampleButton(mDataSampleButtonContainer, cleanName, dataSample);
     dataSampleButton->setFixedHeight(30);
-
 
     dataSampleButton->setCallback([this, dataSample]() {
         selectDataSample(dataSample);

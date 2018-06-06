@@ -190,7 +190,7 @@ void DataSample::updatePointSelection()
 
 void DataSample::setWaveLengthIndex(unsigned int displayedWaveLength)
 {
-    displayedWaveLength = min(displayedWaveLength, mH.size());
+    displayedWaveLength = min(displayedWaveLength, mH.size()-1);
     if (mWaveLengthIndex == displayedWaveLength)
         return;
 
@@ -205,10 +205,7 @@ void DataSample::setWaveLengthIndex(unsigned int displayedWaveLength)
     mShaders[POINTS].bind();
     mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
 
-	if (hasSelection()) {
-		update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
-		mSelectionAxis.setOrigin(selectionCenter());
-	}
+	//mSelectionAxis.setOrigin(selectionCenter());
 }
 
 TEKARI_NAMESPACE_END

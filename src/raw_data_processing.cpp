@@ -65,6 +65,11 @@ void recompute_data(
     compute_path_segments(pathSegments, V2D);
     compute_normals(F, V2D, H, LH, N, LN);
     update_points_stats(pointsStats, rawPoints, V2D, H);
+
+	for (size_t i = 0; i < rawPoints.rows(); i++)
+	{
+		cout << "Intensity : " << rawPoints(i, 0) << endl;
+	}
 }
 
 void compute_normals(

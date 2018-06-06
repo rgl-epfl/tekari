@@ -69,7 +69,7 @@ void load_data_sample(
             fseek(file, 0, SEEK_SET);
 
             metadata.initInfos();
-            if (metadata.isSpectralData())
+            if (metadata.isSpectral())
                 load_spectral_data_sample(file, rawPoints, V2D, metadata);
             else
                 load_standard_data_sample(file, rawPoints, V2D, metadata);
@@ -183,20 +183,29 @@ void load_spectral_data_sample(
 
             v2d.push_back(transformRawPoint(angles));
             rawData.push_back(vector<float>{});
-            rawData.back().resize(nDataPointsPerLoop + 2, 0);
-            rawData.back()[0] = angles[0];
-            rawData.back()[1] = angles[1];
+            rawData[nPoints].resize(nDataPointsPerLoop + 2, 0);
+            rawData[nPoints][0] = angles[0];
+            rawData[nPoints][1] = angles[1];
+
+			if ((head = strchr(++head, '\t')) == nullptr ||			// skip the two first tabs
+				(head = strchr(++head, '\t')) == nullptr)
+			{
+				fclose(file);
+				ostringstream errorMsg;
+				errorMsg << "Invalid file format: expecting a tab " << head << " (line " << lineNumber << ")";
+				throw runtime_error(errorMsg.str());
+			}
 
             for (int i = 0; i < nDataPointsPerLoop; ++i)
             {
                 float value;
-                
-                if (nullptr == (head = strchr(head, ' ')) ||
-                    1 != sscanf(head, "%f", &value))
+
+                if (1 != sscanf(head, "%f", &value) ||
+					(head = strchr(++head, ' ')) == nullptr)
                 {
                     fclose(file);
                     ostringstream errorMsg;
-                    errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
+                    errorMsg << "Invalid file format: expecting a space " << head << " (line " << lineNumber << ")";
                     throw runtime_error(errorMsg.str());
                 }
                 rawData[nPoints][i+2] = value;
