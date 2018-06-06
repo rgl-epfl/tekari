@@ -1,7 +1,7 @@
 #include "tekari/data_io.h"
 
 #include <unordered_set>
-#include <functional>
+#include <fstream>
 #include "tekari/stop_watch.h"
 
 TEKARI_NAMESPACE_BEGIN
@@ -19,13 +19,13 @@ struct Vector2fHash : unary_function<Vector2f, size_t>
 };
 
 void load_standard_data_sample(
-    FILE* file,
+	ifstream& file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
     Metadata &metadata
 );
 void load_spectral_data_sample(
-    FILE* file,
+	ifstream& file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
     Metadata &metadata
@@ -41,32 +41,26 @@ void load_data_sample(
 {
     START_PROFILING("Loading data sample");
     // try open file
-    FILE* file = fopen(fileName.c_str(), "r");
+	ifstream file(fileName);
     if (!file)
         throw runtime_error("Unable to open file " + fileName);
 
     unsigned int lineNumber = 0;
-    const size_t MAX_LENGTH = 512;
-    char line[MAX_LENGTH];
-    while (!feof(file) && !ferror(file) && fgets(line, MAX_LENGTH, file))
+    for (string line; getline(file, line); )
     {
         ++lineNumber;
 
-        // remove any trailing spaces (this will detect full of spaces lines)
-        const char* head = line;
-        while (isspace(*head)) ++head;
-
-        if (*head == '\0')
+		if (line.empty())
+		{
+			continue;
+		}
+		if (line[0] == '#')
         {
-            // skip empty lines
-        }
-        else if (*head == '#')
-        {
-            metadata.addLine(head);
+            metadata.addLine(line);
         }
         else
         {
-            fseek(file, 0, SEEK_SET);
+            file.seekg(0);
 
             metadata.initInfos();
             if (metadata.isSpectral())
@@ -83,7 +77,7 @@ void load_data_sample(
 }
 
 void load_standard_data_sample(
-    FILE* file,
+	ifstream& file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
     Metadata &metadata
@@ -96,30 +90,22 @@ void load_standard_data_sample(
 
     unsigned int lineNumber = 0;
     unsigned int nPoints = 0;
-    const size_t MAX_LENGTH = 512;
-    char line[MAX_LENGTH];
-    while (!feof(file) && !ferror(file) && fgets(line, MAX_LENGTH, file))
+    for (string line; getline(file, line); )
     {
         ++lineNumber;
 
-        // remove any trailing spaces (this will detect full of spaces lines)
-        const char* head = line;
-        while (isspace(*head)) ++head;
-
-        if (*head == '\0' || *head == '#')
+        if (line.empty() || line[0] == '#')
         {
             // skip empty/comment lines
         }
-        else
-        {
+		else
+		{
             float theta, phi, intensity;
-            if (sscanf(head, "%f %f %f", &theta, &phi, &intensity) != 3)
-            {
-                fclose(file);
-                ostringstream errorMsg;
-                errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
-                throw runtime_error(errorMsg.str());
-            }
+			if (sscanf(line.c_str(), "%f %f %f", &theta, &phi, &intensity) != 3)
+			{
+				throw runtime_error("Error reading file");
+			}
+
             Vector2f p2d = Vector2f{ theta, phi };
             if (readVertices.count(p2d) != 0)
             {
@@ -133,10 +119,9 @@ void load_standard_data_sample(
             ++nPoints;
         }
     }
-    fclose(file);
 }
 void load_spectral_data_sample(
-    FILE* file,
+	ifstream& file,
     MatrixXf &rawPoints,
     MatrixXf  &V2D,
     Metadata &metadata
@@ -150,30 +135,19 @@ void load_spectral_data_sample(
 
     unsigned int lineNumber = 0;
     unsigned int nPoints = 0;
-    const size_t MAX_LENGTH = 8192;
-    char line[MAX_LENGTH];
-    while (!feof(file) && !ferror(file) && fgets(line, MAX_LENGTH, file))
+	for (string line; getline(file, line); )
     {
         ++lineNumber;
 
-        // remove any trailing spaces (this will detect full of spaces lines)
-        const char* head = line;
-        while (isspace(*head)) ++head;
-
-        if (*head == '\0' || *head == '#')
+		if (line.empty() || line[0] == '#')
+		{
+			// skip empty/comment lines
+		}
+		else
         {
-            // skip empty/comment lines
-        }
-        else
-        {
+			istringstream lineStream{ line };
             Vector2f angles;
-            if (sscanf(head, "%f %f", &angles[0], &angles[1]) != 2)
-            {
-                fclose(file);
-                ostringstream errorMsg;
-                errorMsg << "Invalid file format: " << head << " (line " << lineNumber << ")";
-                throw runtime_error(errorMsg.str());
-            }
+			lineStream >> angles[0] >> angles[1];
             if (readVertices.count(angles) > 0)
             {
                 cerr << "Warning: found two points with exact same coordinates\n";
@@ -187,28 +161,9 @@ void load_spectral_data_sample(
             rawData[nPoints][0] = angles[0];
             rawData[nPoints][1] = angles[1];
 
-			if ((head = strchr(++head, '\t')) == nullptr ||			// skip the two first tabs
-				(head = strchr(++head, '\t')) == nullptr)
-			{
-				fclose(file);
-				ostringstream errorMsg;
-				errorMsg << "Invalid file format: expecting a tab " << head << " (line " << lineNumber << ")";
-				throw runtime_error(errorMsg.str());
-			}
-
             for (int i = 0; i < nDataPointsPerLoop; ++i)
             {
-                float value;
-
-                if (1 != sscanf(head, "%f", &value) ||
-					(head = strchr(++head, ' ')) == nullptr)
-                {
-                    fclose(file);
-                    ostringstream errorMsg;
-                    errorMsg << "Invalid file format: expecting a space " << head << " (line " << lineNumber << ")";
-                    throw runtime_error(errorMsg.str());
-                }
-                rawData[nPoints][i+2] = value;
+                lineStream >> rawData[nPoints][i+2];
             }
             ++nPoints;
         }
@@ -222,9 +177,7 @@ void load_spectral_data_sample(
     }
 
     V2D.resize(2, nPoints);
-    memcpy(V2D.data(), v2d.data(), sizeof(Vector2f) * nPoints);
-
-    fclose(file);
+	memcpy(V2D.data(), v2d.data(), sizeof(Vector2f) * nPoints);
 }
 
 void save_data_sample(

@@ -447,6 +447,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                         mSelectedDS->H(), mSelectedDS->LH(),
                         mSelectedDS->N(), mSelectedDS->LN()
                     );
+
                     mSelectedDS->linkDataToShaders();
 					mSelectedDS->setDirty(true);
 					correspondingButton(mSelectedDS)->setDirty(true);

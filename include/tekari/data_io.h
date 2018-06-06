@@ -1,8 +1,7 @@
 #pragma once
 
+#include "common.h"
 #include <string>
-#include <sstream>
-#include <nanogui/opengl.h>
 #include "Metadata.h"
 #include "points_stats.h"
 

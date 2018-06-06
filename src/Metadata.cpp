@@ -20,7 +20,7 @@ Metadata::Metadata()
 
 void Metadata::addLine(const string& line)
 {
-    mRawMetadata.push_back(line.substr(0, line.length()-1));
+    mRawMetadata.push_back(line);
 }
 
 void Metadata::initInfos()
