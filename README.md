@@ -2,6 +2,11 @@
 
 A BSDF-data visualization and editing tool.
 
+## Screenshot
+
+![Screenshot](https://raw.githubusercontent.com/4str0m/tekari/master/resources/tekari_screen.png)
+_A example of workflow with *Tekari*, with multiple files open, some points selected and the color map selection window displayed._
+
 ## Usage
 
 ### Command Line

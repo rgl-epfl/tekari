@@ -6,3 +6,7 @@ TODO SORTED:
 - delete points not threaded
 
 CLEAN EVERYTHING FOR PRESENTATION
+
+README:
+- add screenshots
+- find name of machine
