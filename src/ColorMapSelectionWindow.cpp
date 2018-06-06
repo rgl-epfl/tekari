@@ -22,7 +22,7 @@ ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_p
     mCloseButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
     setLayout(new GroupLayout{});
 
-    new Label{ this, "Available Color Maps :", "sans-bold", 18 };
+    new Label{ this, "Available Color Maps :", "sans-bold" };
     auto colorMapsButtonContainer = new Widget{ this };
     colorMapsButtonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 2, 2 });
 
@@ -30,7 +30,7 @@ ColorMapSelectionWindow::ColorMapSelectionWindow(Widget* parent, vector<shared_p
     {
         new Label{ colorMapsButtonContainer, colorMap->name() };
         auto colorMapButton = new ColorMapButton{ colorMapsButtonContainer, colorMap };
-        colorMapButton->setFixedHeight(10);
+		colorMapButton->setFixedSize(Vector2i{ 40, 10 });
         colorMapButton->setCallback([this](ColorMapButton* colorMapButton) {
             deselectAllColorMapsButton();
             mSelectedColorMapIndex = colorMapButtonIndex(colorMapButton);
@@ -54,6 +54,7 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
     if (Window::keyboardEvent(key, scancode, action, modifiers)) {
         return true;
     }
+
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
     {
         switch (key)
@@ -68,7 +69,9 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
             deselectAllColorMapsButton();
 
             int selectedColorMapIndex = mSelectedColorMapIndex + increment;
-            if (selectedColorMapIndex < 0) selectedColorMapIndex += mColorMapButtons.size();
+            if (selectedColorMapIndex < 0)
+				selectedColorMapIndex += mColorMapButtons.size();
+
             mSelectedColorMapIndex = selectedColorMapIndex % mColorMapButtons.size();
             auto colorMapButton = mColorMapButtons[mSelectedColorMapIndex];
             colorMapButton->setSelected(true);
@@ -77,7 +80,6 @@ bool ColorMapSelectionWindow::keyboardEvent(int key, int scancode, int action, i
         }
         }
     }
-
     return false;
 }
 

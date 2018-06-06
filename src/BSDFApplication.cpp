@@ -152,6 +152,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 			[this](bool checked) {
 			setTheme(checked ? new LightTheme{ nvgContext() } : new Theme{ nvgContext() });
 			setBackground(mTheme->mWindowFillFocused);
+			mHiddenOptionsButton->setBackgroundColor(checked ? Color{ 0.7f, 0.3f, 0.3f, 1.0f } : Color{ 0.4f, 0.1f, 0.1f, 1.0f });
 		});
 
         auto pointSizeLabel = new Label{ hiddenOptionsPopup , "Point Size" };
@@ -164,12 +165,12 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         });
 
         auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };
-        choseColorMapButton->setTooltip("Chose with which color map the data should be displayed (C)");
+        choseColorMapButton->setTooltip("Chose with which color map the data should be displayed (M)");
         choseColorMapButton->setCallback([this]() {
             toggleColorMapSelectionWindow();
         });
 
-		new Label{ hiddenOptionsPopup, "Grid Options", "sans-bold", 18 };
+		new Label{ hiddenOptionsPopup, "Grid Options", "sans-bold" };
 		auto gridColorLabel = new Label{ hiddenOptionsPopup, "Color" };
 		gridColorLabel->setTooltip("Chose in witch color the grid should be displayed");
 		auto colorwheel = new ColorWheel{ hiddenOptionsPopup, mBSDFCanvas->grid().color() };
@@ -193,13 +194,13 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
     // mouse mode
     {
-        new Label{ mToolWindow, "Mouse Mode", "sans-bold", 25};
+        auto mouseModeLabel = new Label{ mToolWindow, "Mouse Mode", "sans-bold"};
+		mouseModeLabel->setTooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
         mMouseModeSelector = new ComboBox{ mToolWindow, {"Rotation", "Translation", "Box Selection"} };
         mMouseModeSelector->setCallback([this](int index) {
             mBSDFCanvas->setMouseMode(static_cast<BSDFCanvas::MouseMode>(index));
             glfwSetCursor(mGLFWWindow, mCursors[index]);
         });
-        mMouseModeSelector->setTooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
 
         mCursors[BSDFCanvas::MouseMode::ROTATE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
         mCursors[BSDFCanvas::MouseMode::TRANSLATE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
@@ -209,7 +210,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
     // grid view otpions
     {
-        auto label = new Label(mToolWindow, "View Options", "sans-bold", 25);
+        auto label = new Label(mToolWindow, "View Options", "sans-bold");
         label->setTooltip(
             "Various view modes. Hover on them to learn what they do."
         );
@@ -233,7 +234,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
         backgroundColorPopupButton->setFontSize(15);
         backgroundColorPopupButton->setChevronIcon(0);
-        backgroundColorPopupButton->setTooltip("Grid Color");
+        backgroundColorPopupButton->setTooltip("Background Color");
 
         // Background color popup
         {
@@ -249,7 +250,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 
     // Open, save screenshot, save data
     {
-        new Label(mToolWindow, "Data Samples", "sans-bold", 25);
+        new Label(mToolWindow, "Data Samples", "sans-bold");
         auto tools = new Widget{ mToolWindow };
         tools->setLayout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
 
@@ -328,15 +329,15 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_P:
                 saveScreenShot();
                 return true;
-            case GLFW_KEY_1: if (!alt) break;
+            case GLFW_KEY_1: if (!alt) return false;
             case GLFW_KEY_KP_1:
                 mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::BACK);
                 return true;
-            case GLFW_KEY_3: if (!alt) break;
+            case GLFW_KEY_3: if (!alt) return false;
             case GLFW_KEY_KP_3:
                 mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::RIGHT);
                 return true;
-            case GLFW_KEY_7: if (!alt) break;
+            case GLFW_KEY_7: if (!alt) return false;
             case GLFW_KEY_KP_7:
                 mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
                 return true;
@@ -405,6 +406,9 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
         {
             switch (key)
             {
+			case GLFW_KEY_F1:
+				hideWindows();
+				return true;
             case GLFW_KEY_ESCAPE:
                 if (mSelectedDS)
                 {
@@ -677,7 +681,8 @@ void BSDFApplication::toggleWindow(Window *& window, function<Window*(void)> cre
     {
         window = createWindow();
         window->requestFocus();
-        requestLayoutUpdate();
+		window->setVisible(!mDistractionFreeMode);
+		requestLayoutUpdate();
     }
 }
 
@@ -998,6 +1003,20 @@ void BSDFApplication::reprintFooter()
 		mDataSamplePointsCount->setCaption("-");
 		mDataSampleAverageHeight->setCaption("-");
 	}
+}
+
+void BSDFApplication::hideWindows()
+{
+	mDistractionFreeMode = !mDistractionFreeMode;
+
+	auto toggleVisibility = [this](Window* w) { if (w) w->setVisible(!mDistractionFreeMode); };
+
+	toggleVisibility(mToolWindow);
+	toggleVisibility(mMetadataWindow);
+	toggleVisibility(mHelpWindow);
+	toggleVisibility(mColorMapSelectionWindow);
+	toggleVisibility(mSelectionInfoWindow);
+	toggleVisibility(mUnsavedDataWindow);
 }
 
 void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)

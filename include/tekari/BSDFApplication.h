@@ -67,6 +67,8 @@ public:
     DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample);
     const DataSampleButton* correspondingButton(const std::shared_ptr<const DataSample> dataSample) const;
 
+	void hideWindows();
+
 private:
     void toggleView(DataSample::Views view, std::shared_ptr<DataSample> dataSample, bool toggle);
     void toggleLogView(std::shared_ptr<DataSample> dataSample);
@@ -85,6 +87,7 @@ private:
 
 private:
     bool mRequiresLayoutUpdate = false;
+	bool mDistractionFreeMode = false;
 
     Window* mToolWindow;
     Widget* m3DView;

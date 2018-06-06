@@ -49,7 +49,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         mScrollPanel->setFixedHeight(500);
 
         auto addShortcutSection = [&scrollContent](const std::string& label, const std::string& tooltip="") {
-            auto l = new Label{ scrollContent, label, "sans-bold", 18 };
+            auto l = new Label{ scrollContent, label, "sans-bold"};
             l->setTooltip(tooltip);
             auto section = new Widget{ scrollContent };
             section->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 0, 0 });
@@ -59,7 +59,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         auto addRow = [](Widget* current, string keys, string desc) {
             auto row = new Widget{ current };
             row->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill, 0, 10 });
-            auto descWidget = new Label{ row, desc, "sans" };
+            auto descWidget = new Label{ row, desc};
             descWidget->setFixedWidth(250);
             new Label{ row, keys, "sans-bold" };
             return descWidget;
@@ -77,8 +77,8 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(moveControls, "C", "Snap To Selection Center");
 
         auto fileLoading = addShortcutSection("File Loading");
-        addRow(fileLoading, COMMAND + "+O", "Open Data Sample");
-        addRow(fileLoading, COMMAND + "+S", "Save Data in obj format");
+        addRow(fileLoading, COMMAND + "+O", "Open Data Samples");
+        addRow(fileLoading, COMMAND + "+S", "Save Data in the same format");
         addRow(fileLoading, COMMAND + "+P", "Save Screenshot of Data");
         addRow(fileLoading, "Delete", "Close Selected Data Sample");
 
@@ -101,6 +101,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addRow(viewOptions, COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Back View");
         addRow(viewOptions, COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Right View");
         addRow(viewOptions, COMMAND + "+KP_7 or " + COMMAND + "+Alt+7", "Bottom View");
+		addRow(viewOptions, "F1", "Show/Hide all the windows (to make screenshots cleaner)");
 
         auto dataSelection = addShortcutSection("Data Sample Selection");
         addRow(dataSelection, "1...9", "Select N-th Data Sample");
