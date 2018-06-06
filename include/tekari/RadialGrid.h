@@ -32,6 +32,9 @@ public:
     const nanogui::Color& color() const { return mColor; }
     void setColor(const nanogui::Color& newColor) { mColor = newColor; }
 
+	const float& alpha() const { return mColor(3); }
+	void setAlpha(float alpha) { mColor(3) = alpha; }
+
 private:
     static constexpr unsigned int CIRCLE_COUNT = 10;
     static constexpr unsigned int VERTEX_PER_CIRCLE_COUNT = 100;

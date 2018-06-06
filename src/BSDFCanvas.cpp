@@ -15,17 +15,16 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-int BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT] =
-{
-    { GLFW_MOUSE_BUTTON_1, GLFW_MOUSE_BUTTON_2, GLFW_MOUSE_BUTTON_3 },
-    { GLFW_MOUSE_BUTTON_2, GLFW_MOUSE_BUTTON_3, GLFW_MOUSE_BUTTON_5 }
-};
-
 const Vector3f BSDFCanvas::VIEW_ORIGIN{ 0, 0, 4 };
 const Vector3f BSDFCanvas::VIEW_UP{ 0, 1, 0 };
 const Vector3f BSDFCanvas::VIEW_RIGHT{ 1, 0, 0 };
 const Matrix4f BSDFCanvas::VIEW{ lookAt(VIEW_ORIGIN, Vector3f{ 0.0f,0.0f,0.0f }, VIEW_UP) };
 
+const int BSDFCanvas::BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT] =
+{
+	{ GLFW_MOUSE_BUTTON_1, GLFW_MOUSE_BUTTON_2, GLFW_MOUSE_BUTTON_3 },
+	{ GLFW_MOUSE_BUTTON_2, GLFW_MOUSE_BUTTON_3, GLFW_MOUSE_BUTTON_5 }
+};
 
 BSDFCanvas::BSDFCanvas(Widget *parent)
 :   GLCanvas(parent)
@@ -108,18 +107,6 @@ bool BSDFCanvas::mouseButtonEvent(const Vector2i &p, int button, bool down, int 
     }
     return false;
 }
-int BSDFCanvas::rotationMouseButton(bool dragging) const
-{
-    return BUTTON_MAPPINGS[dragging][mMouseMode];
-}
-int BSDFCanvas::translationMouseButton(bool dragging) const
-{
-    return BUTTON_MAPPINGS[dragging][(mMouseMode + 2) % MOUSE_MODE_COUNT];
-}
-int BSDFCanvas::selectionMouseButton(bool dragging) const
-{
-    return BUTTON_MAPPINGS[dragging][(mMouseMode + 1) % MOUSE_MODE_COUNT];
-}
 
 bool BSDFCanvas::scrollEvent(const Vector2i &p, const Vector2f &rel)
 {
@@ -156,7 +143,7 @@ void BSDFCanvas::drawGL() {
     Matrix4f proj = getProjectionMatrix();
 
     float pointSizeFactor = (mZoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-    glPointSize(pointSizeFactor * pointSizeFactor * pointSizeFactor * mPointSizeScale);
+    glPointSize(pointSizeFactor * pointSizeFactor * mPointSizeScale);
     for (const auto& dataSample: mDataSamplesToDraw)
     {
         dataSample->drawGL(VIEW_ORIGIN, model, VIEW, proj, mDrawFlags, mColorMap);

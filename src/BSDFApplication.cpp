@@ -27,7 +27,7 @@ using namespace std;
 TEKARI_NAMESPACE_BEGIN
 
 BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths)
-:   Screen(Vector2i(1200, 750), "Tekari", true)
+:   Screen(Vector2i(1200, 750), "Tekari", true, false, 8, 8, 24, 8, 2)
 ,   mSelectedDS(nullptr)
 ,	mMetadataWindow(nullptr)
 ,   mHelpWindow(nullptr)
@@ -145,10 +145,9 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
             [this](bool checked) {
             mBSDFCanvas->setDrawFlag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
         });
-        mDisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
-            [this](bool checked) { mBSDFCanvas->grid().setShowDegrees(checked); }, true);
 
-        new Label{ hiddenOptionsPopup , "Point Size" };
+        auto pointSizeLabel = new Label{ hiddenOptionsPopup , "Point Size" };
+		pointSizeLabel->setTooltip("Changes the point size based on a arbitrary heuristic (also distance dependent)");
         auto pointSizeSlider = new Slider{ hiddenOptionsPopup };
         pointSizeSlider->setRange(make_pair(0.1f, 10.0f));
         pointSizeSlider->setValue(1.0f);
@@ -161,6 +160,27 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         choseColorMapButton->setCallback([this]() {
             toggleColorMapSelectionWindow();
         });
+
+		new Label{ hiddenOptionsPopup, "Grid Options", "sans-bold", 18 };
+		auto gridColorLabel = new Label{ hiddenOptionsPopup, "Color" };
+		gridColorLabel->setTooltip("Chose in witch color the grid should be displayed");
+		auto colorwheel = new ColorWheel{ hiddenOptionsPopup, mBSDFCanvas->grid().color() };
+
+		auto gridAlphaLabel = new Label{ hiddenOptionsPopup, "Alpha" };
+		gridAlphaLabel->setTooltip("Chose the grid transparency (left = fully transparent, right = fully opaque)");
+		auto gridAlphaSlider = new Slider{ hiddenOptionsPopup };
+		gridAlphaSlider->setRange({ 0.0f, 1.0f });
+		gridAlphaSlider->setCallback([this](float value) { mBSDFCanvas->grid().setAlpha(value); });
+
+		gridAlphaSlider->setValue(mBSDFCanvas->grid().alpha());
+
+		colorwheel->setCallback([gridAlphaSlider, this](const Color& value) {
+			mBSDFCanvas->grid().setColor(value);
+			mBSDFCanvas->grid().setAlpha(gridAlphaSlider->value());
+		});
+
+		mDisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
+			[this](bool checked) { mBSDFCanvas->grid().setShowDegrees(checked); }, true);
     }
 
     // mouse mode
@@ -201,43 +221,21 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         mOrthoViewToggle->setChangeCallback([this](bool checked) { mBSDFCanvas->setOrthoMode(checked); });
         mOrthoViewToggle->setPushed(false);
 
-        auto gridColorPopupButton = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
+        auto backgroundColorPopupButton = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
 
-        gridColorPopupButton->setFontSize(15);
-        gridColorPopupButton->setChevronIcon(0);
-        gridColorPopupButton->setTooltip("Grid Color");
+        backgroundColorPopupButton->setFontSize(15);
+        backgroundColorPopupButton->setChevronIcon(0);
+        backgroundColorPopupButton->setTooltip("Grid Color");
 
         // Background color popup
         {
-            auto popup = gridColorPopupButton->popup();
+            auto popup = backgroundColorPopupButton->popup();
             popup->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 10});
 
-            new Label{popup, "Grid Color"};
-            auto colorwheel = new ColorWheel{popup, mBSDFCanvas->grid().color()};
+            new Label{popup, "Background Color"};
+            auto colorwheel = new ColorWheel{popup, mBSDFCanvas->backgroundColor()};
 
-            new Label{popup, "Grid Alpha"};
-            auto gridAlphaSlider = new Slider{popup};
-            gridAlphaSlider->setRange({0.0f, 1.0f});
-            gridAlphaSlider->setCallback([this](float value) {
-                auto col = mBSDFCanvas->grid().color();
-                mBSDFCanvas->grid().setColor(Color{
-                    col.r(),
-                    col.g(),
-                    col.b(),
-                    value,
-                });
-            });
-
-            gridAlphaSlider->setValue(1.0);
-
-            colorwheel->setCallback([gridAlphaSlider, this](const Color& value) {
-                mBSDFCanvas->grid().setColor(Color{
-                    value.r(),
-                    value.g(),
-                    value.b(),
-                    gridAlphaSlider->value(),
-                });
-            });
+            colorwheel->setCallback([this](const Color& value) { mBSDFCanvas->setBackgroundColor(value); });
         }
     }
 

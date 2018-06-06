@@ -31,16 +31,15 @@ DataSample::DataSample()
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
+
     mDrawFunctions[POINTS] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap> colorMap) {
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         mShaders[POINTS].bind();
         colorMap->bind();
         mShaders[POINTS].setUniform("modelViewProj", mvp);
         mShaders[POINTS].setUniform("showAllPoints", mDisplayViews[POINTS]);
         mShaders[POINTS].drawArray(GL_POINTS, 0, mV2D.cols());
-        glDisable(GL_BLEND);
     };
+
     mDrawFunctions[INCIDENT_ANGLE] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
         if (mDisplayViews[INCIDENT_ANGLE])
         {
@@ -94,15 +93,16 @@ void DataSample::drawGL(
         mPredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
         mPredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
     }
-	// Draw the axis if points are selected
-    if (flags & DISPLAY_AXIS && hasSelection())
-        mSelectionAxis.drawGL(mvp);
-
+	// call every draw func
     for (const auto& drawFunc: mDrawFunctions)
         drawFunc(mvp, colorMap);
 
 	// Don't forget to disable depth testing for later opengl draw calls
 	glDisable(GL_DEPTH_TEST);
+
+	// Draw the axis if points are selected
+	if (flags & DISPLAY_AXIS && hasSelection())
+		mSelectionAxis.drawGL(mvp);
 }
 
 void DataSample::initShaders()

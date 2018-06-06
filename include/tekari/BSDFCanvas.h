@@ -36,6 +36,8 @@ private:
     static const Vector3f VIEW_RIGHT;
     static const Matrix4f VIEW;
 
+	static const int BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT];
+
 public:
     BSDFCanvas(nanogui::Widget *parent);
 
@@ -81,9 +83,10 @@ public:
 private:
     SelectionBox getSelectionBox() const;
     Matrix4f getProjectionMatrix() const;
-    int rotationMouseButton(bool dragging) const;
-    int translationMouseButton(bool dragging) const;
-    int selectionMouseButton(bool dragging) const;
+
+    inline int rotationMouseButton(bool dragging)	 const { return BUTTON_MAPPINGS[dragging][mMouseMode]; }
+    inline int translationMouseButton(bool dragging) const { return BUTTON_MAPPINGS[dragging][(mMouseMode + 2) % MOUSE_MODE_COUNT]; }
+    inline int selectionMouseButton(bool dragging)	 const { return BUTTON_MAPPINGS[dragging][(mMouseMode + 1) % MOUSE_MODE_COUNT]; }
 
     // data samples
     std::vector<std::shared_ptr<DataSample>>    mDataSamplesToDraw;
@@ -107,7 +110,6 @@ private:
     // global state for sample display
     int mDrawFlags;
     std::shared_ptr<ColorMap> mColorMap;
-
 };
 
 TEKARI_NAMESPACE_END

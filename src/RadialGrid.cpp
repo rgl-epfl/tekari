@@ -101,7 +101,7 @@ void RadialGrid::draw(  NVGcontext *ctx,
         nvgFontSize(ctx, 15.0f);
         nvgFontFace(ctx, "sans");
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-        nvgFillColor(ctx, Color(1.0f, 0.8f));
+        nvgFillColor(ctx, mColor);
         for (const auto& phiLabel : mPhiLabels)
         {
             Vector4f projectedPoint = projectOnScreen(phiLabel.second, canvasSize, mvp);
