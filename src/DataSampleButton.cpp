@@ -17,7 +17,7 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, shared_ptr<DataSample> dataSample)
+DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, bool isSpectral, unsigned int maxWaveLengthIndex)
 :   Widget{ parent }
 ,   mLabel{ label }
 ,   mDisplayLabel{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
@@ -54,16 +54,16 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, s
     mViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample (Shift + P)", false);
     mViewToggles[DataSample::Views::INCIDENT_ANGLE] = makeViewButton("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
 
-	if (dataSample->isSpectral())
+	if (isSpectral)
 	{
 		auto waveLengthIndexLabel = new Label{ mPopup, "Wave length index : 0", "sans-bold", 18 };
 		auto waveLengthSlider = new Slider{ mPopup };
-		waveLengthSlider->setRange(make_pair(0, dataSample->maxWaveLengthIndex()));
-		waveLengthSlider->setCallback([waveLengthSlider, dataSample, waveLengthIndexLabel](float value) {
+		waveLengthSlider->setRange(make_pair(0, maxWaveLengthIndex));
+		waveLengthSlider->setCallback([this, waveLengthSlider, waveLengthIndexLabel](float value) {
 			unsigned int waveLengthIndex = static_cast<unsigned int>(round(value));
 			waveLengthSlider->setValue(waveLengthIndex);
 			waveLengthIndexLabel->setCaption("Wave length index : " + to_string(waveLengthIndex));
-			dataSample->setWaveLengthIndex(waveLengthIndex);
+			mWaveLengthSliderCallback(waveLengthIndex);
 		});
 	}
 }
@@ -148,9 +148,9 @@ void DataSampleButton::draw(NVGcontext * ctx)
     nvgFontSize(ctx, 18.0f);
     nvgFontFace(ctx, "sans");
     nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-    nvgFillColor(ctx, Color(0.0f, 0.8f));
+    nvgFillColor(ctx, mTheme->mTextColorShadow);
     nvgText(ctx, 5, mSize.y() * 0.5f - 1.0f, label.c_str(), nullptr);
-    nvgFillColor(ctx, Color(1.0f, 0.8f));
+    nvgFillColor(ctx, mTheme->mTextColor);
     nvgText(ctx, 5, mSize.y() * 0.5f, label.c_str(), nullptr);
 
     // font settings for icons

@@ -52,13 +52,13 @@ public:
     void initShaders();
 
     // info accessors
-    inline const std::string name()             const { return mMetadata.sampleName(); }
-    inline const Metadata& metadata()           const { return mMetadata; }
-    inline bool hasSelection()                  const { return mSelectionStats.pointsCount() > 0; }
-    inline const PointsStats& pointsStats()     const { return mPointsStats; }
-    inline const PointsStats& selectionStats()  const { return mSelectionStats; }
-	inline const bool isSpectral()				const { return mMetadata.isSpectral(); }
-	inline const int maxWaveLengthIndex()		const { return mH.size() - 1; }
+    inline const std::string name()					const { return mMetadata.sampleName(); }
+    inline const Metadata& metadata()				const { return mMetadata; }
+    inline bool hasSelection()						const { return mSelectionStats.pointsCount() > 0; }
+    inline const PointsStats& pointsStats()			const { return mPointsStats; }
+    inline const PointsStats& selectionStats()		const { return mSelectionStats; }
+	inline const bool isSpectral()					const { return mMetadata.isSpectral(); }
+	inline const unsigned int maxWaveLengthIndex()	const { return mH.size() - 1; }
 
     inline PointsStats& pointsStats()    { return mPointsStats; }
     inline Metadata& metadata()          { return mMetadata; }

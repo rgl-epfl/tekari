@@ -1,8 +1,9 @@
 #pragma once
 
+#include "common.h"
+
 #include <string>
 #include <vector>
-#include "common.h"
 
 TEKARI_NAMESPACE_BEGIN
 

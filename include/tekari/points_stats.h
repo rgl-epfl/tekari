@@ -1,9 +1,9 @@
 #pragma once
 
+#include "common.h"
+
 #include <nanogui/opengl.h>
 #include <limits>
-
-#include "common.h"
 
 TEKARI_NAMESPACE_BEGIN
 

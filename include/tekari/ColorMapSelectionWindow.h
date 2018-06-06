@@ -1,10 +1,11 @@
 #pragma once
 
+#include "common.h"
+
 #include <nanogui/window.h>
 #include <memory>
 #include <vector>
 
-#include "common.h"
 #include "ColorMap.h"
 #include "ColorMapButton.h"
 

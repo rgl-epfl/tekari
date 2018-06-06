@@ -20,6 +20,9 @@
 #include "tekari/selections.h"
 #include "tekari/raw_data_processing.h"
 #include "tekari/data_io.h"
+#include "tekari/LightTheme.h"
+
+#define FOOTER_HEIGHT 25
 
 using namespace nanogui;
 using namespace std;
@@ -89,7 +92,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
     // Footer
     {
         mFooter = new Widget{ m3DView };
-        mFooter->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill});
+        mFooter->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill, 5});
 
         auto makeFooterInfo = [this](string label) {
             auto container = new Widget{ mFooter };
@@ -145,6 +148,11 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
             [this](bool checked) {
             mBSDFCanvas->setDrawFlag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
         });
+		addHiddenOptionToggle("Use Light Theme", "Switch from dark to light theme",
+			[this](bool checked) {
+			setTheme(checked ? new LightTheme{ nvgContext() } : new Theme{ nvgContext() });
+			setBackground(mTheme->mWindowFillFocused);
+		});
 
         auto pointSizeLabel = new Label{ hiddenOptionsPopup , "Point Size" };
 		pointSizeLabel->setTooltip("Changes the point size based on a arbitrary heuristic (also distance dependent)");
@@ -272,6 +280,8 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
     }
 
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
+
+	setBackground(mTheme->mWindowFillFocused);
 
     requestLayoutUpdate();
     openFiles(dataSamplePaths);
@@ -568,11 +578,11 @@ void BSDFApplication::updateLayout()
 {
     m3DView->setFixedSize(mSize);
 
-    mFooter->setFixedSize(Vector2i{ mSize.x(), 20 });
+    mFooter->setFixedSize(Vector2i{ mSize.x(), FOOTER_HEIGHT });
     for(auto& footerInfos: mFooter->children())
-        footerInfos->setFixedWidth(width() / 3);
+        footerInfos->setFixedWidth(width() / mFooter->children().size());
 
-    mBSDFCanvas->setFixedSize(Vector2i{ mSize.x(), mSize.y() - 20 });
+    mBSDFCanvas->setFixedSize(Vector2i{ mSize.x(), mSize.y() - FOOTER_HEIGHT });
     mToolWindow->setFixedSize({ 210, 400 });
 
     mDataSamplesScrollPanel->setFixedHeight(
@@ -817,10 +827,6 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         button->setSelected(true);
         button->showPopup(true);
 
-        mDataSampleName->setCaption(mSelectedDS->name());
-        mDataSamplePointsCount->setCaption(to_string(mSelectedDS->pointsStats().pointsCount()));
-        mDataSampleAverageHeight->setCaption(to_string(mSelectedDS->averageIntensity()));
-
 		int buttonAbsY = button->absolutePosition()[1];
 		int scrollAbsY = mDataSamplesScrollPanel->absolutePosition()[1];
 		int buttonH = button->height();
@@ -837,12 +843,7 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 		}
 		mDataSamplesScrollPanel->setScroll(scroll);
     }
-    else
-    {
-        mDataSampleName->setCaption("-");
-        mDataSamplePointsCount->setCaption("-");
-        mDataSampleAverageHeight->setCaption("-");
-    }
+	reprintFooter();
 
     requestLayoutUpdate();
 }
@@ -890,12 +891,16 @@ void BSDFApplication::addDataSample(shared_ptr<DataSample> dataSample)
 
     string cleanName = dataSample->name();
     replace(cleanName.begin(), cleanName.end(), '_', ' ');
-    auto dataSampleButton = new DataSampleButton(mDataSampleButtonContainer, cleanName, dataSample);
+	auto dataSampleButton = new DataSampleButton{ mDataSampleButtonContainer, cleanName,
+		dataSample->isSpectral(), dataSample->maxWaveLengthIndex() };
     dataSampleButton->setFixedHeight(30);
 
-    dataSampleButton->setCallback([this, dataSample]() {
-        selectDataSample(dataSample);
-    });
+    dataSampleButton->setCallback([this, dataSample]() { selectDataSample(dataSample); });
+
+	dataSampleButton->setWaveLengthSliderCallback([this, dataSample](unsigned int waveLengthIndex) {
+		dataSample->setWaveLengthIndex(waveLengthIndex);
+		reprintFooter();
+	});
 
     dataSampleButton->setDeleteCallback([this, dataSample]() {
 		if (dataSample->dirty())
@@ -977,6 +982,22 @@ void BSDFApplication::toggleCanvasDrawFlags(int flag, CheckBox *checkbox)
     int flags = mBSDFCanvas->drawFlags() ^ flag;
     checkbox->setChecked(static_cast<bool>(flags & flag));
     mBSDFCanvas->setDrawFlags(flags);
+}
+
+void BSDFApplication::reprintFooter()
+{
+	if (mSelectedDS)
+	{
+		mDataSampleName->setCaption(mSelectedDS->name());
+		mDataSamplePointsCount->setCaption(to_string(mSelectedDS->pointsStats().pointsCount()));
+		mDataSampleAverageHeight->setCaption(to_string(mSelectedDS->averageIntensity()));
+	}
+	else
+	{
+		mDataSampleName->setCaption("-");
+		mDataSamplePointsCount->setCaption("-");
+		mDataSampleAverageHeight->setCaption("-");
+	}
 }
 
 void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)

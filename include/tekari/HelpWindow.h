@@ -1,10 +1,10 @@
 #pragma once
 
+#include "common.h"
+
 #include <nanogui/window.h>
 #include <string>
 #include <iostream>
-
-#include "common.h"
 
 TEKARI_NAMESPACE_BEGIN
 

@@ -1,10 +1,11 @@
 #pragma once
 
+#include "common.h"
+
 #include <nanogui/screen.h>
 #include <memory>
 #include <thread>
 
-#include "common.h"
 #include "BSDFCanvas.h"
 #include "DataSampleButton.h"
 #include "MetadataWindow.h"
@@ -79,6 +80,8 @@ private:
     void tryLoadDataSample(std::string filePath, std::shared_ptr<DataSampleToAdd> dataSampleToAdd);
 
     void toggleCanvasDrawFlags(int flag, CheckBox *checkbox);
+
+	void reprintFooter();
 
 private:
     bool mRequiresLayoutUpdate = false;
