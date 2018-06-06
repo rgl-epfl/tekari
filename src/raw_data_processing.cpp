@@ -9,6 +9,7 @@
 TEKARI_NAMESPACE_BEGIN
 
 #define MAX_SAMPLING_DISTANCE 0.05f
+#define CORRECTION_FACTOR 1e-5
 
 using namespace std;
 using namespace nanogui;
@@ -155,7 +156,7 @@ void compute_normalized_heights(
         float max_intensity = pointsStats.maxIntensity(j);
         float correction_factor = 0.0f;
         if (min_intensity <= 0.0f)
-            correction_factor = -min_intensity + 1e-10f;
+            correction_factor = -min_intensity + CORRECTION_FACTOR;
         float min_log_intensity = log(min_intensity + correction_factor);
         float max_log_intensity = log(max_intensity);
 
