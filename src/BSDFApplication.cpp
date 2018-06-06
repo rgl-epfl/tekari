@@ -635,16 +635,27 @@ void BSDFApplication::saveSelectedDataSample()
 
 void BSDFApplication::saveScreenShot()
 {
-    if (mFramebuffer.ready())
-    {
-        mFramebuffer.free();
-    }
-    mFramebuffer.init((int)mPixelRatio*mBSDFCanvas->size(), 1);
-    glViewport(0, 0, mPixelRatio*mBSDFCanvas->size()[0], mPixelRatio*mBSDFCanvas->size()[1]);
-    mFramebuffer.bind();
-    mBSDFCanvas->draw(nvgContext());
-    mFramebuffer.downloadTGA("test.tga");
-    mFramebuffer.release();
+	string screenshotName = file_dialog(
+	{
+		{ "tga", "TGA images" }
+	}, true);
+
+	if (screenshotName.empty())
+		return;
+		
+	if (mFramebuffer.ready())
+	{
+		mFramebuffer.free();
+	}
+	int viewPortWidth = static_cast<int>(mPixelRatio * width());
+	int viewPortHeight = static_cast<int>(mPixelRatio * height());
+	mFramebuffer.init(Vector2i{ viewPortWidth, viewPortHeight }, 1);
+	glViewport(0, 0, viewPortWidth, viewPortHeight);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	mFramebuffer.bind();
+	drawAll();
+	mFramebuffer.downloadTGA(screenshotName);
+	mFramebuffer.release();
 }
 
 void BSDFApplication::toggleWindow(Window *& window, function<Window*(void)> createWindow)
