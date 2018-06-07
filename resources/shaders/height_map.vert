@@ -6,6 +6,7 @@ uniform mat4 model;
 in vec3 in_normal;
 in vec2 in_pos2d;
 in float in_height;
+in int in_selected;
 
 out float height;
 out vec3 position;
