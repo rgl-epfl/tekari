@@ -9,4 +9,3 @@ CLEAN EVERYTHING FOR PRESENTATION
 
 README:
 - find name of machine
-- change datasample button color

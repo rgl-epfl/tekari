@@ -17,6 +17,7 @@
 #include <bitset>
 #include <string>
 
+#include "stb_image.h"
 #include "tekari/selections.h"
 #include "tekari/raw_data_processing.h"
 #include "tekari/data_io.h"
@@ -273,6 +274,39 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
     setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
 
 	setBackground(mTheme->mWindowFillFocused);
+
+	// load application icon
+	{
+		constexpr unsigned int icon_count = 5;
+		const char* icon_paths[icon_count] =
+		{
+			"../resources/icons/tekari_icon_16x16.png",
+			"../resources/icons/tekari_icon_32x32.png",
+			"../resources/icons/tekari_icon_64x64.png",
+			"../resources/icons/tekari_icon_128x128.png",
+			"../resources/icons/tekari_icon_256x256.png"
+		};
+
+		GLFWimage icons[icon_count];
+		unsigned int i;
+		for (i = 0; i < icon_count; i++)
+		{
+			int numChanels;
+			icons[i].pixels = stbi_load(icon_paths[i], &icons[i].width, &icons[i].height, &numChanels, 0);
+			if (!icons[i].pixels)
+			{
+				cout << "Warning : unable to load Tekari's icons\n";
+				break;
+			}
+		}
+		if (i == icon_count)
+			glfwSetWindowIcon(mGLFWWindow, icon_count, icons);
+
+		for (unsigned int j = 0; j < i; j++)
+		{
+			stbi_image_free(icons[j].pixels);
+		}
+	}
 
     requestLayoutUpdate();
     openFiles(dataSamplePaths);

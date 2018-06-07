@@ -1,5 +1,7 @@
 #include "tekari/ColorMap.h"
 
+#include "stb_image.h"
+
 using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
@@ -46,6 +48,7 @@ ColorMap::ColorMap(const string& name, const string& filePath)
     }
     if (h != 1)
     {
+		stbi_image_free(data);
         throw runtime_error("Wrong color map format " + filePath + " (height should be 1)");
     }
     GLenum format = GL_RGB;

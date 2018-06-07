@@ -133,6 +133,7 @@ add_executable(tekari
   "include/tekari/SharedQueue.h"
   "include/tekari/common.h"
   "include/tekari/stop_watch.h"
+  tekari.rc
   )
 
 add_definitions(${NANOGUI_EXTRA_DEFS})

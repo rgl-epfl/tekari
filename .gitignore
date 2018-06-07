@@ -2,6 +2,7 @@ Makefile
 *.cmake
 .DS_Store
 build/
+resources/screenshots/
 CMakeCache.txt
 TODO.md
 im

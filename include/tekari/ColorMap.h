@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.h"
-#include "stb_image.h"
 
 TEKARI_NAMESPACE_BEGIN
 
