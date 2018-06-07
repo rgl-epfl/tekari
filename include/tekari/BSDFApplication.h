@@ -49,9 +49,10 @@ public:
     void saveSelectedDataSample();
 
     void toggleWindow(Window* &window, std::function<Window*(void)> createWindow);
-    void toggleMetadataWindow();
+	void toggleMetadataWindow();
     void toggleHelpWindow();
 	void toggleSelectionInfoWindow();
+	void updateSelectionInfoWindow();
 	void toggleUnsavedDataWindow(const std::vector<std::string>& dataSampleNames, std::function<void(void)> continueCallback);
     void toggleColorMapSelectionWindow();
     

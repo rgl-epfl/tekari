@@ -47,11 +47,12 @@ extern void select_closest_point(
 	const Vector2i & canvasSize
 );
 
-extern void select_highest_point(
+extern void select_extreme_point(
 	const PointsStats &pointsInfo,
 	const PointsStats &selectionInfo,
 	VectorXu8 &selectedPoints,
-	unsigned int waveLengthIndex
+	unsigned int waveLengthIndex,
+	bool highest
 );
 
 extern void select_all_points(VectorXu8 &selectedPoints);

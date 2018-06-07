@@ -53,8 +53,6 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
     mBSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
     mBSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const SelectionBox& selectionBox,
         const Vector2i& canvasSize, SelectionMode mode) {
-        if (mSelectionInfoWindow) toggleSelectionInfoWindow(); // first disable the selection window
-
 		if (!mSelectedDS)
 			return;
         
@@ -71,7 +69,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
                             mvp, selectionBox, canvasSize, mode);
         }
 		mSelectedDS->updatePointSelection();
-		toggleSelectionInfoWindow();
+		updateSelectionInfoWindow();
     });
     mBSDFCanvas->setColorMap(mColorMaps[0]);
 
@@ -346,8 +344,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
 
                 select_all_points(mSelectedDS->selectedPoints());
                 mSelectedDS->updatePointSelection();
-                if (mSelectionInfoWindow) toggleSelectionInfoWindow();
-                toggleSelectionInfoWindow();
+				updateSelectionInfoWindow();
                 return true;
             case GLFW_KEY_P:
                 saveScreenShot();
@@ -391,19 +388,27 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                     toggleView(DataSample::Views::INCIDENT_ANGLE, mSelectedDS, !mSelectedDS->displayView(DataSample::Views::INCIDENT_ANGLE));
                     return true;
                 case GLFW_KEY_H:
-					if (!mSelectedDS)
+				case GLFW_KEY_L:
+					if (!mSelectedDS || mSelectedDS->selectionStats().pointsCount() <= 1)
 						return false;
                     
-					select_highest_point( mSelectedDS->pointsStats(),
+					select_extreme_point( mSelectedDS->pointsStats(),
                                             mSelectedDS->selectionStats(),
                                             mSelectedDS->selectedPoints(),
-                                            mSelectedDS->waveLengthIndex());
+                                            mSelectedDS->waveLengthIndex(),
+											key == GLFW_KEY_H);
                     mSelectedDS->updatePointSelection();
-                    // if selection window already visible, hide it
-                    if(mSelectionInfoWindow) toggleSelectionInfoWindow();
-                    // show selection window
-                    toggleSelectionInfoWindow();
+					updateSelectionInfoWindow();
                     return true;
+				case GLFW_KEY_1:
+				case GLFW_KEY_2:
+					if (!mSelectedDS || !mSelectedDS->hasSelection())
+						return false;
+
+					move_selection_along_path(key == GLFW_KEY_1, mSelectedDS->selectedPoints());
+					mSelectedDS->updatePointSelection();
+					updateSelectionInfoWindow();
+					return true;
                 default:
                     return false;
             }
@@ -434,12 +439,12 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
 				hideWindows();
 				return true;
             case GLFW_KEY_ESCAPE:
-				if (!mSelectedDS)
+				if (!mSelectedDS || !mSelectedDS->hasSelection())
 					return false;
                  
 				deselect_all_points(mSelectedDS->selectedPoints());
                 mSelectedDS->updatePointSelection();
-                if (mSelectionInfoWindow) toggleSelectionInfoWindow();
+				updateSelectionInfoWindow();
                 return true;
             case GLFW_KEY_Q:
 			{
@@ -488,8 +493,9 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
 				mSelectedDS->setDirty(true);
 				correspondingButton(mSelectedDS)->setDirty(true);
 
-                if (mSelectionInfoWindow) toggleSelectionInfoWindow();
-                selectDataSample(mSelectedDS);
+				reprintFooter();
+				updateSelectionInfoWindow();
+				requestLayoutUpdate();
                 return true;
             case GLFW_KEY_UP: case GLFW_KEY_W:
                 selectDataSample(selectedDataSampleIndex() - 1, false);
@@ -550,15 +556,12 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                 return true;
             case GLFW_KEY_KP_ADD:
             case GLFW_KEY_KP_SUBTRACT:
-				if (!mSelectedDS)
+				if (!mSelectedDS || !mSelectedDS->hasSelection())
 					return false;
 
                 move_selection_along_path(key == GLFW_KEY_KP_ADD, mSelectedDS->selectedPoints());
                 mSelectedDS->updatePointSelection();
-                // if selection window already visible, hide it
-                if (mSelectionInfoWindow) toggleSelectionInfoWindow();
-                // show selection window
-                toggleSelectionInfoWindow();
+				updateSelectionInfoWindow();
                 return true;
             default:
                 return false;
@@ -724,6 +727,12 @@ void BSDFApplication::toggleMetadataWindow()
     });
 }
 
+void BSDFApplication::updateSelectionInfoWindow()
+{
+	if (mSelectionInfoWindow) toggleSelectionInfoWindow();
+	toggleSelectionInfoWindow();
+}
+
 void BSDFApplication::toggleSelectionInfoWindow()
 {
 	// if we are trying to toggle the selection window without a selection, just return
@@ -827,6 +836,10 @@ void BSDFApplication::selectDataSample(int index, bool clamped)
 
 void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
 {
+	// if we select the same data sample, nothing to do
+	if (dataSample == mSelectedDS)
+		return;
+
     // de-select previously selected button
     if (mSelectedDS)
     {
@@ -834,13 +847,12 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
         oldButton->setSelected(false);
         oldButton->showPopup(false);
     }
-
+	
     mSelectedDS = dataSample;
     mBSDFCanvas->selectDataSample(dataSample);
 
 	reprintFooter();
-	if (mSelectionInfoWindow) toggleSelectionInfoWindow(); // first disable it
-	toggleSelectionInfoWindow();
+	updateSelectionInfoWindow();
 	requestLayoutUpdate();
 
 	if (!mSelectedDS) // if no data sample is selected, we can stop there
@@ -848,7 +860,6 @@ void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
  
 	auto button = correspondingButton(mSelectedDS);
     button->setSelected(true);
-    button->showPopup(true);
 
 	int buttonAbsY = button->absolutePosition()[1];
 	int scrollAbsY = mDataSamplesScrollPanel->absolutePosition()[1];

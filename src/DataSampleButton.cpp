@@ -91,6 +91,7 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
         }
         else if (mCallback)
         {
+			mPopup->setVisible(!mPopup->visible());
             mCallback();
             return true;
         }
@@ -120,9 +121,6 @@ bool DataSampleButton::mouseMotionEvent(const Vector2i &p, const Vector2i &rel, 
 
 void DataSampleButton::draw(NVGcontext * ctx)
 {
-    if (!window()->focused() && !mPopup->focused())
-        mPopup->setVisible(false);
-
     Color fillColor =	mSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) :
 						mMouseFocus ? mTheme->mButtonGradientTopFocused :
 						mTheme->mButtonGradientTopUnfocused;

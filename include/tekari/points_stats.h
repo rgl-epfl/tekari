@@ -19,7 +19,8 @@ public:
     float           averageIntensity    (unsigned int waveLengthIndex) const { return mAverageRawPoint(waveLengthIndex + 2); }
     float           minIntensity        (unsigned int waveLengthIndex) const { return mMinIntensity(waveLengthIndex); }
     float           maxIntensity        (unsigned int waveLengthIndex) const { return mMaxIntensity(waveLengthIndex); }
-    unsigned int    highestPointIndex   (unsigned int waveLengthIndex) const { return mHighestPointIndex(waveLengthIndex); }
+	unsigned int    highestPointIndex	(unsigned int waveLengthIndex) const { return mHighestPointIndex(waveLengthIndex); }
+	unsigned int    lowestPointIndex	(unsigned int waveLengthIndex) const { return mLowestPointIndex(waveLengthIndex); }
 
     void addIntensity(unsigned int index, const VectorXf &rawPoint);
 private:

@@ -97,21 +97,29 @@ void select_closest_point(
     END_PROFILING();
 }
 
-void select_highest_point(
+void select_extreme_point(
     const PointsStats &pointsInfo,
     const PointsStats &selectionInfo,
     VectorXu8 &selectedPoints,
-    unsigned int waveLengthIndex
+    unsigned int waveLengthIndex,
+	bool highest
 )
 {
-    START_PROFILING("Selecting highest point");
-    int highestPointIndex = selectionInfo.pointsCount() == 0 ?
-                            pointsInfo.highestPointIndex(waveLengthIndex) :
-                            selectionInfo.highestPointIndex(waveLengthIndex);
+    START_PROFILING("Selecting extreme point");
+	bool noSelection = selectionInfo.pointsCount() == 0;
+    int pointIndex = 
+		(highest ? 
+			(noSelection ?
+				pointsInfo.highestPointIndex(waveLengthIndex)
+				: selectionInfo.highestPointIndex(waveLengthIndex))
+			: (noSelection ?
+				pointsInfo.lowestPointIndex(waveLengthIndex)
+				: selectionInfo.lowestPointIndex(waveLengthIndex)));
 
     deselect_all_points(selectedPoints);
-    selectedPoints(highestPointIndex) = 1;
-    END_PROFILING();
+    selectedPoints(pointIndex) = 1;
+
+	END_PROFILING();
 }
 
 void select_all_points(VectorXu8 &selectedPoints)
