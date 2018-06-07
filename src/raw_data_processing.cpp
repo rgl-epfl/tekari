@@ -155,11 +155,10 @@ void compute_normalized_heights(
         // normalize intensities
         float min_intensity = pointsStats.minIntensity(j);
         float max_intensity = pointsStats.maxIntensity(j);
-        float correction_factor = 0.0f;
-        if (min_intensity <= 0.0f)
-            correction_factor = -min_intensity + CORRECTION_FACTOR;
+		float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
+
         float min_log_intensity = log(min_intensity + correction_factor);
-        float max_log_intensity = log(max_intensity);
+        float max_log_intensity = log(max_intensity + correction_factor);
 
         tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)rawPoints.cols(), GRAIN_SIZE),
             [&](const tbb::blocked_range<uint32_t> &range)
