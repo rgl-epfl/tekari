@@ -8,5 +8,5 @@ TODO SORTED:
 CLEAN EVERYTHING FOR PRESENTATION
 
 README:
-- add screenshots
 - find name of machine
+- change datasample button color

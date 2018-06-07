@@ -1,9 +1,11 @@
 #include "tekari/ColorMap.h"
 
+using namespace std;
+
 TEKARI_NAMESPACE_BEGIN
 
-const std::string ColorMap::FOLDER_PATH = "../resources/color_maps/";
-const std::vector<std::pair<const std::string, const std::string>> ColorMap::PREDEFINED_MAPS =
+const string ColorMap::FOLDER_PATH = "../resources/color_maps/";
+const vector<pair<const string, const string>> ColorMap::PREDEFINED_MAPS =
 {
     { "Jet",            "jet.png" },
     { "BRG",            "brg.png" },
@@ -24,7 +26,7 @@ const std::vector<std::pair<const std::string, const std::string>> ColorMap::PRE
     { "Terrain",        "terrain.png" },
 };
 
-ColorMap::ColorMap(const std::string& name, const std::string& filePath)
+ColorMap::ColorMap(const string& name, const string& filePath)
 :   mName(name)
 {
     glGenTextures(1, &mRenderId);
@@ -40,11 +42,11 @@ ColorMap::ColorMap(const std::string& name, const std::string& filePath)
     unsigned char* data = stbi_load(filePath.c_str(), &w, &h, &numChanels, 0);
     if (!data)
     {
-        throw std::runtime_error("Unable to open color map " + filePath);
+        throw runtime_error("Unable to open color map " + filePath);
     }
     if (h != 1)
     {
-        throw std::runtime_error("Wrong color map format " + filePath + " (height should be 1)");
+        throw runtime_error("Wrong color map format " + filePath + " (height should be 1)");
     }
     GLenum format = GL_RGB;
     if (numChanels == 3) format = GL_RGB;

@@ -139,7 +139,12 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         mUseShadowsCheckbox = addHiddenOptionToggle("Shadows", "Enable/Disable shadows (Shift+S)",
             [this](bool checked) {
             mBSDFCanvas->setDrawFlag(USES_SHADOWS, checked);
+			mUseSpecularCheckbox->setEnabled(checked);
         }, true);
+		mUseSpecularCheckbox = addHiddenOptionToggle("Specular", "Enable/Disable specular lighting",
+			[this](bool checked) {
+			mBSDFCanvas->setDrawFlag(USES_SPECULAR, checked);
+		}, false);
         mDisplayCenterAxis = addHiddenOptionToggle("Center Axis", "Show/Hide Center Axis (A)",
             [this](bool checked) {
             mBSDFCanvas->setDrawFlag(DISPLAY_AXIS, checked);
@@ -352,6 +357,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             {
                 case GLFW_KEY_S:
                     toggleCanvasDrawFlags(USES_SHADOWS, mUseShadowsCheckbox);
+					mUseSpecularCheckbox->setEnabled(mUseShadowsCheckbox->checked());
                     return true;
                 case GLFW_KEY_G:
                 {
@@ -613,6 +619,7 @@ void BSDFApplication::openDataSampleDialog()
     openFiles(dataSamplePaths);
     // Make sure we gain focus after seleting a file to be loaded.
     glfwFocusWindow(mGLFWWindow);
+	requestLayoutUpdate();
 }
 
 void BSDFApplication::openFiles(const std::vector<std::string>& dataSamplePaths)

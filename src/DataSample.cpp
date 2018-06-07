@@ -82,7 +82,8 @@ void DataSample::drawGL(
     mMeshShader.setUniform("modelViewProj", mvp);
     mMeshShader.setUniform("model", model);
     mMeshShader.setUniform("view", viewOrigin);
-    mMeshShader.setUniform("useShadows", flags & USES_SHADOWS);
+	mMeshShader.setUniform("useShadows", flags & USES_SHADOWS);
+	mMeshShader.setUniform("useSpecular", flags & USES_SPECULAR);
     mMeshShader.drawIndexed(GL_TRIANGLES, 0, mF.cols());
     glDisable(GL_POLYGON_OFFSET_FILL);
 

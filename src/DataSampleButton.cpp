@@ -123,7 +123,9 @@ void DataSampleButton::draw(NVGcontext * ctx)
     if (!window()->focused() && !mPopup->focused())
         mPopup->setVisible(false);
 
-    Color fillColor = mSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) : Color(mMouseFocus ? 0.7f : 0.6f, 1.0f);
+    Color fillColor =	mSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) :
+						mMouseFocus ? mTheme->mButtonGradientTopFocused :
+						mTheme->mButtonGradientTopUnfocused;
     float deleteButtonFillOpacity = mDeleteButtonHovered ? 0.4f : 0.2f;
     float toggleViewButtonFillOpacity = mToggleViewButtonHovered ? 0.4f : mVisible ? 0.5f : 0.2f;
 

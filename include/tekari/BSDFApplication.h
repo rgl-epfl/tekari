@@ -93,7 +93,8 @@ private:
     Widget* m3DView;
 
     PopupButton* mHiddenOptionsButton;
-    CheckBox* mUseShadowsCheckbox;
+	CheckBox* mUseShadowsCheckbox;
+	CheckBox* mUseSpecularCheckbox;
     CheckBox* mDisplayCenterAxis;
     CheckBox* mDisplayDegreesCheckbox;
     CheckBox* mDisplayPredictedOutgoingAngleCheckbox;
