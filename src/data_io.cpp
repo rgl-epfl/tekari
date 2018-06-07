@@ -199,7 +199,11 @@ void save_data_sample(
     //!feof(datasetFile) && !ferror(datasetFile))
     for (Eigen::Index i = 0; i < rawPoints.cols(); ++i)
     {
-        fprintf(datasetFile, "%lf %lf %lf\n", rawPoints(0, i), rawPoints(1, i), rawPoints(2, i));
+		for (Eigen::Index j = 0; j < rawPoints.rows(); ++j)
+		{
+			fprintf(datasetFile, "%lf ", rawPoints(j, i));
+		}
+		fprintf(datasetFile, "\n");
     }
     fclose(datasetFile);
     END_PROFILING();

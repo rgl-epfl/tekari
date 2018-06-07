@@ -271,10 +271,6 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
         mDataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
-    setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
-
-	setBackground(mTheme->mWindowFillFocused);
-
 	// load application icon
 	{
 		constexpr unsigned int icon_count = 5;
@@ -307,6 +303,10 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths
 			stbi_image_free(icons[j].pixels);
 		}
 	}
+
+	setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
+	
+	setBackground(mTheme->mWindowFillFocused);
 
     requestLayoutUpdate();
     openFiles(dataSamplePaths);
@@ -444,7 +444,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             case GLFW_KEY_Q:
 			{
 				vector<string> dsNames;
-				for (const auto& ds: mDataSamples)
+				for (const auto& ds : mDataSamples)
 				{
 					if (ds->dirty())
 					{
@@ -453,8 +453,8 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
 				}
 				if (dsNames.empty()) setVisible(false);
 				else toggleUnsavedDataWindow(dsNames, [this]() { setVisible(false); });
-                return true;
 			}
+				return true;
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
             case GLFW_KEY_6: case GLFW_KEY_7: case GLFW_KEY_8: case GLFW_KEY_9:
                 selectDataSample(key - GLFW_KEY_1);
@@ -770,10 +770,9 @@ void BSDFApplication::toggleUnsavedDataWindow(const vector<string>& dataSampleNa
 			errorMsg.str(), "Cancel", "Continue", true };
 
 		window->setCallback([this, continueCallback](int i) {
-			if (i == 0)
-				mUnsavedDataWindow = nullptr;
-			else
+			if (i != 0)
 				continueCallback();
+			mUnsavedDataWindow = nullptr;
 		});
 		window->center();
 		return window;

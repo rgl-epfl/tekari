@@ -40,12 +40,17 @@ void Metadata::initInfos()
         make_pair("#theta_in", [this](const string &keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &mInTheta); }),
         make_pair("#datapoints_in_file", [this](const string &keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%d", &mPointsInFile); }),
         make_pair("#sample_name", [this](const string &, const string* line) { mSampleName = stripQuoteMarks(line->substr(13)); }),
+		make_pair("sample_name=", [this](const string &keyword, const string* line) {
+			size_t pos = line->find(keyword);	// we know this will work
+			mSampleName = stripQuoteMarks(line->substr(pos + keyword.length(), line->length()));
+		}),
     };
 
     for (const auto& p : parsingFuncs)
     {
-        if ((line = findLineStartingWith(p.first)) != nullptr)
-            p.second(p.first, line);
+		if ((line = findLineStartingWith(p.first))	!= nullptr ||
+			(line = findLineContaining(p.first))	!= nullptr)
+			p.second(p.first, line);
     }
 
     if (mIsSpectral) {
