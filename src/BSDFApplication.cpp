@@ -628,12 +628,12 @@ void BSDFApplication::updateLayout()
 
 void BSDFApplication::openDataSampleDialog()
 {
-    vector<string> dataSamplePaths = file_dialog({{"txt",  "Data samples"}}, false, true);
-    openFiles(dataSamplePaths);
-
-    // Make sure we gain focus after seleting a file to be loaded.
-	glfwFocusWindow(mGLFWWindow);
-	requestLayoutUpdate();
+	mThreadPool.addTask([this]() {
+		vector<string> dataSamplePaths = file_dialog({ { "txt",  "Data samples" } }, false, true);
+		openFiles(dataSamplePaths);
+		// Make sure we gain focus after seleting a file to be loaded.
+		glfwFocusWindow(mGLFWWindow);
+	});
 }
 
 void BSDFApplication::openFiles(const std::vector<std::string>& dataSamplePaths)
