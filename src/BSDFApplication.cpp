@@ -389,7 +389,7 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
                     return true;
                 case GLFW_KEY_H:
 				case GLFW_KEY_L:
-					if (!mSelectedDS || mSelectedDS->selectionStats().pointsCount() <= 1)
+					if (!mSelectedDS)
 						return false;
                     
 					select_extreme_point( mSelectedDS->pointsStats(),
@@ -628,12 +628,12 @@ void BSDFApplication::updateLayout()
 
 void BSDFApplication::openDataSampleDialog()
 {
-    vector<string> dataSamplePaths = file_dialog({{"txt",  "Data samples"}}, false, true);
-    openFiles(dataSamplePaths);
-
-    // Make sure we gain focus after seleting a file to be loaded.
-	glfwFocusWindow(mGLFWWindow);
-	requestLayoutUpdate();
+	mThreadPool.addTask([this]() {
+		vector<string> dataSamplePaths = file_dialog({ { "txt",  "Data samples" } }, false, true);
+		openFiles(dataSamplePaths);
+		// Make sure we gain focus after seleting a file to be loaded.
+		glfwFocusWindow(mGLFWWindow);
+	});
 }
 
 void BSDFApplication::openFiles(const std::vector<std::string>& dataSamplePaths)

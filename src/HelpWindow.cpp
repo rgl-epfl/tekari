@@ -170,6 +170,7 @@ HelpWindow::HelpWindow(Widget *parent, function<void()> closeCallback)
         addLibrary(about, "GLFW", "", "OpenGL Desktop Development Library.");
         addLibrary(about, "NanoGUI", "", "Small Widget Library for OpenGL.");
         addLibrary(about, "NanoVG", "", "Small Vector Graphics Library.");
+        addLibrary(about, "Triangle", "", "C Delaunay Triangulator.");
     }
 
     tabWidget->setActiveTab(0);
