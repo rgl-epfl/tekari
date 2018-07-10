@@ -1,6 +1,3 @@
-[submodule "nanogui"]
-	path = ext/nanogui
-	url = https://github.com/wjakob/nanogui.git
 [submodule "ext/tbb"]
 	path = ext/tbb
 	url = https://github.com/wjakob/tbb.git
