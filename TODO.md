@@ -1,11 +1,18 @@
 TODO SORTED:
-- spectral data/loading
-- GLFrameBuffer: how to write to it (look at instant meshes for framebuffers)
 - integrate intensities for spectral data
-- make faster where possible
 - delete points not threaded
-
-CLEAN EVERYTHING FOR PRESENTATION
 
 README:
 - find name of machine
+
+## An Adaptive Parameterization for Efficient Material Acquisition and Rendering
+
+
+
+## Web integration
+emscripten
+
+
+([\l]+)(\u)([\w]*)\(
+\1_\l\2\3(
+

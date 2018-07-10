@@ -4,3 +4,6 @@
 [submodule "ext/triangle"]
 	path = ext/triangle
 	url = https://github.com/libigl/triangle.git
+[submodule "ext/nanogui"]
+	path = ext/nanogui
+	url = https://github.com/mitsuba-renderer/nanogui.git
