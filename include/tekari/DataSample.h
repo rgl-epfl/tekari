@@ -13,9 +13,9 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-#define USES_SHADOWS					 (1 << 0)
-#define USES_SPECULAR					 (1 << 1)
-#define DISPLAY_AXIS					 (1 << 2)
+#define USES_SHADOWS                     (1 << 0)
+#define USES_SPECULAR                     (1 << 1)
+#define DISPLAY_AXIS                     (1 << 2)
 #define DISPLAY_PREDICTED_OUTGOING_ANGLE (1 << 3)
 
 class DataSample
@@ -38,103 +38,103 @@ public:
     DataSample& operator=(const DataSample&) = delete;
     DataSample& operator=(DataSample&&) = default;
 
-    void drawGL(const Vector3f& viewOrigin,
+    void draw_gl(const Vector3f& view_origin,
                 const Matrix4f& model,
                 const Matrix4f& view,
                 const Matrix4f& proj,
                 int flags,
-                std::shared_ptr<ColorMap> colorMap);
+                std::shared_ptr<ColorMap> color_map);
 
-    void toggleLogView();
-    inline void toggleView(Views view, bool toggle) { mDisplayViews[view] = toggle; }
-    inline bool displayView(Views view) const { return mDisplayViews[view]; }
+    void toggle_log_view();
+    inline void toggle_view(Views view, bool toggle) { m_display_views[view] = toggle; }
+    inline bool display_view(Views view) const { return m_display_views[view]; }
 
-    void linkDataToShaders();
-    void initShaders();
+    void link_data_to_shaders();
+    void init_shaders();
 
     // info accessors
-    inline const std::string name()					const { return mMetadata.sampleName(); }
-    inline const Metadata& metadata()				const { return mMetadata; }
-    inline bool hasSelection()						const { return mSelectionStats.pointsCount() > 0; }
-    inline const PointsStats& pointsStats()			const { return mPointsStats; }
-    inline const PointsStats& selectionStats()		const { return mSelectionStats; }
-	inline const bool isSpectral()					const { return mMetadata.isSpectral(); }
-	inline const unsigned int maxWaveLengthIndex()	const { return mH.size() - 1; }
+    inline const std::string name()                    const { return m_metadata.sample_name(); }
+    inline const Metadata& metadata()                const { return m_metadata; }
+    inline bool has_selection()                        const { return m_selection_stats.points_count() > 0; }
+    inline const PointsStats& points_stats()            const { return m_points_stats; }
+    inline const PointsStats& selection_stats()        const { return m_selection_stats; }
+    inline const bool is_spectral()                    const { return m_metadata.is_spectral(); }
+    inline const unsigned int max_wave_length_index()    const { return m_h.size() - 1; }
 
-    inline PointsStats& pointsStats()    { return mPointsStats; }
-    inline Metadata& metadata()          { return mMetadata; }
-    inline PointsStats& selectionStats() { return mSelectionStats; }
-    inline float selectionMinIntensity()        const { return mSelectionStats.minIntensity(mWaveLengthIndex); }
-    inline float selectionMaxIntensity()        const { return mSelectionStats.maxIntensity(mWaveLengthIndex); }
-    inline float selectionAverageIntensity()    const { return mSelectionStats.averageIntensity(mWaveLengthIndex); }
+    inline PointsStats& points_stats()    { return m_points_stats; }
+    inline Metadata& metadata()          { return m_metadata; }
+    inline PointsStats& selection_stats() { return m_selection_stats; }
+    inline float selection_min_intensity()        const { return m_selection_stats.min_intensity(m_wave_length_index); }
+    inline float selection_max_intensity()        const { return m_selection_stats.max_intensity(m_wave_length_index); }
+    inline float selection_average_intensity()    const { return m_selection_stats.average_intensity(m_wave_length_index); }
 
-    inline float averageIntensity()    const { return mPointsStats.averageIntensity(mWaveLengthIndex); }
+    inline float average_intensity()    const { return m_points_stats.average_intensity(m_wave_length_index); }
 
     // accessors
-    inline unsigned int waveLengthIndex()    const { return mWaveLengthIndex; }
-    void setWaveLengthIndex(size_t displayedWaveLength);
+    inline unsigned int wave_length_index()    const { return m_wave_length_index; }
+    void set_wave_length_index(size_t displayed_wave_length);
 
-    inline const VectorXf& currH()           const { return mDisplayAsLog ? mLH[mWaveLengthIndex] : mH[mWaveLengthIndex]; }
-    inline const MatrixXf& currN()           const { return mDisplayAsLog ? mLN[mWaveLengthIndex] : mN[mWaveLengthIndex]; }
-    inline const MatrixXf& V2D()             const { return mV2D; }
-    inline const MatrixXf& rawPoints()       const { return mRawPoints; }
-    inline const VectorXu8& selectedPoints() const { return mSelectedPoints; }
+    inline const VectorXf& curr_h()           const { return m_display_as_log ? m_l_h[m_wave_length_index] : m_h[m_wave_length_index]; }
+    inline const MatrixXf& curr_n()           const { return m_display_as_log ? m_l_n[m_wave_length_index] : m_n[m_wave_length_index]; }
+    inline const MatrixXf& V2D()             const { return m_v2D; }
+    inline const MatrixXf& raw_points()       const { return m_raw_points; }
+    inline const VectorXu8& selected_points() const { return m_selected_points; }
 
-    inline VectorXf& currH()            { return mDisplayAsLog ? mLH[mWaveLengthIndex] : mH[mWaveLengthIndex]; }
-    inline MatrixXf& currN()            { return mDisplayAsLog ? mLN[mWaveLengthIndex] : mN[mWaveLengthIndex]; }
-    inline std::vector<VectorXf>& H()   { return mH; }
-    inline std::vector<VectorXf>& LH()  { return mLH; }
-    inline std::vector<MatrixXf>& N()   { return mN; }
-    inline std::vector<MatrixXf>& LN()  { return mLN; }
-    inline MatrixXf& V2D()              { return mV2D; }
-    inline MatrixXf& rawPoints()        { return mRawPoints; }
-    inline VectorXu& pathSegments()     { return mPathSegments; }
-    inline VectorXu8& selectedPoints()  { return mSelectedPoints; }
+    inline VectorXf& curr_h()            { return m_display_as_log ? m_l_h[m_wave_length_index] : m_h[m_wave_length_index]; }
+    inline MatrixXf& curr_n()            { return m_display_as_log ? m_l_n[m_wave_length_index] : m_n[m_wave_length_index]; }
+    inline std::vector<VectorXf>& H()   { return m_h; }
+    inline std::vector<VectorXf>& LH()  { return m_l_h; }
+    inline std::vector<MatrixXf>& N()   { return m_n; }
+    inline std::vector<MatrixXf>& LN()  { return m_l_n; }
+    inline MatrixXf& V2D()              { return m_v2D; }
+    inline MatrixXf& raw_points()        { return m_raw_points; }
+    inline VectorXu& path_segments()     { return m_path_segments; }
+    inline VectorXu8& selected_points()  { return m_selected_points; }
 
-    inline MatrixXu& F()                { return mF; }
+    inline MatrixXu& F()                { return m_f; }
 
     // Selection
-	inline Vector3f selectionCenter() const { return hasSelection() ? mSelectionStats.averagePoint(mWaveLengthIndex) : Vector3f{ 0,0,0 }; }
-    void updatePointSelection();
+    inline Vector3f selection_center() const { return has_selection() ? m_selection_stats.average_point(m_wave_length_index) : Vector3f{ 0,0,0 }; }
+    void update_point_selection();
 
-	// Dirty flag setter/accessor
-	inline bool dirty() const			{ return mDirty; }
-	inline void setDirty(bool dirty)	{ mDirty = dirty; }
+    // Dirty flag setter/accessor
+    inline bool dirty() const            { return m_dirty; }
+    inline void set_dirty(bool dirty)    { m_dirty = dirty; }
 
 private:
     // Raw sample data
-    MatrixXu    mF;
-    MatrixXf    mV2D;
-    unsigned int             mWaveLengthIndex;
-    std::vector<VectorXf>    mH;
-    std::vector<VectorXf>    mLH;
-    std::vector<MatrixXf>    mN;
-    std::vector<MatrixXf>    mLN;
-    VectorXu    mPathSegments;
+    MatrixXu    m_f;
+    MatrixXf    m_v2D;
+    unsigned int             m_wave_length_index;
+    std::vector<VectorXf>    m_h;
+    std::vector<VectorXf>    m_l_h;
+    std::vector<MatrixXf>    m_n;
+    std::vector<MatrixXf>    m_l_n;
+    VectorXu    m_path_segments;
     // Untransformed data
-    MatrixXf    mRawPoints;        // theta, phi, intensity0, intensity1, ...
-    PointsStats mPointsStats;
+    MatrixXf    m_raw_points;        // theta, phi, intensity0, intensity1, ...
+    PointsStats m_points_stats;
 
     // display Shaders
-    nanogui::GLShader mMeshShader;
-    nanogui::GLShader mShaders[VIEW_COUNT];
-    std::function<void(const Matrix4f&, std::shared_ptr<ColorMap>)> mDrawFunctions[VIEW_COUNT];
-    nanogui::GLShader mPredictedOutgoingAngleShader;
+    nanogui::GLShader m_mesh_shader;
+    nanogui::GLShader m_shaders[VIEW_COUNT];
+    std::function<void(const Matrix4f&, std::shared_ptr<ColorMap>)> m_draw_functions[VIEW_COUNT];
+    nanogui::GLShader m_predicted_outgoing_angle_shader;
 
     // display options
-    bool mDisplayAsLog;
-    bool mDisplayViews[VIEW_COUNT];
+    bool m_display_as_log;
+    bool m_display_views[VIEW_COUNT];
 
     // metadata
-    Metadata mMetadata;
-    Axis mSelectionAxis;
+    Metadata m_metadata;
+    Axis m_selection_axis;
 
     // Selected point
-    VectorXu8       mSelectedPoints;
-    PointsStats     mSelectionStats;
+    VectorXu8       m_selected_points;
+    PointsStats     m_selection_stats;
 
-	// dirty flag to indicate changes in the data
-	bool mDirty;
+    // dirty flag to indicate changes in the data
+    bool m_dirty;
 };
 
 TEKARI_NAMESPACE_END

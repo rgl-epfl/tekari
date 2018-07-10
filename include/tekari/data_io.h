@@ -8,16 +8,16 @@
 TEKARI_NAMESPACE_BEGIN
 
 extern void load_data_sample(
-    const std::string& fileName,
-    MatrixXf &rawPoints,
+    const std::string& file_name,
+    MatrixXf &raw_points,
     MatrixXf  &V2D,
-    VectorXu8 &selectedPoints,
+    VectorXu8 &selected_points,
     Metadata &metadata
 );
 
 extern void save_data_sample(
     const std::string& path,
-    const MatrixXf &rawPoints,
+    const MatrixXf &raw_points,
     const Metadata &metadata
 );
 

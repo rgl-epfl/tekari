@@ -14,30 +14,30 @@ TEKARI_NAMESPACE_BEGIN
 class ColorMapSelectionWindow : public nanogui::Window
 {
 public:
-    ColorMapSelectionWindow(nanogui::Widget* parent, std::vector<std::shared_ptr<ColorMap>> colorMaps);
+    ColorMapSelectionWindow(nanogui::Widget* parent, std::vector<std::shared_ptr<ColorMap>> color_maps);
 
-    virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
+    virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
 
-    void deselectAllColorMapsButton();
+    void deselect_all_color_maps_button();
 
-    void setCloseCallback(std::function<void()> closeCallback)
+    void set_close_callback(std::function<void()> close_callback)
     {
-        mCloseCallback = closeCallback;
-        mCloseButton->setCallback(mCloseCallback);
+        m_close_callback = close_callback;
+        m_close_button->set_callback(m_close_callback);
     }
-    void setSelectionCallback(std::function<void(std::shared_ptr<ColorMap> colorMap)> selectionCallback) { mSelectionCallback = selectionCallback; }
-    void setSelectedButton(size_t index) { mColorMapButtons[index]->setSelected(true); }
+    void set_selection_callback(std::function<void(std::shared_ptr<ColorMap> color_map)> selection_callback) { m_selection_callback = selection_callback; }
+    void set_selected_button(size_t index) { m_color_map_buttons[index]->set_selected(true); }
 
 private:
-    int colorMapButtonIndex(const ColorMapButton* button) const;
+    int color_map_button_index(const ColorMapButton* button) const;
 
-    std::function<void(void)> mCloseCallback;
-    std::function<void(std::shared_ptr<ColorMap>)> mSelectionCallback;
+    std::function<void(void)> m_close_callback;
+    std::function<void(std::shared_ptr<ColorMap>)> m_selection_callback;
 
-    unsigned int mSelectedColorMapIndex;
-    std::vector<ColorMapButton*> mColorMapButtons;
+    unsigned int m_selected_color_map_index;
+    std::vector<ColorMapButton*> m_color_map_buttons;
 
-    nanogui::Button *mCloseButton;
+    nanogui::Button *m_close_button;
 };
 
 TEKARI_NAMESPACE_END

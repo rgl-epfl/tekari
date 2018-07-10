@@ -2,24 +2,24 @@
 
 template<class N>
 ThreadPool<N>::ThreadPool()
-:   m_TasksAvailable(0)
-,   m_ShouldTerminate(false)
+:   m_Tasks_available(0)
+,   m_Should_terminate(false)
 {
     for (unsigned int i = 0; i < N; i++)
     {
         m_Threads.emplace_back([this](void) {
-            while (!m_ShouldTerminate) {
-                std::unique_lock<std::mutex> lock{ m_TasksMutex };
-                while (!m_ShouldTerminate && m_TasksAvailable <= 0) {
-                    m_TasksCond.wait(lock);
+            while (!m_Should_terminate) {
+                std::unique_lock<std::mutex> lock{ m_Tasks_mutex };
+                while (!m_Should_terminate && m_Tasks_available <= 0) {
+                    m_Tasks_cond.wait(lock);
                 }
                 // if we didn't quit te waiting loop because we should terminate
-                if (!m_ShouldTerminate)
+                if (!m_Should_terminate)
                 {
-                    auto task = m_TaskQueue.pop();
-                    --m_TasksAvailable;
+                    auto task = m_Task_queue.pop();
+                    --m_Tasks_available;
                     lock.unlock();
-                    m_TasksCond.notify_all();
+                    m_Tasks_cond.notify_all();
                     task();
                 }
                 else
@@ -34,9 +34,9 @@ ThreadPool<N>::ThreadPool()
 template<typename N>
 ThreadPool<N>::~ThreadPool()
 {
-    std::unique_lock<std::mutex> lock{ m_TasksMutex };
-    m_ShouldTerminate = true;
-    m_TasksCond.notify_all();
+    std::unique_lock<std::mutex> lock{ m_Tasks_mutex };
+    m_Should_terminate = true;
+    m_Tasks_cond.notify_all();
     lock.unlock();
 
     for (auto& thread : m_Threads)
@@ -44,17 +44,17 @@ ThreadPool<N>::~ThreadPool()
 }
 
 template<typename N>
-void ThreadPool<N>::addTask(const std::function<void(void)> task) {
-    std::unique_lock<std::mutex> lock{ m_TasksMutex };
-    m_TaskQueue.push(task);
-    ++m_TasksAvailable;
-    m_TasksCond.notify_one();
+void ThreadPool<N>::add_task(const std::function<void(void)> task) {
+    std::unique_lock<std::mutex> lock{ m_Tasks_mutex };
+    m_Task_queue.push(task);
+    ++m_Tasks_available;
+    m_Tasks_cond.notify_one();
 }
 
 template<typename N>
-void ThreadPool<N>::waitForTasks() {
-    std::unique_lock<std::mutex> lock{ m_TasksMutex };
-    while (m_TasksAvailable) {
-        m_TasksCond.wait(lock);
+void ThreadPool<N>::wait_for_tasks() {
+    std::unique_lock<std::mutex> lock{ m_Tasks_mutex };
+    while (m_Tasks_available) {
+        m_Tasks_cond.wait(lock);
     }
 }

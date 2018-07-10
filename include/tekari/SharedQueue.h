@@ -10,45 +10,45 @@ public:
 
     void push(const T& value)
     {
-        std::lock_guard<std::mutex> lock{ mQueueMutex };
-        mRawQueue.push(value);
+        std::lock_guard<std::mutex> lock{ m_queue_mutex };
+        m_raw_queue.push(value);
     }
 
     T pop()
     {
-        std::lock_guard<std::mutex> lock{ mQueueMutex };
-        T retVal = mRawQueue.front();
-        mRawQueue.pop();
-        return retVal;
+        std::lock_guard<std::mutex> lock{ m_queue_mutex };
+        T ret_val = m_raw_queue.front();
+        m_raw_queue.pop();
+        return ret_val;
     }
 
-    T tryPop()
+    T try_pop()
     {
-        std::lock_guard<std::mutex> lock{ mQueueMutex };
-        if (mRawQueue.empty())
+        std::lock_guard<std::mutex> lock{ m_queue_mutex };
+        if (m_raw_queue.empty())
         {
             throw std::runtime_error("Pop from empty stack");
         }
-        T retVal = std::move(mRawQueue.front());
-        mRawQueue.pop();
-        return retVal;
+        T ret_val = std::move(m_raw_queue.front());
+        m_raw_queue.pop();
+        return ret_val;
     }
 
     bool emtpy()
     {
-        std::lock_guard<std::mutex> lock{ mQueueMutex };
-        return mRawQueue.empty();
+        std::lock_guard<std::mutex> lock{ m_queue_mutex };
+        return m_raw_queue.empty();
     }
 
     size_t size()
     {
-        std::lock_guard<std::mutex> lock{ mQueueMutex };
-        return mRawQueue.size();
+        std::lock_guard<std::mutex> lock{ m_queue_mutex };
+        return m_raw_queue.size();
     }
 
 private:
-    std::queue<T> mRawQueue;
-    std::mutex mQueueMutex;
+    std::queue<T> m_raw_queue;
+    std::mutex m_queue_mutex;
 
-    unsigned int mSize = 0;
+    unsigned int m_size = 0;
 };

@@ -27,7 +27,7 @@
 #define PROFILE(f)      \
     do {                    \
         std::cout << "Computing " #f "..."; \
-        StopWatch sw;       \
+        Stop_watch sw;       \
         sw.start();         \
         f;                  \
         sw.stop();          \
@@ -37,7 +37,7 @@
 #ifdef ENABLE_PROFILING
 #define START_PROFILING(msg) \
     { \
-        StopWatch sw; \
+        Stop_watch sw; \
         sw.start(); \
         do { std::cout << std::setw(45) << std::left << msg "..." << std::setw(0); } while(0)
 #else
@@ -58,18 +58,18 @@
 //== CLASS DEFINITION =========================================================
 
 
-/// \class StopWatch StopWatch.h
+/// \class Stop_watch Stop_watch.h
 /// This class implements a simple stop watch, that you can start() and stop()
 /// and that returns the elapsed() time in milliseconds.
-class StopWatch
+class Stop_watch
 {
 public:
 
     /// Constructor
-    StopWatch()
+    Stop_watch()
     {
 #ifdef _WIN32 // Windows
-        QueryPerformanceFrequency(&freq_);
+        Query_performance_frequency(&freq_);
 #endif
     }
 
@@ -78,7 +78,7 @@ public:
     void start()
     {
 #ifdef _WIN32 // Windows
-        QueryPerformanceCounter(&starttime_);
+        Query_performance_counter(&starttime_);
 #else // Linux
         starttime_ = current_time();
 #endif
@@ -89,7 +89,7 @@ public:
     double stop()
     {
 #ifdef _WIN32 // Windows
-        QueryPerformanceCounter(&endtime_);
+        Query_performance_counter(&endtime_);
 #else // Unix
         endtime_ = current_time();
 #endif
@@ -101,8 +101,8 @@ public:
     double elapsed() const
     {
 #ifdef _WIN32 // Windows
-        return ((double)(endtime_.QuadPart - starttime_.QuadPart)
-                / (double)freq_.QuadPart * 1000.0f);
+        return ((double)(endtime_.Quad_part - starttime_.Quad_part)
+                / (double)freq_.Quad_part * 1000.0f);
 #else // Unix
         return ((endtime_.tv_sec  - starttime_.tv_sec )*1000.0 +
                 (endtime_.tv_usec - starttime_.tv_usec)*0.001);
@@ -137,7 +137,7 @@ private:
 
 /// output a timer to a stream
 inline std::ostream&
-operator<<(std::ostream& _os, const StopWatch& _timer)
+operator<<(std::ostream& _os, const Stop_watch& _timer)
 {
     _os << _timer.elapsed() << " ms";
     return _os;

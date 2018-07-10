@@ -11,13 +11,13 @@ public:
     Axis(Vector3f origin);
     ~Axis();
 
-    void loadShader();
+    void load_shader();
 
-    void drawGL(const Matrix4f& mvp);
-    void setOrigin(const Vector3f& newOrigin);
+    void draw_gl(const Matrix4f& mvp);
+    void set_origin(const Vector3f& new_origin);
 private:
-    Vector3f mOrigin;
-    nanogui::GLShader mShader;
+    Vector3f m_origin;
+    nanogui::GLShader m_shader;
 };
 
 TEKARI_NAMESPACE_END

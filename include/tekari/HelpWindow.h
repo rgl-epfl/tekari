@@ -10,18 +10,18 @@ TEKARI_NAMESPACE_BEGIN
 
 class HelpWindow : public nanogui::Window {
 public:
-    HelpWindow(nanogui::Widget* parent, std::function<void()> closeCallback);
+    HelpWindow(nanogui::Widget* parent, std::function<void()> close_callback);
 
-    virtual bool keyboardEvent(int key, int scancode, int action, int modifiers) override;
-    virtual void performLayout(NVGcontext *ctx) override;
+    virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
+    virtual void perform_layout(NVGcontext *ctx) override;
 
     static std::string COMMAND;
     static std::string ALT;
 
 private:
-    std::function<void()> mCloseCallback;
+    std::function<void()> m_close_callback;
 
-    nanogui::VScrollPanel *mScrollPanel;
+    nanogui::VScrollPanel *m_scroll_panel;
 };
 
 TEKARI_NAMESPACE_END

@@ -12,68 +12,68 @@ class PointsStats
 public:
     PointsStats();
 
-    void setSize(unsigned int nWaveLengths);
+    void set_size(unsigned int n_wave_lengths);
 
-    unsigned int    pointsCount () const { return mPointsCount; }
-    Vector3f        averagePoint        (unsigned int waveLengthIndex) const { return mAveragePoint.col(waveLengthIndex); }
-    float           averageIntensity    (unsigned int waveLengthIndex) const { return mAverageRawPoint(waveLengthIndex + 2); }
-    float           minIntensity        (unsigned int waveLengthIndex) const { return mMinIntensity(waveLengthIndex); }
-    float           maxIntensity        (unsigned int waveLengthIndex) const { return mMaxIntensity(waveLengthIndex); }
-	unsigned int    highestPointIndex	(unsigned int waveLengthIndex) const { return mHighestPointIndex(waveLengthIndex); }
-	unsigned int    lowestPointIndex	(unsigned int waveLengthIndex) const { return mLowestPointIndex(waveLengthIndex); }
+    unsigned int    points_count () const { return m_points_count; }
+    Vector3f        average_point        (unsigned int wave_length_index) const { return m_average_point.col(wave_length_index); }
+    float           average_intensity    (unsigned int wave_length_index) const { return m_average_raw_point(wave_length_index + 2); }
+    float           min_intensity        (unsigned int wave_length_index) const { return m_min_intensity(wave_length_index); }
+    float           max_intensity        (unsigned int wave_length_index) const { return m_max_intensity(wave_length_index); }
+    unsigned int    highest_point_index    (unsigned int wave_length_index) const { return m_highest_point_index(wave_length_index); }
+    unsigned int    lowest_point_index    (unsigned int wave_length_index) const { return m_lowest_point_index(wave_length_index); }
 
-    void addIntensity(unsigned int index, const VectorXf &rawPoint);
+    void add_intensity(unsigned int index, const VectorXf &raw_point);
 private:
-    void addPoint(const VectorXf& rawPoint, const MatrixXf& transformedPoint);
+    void add_point(const VectorXf& raw_point, const MatrixXf& transformed_point);
 
-    void normalizeAverage();
+    void normalize_average();
     void normalize();
 
-    unsigned int mPointsCount;
-    MatrixXf mAveragePoint;
-    VectorXf mAverageRawPoint;
-    VectorXf mMinIntensity;
-    VectorXf mMaxIntensity;
-    VectorXu mLowestPointIndex;
-    VectorXu mHighestPointIndex;
+    unsigned int m_points_count;
+    MatrixXf m_average_point;
+    VectorXf m_average_raw_point;
+    VectorXf m_min_intensity;
+    VectorXf m_max_intensity;
+    VectorXu m_lowest_point_index;
+    VectorXu m_highest_point_index;
 
     friend void update_selection_stats(
-        PointsStats &selectionStats,
-        const VectorXu8 &selectedPoints,
-        const MatrixXf &rawPoints,
+        PointsStats &selection_stats,
+        const VectorXu8 &selected_points,
+        const MatrixXf &raw_points,
         const MatrixXf &V2D,
         const std::vector<VectorXf> &H
     );
 
     friend void update_points_stats(
-        PointsStats &pointsStats,
-        const MatrixXf &rawPoints,
+        PointsStats &points_stats,
+        const MatrixXf &raw_points,
         const MatrixXf &V2D,
         const std::vector<VectorXf> &H
     );
 
     friend void compute_min_max_intensities(
-        PointsStats &pointsStats,
-        const MatrixXf &rawPoints
+        PointsStats &points_stats,
+        const MatrixXf &raw_points
     );
 };
 
 extern void update_selection_stats(
-    PointsStats &selectionStats,
-    const VectorXu8 &selectedPoints,
-    const MatrixXf &rawPoints,
+    PointsStats &selection_stats,
+    const VectorXu8 &selected_points,
+    const MatrixXf &raw_points,
     const MatrixXf &V2D,
     const std::vector<VectorXf> &H
 );
 
 extern void compute_min_max_intensities(
-    PointsStats &pointsStats,
-    const MatrixXf &rawPoints
+    PointsStats &points_stats,
+    const MatrixXf &raw_points
 );
 
 extern void update_points_stats(
-    PointsStats &pointsStats,
-    const MatrixXf &rawPoints,
+    PointsStats &points_stats,
+    const MatrixXf &raw_points,
     const MatrixXf &V2D,
     const std::vector<VectorXf> &H
 );

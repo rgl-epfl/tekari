@@ -21,7 +21,7 @@ public:
     {
         FRONT, BACK, UP, DOWN, LEFT, RIGHT
     };
-    enum MouseMode
+    enum Mouse_mode
     {
         ROTATE,
         TRANSLATE,
@@ -36,80 +36,80 @@ private:
     static const Vector3f VIEW_RIGHT;
     static const Matrix4f VIEW;
 
-	static const int BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT];
+    static const int BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT];
 
 public:
     BSDFCanvas(nanogui::Widget *parent);
 
     // nanogui specific methods
-    virtual bool mouseMotionEvent(const Vector2i &p,
+    virtual bool mouse_motion_event(const Vector2i &p,
                                   const Vector2i &rel,
                                   int button, int modifiers) override;
-    virtual bool mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) override;
-    virtual bool scrollEvent(const Vector2i &p, const Vector2f &rel) override;
-    virtual void performLayout(NVGcontext*) override { mArcball.setSize(mSize); }
+    virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
+    virtual bool scroll_event(const Vector2i &p, const Vector2f &rel) override;
+    virtual void perform_layout(NVGcontext*) override { m_arcball.set_size(m_size); }
     virtual void draw(NVGcontext* ctx) override;
-    virtual void drawGL() override;
+    virtual void draw_gl() override;
 
     // data sample addition/removale/selection
-    void selectDataSample(std::shared_ptr<DataSample> dataSample);
-    void addDataSample(std::shared_ptr<DataSample> dataSample);
-    void removeDataSample(std::shared_ptr<DataSample> dataSample);
+    void select_data_sample(std::shared_ptr<DataSample> data_sample);
+    void add_data_sample(std::shared_ptr<DataSample> data_sample);
+    void remove_data_sample(std::shared_ptr<DataSample> data_sample);
 
-    void snapToSelectionCenter();
+    void snap_to_selection_center();
 
 
-    void setOrthoMode(bool orthoMode) { mOrthoMode = orthoMode; }
-    void setViewAngle(ViewAngles viewAngle);
-    void setSelectionCallback(std::function<void(const Matrix4f&, const SelectionBox&,
-        const Vector2i&, SelectionMode)> callback) { mSelectCallback = callback; }
+    void set_ortho_mode(bool ortho_mode) { m_ortho_mode = ortho_mode; }
+    void set_view_angle(ViewAngles view_angle);
+    void set_selection_callback(std::function<void(const Matrix4f&, const SelectionBox&,
+        const Vector2i&, SelectionMode)> callback) { m_select_callback = callback; }
 
     // Setters/Getters
-    const RadialGrid& grid() const { return mGrid; }
-    RadialGrid& grid() { return mGrid; }
+    const RadialGrid& grid() const { return m_grid; }
+    RadialGrid& grid() { return m_grid; }
 
-    int drawFlags() const { return mDrawFlags; }
-    void setDrawFlags(int flags) { mDrawFlags = flags; }
-    void setDrawFlag(int flag, bool state) { mDrawFlags = state ? mDrawFlags | flag : mDrawFlags & ~flag; }
+    int draw_flags() const { return m_draw_flags; }
+    void set_draw_flags(int flags) { m_draw_flags = flags; }
+    void set_draw_flag(int flag, bool state) { m_draw_flags = state ? m_draw_flags | flag : m_draw_flags & ~flag; }
 
-    void setColorMap(std::shared_ptr<ColorMap> colorMap) { mColorMap = colorMap; }
-    const std::shared_ptr<const ColorMap> colorMap() const { return mColorMap; }
+    void set_color_map(std::shared_ptr<ColorMap> color_map) { m_color_map = color_map; }
+    const std::shared_ptr<const ColorMap> color_map() const { return m_color_map; }
 
-    void setPointSizeScale(float pointSizeScale) { mPointSizeScale = pointSizeScale; }
+    void set_point_size_scale(float point_size_scale) { m_point_size_scale = point_size_scale; }
 
-    void setMouseMode(MouseMode mode) { mMouseMode = mode; }
-    MouseMode mouseMode() const { return mMouseMode; }
+    void set_mouse_mode(Mouse_mode mode) { m_mouse_mode = mode; }
+    Mouse_mode mouse_mode() const { return m_mouse_mode; }
 
 private:
-    SelectionBox getSelectionBox() const;
-    Matrix4f getProjectionMatrix() const;
+    SelectionBox get_selection_box() const;
+    Matrix4f get_projection_matrix() const;
 
-    inline int rotationMouseButton(bool dragging)	 const { return BUTTON_MAPPINGS[dragging][mMouseMode]; }
-    inline int translationMouseButton(bool dragging) const { return BUTTON_MAPPINGS[dragging][(mMouseMode + 2) % MOUSE_MODE_COUNT]; }
-    inline int selectionMouseButton(bool dragging)	 const { return BUTTON_MAPPINGS[dragging][(mMouseMode + 1) % MOUSE_MODE_COUNT]; }
+    inline int rotation_mouse_button(bool dragging)     const { return BUTTON_MAPPINGS[dragging][m_mouse_mode]; }
+    inline int translation_mouse_button(bool dragging) const { return BUTTON_MAPPINGS[dragging][(m_mouse_mode + 2) % MOUSE_MODE_COUNT]; }
+    inline int selection_mouse_button(bool dragging)     const { return BUTTON_MAPPINGS[dragging][(m_mouse_mode + 1) % MOUSE_MODE_COUNT]; }
 
     // data samples
-    std::vector<std::shared_ptr<DataSample>>    mDataSamplesToDraw;
-    std::shared_ptr<DataSample>                 mSelectedDataSample;
+    std::vector<std::shared_ptr<DataSample>>    m_data_samples_to_draw;
+    std::shared_ptr<DataSample>                 m_selected_data_sample;
 
-    RadialGrid          mGrid;
-    nanogui::Arcball    mArcball;
+    RadialGrid          m_grid;
+    nanogui::Arcball    m_arcball;
 
     // view state
-    Vector3f mTranslation;
-    float mZoom;
-    float mPointSizeScale;
-    bool mOrthoMode;
-    MouseMode mMouseMode;
+    Vector3f m_translation;
+    float m_zoom;
+    float m_point_size_scale;
+    bool m_ortho_mode;
+    Mouse_mode m_mouse_mode;
 
     // selection
-    std::pair<Vector2i, Vector2i> mSelectionRegion;
+    std::pair<Vector2i, Vector2i> m_selection_region;
     std::function<void(const Matrix4f&, const SelectionBox&,
-        const Vector2i&, SelectionMode)> mSelectCallback;
+        const Vector2i&, SelectionMode)> m_select_callback;
 
     // global state for sample display
-    int mDrawFlags;
-    std::shared_ptr<ColorMap> mColorMap;
+    int m_draw_flags;
+    std::shared_ptr<ColorMap> m_color_map;
 };
 
 TEKARI_NAMESPACE_END

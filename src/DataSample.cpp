@@ -8,205 +8,205 @@ using namespace nanogui;
 TEKARI_NAMESPACE_BEGIN
 
 DataSample::DataSample()
-:   mWaveLengthIndex(0)
-,   mDisplayAsLog(false)
-,   mDisplayViews{ false, false, true }
-,   mPointsStats()
-,   mSelectionStats()
-,   mSelectionAxis{Vector3f{0.0f, 0.0f, 0.0f}}
-,	mDirty(false)
+:   m_wave_length_index(0)
+,   m_display_as_log(false)
+,   m_display_views{ false, false, true }
+,   m_points_stats()
+,   m_selection_stats()
+,   m_selection_axis{Vector3f{0.0f, 0.0f, 0.0f}}
+,    m_dirty(false)
 {
-    mDrawFunctions[PATH] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
-        if (mDisplayViews[PATH])
+    m_draw_functions[PATH] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
+        if (m_display_views[PATH])
         {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            mShaders[PATH].bind();
-            mShaders[PATH].setUniform("modelViewProj", mvp);
-            for (Eigen::Index i = 0; i < mPathSegments.size() - 1; ++i)
+            gl_polygon_mode(GL_FRONT_AND_BACK, GL_LINE);
+            m_shaders[PATH].bind();
+            m_shaders[PATH].set_uniform("model_view_proj", mvp);
+            for (Eigen::Index i = 0; i < m_path_segments.size() - 1; ++i)
             {
-                int offset = mPathSegments[i];
-                int count = mPathSegments[i + 1] - mPathSegments[i] - 1;
-                mShaders[PATH].drawArray(GL_LINE_STRIP, offset, count);
+                int offset = m_path_segments[i];
+                int count = m_path_segments[i + 1] - m_path_segments[i] - 1;
+                m_shaders[PATH].draw_array(GL_LINE_STRIP, offset, count);
             }
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            gl_polygon_mode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
 
-    mDrawFunctions[POINTS] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap> colorMap) {
-        mShaders[POINTS].bind();
-        colorMap->bind();
-        mShaders[POINTS].setUniform("modelViewProj", mvp);
-        mShaders[POINTS].setUniform("showAllPoints", mDisplayViews[POINTS]);
-        mShaders[POINTS].drawArray(GL_POINTS, 0, mV2D.cols());
+    m_draw_functions[POINTS] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap> color_map) {
+        m_shaders[POINTS].bind();
+        color_map->bind();
+        m_shaders[POINTS].set_uniform("model_view_proj", mvp);
+        m_shaders[POINTS].set_uniform("show_all_points", m_display_views[POINTS]);
+        m_shaders[POINTS].draw_array(GL_POINTS, 0, m_v2D.cols());
     };
 
-    mDrawFunctions[INCIDENT_ANGLE] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
-        if (mDisplayViews[INCIDENT_ANGLE])
+    m_draw_functions[INCIDENT_ANGLE] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
+        if (m_display_views[INCIDENT_ANGLE])
         {
-            mShaders[INCIDENT_ANGLE].bind();
-            mShaders[INCIDENT_ANGLE].setUniform("modelViewProj", mvp);
-            mShaders[INCIDENT_ANGLE].drawArray(GL_POINTS, 0, 1);
+            m_shaders[INCIDENT_ANGLE].bind();
+            m_shaders[INCIDENT_ANGLE].set_uniform("model_view_proj", mvp);
+            m_shaders[INCIDENT_ANGLE].draw_array(GL_POINTS, 0, 1);
         }
     };
 }
 
 DataSample::~DataSample()
 {
-    mMeshShader.free();
-    mPredictedOutgoingAngleShader.free();
+    m_mesh_shader.free();
+    m_predicted_outgoing_angle_shader.free();
     for (int i = 0; i != VIEW_COUNT; ++i)
     {
-        mShaders[i].free();
+        m_shaders[i].free();
     }
 }
 
-void DataSample::drawGL(
-    const Vector3f& viewOrigin,
+void DataSample::draw_gl(
+    const Vector3f& view_origin,
     const Matrix4f& model,
     const Matrix4f& view,
     const Matrix4f& proj,
     int flags,
-    shared_ptr<ColorMap> colorMap)
+    shared_ptr<ColorMap> color_map)
 {
     // Every draw call requires depth testing
-	glEnable(GL_DEPTH_TEST);
+    gl_enable(GL_DEPTH_TEST);
 
-	// Precompute mvp
+    // Precompute mvp
     Matrix4f mvp = proj * view * model;
 
-	// Draw the mesh
-    glEnable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(2.0, 2.0);
-    mMeshShader.bind();
-    colorMap->bind();
-    mMeshShader.setUniform("modelViewProj", mvp);
-    mMeshShader.setUniform("model", model);
-    mMeshShader.setUniform("view", viewOrigin);
-	mMeshShader.setUniform("useShadows", flags & USES_SHADOWS);
-	mMeshShader.setUniform("useSpecular", flags & USES_SPECULAR);
-    mMeshShader.drawIndexed(GL_TRIANGLES, 0, mF.cols());
-    glDisable(GL_POLYGON_OFFSET_FILL);
+    // Draw the mesh
+    gl_enable(GL_POLYGON_OFFSET_FILL);
+    gl_polygon_offset(2.0, 2.0);
+    m_mesh_shader.bind();
+    color_map->bind();
+    m_mesh_shader.set_uniform("model_view_proj", mvp);
+    m_mesh_shader.set_uniform("model", model);
+    m_mesh_shader.set_uniform("view", view_origin);
+    m_mesh_shader.set_uniform("use_shadows", flags & USES_SHADOWS);
+    m_mesh_shader.set_uniform("use_specular", flags & USES_SPECULAR);
+    m_mesh_shader.draw_indexed(GL_TRIANGLES, 0, m_f.cols());
+    gl_disable(GL_POLYGON_OFFSET_FILL);
 
-	// draw the predicted outgoing angle
+    // draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
-        mPredictedOutgoingAngleShader.bind();
-        mPredictedOutgoingAngleShader.setUniform("modelViewProj", mvp);
-        mPredictedOutgoingAngleShader.drawArray(GL_POINTS, 0, 1);
+        m_predicted_outgoing_angle_shader.bind();
+        m_predicted_outgoing_angle_shader.set_uniform("model_view_proj", mvp);
+        m_predicted_outgoing_angle_shader.draw_array(GL_POINTS, 0, 1);
     }
-	// call every draw func
-    for (const auto& drawFunc: mDrawFunctions)
-        drawFunc(mvp, colorMap);
+    // call every draw func
+    for (const auto& draw_func: m_draw_functions)
+        draw_func(mvp, color_map);
 
-	// Don't forget to disable depth testing for later opengl draw calls
-	glDisable(GL_DEPTH_TEST);
+    // Don't forget to disable depth testing for later opengl draw calls
+    gl_disable(GL_DEPTH_TEST);
 
-	// Draw the axis if points are selected
-	if (flags & DISPLAY_AXIS && hasSelection())
-		mSelectionAxis.drawGL(mvp);
+    // Draw the axis if points are selected
+    if (flags & DISPLAY_AXIS && has_selection())
+        m_selection_axis.draw_gl(mvp);
 }
 
-void DataSample::initShaders()
+void DataSample::init_shaders()
 {
     const string shader_path = "../resources/shaders/";
-    mMeshShader.initFromFiles("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
-    mShaders[PATH].initFromFiles("path", shader_path + "path.vert", shader_path + "path.frag");
-    mShaders[POINTS].initFromFiles("points", shader_path + "points.vert", shader_path + "points.frag");
-    mShaders[INCIDENT_ANGLE].initFromFiles("incident_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
+    m_mesh_shader.init_from_files("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
+    m_shaders[PATH].init_from_files("path", shader_path + "path.vert", shader_path + "path.frag");
+    m_shaders[POINTS].init_from_files("points", shader_path + "points.vert", shader_path + "points.frag");
+    m_shaders[INCIDENT_ANGLE].init_from_files("incident_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
 
-    mPredictedOutgoingAngleShader.initFromFiles("predicted_outgoing_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
+    m_predicted_outgoing_angle_shader.init_from_files("predicted_outgoing_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
 }
 
-void DataSample::linkDataToShaders()
+void DataSample::link_data_to_shaders()
 {
-    if (mF.size() == 0)
+    if (m_f.size() == 0)
     {
         throw runtime_error("ERROR: cannot link data to shader before loading data.");
     }
 
-    mMeshShader.bind();
-    mMeshShader.setUniform("color_map", 0);
-	mMeshShader.uploadAttrib("in_pos2d", mV2D);
-    mMeshShader.uploadAttrib("in_normal", currN());
-    mMeshShader.uploadAttrib("in_height", currH());
-    mMeshShader.uploadIndices(mF);
+    m_mesh_shader.bind();
+    m_mesh_shader.set_uniform("color_map", 0);
+    m_mesh_shader.upload_attrib("in_pos2d", m_v2D);
+    m_mesh_shader.upload_attrib("in_normal", curr_n());
+    m_mesh_shader.upload_attrib("in_height", curr_h());
+    m_mesh_shader.upload_indices(m_f);
 
-    mShaders[PATH].bind();
-    mShaders[PATH].shareAttrib(mMeshShader, "in_pos2d");
-    mShaders[PATH].shareAttrib(mMeshShader, "in_height");
+    m_shaders[PATH].bind();
+    m_shaders[PATH].share_attrib(m_mesh_shader, "in_pos2d");
+    m_shaders[PATH].share_attrib(m_mesh_shader, "in_height");
 
-    mShaders[POINTS].bind();
-    mShaders[POINTS].setUniform("color_map", 0);
-    mShaders[POINTS].shareAttrib(mMeshShader, "in_pos2d");
-    mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
-    mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
+    m_shaders[POINTS].bind();
+    m_shaders[POINTS].set_uniform("color_map", 0);
+    m_shaders[POINTS].share_attrib(m_mesh_shader, "in_pos2d");
+    m_shaders[POINTS].share_attrib(m_mesh_shader, "in_height");
+    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points);
 
-    Vector2f origin2D = transformRawPoint({ mMetadata.incidentTheta(), mMetadata.incidentPhi() });
+    Vector2f origin2D = transform_raw_point({ m_metadata.incident_theta(), m_metadata.incident_phi() });
     Vector3f origin3D = Vector3f{ origin2D(0), 0.0f, origin2D(1) };
-    mShaders[INCIDENT_ANGLE].bind();
-    mShaders[INCIDENT_ANGLE].uploadAttrib("pos", Vector3f{ 0, 0, 0 });
-    mShaders[INCIDENT_ANGLE].setUniform("origin", origin3D);
-    mShaders[INCIDENT_ANGLE].setUniform("direction", Vector3f{ 0, 1, 0 });
-    mShaders[INCIDENT_ANGLE].setUniform("color", Vector3f{ 1, 0, 1 });
-    mShaders[INCIDENT_ANGLE].setUniform("length", 1.0f);
+    m_shaders[INCIDENT_ANGLE].bind();
+    m_shaders[INCIDENT_ANGLE].upload_attrib("pos", Vector3f{ 0, 0, 0 });
+    m_shaders[INCIDENT_ANGLE].set_uniform("origin", origin3D);
+    m_shaders[INCIDENT_ANGLE].set_uniform("direction", Vector3f{ 0, 1, 0 });
+    m_shaders[INCIDENT_ANGLE].set_uniform("color", Vector3f{ 1, 0, 1 });
+    m_shaders[INCIDENT_ANGLE].set_uniform("length", 1.0f);
 
     origin3D = -origin3D;
-    mPredictedOutgoingAngleShader.bind();
-    mPredictedOutgoingAngleShader.uploadAttrib("pos", Vector3f{ 0, 0, 0 });
-    mPredictedOutgoingAngleShader.setUniform("origin", origin3D);
-    mPredictedOutgoingAngleShader.setUniform("direction", Vector3f{ 0, 1, 0 });
-    mPredictedOutgoingAngleShader.setUniform("color", Vector3f{ 0, 0.1f, 0.8f });
-    mPredictedOutgoingAngleShader.setUniform("length", 1.0f);
+    m_predicted_outgoing_angle_shader.bind();
+    m_predicted_outgoing_angle_shader.upload_attrib("pos", Vector3f{ 0, 0, 0 });
+    m_predicted_outgoing_angle_shader.set_uniform("origin", origin3D);
+    m_predicted_outgoing_angle_shader.set_uniform("direction", Vector3f{ 0, 1, 0 });
+    m_predicted_outgoing_angle_shader.set_uniform("color", Vector3f{ 0, 0.1f, 0.8f });
+    m_predicted_outgoing_angle_shader.set_uniform("length", 1.0f);
 
-    mSelectionAxis.loadShader();
+    m_selection_axis.load_shader();
 }
 
-void DataSample::toggleLogView()
+void DataSample::toggle_log_view()
 {
-    mDisplayAsLog = !mDisplayAsLog;
+    m_display_as_log = !m_display_as_log;
 
-    mMeshShader.bind();
-    mMeshShader.uploadAttrib("in_normal", currN());
-    mMeshShader.uploadAttrib("in_height", currH());
+    m_mesh_shader.bind();
+    m_mesh_shader.upload_attrib("in_normal", curr_n());
+    m_mesh_shader.upload_attrib("in_height", curr_h());
 
-    mShaders[PATH].bind();
-    mShaders[PATH].shareAttrib(mMeshShader, "in_height");
-    mShaders[POINTS].bind();
-    mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
+    m_shaders[PATH].bind();
+    m_shaders[PATH].share_attrib(m_mesh_shader, "in_height");
+    m_shaders[POINTS].bind();
+    m_shaders[POINTS].share_attrib(m_mesh_shader, "in_height");
 
-	if (hasSelection()) {
-        update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
-		mSelectionAxis.setOrigin(selectionCenter());
-	}
+    if (has_selection()) {
+        update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2D, m_display_as_log ? m_l_h : m_h);
+        m_selection_axis.set_origin(selection_center());
+    }
 }
 
-void DataSample::updatePointSelection()
+void DataSample::update_point_selection()
 {
-    mShaders[POINTS].bind();
-    mShaders[POINTS].uploadAttrib("in_selected", mSelectedPoints);
+    m_shaders[POINTS].bind();
+    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points);
 
-	update_selection_stats(mSelectionStats, mSelectedPoints, mRawPoints, mV2D, mDisplayAsLog ? mLH : mH);
-	mSelectionAxis.setOrigin(selectionCenter());
+    update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2D, m_display_as_log ? m_l_h : m_h);
+    m_selection_axis.set_origin(selection_center());
 }
 
-void DataSample::setWaveLengthIndex(size_t displayedWaveLength)
+void DataSample::set_wave_length_index(size_t displayed_wave_length)
 {
-    displayedWaveLength = std::min(displayedWaveLength, mH.size()-1);
-    if (mWaveLengthIndex == displayedWaveLength)
+    displayed_wave_length = std::min(displayed_wave_length, m_h.size()-1);
+    if (m_wave_length_index == displayed_wave_length)
         return;
 
-    mWaveLengthIndex = displayedWaveLength;
+    m_wave_length_index = displayed_wave_length;
 
-    mMeshShader.bind();
-    mMeshShader.uploadAttrib("in_normal", currN());
-    mMeshShader.uploadAttrib("in_height", currH());
+    m_mesh_shader.bind();
+    m_mesh_shader.upload_attrib("in_normal", curr_n());
+    m_mesh_shader.upload_attrib("in_height", curr_h());
 
-    mShaders[PATH].bind();
-    mShaders[PATH].shareAttrib(mMeshShader, "in_height");
-    mShaders[POINTS].bind();
-    mShaders[POINTS].shareAttrib(mMeshShader, "in_height");
+    m_shaders[PATH].bind();
+    m_shaders[PATH].share_attrib(m_mesh_shader, "in_height");
+    m_shaders[POINTS].bind();
+    m_shaders[POINTS].share_attrib(m_mesh_shader, "in_height");
 
-	mSelectionAxis.setOrigin(selectionCenter());
+    m_selection_axis.set_origin(selection_center());
 }
 
 TEKARI_NAMESPACE_END

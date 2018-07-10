@@ -30,298 +30,298 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-BSDFApplication::BSDFApplication(const std::vector<std::string>& dataSamplePaths)
+BSDFApplication::BSDFApplication(const std::vector<std::string>& data_sample_paths)
 :   Screen(Vector2i(1200, 750), "Tekari", true, false, 8, 8, 24, 8, 2)
-,   mSelectedDS(nullptr)
-,	mMetadataWindow(nullptr)
-,   mHelpWindow(nullptr)
-,   mSelectionInfoWindow(nullptr)
-,	mUnsavedDataWindow(nullptr)
-,	mColorMapSelectionWindow(nullptr)
+,   m_selected_d_s(nullptr)
+,    m_metadata_window(nullptr)
+,   m_help_window(nullptr)
+,   m_selection_info_window(nullptr)
+,    m_unsaved_data_window(nullptr)
+,    m_color_map_selection_window(nullptr)
 {
     // load color maps
     for (auto& p : ColorMap::PREDEFINED_MAPS)
     {
-        mColorMaps.push_back(make_shared<ColorMap>(p.first, ColorMap::FOLDER_PATH + p.second));
+        m_color_maps.push_back(make_shared<ColorMap>(p.first, ColorMap::FOLDER_PATH + p.second));
     }
 
     m3DView = new Widget{this};
-    m3DView->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
+    m3DView->set_layout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
 
     // canvas
-    mBSDFCanvas = new BSDFCanvas{ m3DView };
-    mBSDFCanvas->setBackgroundColor({ 50, 50, 50, 255 });
-    mBSDFCanvas->setSelectionCallback([this](const Matrix4f& mvp, const SelectionBox& selectionBox,
-        const Vector2i& canvasSize, SelectionMode mode) {
-		if (!mSelectedDS)
-			return;
+    m_bsdf_canvas = new BSDFCanvas{ m3DView };
+    m_bsdf_canvas->set_background_color({ 50, 50, 50, 255 });
+    m_bsdf_canvas->set_selection_callback([this](const Matrix4f& mvp, const SelectionBox& selection_box,
+        const Vector2i& canvas_size, SelectionMode mode) {
+        if (!m_selected_d_s)
+            return;
         
-		if (selectionBox.empty())
+        if (selection_box.empty())
         {
-            select_closest_point(   mSelectedDS->V2D(), mSelectedDS->currH(),
-                                    mSelectedDS->selectedPoints(),
-                                    mvp, selectionBox.topLeft, canvasSize);
+            select_closest_point(   m_selected_d_s->V2D(), m_selected_d_s->curr_h(),
+                                    m_selected_d_s->selected_points(),
+                                    mvp, selection_box.top_left, canvas_size);
         }
         else
         {
-            select_points(  mSelectedDS->V2D(), mSelectedDS->currH(),
-                            mSelectedDS->selectedPoints(),
-                            mvp, selectionBox, canvasSize, mode);
+            select_points(  m_selected_d_s->V2D(), m_selected_d_s->curr_h(),
+                            m_selected_d_s->selected_points(),
+                            mvp, selection_box, canvas_size, mode);
         }
-		mSelectedDS->updatePointSelection();
-		updateSelectionInfoWindow();
+        m_selected_d_s->update_point_selection();
+        update_selection_info_window();
     });
-    mBSDFCanvas->setColorMap(mColorMaps[0]);
+    m_bsdf_canvas->set_color_map(m_color_maps[0]);
 
     // Footer
     {
-        mFooter = new Widget{ m3DView };
-        mFooter->setLayout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill, 5});
+        m_footer = new Widget{ m3DView };
+        m_footer->set_layout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill, 5});
 
-        auto makeFooterInfo = [this](string label) {
-            auto container = new Widget{ mFooter };
-            container->setLayout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
-            container->setFixedWidth(width() / 3);
+        auto make_footer_info = [this](string label) {
+            auto container = new Widget{ m_footer };
+            container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
+            container->set_fixed_width(width() / 3);
             new Label{ container, label };
             auto info = new Label{ container, "-" };
             return info;
         };
 
-        mDataSampleName = makeFooterInfo("Data Sample Name : ");
-        mDataSamplePointsCount = makeFooterInfo("Points Count : ");
-        mDataSampleAverageHeight = makeFooterInfo("AverageIntensity : ");
+        m_data_sample_name = make_footer_info("Data Sample Name : ");
+        m_data_sample_points_count = make_footer_info("Points Count : ");
+        m_data_sample_average_height = make_footer_info("Average_intensity : ");
     }
 
-    mToolWindow = new Window(this, "Tools");
-    mToolWindow->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
-    mToolWindow->setVisible(true);
-    mToolWindow->setPosition({ 20, 20 });
+    m_tool_window = new Window(this, "Tools");
+    m_tool_window->set_layout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 5, 5});
+    m_tool_window->set_visible(true);
+    m_tool_window->set_position({ 20, 20 });
 
-    mHelpButton = new Button(mToolWindow->buttonPanel(), "", ENTYPO_ICON_HELP);
-    mHelpButton->setCallback([this]() { toggleHelpWindow(); });
-    mHelpButton->setFontSize(15);
-    mHelpButton->setTooltip("Information about using BSDF Vidualizer (H)");
-    mHelpButton->setPosition({20, 0});
+    m_help_button = new Button(m_tool_window->button_panel(), "", ENTYPO_ICON_HELP);
+    m_help_button->set_callback([this]() { toggle_help_window(); });
+    m_help_button->set_font_size(15);
+    m_help_button->set_tooltip("Information about using BSDF Vidualizer (H)");
+    m_help_button->set_position({20, 0});
 
     // Hidden options
     {
-        mHiddenOptionsButton = new PopupButton(mToolWindow->buttonPanel(), "", ENTYPO_ICON_TOOLS);
-        mHiddenOptionsButton->setBackgroundColor(Color{0.4f, 0.1f, 0.1f, 1.0f});
-        mHiddenOptionsButton->setTooltip("More view options");
-        auto hiddenOptionsPopup = mHiddenOptionsButton->popup();
-        hiddenOptionsPopup->setLayout(new GroupLayout{});
+        m_hidden_options_button = new PopupButton(m_tool_window->button_panel(), "", ENTYPO_ICON_TOOLS);
+        m_hidden_options_button->set_background_color(Color{0.4f, 0.1f, 0.1f, 1.0f});
+        m_hidden_options_button->set_tooltip("More view options");
+        auto hidden_options_popup = m_hidden_options_button->popup();
+        hidden_options_popup->set_layout(new GroupLayout{});
 
-        auto addHiddenOptionToggle = [hiddenOptionsPopup](const string& label, const string& tooltip,
+        auto add_hidden_option_toggle = [hidden_options_popup](const string& label, const string& tooltip,
             const function<void(bool)> &callback, bool checked = false) {
-            auto checkbox = new CheckBox{ hiddenOptionsPopup, label, callback };
-            checkbox->setChecked(checked);
-            checkbox->setTooltip(tooltip);
+            auto checkbox = new CheckBox{ hidden_options_popup, label, callback };
+            checkbox->set_checked(checked);
+            checkbox->set_tooltip(tooltip);
             return checkbox;
         };
 
-        new Label{ hiddenOptionsPopup, "Advanced View Options", "sans-bold" };
-        mUseShadowsCheckbox = addHiddenOptionToggle("Shadows", "Enable/Disable shadows (Shift+S)",
+        new Label{ hidden_options_popup, "Advanced View Options", "sans-bold" };
+        m_use_shadows_checkbox = add_hidden_option_toggle("Shadows", "Enable/Disable shadows (Shift+S)",
             [this](bool checked) {
-            mBSDFCanvas->setDrawFlag(USES_SHADOWS, checked);
-			mUseSpecularCheckbox->setEnabled(checked);
+            m_bsdf_canvas->set_draw_flag(USES_SHADOWS, checked);
+            m_use_specular_checkbox->set_enabled(checked);
         }, true);
-		mUseSpecularCheckbox = addHiddenOptionToggle("Specular", "Enable/Disable specular lighting",
-			[this](bool checked) {
-			mBSDFCanvas->setDrawFlag(USES_SPECULAR, checked);
-		}, false);
-        mDisplayCenterAxis = addHiddenOptionToggle("Center Axis", "Show/Hide Center Axis (A)",
+        m_use_specular_checkbox = add_hidden_option_toggle("Specular", "Enable/Disable specular lighting",
             [this](bool checked) {
-            mBSDFCanvas->setDrawFlag(DISPLAY_AXIS, checked);
+            m_bsdf_canvas->set_draw_flag(USES_SPECULAR, checked);
+        }, false);
+        m_display_center_axis = add_hidden_option_toggle("Center Axis", "Show/Hide Center Axis (A)",
+            [this](bool checked) {
+            m_bsdf_canvas->set_draw_flag(DISPLAY_AXIS, checked);
         }, true);
-        mDisplayPredictedOutgoingAngleCheckbox = addHiddenOptionToggle("Predicted Outgoing Angle", "Show/Hide Predicted Outgoing Angle (Ctrl+I)",
+        m_display_predicted_outgoing_angle_checkbox = add_hidden_option_toggle("Predicted Outgoing Angle", "Show/Hide Predicted Outgoing Angle (Ctrl+I)",
             [this](bool checked) {
-            mBSDFCanvas->setDrawFlag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
+            m_bsdf_canvas->set_draw_flag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
         });
-		addHiddenOptionToggle("Use Light Theme", "Switch from dark to light theme",
-			[this](bool checked) {
-			setTheme(checked ? new LightTheme{ nvgContext() } : new Theme{ nvgContext() });
-			setBackground(mTheme->mWindowFillFocused);
-			mHiddenOptionsButton->setBackgroundColor(checked ? Color{ 0.7f, 0.3f, 0.3f, 1.0f } : Color{ 0.4f, 0.1f, 0.1f, 1.0f });
-		});
-
-        auto pointSizeLabel = new Label{ hiddenOptionsPopup , "Point Size" };
-		pointSizeLabel->setTooltip("Changes the point size based on a arbitrary heuristic (also distance dependent)");
-        auto pointSizeSlider = new Slider{ hiddenOptionsPopup };
-        pointSizeSlider->setRange(make_pair(0.1f, 10.0f));
-        pointSizeSlider->setValue(1.0f);
-        pointSizeSlider->setCallback([this](float value) {
-            mBSDFCanvas->setPointSizeScale(value);
+        add_hidden_option_toggle("Use Light Theme", "Switch from dark to light theme",
+            [this](bool checked) {
+            set_theme(checked ? new LightTheme{ nvg_context() } : new Theme{ nvg_context() });
+            set_background(m_theme->m_window_fill_focused);
+            m_hidden_options_button->set_background_color(checked ? Color{ 0.7f, 0.3f, 0.3f, 1.0f } : Color{ 0.4f, 0.1f, 0.1f, 1.0f });
         });
 
-        auto choseColorMapButton = new Button{ hiddenOptionsPopup, "Chose Color Map" };
-        choseColorMapButton->setTooltip("Chose with which color map the data should be displayed (M)");
-        choseColorMapButton->setCallback([this]() {
-            toggleColorMapSelectionWindow();
+        auto point_size_label = new Label{ hidden_options_popup , "Point Size" };
+        point_size_label->set_tooltip("Changes the point size based on a arbitrary heuristic (also distance dependent)");
+        auto point_size_slider = new Slider{ hidden_options_popup };
+        point_size_slider->set_range(make_pair(0.1f, 10.0f));
+        point_size_slider->set_value(1.0f);
+        point_size_slider->set_callback([this](float value) {
+            m_bsdf_canvas->set_point_size_scale(value);
         });
 
-		new Label{ hiddenOptionsPopup, "Grid Options", "sans-bold" };
-		auto gridColorLabel = new Label{ hiddenOptionsPopup, "Color" };
-		gridColorLabel->setTooltip("Chose in witch color the grid should be displayed");
-		auto colorwheel = new ColorWheel{ hiddenOptionsPopup, mBSDFCanvas->grid().color() };
+        auto chose_color_map_button = new Button{ hidden_options_popup, "Chose Color Map" };
+        chose_color_map_button->set_tooltip("Chose with which color map the data should be displayed (M)");
+        chose_color_map_button->set_callback([this]() {
+            toggle_color_map_selection_window();
+        });
 
-		auto gridAlphaLabel = new Label{ hiddenOptionsPopup, "Alpha" };
-		gridAlphaLabel->setTooltip("Chose the grid transparency (left = fully transparent, right = fully opaque)");
-		auto gridAlphaSlider = new Slider{ hiddenOptionsPopup };
-		gridAlphaSlider->setRange({ 0.0f, 1.0f });
-		gridAlphaSlider->setCallback([this](float value) { mBSDFCanvas->grid().setAlpha(value); });
+        new Label{ hidden_options_popup, "Grid Options", "sans-bold" };
+        auto grid_color_label = new Label{ hidden_options_popup, "Color" };
+        grid_color_label->set_tooltip("Chose in witch color the grid should be displayed");
+        auto colorwheel = new Color_wheel{ hidden_options_popup, m_bsdf_canvas->grid().color() };
 
-		gridAlphaSlider->setValue(mBSDFCanvas->grid().alpha());
+        auto grid_alpha_label = new Label{ hidden_options_popup, "Alpha" };
+        grid_alpha_label->set_tooltip("Chose the grid transparency (left = fully transparent, right = fully opaque)");
+        auto grid_alpha_slider = new Slider{ hidden_options_popup };
+        grid_alpha_slider->set_range({ 0.0f, 1.0f });
+        grid_alpha_slider->set_callback([this](float value) { m_bsdf_canvas->grid().set_alpha(value); });
 
-		colorwheel->setCallback([gridAlphaSlider, this](const Color& value) {
-			mBSDFCanvas->grid().setColor(value);
-			mBSDFCanvas->grid().setAlpha(gridAlphaSlider->value());
-		});
+        grid_alpha_slider->set_value(m_bsdf_canvas->grid().alpha());
 
-		mDisplayDegreesCheckbox = addHiddenOptionToggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
-			[this](bool checked) { mBSDFCanvas->grid().setShowDegrees(checked); }, true);
+        colorwheel->set_callback([grid_alpha_slider, this](const Color& value) {
+            m_bsdf_canvas->grid().set_color(value);
+            m_bsdf_canvas->grid().set_alpha(grid_alpha_slider->value());
+        });
+
+        m_display_degrees_checkbox = add_hidden_option_toggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
+            [this](bool checked) { m_bsdf_canvas->grid().set_show_degrees(checked); }, true);
     }
 
     // mouse mode
     {
-        auto mouseModeLabel = new Label{ mToolWindow, "Mouse Mode", "sans-bold"};
-		mouseModeLabel->setTooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
-        mMouseModeSelector = new ComboBox{ mToolWindow, {"Rotation", "Translation", "Box Selection"} };
-        mMouseModeSelector->setCallback([this](int index) {
-            mBSDFCanvas->setMouseMode(static_cast<BSDFCanvas::MouseMode>(index));
-            glfwSetCursor(mGLFWWindow, mCursors[index]);
+        auto mouse_mode_label = new Label{ m_tool_window, "Mouse Mode", "sans-bold"};
+        mouse_mode_label->set_tooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
+        m_mouse_mode_selector = new ComboBox{ m_tool_window, {"Rotation", "Translation", "Box Selection"} };
+        m_mouse_mode_selector->set_callback([this](int index) {
+            m_bsdf_canvas->set_mouse_mode(static_cast<BSDFCanvas::Mouse_mode>(index));
+            glfw_set_cursor(m_g_l_f_w_window, m_cursors[index]);
         });
 
-        mCursors[BSDFCanvas::MouseMode::ROTATE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        mCursors[BSDFCanvas::MouseMode::TRANSLATE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-        mCursors[BSDFCanvas::MouseMode::SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-        glfwSetCursor(mGLFWWindow, mCursors[mBSDFCanvas->mouseMode()]);
+        m_cursors[BSDFCanvas::Mouse_mode::ROTATE] = glfw_create_standard_cursor(GLFW_ARROW_CURSOR);
+        m_cursors[BSDFCanvas::Mouse_mode::TRANSLATE] = glfw_create_standard_cursor(GLFW_HAND_CURSOR);
+        m_cursors[BSDFCanvas::Mouse_mode::SELECTION] = glfw_create_standard_cursor(GLFW_CROSSHAIR_CURSOR);
+        glfw_set_cursor(m_g_l_f_w_window, m_cursors[m_bsdf_canvas->mouse_mode()]);
     }
 
     // grid view otpions
     {
-        auto label = new Label(mToolWindow, "View Options", "sans-bold");
-        label->setTooltip(
+        auto label = new Label(m_tool_window, "View Options", "sans-bold");
+        label->set_tooltip(
             "Various view modes. Hover on them to learn what they do."
         );
 
-        auto panel = new Widget(mToolWindow);
-        panel->setLayout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
+        auto panel = new Widget(m_tool_window);
+        panel->set_layout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
 
-        mGridViewToggle = new Button(panel, "Grid");
-        mGridViewToggle->setFlags(Button::Flags::ToggleButton);
-        mGridViewToggle->setTooltip("Display/Hide grid (G)");
-        mGridViewToggle->setChangeCallback( [this] (bool checked) { mBSDFCanvas->grid().setVisible(checked); });
-        mGridViewToggle->setPushed(true);
+        m_grid_view_toggle = new Button(panel, "Grid");
+        m_grid_view_toggle->set_flags(Button::Flags::Toggle_button);
+        m_grid_view_toggle->set_tooltip("Display/Hide grid (G)");
+        m_grid_view_toggle->set_change_callback( [this] (bool checked) { m_bsdf_canvas->grid().set_visible(checked); });
+        m_grid_view_toggle->set_pushed(true);
 
-        mOrthoViewToggle = new Button(panel, "Ortho");
-        mOrthoViewToggle->setFlags(Button::Flags::ToggleButton);
-        mOrthoViewToggle->setTooltip("Enable/Disable orthogonal projection (O)");
-        mOrthoViewToggle->setChangeCallback([this](bool checked) { mBSDFCanvas->setOrthoMode(checked); });
-        mOrthoViewToggle->setPushed(false);
+        m_ortho_view_toggle = new Button(panel, "Ortho");
+        m_ortho_view_toggle->set_flags(Button::Flags::Toggle_button);
+        m_ortho_view_toggle->set_tooltip("Enable/Disable orthogonal projection (O)");
+        m_ortho_view_toggle->set_change_callback([this](bool checked) { m_bsdf_canvas->set_ortho_mode(checked); });
+        m_ortho_view_toggle->set_pushed(false);
 
-        auto backgroundColorPopupButton = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
+        auto background_color_popup_button = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
 
-        backgroundColorPopupButton->setFontSize(15);
-        backgroundColorPopupButton->setChevronIcon(0);
-        backgroundColorPopupButton->setTooltip("Background Color");
+        background_color_popup_button->set_font_size(15);
+        background_color_popup_button->set_chevron_icon(0);
+        background_color_popup_button->set_tooltip("Background Color");
 
         // Background color popup
         {
-            auto popup = backgroundColorPopupButton->popup();
-            popup->setLayout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 10});
+            auto popup = background_color_popup_button->popup();
+            popup->set_layout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 10});
 
             new Label{popup, "Background Color"};
-            auto colorwheel = new ColorWheel{popup, mBSDFCanvas->backgroundColor()};
+            auto colorwheel = new Color_wheel{popup, m_bsdf_canvas->background_color()};
 
-            colorwheel->setCallback([this](const Color& value) { mBSDFCanvas->setBackgroundColor(value); });
+            colorwheel->set_callback([this](const Color& value) { m_bsdf_canvas->set_background_color(value); });
         }
     }
 
     // Open, save screenshot, save data
     {
-        new Label(mToolWindow, "Data Samples", "sans-bold");
-        auto tools = new Widget{ mToolWindow };
-        tools->setLayout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
+        new Label(m_tool_window, "Data Samples", "sans-bold");
+        auto tools = new Widget{ m_tool_window };
+        tools->set_layout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
 
-        auto makeToolButton = [&](bool enabled, function<void()> callback, int icon = 0, string tooltip = "") {
+        auto make_tool_button = [&](bool enabled, function<void()> callback, int icon = 0, string tooltip = "") {
             auto button = new Button{tools, "", icon};
-            button->setCallback(callback);
-            button->setTooltip(tooltip);
-            button->setFontSize(15);
-            button->setEnabled(enabled);
+            button->set_callback(callback);
+            button->set_tooltip(tooltip);
+            button->set_font_size(15);
+            button->set_enabled(enabled);
             return button;
         };
 
-        makeToolButton(true, [this] { openDataSampleDialog(); }, ENTYPO_ICON_FOLDER, "Open data sample (CTRL+O)");
-        makeToolButton(true, [this] { saveScreenShot(); }, ENTYPO_ICON_IMAGE, "Save image (CTRL+P)");
-        makeToolButton(true, [this] { saveSelectedDataSample(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
-        makeToolButton(true, [this]() { toggleMetadataWindow(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
+        make_tool_button(true, [this] { open_data_sample_dialog(); }, ENTYPO_ICON_FOLDER, "Open data sample (CTRL+O)");
+        make_tool_button(true, [this] { save_screen_shot(); }, ENTYPO_ICON_IMAGE, "Save image (CTRL+P)");
+        make_tool_button(true, [this] { save_selected_data_sample(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
+        make_tool_button(true, [this]() { toggle_metadata_window(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
     }
 
     // Data sample selection
     {
-        mDataSamplesScrollPanel = new VScrollPanel{ mToolWindow };
+        m_data_samples_scroll_panel = new VScrollPanel{ m_tool_window };
 
-        mScrollContent = new Widget{ mDataSamplesScrollPanel };
-        mScrollContent->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill));
+        m_scroll_content = new Widget{ m_data_samples_scroll_panel };
+        m_scroll_content->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill));
 
-        mDataSampleButtonContainer = new Widget{ mScrollContent };
-        mDataSampleButtonContainer->setLayout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
+        m_data_sample_button_container = new Widget{ m_scroll_content };
+        m_data_sample_button_container->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
-	// load application icon
-	{
-		constexpr unsigned int icon_count = 5;
-		const char* icon_paths[icon_count] =
-		{
-			"../resources/icons/tekari_icon_16x16.png",
-			"../resources/icons/tekari_icon_32x32.png",
-			"../resources/icons/tekari_icon_64x64.png",
-			"../resources/icons/tekari_icon_128x128.png",
-			"../resources/icons/tekari_icon_256x256.png"
-		};
+    // load application icon
+    {
+        constexpr unsigned int icon_count = 5;
+        const char* icon_paths[icon_count] =
+        {
+            "../resources/icons/tekari_icon_16x16.png",
+            "../resources/icons/tekari_icon_32x32.png",
+            "../resources/icons/tekari_icon_64x64.png",
+            "../resources/icons/tekari_icon_128x128.png",
+            "../resources/icons/tekari_icon_256x256.png"
+        };
 
-		GLFWimage icons[icon_count];
-		unsigned int i;
-		for (i = 0; i < icon_count; i++)
-		{
-			int numChanels;
-			icons[i].pixels = stbi_load(icon_paths[i], &icons[i].width, &icons[i].height, &numChanels, 0);
-			if (!icons[i].pixels)
-			{
-				cout << "Warning : unable to load Tekari's icons\n";
-				break;
-			}
-		}
-		if (i == icon_count)
-			glfwSetWindowIcon(mGLFWWindow, icon_count, icons);
+        GLFWimage icons[icon_count];
+        unsigned int i;
+        for (i = 0; i < icon_count; i++)
+        {
+            int num_chanels;
+            icons[i].pixels = stbi_load(icon_paths[i], &icons[i].width, &icons[i].height, &num_chanels, 0);
+            if (!icons[i].pixels)
+            {
+                cout << "Warning : unable to load Tekari's icons\n";
+                break;
+            }
+        }
+        if (i == icon_count)
+            glfw_set_window_icon(m_g_l_f_w_window, icon_count, icons);
 
-		for (unsigned int j = 0; j < i; j++)
-		{
-			stbi_image_free(icons[j].pixels);
-		}
-	}
+        for (unsigned int j = 0; j < i; j++)
+        {
+            stbi_image_free(icons[j].pixels);
+        }
+    }
 
-	setResizeCallback([this](Vector2i) { requestLayoutUpdate(); });
-	
-	setBackground(mTheme->mWindowFillFocused);
+    set_resize_callback([this](Vector2i) { request_layout_update(); });
+    
+    set_background(m_theme->m_window_fill_focused);
 
-    requestLayoutUpdate();
-    openFiles(dataSamplePaths);
+    request_layout_update();
+    open_files(data_sample_paths);
 }
 
 BSDFApplication::~BSDFApplication()
 {
-    mFramebuffer.free();
+    m_framebuffer.free();
 
     for (size_t i = 0; i < BSDFCanvas::MOUSE_MODE_COUNT; i++)
     {
-        glfwDestroyCursor(mCursors[i]);
+        glfw_destroy_cursor(m_cursors[i]);
     }
 }
 
-bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modifiers) {
-    if (Screen::keyboardEvent(key, scancode, action, modifiers))
+bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modifiers) {
+    if (Screen::keyboard_event(key, scancode, action, modifiers))
         return true;
 
     if (action == GLFW_PRESS || action == GLFW_REPEAT)
@@ -333,36 +333,36 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
             case GLFW_KEY_O:
-                openDataSampleDialog();
+                open_data_sample_dialog();
                 return true;
             case GLFW_KEY_S:
                 cout << "Save data\n";
                 return true;
             case GLFW_KEY_A:
-				if (!mSelectedDS)
-					return false;
+                if (!m_selected_d_s)
+                    return false;
 
-                select_all_points(mSelectedDS->selectedPoints());
-                mSelectedDS->updatePointSelection();
-				updateSelectionInfoWindow();
+                select_all_points(m_selected_d_s->selected_points());
+                m_selected_d_s->update_point_selection();
+                update_selection_info_window();
                 return true;
             case GLFW_KEY_P:
-                saveScreenShot();
+                save_screen_shot();
                 return true;
             case GLFW_KEY_1: if (!alt) return false;
             case GLFW_KEY_KP_1:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::BACK);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::BACK);
                 return true;
             case GLFW_KEY_3: if (!alt) return false;
             case GLFW_KEY_KP_3:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::RIGHT);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::RIGHT);
                 return true;
             case GLFW_KEY_7: if (!alt) return false;
             case GLFW_KEY_KP_7:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::DOWN);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::DOWN);
                 return true;
             case GLFW_KEY_I:
-                toggleCanvasDrawFlags(DISPLAY_PREDICTED_OUTGOING_ANGLE, mDisplayPredictedOutgoingAngleCheckbox);
+                toggle_canvas_draw_flags(DISPLAY_PREDICTED_OUTGOING_ANGLE, m_display_predicted_outgoing_angle_checkbox);
                 return true;
             }
         }
@@ -371,44 +371,44 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
                 case GLFW_KEY_S:
-                    toggleCanvasDrawFlags(USES_SHADOWS, mUseShadowsCheckbox);
-					mUseSpecularCheckbox->setEnabled(mUseShadowsCheckbox->checked());
+                    toggle_canvas_draw_flags(USES_SHADOWS, m_use_shadows_checkbox);
+                    m_use_specular_checkbox->set_enabled(m_use_shadows_checkbox->checked());
                     return true;
                 case GLFW_KEY_G:
                 {
-                    int showDegrees = !mBSDFCanvas->grid().showDegrees();
-                    mDisplayDegreesCheckbox->setChecked(showDegrees);
-                    mBSDFCanvas->grid().setShowDegrees(showDegrees);
+                    int show_degrees = !m_bsdf_canvas->grid().show_degrees();
+                    m_display_degrees_checkbox->set_checked(show_degrees);
+                    m_bsdf_canvas->grid().set_show_degrees(show_degrees);
                     return true;
                 }
                 case GLFW_KEY_P:
-                    toggleView(DataSample::Views::POINTS, mSelectedDS, !mSelectedDS->displayView(DataSample::Views::POINTS));
+                    toggle_view(DataSample::Views::POINTS, m_selected_d_s, !m_selected_d_s->display_view(DataSample::Views::POINTS));
                     return true;
                 case GLFW_KEY_I:
-                    toggleView(DataSample::Views::INCIDENT_ANGLE, mSelectedDS, !mSelectedDS->displayView(DataSample::Views::INCIDENT_ANGLE));
+                    toggle_view(DataSample::Views::INCIDENT_ANGLE, m_selected_d_s, !m_selected_d_s->display_view(DataSample::Views::INCIDENT_ANGLE));
                     return true;
                 case GLFW_KEY_H:
-				case GLFW_KEY_L:
-					if (!mSelectedDS)
-						return false;
+                case GLFW_KEY_L:
+                    if (!m_selected_d_s)
+                        return false;
                     
-					select_extreme_point( mSelectedDS->pointsStats(),
-                                            mSelectedDS->selectionStats(),
-                                            mSelectedDS->selectedPoints(),
-                                            mSelectedDS->waveLengthIndex(),
-											key == GLFW_KEY_H);
-                    mSelectedDS->updatePointSelection();
-					updateSelectionInfoWindow();
+                    select_extreme_point( m_selected_d_s->points_stats(),
+                                            m_selected_d_s->selection_stats(),
+                                            m_selected_d_s->selected_points(),
+                                            m_selected_d_s->wave_length_index(),
+                                            key == GLFW_KEY_H);
+                    m_selected_d_s->update_point_selection();
+                    update_selection_info_window();
                     return true;
-				case GLFW_KEY_1:
-				case GLFW_KEY_2:
-					if (!mSelectedDS || !mSelectedDS->hasSelection())
-						return false;
+                case GLFW_KEY_1:
+                case GLFW_KEY_2:
+                    if (!m_selected_d_s || !m_selected_d_s->has_selection())
+                        return false;
 
-					move_selection_along_path(key == GLFW_KEY_1, mSelectedDS->selectedPoints());
-					mSelectedDS->updatePointSelection();
-					updateSelectionInfoWindow();
-					return true;
+                    move_selection_along_path(key == GLFW_KEY_1, m_selected_d_s->selected_points());
+                    m_selected_d_s->update_point_selection();
+                    update_selection_info_window();
+                    return true;
                 default:
                     return false;
             }
@@ -418,16 +418,16 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
             switch (key)
             {
             case GLFW_KEY_1:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::FRONT);
                 return true;
             case GLFW_KEY_3:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::LEFT);
                 return true;
             case GLFW_KEY_7:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::UP);
                 return true;
             case GLFW_KEY_5:
-                toggleToolButton(mOrthoViewToggle);
+                toggle_tool_button(m_ortho_view_toggle);
                 return true;
             }
         }
@@ -435,133 +435,133 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
         {
             switch (key)
             {
-			case GLFW_KEY_F1:
-				hideWindows();
-				return true;
+            case GLFW_KEY_F1:
+                hide_windows();
+                return true;
             case GLFW_KEY_ESCAPE:
-				if (!mSelectedDS || !mSelectedDS->hasSelection())
-					return false;
+                if (!m_selected_d_s || !m_selected_d_s->has_selection())
+                    return false;
                  
-				deselect_all_points(mSelectedDS->selectedPoints());
-                mSelectedDS->updatePointSelection();
-				updateSelectionInfoWindow();
+                deselect_all_points(m_selected_d_s->selected_points());
+                m_selected_d_s->update_point_selection();
+                update_selection_info_window();
                 return true;
             case GLFW_KEY_Q:
-			{
-				vector<string> dsNames;
-				for (const auto& ds : mDataSamples)
-				{
-					if (ds->dirty())
-					{
-						dsNames.push_back(ds->name());
-					}
-				}
-				if (dsNames.empty()) setVisible(false);
-				else toggleUnsavedDataWindow(dsNames, [this]() { setVisible(false); });
-			}
-				return true;
+            {
+                vector<string> ds_names;
+                for (const auto& ds : m_data_samples)
+                {
+                    if (ds->dirty())
+                    {
+                        ds_names.push_back(ds->name());
+                    }
+                }
+                if (ds_names.empty()) set_visible(false);
+                else toggle_unsaved_data_window(ds_names, [this]() { set_visible(false); });
+            }
+                return true;
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
             case GLFW_KEY_6: case GLFW_KEY_7: case GLFW_KEY_8: case GLFW_KEY_9:
-                selectDataSample(key - GLFW_KEY_1);
+                select_data_sample(key - GLFW_KEY_1);
                 return true;
             case GLFW_KEY_DELETE:
-                deleteDataSample(mSelectedDS);
+                delete_data_sample(m_selected_d_s);
                 return true;
             case GLFW_KEY_D:
-				if (!mSelectedDS || !mSelectedDS->hasSelection())
-					return false;
+                if (!m_selected_d_s || !m_selected_d_s->has_selection())
+                    return false;
 
                 delete_selected_points(
-                    mSelectedDS->selectedPoints(),
-                    mSelectedDS->rawPoints(),
-                    mSelectedDS->V2D(),
-                    mSelectedDS->selectionStats(),
-					mSelectedDS->metadata()
+                    m_selected_d_s->selected_points(),
+                    m_selected_d_s->raw_points(),
+                    m_selected_d_s->V2D(),
+                    m_selected_d_s->selection_stats(),
+                    m_selected_d_s->metadata()
                 );
 
                 recompute_data(
-                    mSelectedDS->rawPoints(),
-                    mSelectedDS->pointsStats(),
-                    mSelectedDS->pathSegments(),
-                    mSelectedDS->F(),
-                    mSelectedDS->V2D(),
-                    mSelectedDS->H(), mSelectedDS->LH(),
-                    mSelectedDS->N(), mSelectedDS->LN()
+                    m_selected_d_s->raw_points(),
+                    m_selected_d_s->points_stats(),
+                    m_selected_d_s->path_segments(),
+                    m_selected_d_s->F(),
+                    m_selected_d_s->V2D(),
+                    m_selected_d_s->H(), m_selected_d_s->LH(),
+                    m_selected_d_s->N(), m_selected_d_s->LN()
                 );
 
-                mSelectedDS->linkDataToShaders();
-				mSelectedDS->setDirty(true);
-				correspondingButton(mSelectedDS)->setDirty(true);
+                m_selected_d_s->link_data_to_shaders();
+                m_selected_d_s->set_dirty(true);
+                corresponding_button(m_selected_d_s)->set_dirty(true);
 
-				reprintFooter();
-				updateSelectionInfoWindow();
-				requestLayoutUpdate();
+                reprint_footer();
+                update_selection_info_window();
+                request_layout_update();
                 return true;
             case GLFW_KEY_UP: case GLFW_KEY_W:
-                selectDataSample(selectedDataSampleIndex() - 1, false);
+                select_data_sample(selected_data_sample_index() - 1, false);
                 return true;
             case GLFW_KEY_DOWN: case GLFW_KEY_S:
-                selectDataSample(selectedDataSampleIndex() + 1, false);
+                select_data_sample(selected_data_sample_index() + 1, false);
                 return true;
             case GLFW_KEY_ENTER:
-				if (!mSelectedDS)
-					return false;
-				correspondingButton(mSelectedDS)->toggleView();
+                if (!m_selected_d_s)
+                    return false;
+                corresponding_button(m_selected_d_s)->toggle_view();
                 return true;
             case GLFW_KEY_L:
-				toggleLogView(mSelectedDS);
+                toggle_log_view(m_selected_d_s);
                 return true;
             case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
             {
-                BSDFCanvas::MouseMode mode = BSDFCanvas::MouseMode::ROTATE;
-                if (key == GLFW_KEY_T) mode = BSDFCanvas::MouseMode::TRANSLATE;
-                if (key == GLFW_KEY_B) mode = BSDFCanvas::MouseMode::SELECTION;
-                mMouseModeSelector->setSelectedIndex(mode);
-                mBSDFCanvas->setMouseMode(mode);
-                glfwSetCursor(mGLFWWindow, mCursors[mode]);
+                BSDFCanvas::Mouse_mode mode = BSDFCanvas::Mouse_mode::ROTATE;
+                if (key == GLFW_KEY_T) mode = BSDFCanvas::Mouse_mode::TRANSLATE;
+                if (key == GLFW_KEY_B) mode = BSDFCanvas::Mouse_mode::SELECTION;
+                m_mouse_mode_selector->set_selected_index(mode);
+                m_bsdf_canvas->set_mouse_mode(mode);
+                glfw_set_cursor(m_g_l_f_w_window, m_cursors[mode]);
                 return true;
             }
             case GLFW_KEY_P:
-                toggleView(DataSample::Views::PATH, mSelectedDS, !mSelectedDS->displayView(DataSample::Views::PATH));
+                toggle_view(DataSample::Views::PATH, m_selected_d_s, !m_selected_d_s->display_view(DataSample::Views::PATH));
                 return true;
             case GLFW_KEY_G:
-                toggleToolButton(mGridViewToggle);
+                toggle_tool_button(m_grid_view_toggle);
                 return true;
             case GLFW_KEY_O: case GLFW_KEY_KP_5:
-                toggleToolButton(mOrthoViewToggle);
+                toggle_tool_button(m_ortho_view_toggle);
                 return true;
             case GLFW_KEY_I:
-                toggleMetadataWindow();
+                toggle_metadata_window();
                 return true;
             case GLFW_KEY_C:
-                mBSDFCanvas->snapToSelectionCenter();
+                m_bsdf_canvas->snap_to_selection_center();
                 return true;
             case GLFW_KEY_M:
-                toggleColorMapSelectionWindow();
+                toggle_color_map_selection_window();
                 return true;
             case GLFW_KEY_A:
-                toggleCanvasDrawFlags(DISPLAY_AXIS, mDisplayCenterAxis);
+                toggle_canvas_draw_flags(DISPLAY_AXIS, m_display_center_axis);
                 return true;
             case GLFW_KEY_H:
-                toggleHelpWindow();
+                toggle_help_window();
                 return true;
             case GLFW_KEY_KP_1:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::FRONT);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::FRONT);
                 return true;
             case GLFW_KEY_KP_3:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::LEFT);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::LEFT);
                 return true;
             case GLFW_KEY_KP_7:
-                mBSDFCanvas->setViewAngle(BSDFCanvas::ViewAngles::UP);
+                m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::UP);
                 return true;
             case GLFW_KEY_KP_ADD:
             case GLFW_KEY_KP_SUBTRACT:
-				if (!mSelectedDS || !mSelectedDS->hasSelection())
-					return false;
+                if (!m_selected_d_s || !m_selected_d_s->has_selection())
+                    return false;
 
-                move_selection_along_path(key == GLFW_KEY_KP_ADD, mSelectedDS->selectedPoints());
-                mSelectedDS->updatePointSelection();
-				updateSelectionInfoWindow();
+                move_selection_along_path(key == GLFW_KEY_KP_ADD, m_selected_d_s->selected_points());
+                m_selected_d_s->update_point_selection();
+                update_selection_info_window();
                 return true;
             default:
                 return false;
@@ -571,29 +571,29 @@ bool BSDFApplication::keyboardEvent(int key, int scancode, int action, int modif
     return false;
 }
 
-void BSDFApplication::drawContents() {
-    if (mRequiresLayoutUpdate)
+void BSDFApplication::draw_contents() {
+    if (m_requires_layout_update)
     {
-        updateLayout();
-        mRequiresLayoutUpdate = false;
+        update_layout();
+        m_requires_layout_update = false;
     }
 
     try {
         while (true) {
-            auto newDataSample = mDataSamplesToAdd.tryPop();
-            if (!newDataSample->dataSample)
+            auto new_data_sample = m_data_samples_to_add.try_pop();
+            if (!new_data_sample->data_sample)
             {
-                auto errorMsgDialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error",
-                    newDataSample->errorMsg, "Retry", "Cancel", true);
-                errorMsgDialog->setCallback([this](int index) {
-                    if (index == 0) { openDataSampleDialog(); }
+                auto error_msg_dialog = new Message_dialog(this, Message_dialog::Type::Warning, "Error",
+                    new_data_sample->error_msg, "Retry", "Cancel", true);
+                error_msg_dialog->set_callback([this](int index) {
+                    if (index == 0) { open_data_sample_dialog(); }
                 });
             }
             else
             {
-                newDataSample->dataSample->initShaders();
-                newDataSample->dataSample->linkDataToShaders();
-                addDataSample(newDataSample->dataSample);
+                new_data_sample->data_sample->init_shaders();
+                new_data_sample->data_sample->link_data_to_shaders();
+                add_data_sample(new_data_sample->data_sample);
             }
         }
     }
@@ -601,59 +601,59 @@ void BSDFApplication::drawContents() {
     }
 }
 
-void BSDFApplication::updateLayout()
+void BSDFApplication::update_layout()
 {
-    m3DView->setFixedSize(mSize);
+    m3DView->set_fixed_size(m_size);
 
-    mFooter->setFixedSize(Vector2i{ mSize.x(), FOOTER_HEIGHT });
-    for(auto& footerInfos: mFooter->children())
-        footerInfos->setFixedWidth(width() / mFooter->children().size());
+    m_footer->set_fixed_size(Vector2i{ m_size.x(), FOOTER_HEIGHT });
+    for(auto& footer_infos: m_footer->children())
+        footer_infos->set_fixed_width(width() / m_footer->children().size());
 
-    mBSDFCanvas->setFixedSize(Vector2i{ mSize.x(), mSize.y() - FOOTER_HEIGHT });
-    mToolWindow->setFixedSize({ 210, 400 });
+    m_bsdf_canvas->set_fixed_size(Vector2i{ m_size.x(), m_size.y() - FOOTER_HEIGHT });
+    m_tool_window->set_fixed_size({ 210, 400 });
 
-    mDataSamplesScrollPanel->setFixedHeight(
-        mToolWindow->height() - mDataSamplesScrollPanel->position().y()
+    m_data_samples_scroll_panel->set_fixed_height(
+        m_tool_window->height() - m_data_samples_scroll_panel->position().y()
     );
 
-    performLayout();
+    perform_layout();
 
     // With a changed layout the relative position of the mouse
     // within children changes and therefore should get updated.
     // nanogui does not handle this for us.
     double x, y;
-    glfwGetCursorPos(mGLFWWindow, &x, &y);
-    cursorPosCallbackEvent(x, y);
+    glfw_get_cursor_pos(m_g_l_f_w_window, &x, &y);
+    cursor_pos_callback_event(x, y);
 }
 
-void BSDFApplication::openDataSampleDialog()
+void BSDFApplication::open_data_sample_dialog()
 {
-	mThreadPool.addTask([this]() {
-		vector<string> dataSamplePaths = file_dialog({ { "txt",  "Data samples" } }, false, true);
-		openFiles(dataSamplePaths);
-		// Make sure we gain focus after seleting a file to be loaded.
-		glfwFocusWindow(mGLFWWindow);
-	});
+    m_thread_pool.add_task([this]() {
+        vector<string> data_sample_paths = file_dialog({ { "txt",  "Data samples" } }, false, true);
+        open_files(data_sample_paths);
+        // Make sure we gain focus after seleting a file to be loaded.
+        glfw_focus_window(m_g_l_f_w_window);
+    });
 }
 
-void BSDFApplication::openFiles(const std::vector<std::string>& dataSamplePaths)
+void BSDFApplication::open_files(const std::vector<std::string>& data_sample_paths)
 {
-    for (const auto& dataSamplePath : dataSamplePaths)
+    for (const auto& data_sample_path : data_sample_paths)
     {
-        mThreadPool.addTask([this, dataSamplePath]() {
-            auto newDataSample = make_shared<DataSampleToAdd>();
-            tryLoadDataSample(dataSamplePath, newDataSample);
-            mDataSamplesToAdd.push(newDataSample);
+        m_thread_pool.add_task([this, data_sample_path]() {
+            auto new_data_sample = make_shared<DataSample_to_add>();
+            try_load_data_sample(data_sample_path, new_data_sample);
+            m_data_samples_to_add.push(new_data_sample);
         });
     }
 }
 
-void BSDFApplication::saveSelectedDataSample()
+void BSDFApplication::save_selected_data_sample()
 {
-	if (!mSelectedDS)
-		return;
+    if (!m_selected_d_s)
+        return;
     
-	string path = file_dialog(
+    string path = file_dialog(
     {
         { "txt",  "Data samples" },
     }, true);
@@ -661,37 +661,37 @@ void BSDFApplication::saveSelectedDataSample()
     if (path.empty())
         return;
 
-    save_data_sample(path, mSelectedDS->rawPoints(), mSelectedDS->metadata());
-	mSelectedDS->setDirty(false);
-	correspondingButton(mSelectedDS)->setDirty(false);
+    save_data_sample(path, m_selected_d_s->raw_points(), m_selected_d_s->metadata());
+    m_selected_d_s->set_dirty(false);
+    corresponding_button(m_selected_d_s)->set_dirty(false);
 }
 
-void BSDFApplication::saveScreenShot()
+void BSDFApplication::save_screen_shot()
 {
-	string screenshotName = file_dialog(
-	{
-		{ "tga", "TGA images" }
-	}, true);
+    string screenshot_name = file_dialog(
+    {
+        { "tga", "TGA images" }
+    }, true);
 
-	if (screenshotName.empty())
-		return;
-		
-	if (mFramebuffer.ready())
-	{
-		mFramebuffer.free();
-	}
-	int viewPortWidth = static_cast<int>(mPixelRatio * width());
-	int viewPortHeight = static_cast<int>(mPixelRatio * height());
-	mFramebuffer.init(Vector2i{ viewPortWidth, viewPortHeight }, 1);
-	glViewport(0, 0, viewPortWidth, viewPortHeight);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	mFramebuffer.bind();
-	drawAll();
-	mFramebuffer.downloadTGA(screenshotName);
-	mFramebuffer.release();
+    if (screenshot_name.empty())
+        return;
+        
+    if (m_framebuffer.ready())
+    {
+        m_framebuffer.free();
+    }
+    int view_port_width = static_cast<int>(m_pixel_ratio * width());
+    int view_port_height = static_cast<int>(m_pixel_ratio * height());
+    m_framebuffer.init(Vector2i{ view_port_width, view_port_height }, 1);
+    gl_viewport(0, 0, view_port_width, view_port_height);
+    gl_clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    m_framebuffer.bind();
+    draw_all();
+    m_framebuffer.download_t_g_a(screenshot_name);
+    m_framebuffer.release();
 }
 
-void BSDFApplication::toggleWindow(Window *& window, function<Window*(void)> createWindow)
+void BSDFApplication::toggle_window(Window *& window, function<Window*(void)> create_window)
 {
     if (window)
     {
@@ -700,369 +700,369 @@ void BSDFApplication::toggleWindow(Window *& window, function<Window*(void)> cre
     }
     else
     {
-        window = createWindow();
-        window->requestFocus();
-		window->setVisible(!mDistractionFreeMode);
-		requestLayoutUpdate();
+        window = create_window();
+        window->request_focus();
+        window->set_visible(!m_distraction_free_mode);
+        request_layout_update();
     }
 }
 
-void BSDFApplication::toggleMetadataWindow()
+void BSDFApplication::toggle_metadata_window()
 {
-    toggleWindow(mMetadataWindow, [this]() {
+    toggle_window(m_metadata_window, [this]() {
         Window *window;
-        if (mSelectedDS)
+        if (m_selected_d_s)
         {
-            window = new MetadataWindow(this, &mSelectedDS->metadata(), [this]() { toggleMetadataWindow(); });
+            window = new MetadataWindow(this, &m_selected_d_s->metadata(), [this]() { toggle_metadata_window(); });
         }
         else
         {
-			auto errorWindow = new MessageDialog{ this, MessageDialog::Type::Warning, "Metadata",
-				"No data sample selected.", "close" };
-            errorWindow->setCallback([this](int) { mMetadataWindow = nullptr; });
-            window = errorWindow;
+            auto error_window = new Message_dialog{ this, Message_dialog::Type::Warning, "Metadata",
+                "No data sample selected.", "close" };
+            error_window->set_callback([this](int) { m_metadata_window = nullptr; });
+            window = error_window;
         }
         window->center();
         return window;
     });
 }
 
-void BSDFApplication::updateSelectionInfoWindow()
+void BSDFApplication::update_selection_info_window()
 {
-	if (mSelectionInfoWindow) toggleSelectionInfoWindow();
-	toggleSelectionInfoWindow();
+    if (m_selection_info_window) toggle_selection_info_window();
+    toggle_selection_info_window();
 }
 
-void BSDFApplication::toggleSelectionInfoWindow()
+void BSDFApplication::toggle_selection_info_window()
 {
-	// if we are trying to toggle the selection window without a selection, just return
-	if (!mSelectionInfoWindow &&
-		(!mSelectedDS || mSelectedDS->selectionStats().pointsCount() == 0))
-		return;
+    // if we are trying to toggle the selection window without a selection, just return
+    if (!m_selection_info_window &&
+        (!m_selected_d_s || m_selected_d_s->selection_stats().points_count() == 0))
+        return;
 
-    toggleWindow(mSelectionInfoWindow, [this]() {
+    toggle_window(m_selection_info_window, [this]() {
 
         auto window = new Window{ this, "Selection Info" };
-        window->setLayout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 5, 5 });
+        window->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 5, 5 });
 
-        auto makeSelectionInfoLabels = [this, window](const string& caption, const string& value) {
+        auto make_selection_info_labels = [this, window](const string& caption, const string& value) {
             new Label{ window, caption, "sans-bold" };
             new Label{ window, value };
         };
-		
-        makeSelectionInfoLabels("Points In Selection :", to_string(mSelectedDS->selectionStats().pointsCount()));
-        makeSelectionInfoLabels("Minimum Intensity :", to_string(mSelectedDS->selectionMinIntensity()));
-        makeSelectionInfoLabels("Maximum Intensity :", to_string(mSelectedDS->selectionMaxIntensity()));
-        makeSelectionInfoLabels("Average Intensity :", to_string(mSelectedDS->selectionAverageIntensity()));
+        
+        make_selection_info_labels("Points In Selection :", to_string(m_selected_d_s->selection_stats().points_count()));
+        make_selection_info_labels("Minimum Intensity :", to_string(m_selected_d_s->selection_min_intensity()));
+        make_selection_info_labels("Maximum Intensity :", to_string(m_selected_d_s->selection_max_intensity()));
+        make_selection_info_labels("Average Intensity :", to_string(m_selected_d_s->selection_average_intensity()));
 
-        window->setPosition(Vector2i{width() - 200, 20});
+        window->set_position(Vector2i{width() - 200, 20});
 
         return window;
     });
 }
 
-void BSDFApplication::toggleUnsavedDataWindow(const vector<string>& dataSampleNames, function<void(void)> continueCallback)
+void BSDFApplication::toggle_unsaved_data_window(const vector<string>& data_sample_names, function<void(void)> continue_callback)
 {
-	if (dataSampleNames.empty())
-		return;
+    if (data_sample_names.empty())
+        return;
 
-	toggleWindow(mUnsavedDataWindow, [this, &dataSampleNames, continueCallback]() {
-		ostringstream errorMsg;
-		errorMsg << dataSampleNames[0];
-		for (size_t i = 1; i < dataSampleNames.size(); ++i)
-			errorMsg << " and " << dataSampleNames[i];
+    toggle_window(m_unsaved_data_window, [this, &data_sample_names, continue_callback]() {
+        ostringstream error_msg;
+        error_msg << data_sample_names[0];
+        for (size_t i = 1; i < data_sample_names.size(); ++i)
+            error_msg << " and " << data_sample_names[i];
 
-		errorMsg << (dataSampleNames.size() == 1 ? " has " : " have ");
-		errorMsg << "some unsaved changed. Are you sure you want to continue ?";
+        error_msg << (data_sample_names.size() == 1 ? " has " : " have ");
+        error_msg << "some unsaved changed. Are you sure you want to continue ?";
 
-		auto window = new MessageDialog{ this, MessageDialog::Type::Warning, "Unsaved Changes",
-			errorMsg.str(), "Cancel", "Continue", true };
+        auto window = new Message_dialog{ this, Message_dialog::Type::Warning, "Unsaved Changes",
+            error_msg.str(), "Cancel", "Continue", true };
 
-		window->setCallback([this, continueCallback](int i) {
-			if (i != 0)
-				continueCallback();
-			mUnsavedDataWindow = nullptr;
-		});
-		window->center();
-		return window;
-	});
-}
-
-void BSDFApplication::toggleHelpWindow()
-{
-    toggleWindow(mHelpWindow, [this]() {
-        auto window = new HelpWindow(this, [this]() {toggleHelpWindow(); });
+        window->set_callback([this, continue_callback](int i) {
+            if (i != 0)
+                continue_callback();
+            m_unsaved_data_window = nullptr;
+        });
         window->center();
         return window;
     });
 }
 
-void BSDFApplication::toggleColorMapSelectionWindow()
+void BSDFApplication::toggle_help_window()
 {
-    toggleWindow(mColorMapSelectionWindow, [this]() {
-        auto window = new ColorMapSelectionWindow{ this, mColorMaps };
-        window->setCloseCallback([this]() { toggleColorMapSelectionWindow(); });
-        window->setSelectionCallback([this](shared_ptr<ColorMap> colorMap) { selectColorMap(colorMap); });
-        auto pos = distance(mColorMaps.begin(), find(mColorMaps.begin(), mColorMaps.end(), mBSDFCanvas->colorMap()));
-        window->setSelectedButton(static_cast<size_t>(pos));
+    toggle_window(m_help_window, [this]() {
+        auto window = new HelpWindow(this, [this]() {toggle_help_window(); });
+        window->center();
+        return window;
+    });
+}
+
+void BSDFApplication::toggle_color_map_selection_window()
+{
+    toggle_window(m_color_map_selection_window, [this]() {
+        auto window = new ColorMapSelectionWindow{ this, m_color_maps };
+        window->set_close_callback([this]() { toggle_color_map_selection_window(); });
+        window->set_selection_callback([this](shared_ptr<ColorMap> color_map) { select_color_map(color_map); });
+        auto pos = distance(m_color_maps.begin(), find(m_color_maps.begin(), m_color_maps.end(), m_bsdf_canvas->color_map()));
+        window->set_selected_button(static_cast<size_t>(pos));
         window->center();
         return dynamic_cast<Window*>(window);
     });
 }
 
-void BSDFApplication::selectColorMap(shared_ptr<ColorMap> colorMap)
+void BSDFApplication::select_color_map(shared_ptr<ColorMap> color_map)
 {
-    mBSDFCanvas->setColorMap(colorMap);
+    m_bsdf_canvas->set_color_map(color_map);
 }
 
-int BSDFApplication::dataSampleIndex(const shared_ptr<const DataSample> dataSample) const
+int BSDFApplication::data_sample_index(const shared_ptr<const DataSample> data_sample) const
 {
-    auto pos = static_cast<size_t>(distance(mDataSamples.begin(), find(mDataSamples.begin(), mDataSamples.end(), dataSample)));
-    return pos >= mDataSamples.size() ? -1 : static_cast<int>(pos);
+    auto pos = static_cast<size_t>(distance(m_data_samples.begin(), find(m_data_samples.begin(), m_data_samples.end(), data_sample)));
+    return pos >= m_data_samples.size() ? -1 : static_cast<int>(pos);
 }
 
-void BSDFApplication::selectDataSample(int index, bool clamped)
+void BSDFApplication::select_data_sample(int index, bool clamped)
 {
-    if (mDataSamples.empty())
+    if (m_data_samples.empty())
         return;
 
     if (clamped)
-        index = max(0, min(static_cast<int>(mDataSamples.size()-1), index));
-    else if (index < 0 || index >= static_cast<int>(mDataSamples.size()))
+        index = max(0, min(static_cast<int>(m_data_samples.size()-1), index));
+    else if (index < 0 || index >= static_cast<int>(m_data_samples.size()))
         return;
 
-    selectDataSample(mDataSamples[index]);
+    select_data_sample(m_data_samples[index]);
 }
 
-void BSDFApplication::selectDataSample(shared_ptr<DataSample> dataSample)
+void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
 {
-	// if we select the same data sample, nothing to do
-	if (dataSample == mSelectedDS)
-		return;
+    // if we select the same data sample, nothing to do
+    if (data_sample == m_selected_d_s)
+        return;
 
     // de-select previously selected button
-    if (mSelectedDS)
+    if (m_selected_d_s)
     {
-        DataSampleButton* oldButton = correspondingButton(mSelectedDS);
-        oldButton->setSelected(false);
-        oldButton->showPopup(false);
+        DataSampleButton* old_button = corresponding_button(m_selected_d_s);
+        old_button->set_selected(false);
+        old_button->show_popup(false);
     }
-	
-    mSelectedDS = dataSample;
-    mBSDFCanvas->selectDataSample(dataSample);
+    
+    m_selected_d_s = data_sample;
+    m_bsdf_canvas->select_data_sample(data_sample);
 
-	reprintFooter();
-	updateSelectionInfoWindow();
-	requestLayoutUpdate();
+    reprint_footer();
+    update_selection_info_window();
+    request_layout_update();
 
-	if (!mSelectedDS) // if no data sample is selected, we can stop there
-		return;
+    if (!m_selected_d_s) // if no data sample is selected, we can stop there
+        return;
  
-	auto button = correspondingButton(mSelectedDS);
-    button->setSelected(true);
+    auto button = corresponding_button(m_selected_d_s);
+    button->set_selected(true);
 
-	int buttonAbsY = button->absolutePosition()[1];
-	int scrollAbsY = mDataSamplesScrollPanel->absolutePosition()[1];
-	int buttonH = button->height();
-	int scrollH = mDataSamplesScrollPanel->height();
+    int button_abs_y = button->absolute_position()[1];
+    int scroll_abs_y = m_data_samples_scroll_panel->absolute_position()[1];
+    int button_h = button->height();
+    int scroll_h = m_data_samples_scroll_panel->height();
 
-	float scroll = mDataSamplesScrollPanel->scroll();
-	if (buttonAbsY < scrollAbsY)
-	{
-		scroll = static_cast<float>(button->position()[1]) / mDataSampleButtonContainer->height();
-	}
-	else if (buttonAbsY + buttonH > scrollAbsY + scrollH)
-	{
-		scroll = static_cast<float>(button->position()[1]) / (mDataSampleButtonContainer->height() - buttonH);
-	}
-	mDataSamplesScrollPanel->setScroll(scroll);
+    float scroll = m_data_samples_scroll_panel->scroll();
+    if (button_abs_y < scroll_abs_y)
+    {
+        scroll = static_cast<float>(button->position()[1]) / m_data_sample_button_container->height();
+    }
+    else if (button_abs_y + button_h > scroll_abs_y + scroll_h)
+    {
+        scroll = static_cast<float>(button->position()[1]) / (m_data_sample_button_container->height() - button_h);
+    }
+    m_data_samples_scroll_panel->set_scroll(scroll);
 }
 
-void BSDFApplication::deleteDataSample(shared_ptr<DataSample> dataSample)
+void BSDFApplication::delete_data_sample(shared_ptr<DataSample> data_sample)
 {
-    int index = dataSampleIndex(dataSample);
+    int index = data_sample_index(data_sample);
     if (index == -1)
         return;
 
     // erase data sample and corresponding button
-    auto button = correspondingButton(dataSample);
-    button->removePopupFromParent();
-    mDataSampleButtonContainer->removeChild(index);
+    auto button = corresponding_button(data_sample);
+    button->remove_popup_from_parent();
+    m_data_sample_button_container->remove_child(index);
 
-    mBSDFCanvas->removeDataSample(dataSample);
-    mDataSamples.erase(find(mDataSamples.begin(), mDataSamples.end(), dataSample));
+    m_bsdf_canvas->remove_data_sample(data_sample);
+    m_data_samples.erase(find(m_data_samples.begin(), m_data_samples.end(), data_sample));
 
     // clear focus path and drag widget pointer, since it may refer to deleted button
-    mDragWidget = nullptr;
-    mDragActive = false;
-    mFocusPath.clear();
+    m_drag_widget = nullptr;
+    m_drag_active = false;
+    m_focus_path.clear();
 
     // update selected datasample, if we just deleted the selected data sample
-    if (dataSample == mSelectedDS)
+    if (data_sample == m_selected_d_s)
     {
-        shared_ptr<DataSample> dataSampleToSelect = nullptr;
-        if (index >= static_cast<int>(mDataSamples.size())) --index;
+        shared_ptr<DataSample> data_sample_to_select = nullptr;
+        if (index >= static_cast<int>(m_data_samples.size())) --index;
         if (index >= 0)
         {
-            dataSampleToSelect = mDataSamples[index];
+            data_sample_to_select = m_data_samples[index];
         }
         // Make sure no button is selected
-        mSelectedDS = nullptr;
-        selectDataSample(dataSampleToSelect);
+        m_selected_d_s = nullptr;
+        select_data_sample(data_sample_to_select);
     }
-    requestLayoutUpdate();
+    request_layout_update();
 }
 
-void BSDFApplication::addDataSample(shared_ptr<DataSample> dataSample)
+void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
 {
-    if (!dataSample) {
+    if (!data_sample) {
         throw invalid_argument{ "Data sample may not be null." };
     }
 
-    string cleanName = dataSample->name();
-    replace(cleanName.begin(), cleanName.end(), '_', ' ');
-	auto dataSampleButton = new DataSampleButton{ mDataSampleButtonContainer, cleanName,
-		dataSample->isSpectral(), dataSample->maxWaveLengthIndex() };
-    dataSampleButton->setFixedHeight(30);
+    string clean_name = data_sample->name();
+    replace(clean_name.begin(), clean_name.end(), '_', ' ');
+    auto data_sample_button = new DataSampleButton{ m_data_sample_button_container, clean_name,
+        data_sample->is_spectral(), data_sample->max_wave_length_index() };
+    data_sample_button->set_fixed_height(30);
 
-    dataSampleButton->setCallback([this, dataSample]() { selectDataSample(dataSample); });
+    data_sample_button->set_callback([this, data_sample]() { select_data_sample(data_sample); });
 
-	dataSampleButton->setWaveLengthSliderCallback([this, dataSample](unsigned int waveLengthIndex) {
-		dataSample->setWaveLengthIndex(waveLengthIndex);
-		reprintFooter();
-	});
-
-    dataSampleButton->setDeleteCallback([this, dataSample]() {
-		if (dataSample->dirty())
-		{
-			toggleUnsavedDataWindow({ dataSample->name() }, [this, dataSample]() { deleteDataSample(dataSample); });
-		}
-		else {
-			deleteDataSample(dataSample);
-		}
+    data_sample_button->set_wave_length_slider_callback([this, data_sample](unsigned int wave_length_index) {
+        data_sample->set_wave_length_index(wave_length_index);
+        reprint_footer();
     });
 
-    dataSampleButton->setToggleViewCallback([this, dataSample](bool checked) {
-        int index = dataSampleIndex(dataSample);
-        if (checked)    mBSDFCanvas->addDataSample(mDataSamples[index]);
-        else            mBSDFCanvas->removeDataSample(mDataSamples[index]);
-    });
-
-    dataSampleButton->setViewTogglesCallback([this, dataSample, dataSampleButton](bool) {
-        for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
+    data_sample_button->set_delete_callback([this, data_sample]() {
+        if (data_sample->dirty())
         {
-            DataSample::Views view = static_cast<DataSample::Views>(i);
-            toggleView(view, dataSample, dataSampleButton->isViewToggled(view));
+            toggle_unsaved_data_window({ data_sample->name() }, [this, data_sample]() { delete_data_sample(data_sample); });
+        }
+        else {
+            delete_data_sample(data_sample);
         }
     });
 
-    dataSampleButton->setDisplayAsLogCallback([this, dataSample](bool /* unused */) {
-		dataSample->toggleLogView();
+    data_sample_button->set_toggle_view_callback([this, data_sample](bool checked) {
+        int index = data_sample_index(data_sample);
+        if (checked)    m_bsdf_canvas->add_data_sample(m_data_samples[index]);
+        else            m_bsdf_canvas->remove_data_sample(m_data_samples[index]);
     });
 
-    mDataSamples.push_back(dataSample);
-    selectDataSample(dataSample);
+    data_sample_button->set_view_toggles_callback([this, data_sample, data_sample_button](bool) {
+        for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
+        {
+            DataSample::Views view = static_cast<DataSample::Views>(i);
+            toggle_view(view, data_sample, data_sample_button->is_view_toggled(view));
+        }
+    });
+
+    data_sample_button->set_display_as_log_callback([this, data_sample](bool /* unused */) {
+        data_sample->toggle_log_view();
+    });
+
+    m_data_samples.push_back(data_sample);
+    select_data_sample(data_sample);
 
     // by default toggle view for the new data samples
-    mBSDFCanvas->addDataSample(mSelectedDS);
+    m_bsdf_canvas->add_data_sample(m_selected_d_s);
 }
 
-void BSDFApplication::toggleToolButton(Button* button)
+void BSDFApplication::toggle_tool_button(Button* button)
 {
-    button->setPushed(!button->pushed());
-    button->changeCallback()(button->pushed());
+    button->set_pushed(!button->pushed());
+    button->change_callback()(button->pushed());
 }
 
-void BSDFApplication::toggleView(DataSample::Views view, shared_ptr<DataSample> dataSample, bool toggle)
+void BSDFApplication::toggle_view(DataSample::Views view, shared_ptr<DataSample> data_sample, bool toggle)
 {
-    if (dataSample)
+    if (data_sample)
     {
-        dataSample->toggleView(view, toggle);
-        correspondingButton(dataSample)->toggleView(view, dataSample->displayView(view));
+        data_sample->toggle_view(view, toggle);
+        corresponding_button(data_sample)->toggle_view(view, data_sample->display_view(view));
     }
 }
 
-void BSDFApplication::toggleLogView(shared_ptr<DataSample> dataSample)
+void BSDFApplication::toggle_log_view(shared_ptr<DataSample> data_sample)
 {
-    if (dataSample)
+    if (data_sample)
     {
-        dataSample->toggleLogView();
-        correspondingButton(dataSample)->toggleLogView();
+        data_sample->toggle_log_view();
+        corresponding_button(data_sample)->toggle_log_view();
     }
 }
 
-DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<const DataSample> dataSample)
+DataSampleButton* BSDFApplication::corresponding_button(const shared_ptr<const DataSample> data_sample)
 {
-    int index = dataSampleIndex(dataSample);
+    int index = data_sample_index(data_sample);
     if (index == -1)
         return nullptr;
-    return dynamic_cast<DataSampleButton*>(mDataSampleButtonContainer->childAt(index));
+    return dynamic_cast<DataSampleButton*>(m_data_sample_button_container->child_at(index));
 }
 
-const DataSampleButton* BSDFApplication::correspondingButton(const shared_ptr<const DataSample> dataSample) const
+const DataSampleButton* BSDFApplication::corresponding_button(const shared_ptr<const DataSample> data_sample) const
 {
-    int index = dataSampleIndex(dataSample);
+    int index = data_sample_index(data_sample);
     if (index == -1)
         return nullptr;
-    return dynamic_cast<DataSampleButton*>(mDataSampleButtonContainer->childAt(index));
+    return dynamic_cast<DataSampleButton*>(m_data_sample_button_container->child_at(index));
 }
 
-void BSDFApplication::toggleCanvasDrawFlags(int flag, CheckBox *checkbox)
+void BSDFApplication::toggle_canvas_draw_flags(int flag, CheckBox *checkbox)
 {
-    int flags = mBSDFCanvas->drawFlags() ^ flag;
-    checkbox->setChecked(static_cast<bool>(flags & flag));
-    mBSDFCanvas->setDrawFlags(flags);
+    int flags = m_bsdf_canvas->draw_flags() ^ flag;
+    checkbox->set_checked(static_cast<bool>(flags & flag));
+    m_bsdf_canvas->set_draw_flags(flags);
 }
 
-void BSDFApplication::reprintFooter()
+void BSDFApplication::reprint_footer()
 {
-	mDataSampleName->setCaption			(!mSelectedDS ? "-" : mSelectedDS->name());
-	mDataSamplePointsCount->setCaption	(!mSelectedDS ? "-" : to_string(mSelectedDS->pointsStats().pointsCount()));
-	mDataSampleAverageHeight->setCaption(!mSelectedDS ? "-" : to_string(mSelectedDS->averageIntensity()));
+    m_data_sample_name->set_caption            (!m_selected_d_s ? "-" : m_selected_d_s->name());
+    m_data_sample_points_count->set_caption    (!m_selected_d_s ? "-" : to_string(m_selected_d_s->points_stats().points_count()));
+    m_data_sample_average_height->set_caption(!m_selected_d_s ? "-" : to_string(m_selected_d_s->average_intensity()));
 }
 
-void BSDFApplication::hideWindows()
+void BSDFApplication::hide_windows()
 {
-	mDistractionFreeMode = !mDistractionFreeMode;
+    m_distraction_free_mode = !m_distraction_free_mode;
 
-	auto toggleVisibility = [this](Window* w) { if (w) w->setVisible(!mDistractionFreeMode); };
+    auto toggle_visibility = [this](Window* w) { if (w) w->set_visible(!m_distraction_free_mode); };
 
-	toggleVisibility(mToolWindow);
-	toggleVisibility(mMetadataWindow);
-	toggleVisibility(mHelpWindow);
-	toggleVisibility(mColorMapSelectionWindow);
-	toggleVisibility(mSelectionInfoWindow);
-	toggleVisibility(mUnsavedDataWindow);
+    toggle_visibility(m_tool_window);
+    toggle_visibility(m_metadata_window);
+    toggle_visibility(m_help_window);
+    toggle_visibility(m_color_map_selection_window);
+    toggle_visibility(m_selection_info_window);
+    toggle_visibility(m_unsaved_data_window);
 }
 
-void BSDFApplication::tryLoadDataSample(string filePath, shared_ptr<DataSampleToAdd> dataSampleToAdd)
+void BSDFApplication::try_load_data_sample(string file_path, shared_ptr<DataSample_to_add> data_sample_to_add)
 {
     try {
         shared_ptr<DataSample> ds = make_shared<DataSample>();
 
-		size_t pos = filePath.find_last_of("\\/");
-		string fileName = filePath.substr(pos+1, fileName.length());
-		cout << "====================== Loading " << fileName << " ======================\n";
-        load_data_sample(filePath,
-                         ds->rawPoints(),
+        size_t pos = file_path.find_last_of("\\/");
+        string file_name = file_path.substr(pos+1, file_name.length());
+        cout << "====================== Loading " << file_name << " ======================\n";
+        load_data_sample(file_path,
+                         ds->raw_points(),
                          ds->V2D(),
-                         ds->selectedPoints(),
+                         ds->selected_points(),
                          ds->metadata());
 
-        recompute_data( ds->rawPoints(),
-                        ds->pointsStats(),
-                        ds->pathSegments(),
+        recompute_data( ds->raw_points(),
+                        ds->points_stats(),
+                        ds->path_segments(),
                         ds->F(),
                         ds->V2D(),
                         ds->H(), ds->LH(),
                         ds->N(), ds->LN());
-        dataSampleToAdd->dataSample = ds;
-		cout << "================== Finished loading " << fileName << " =================\n";
+        data_sample_to_add->data_sample = ds;
+        cout << "================== Finished loading " << file_name << " =================\n";
     }
     catch (exception e) {
-        string errorMsg = "Could not open data sample at " + filePath + " : " + e.what();
-        cerr << errorMsg << endl;
-        dataSampleToAdd->errorMsg = errorMsg;
+        string error_msg = "Could not open data sample at " + file_path + " : " + e.what();
+        cerr << error_msg << endl;
+        data_sample_to_add->error_msg = error_msg;
     }
 }
 

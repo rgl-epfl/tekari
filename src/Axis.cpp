@@ -11,47 +11,47 @@ TEKARI_NAMESPACE_BEGIN
 using namespace nanogui;
 
 Axis::Axis(Vector3f origin)
-    : mOrigin(origin)
+    : m_origin(origin)
 {}
 Axis::~Axis()
 {
-    mShader.free();
+    m_shader.free();
 }
 
-void Axis::loadShader()
+void Axis::load_shader()
 {
     const std::string shader_path = "../resources/shaders/";
-    mShader.initFromFiles("axis", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
-    mShader.bind();
-    mShader.setUniform("length", 0.15f);
-    mShader.uploadAttrib("pos", Vector3f{ 0, 0, 0 });
-    mShader.setUniform("origin", mOrigin);
+    m_shader.init_from_files("axis", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
+    m_shader.bind();
+    m_shader.set_uniform("length", 0.15f);
+    m_shader.upload_attrib("pos", Vector3f{ 0, 0, 0 });
+    m_shader.set_uniform("origin", m_origin);
 }
 
-void Axis::drawGL(const Matrix4f& mvp)
+void Axis::draw_gl(const Matrix4f& mvp)
 {
-    glEnable(GL_DEPTH_TEST);
-    mShader.bind();
-    mShader.setUniform("origin", mOrigin);
-    mShader.setUniform("modelViewProj", mvp);
+    gl_enable(GL_DEPTH_TEST);
+    m_shader.bind();
+    m_shader.set_uniform("origin", m_origin);
+    m_shader.set_uniform("model_view_proj", mvp);
 
-    mShader.setUniform("direction", Vector3f{ 1, 0, 0 });
-    mShader.setUniform("color", Vector3f{ 1, 0, 0 });
-    mShader.drawArray(GL_POINTS, 0, 1);
+    m_shader.set_uniform("direction", Vector3f{ 1, 0, 0 });
+    m_shader.set_uniform("color", Vector3f{ 1, 0, 0 });
+    m_shader.draw_array(GL_POINTS, 0, 1);
 
-    mShader.setUniform("direction", Vector3f{ 0, 1, 0 });
-    mShader.setUniform("color", Vector3f{ 0, 1, 0 });
-    mShader.drawArray(GL_POINTS, 0, 1);
+    m_shader.set_uniform("direction", Vector3f{ 0, 1, 0 });
+    m_shader.set_uniform("color", Vector3f{ 0, 1, 0 });
+    m_shader.draw_array(GL_POINTS, 0, 1);
 
-    mShader.setUniform("direction", Vector3f{ 0, 0, 1 });
-    mShader.setUniform("color", Vector3f{ 0, 0, 1 });
-    mShader.drawArray(GL_POINTS, 0, 1);
-    glDisable(GL_DEPTH_TEST);
+    m_shader.set_uniform("direction", Vector3f{ 0, 0, 1 });
+    m_shader.set_uniform("color", Vector3f{ 0, 0, 1 });
+    m_shader.draw_array(GL_POINTS, 0, 1);
+    gl_disable(GL_DEPTH_TEST);
 }
 
-void Axis::setOrigin(const Vector3f& newOrigin)
+void Axis::set_origin(const Vector3f& new_origin)
 {
-    mOrigin = newOrigin;
+    m_origin = new_origin;
 }
 
 TEKARI_NAMESPACE_END

@@ -11,17 +11,17 @@ public:
     static const std::vector<std::pair<const std::string, const std::string>> PREDEFINED_MAPS;
 
 public:
-    ColorMap(const std::string& name, const std::string& filePath);
+    ColorMap(const std::string& name, const std::string& file_path);
 
     void bind(unsigned int target = 0);
     void unbind(unsigned int target = 0);
 
-    unsigned int id() const { return mRenderId; }
-    const std::string& name() const { return mName; }
+    unsigned int id() const { return m_render_id; }
+    const std::string& name() const { return m_name; }
 
 private:
-    unsigned int mRenderId;
-    std::string mName;
+    unsigned int m_render_id;
+    std::string m_name;
 };
 
 TEKARI_NAMESPACE_END

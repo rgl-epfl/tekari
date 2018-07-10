@@ -12,31 +12,31 @@ class Metadata
 public:
     Metadata();
 
-    void addLine(const std::string& line);
-    void initInfos();
+    void add_line(const std::string& line);
+    void init_infos();
 
-    bool isSpectral() const { return mIsSpectral; }
-    float incidentTheta() const { return mInTheta; }
-    float incidentPhi() const { return mInPhi; }
-    const std::string& sampleName() const { return mSampleName; }
-    int pointsInFile() const { return mPointsInFile; }
-    int dataPointsPerLoop() const { return mDataPointsPerLoop; }
-	void setPointsInFile(int pointsInFile);
+    bool is_spectral() const { return m_is_spectral; }
+    float incident_theta() const { return m_in_theta; }
+    float incident_phi() const { return m_in_phi; }
+    const std::string& sample_name() const { return m_sample_name; }
+    int points_in_file() const { return m_points_in_file; }
+    int data_points_per_loop() const { return m_data_points_per_loop; }
+    void set_points_in_file(int points_in_file);
 
-	inline const std::vector<std::string>& rawMetadata() const { return mRawMetadata; }
+    inline const std::vector<std::string>& raw_metadata() const { return m_raw_metadata; }
 
 private:
-    std::string* findLineContaining(const std::string &target);
-    std::string* findLineStartingWith(const std::string &target);
-    static std::string stripQuoteMarks(const std::string& word) { return word.substr(1, word.size() - 2); }
+    std::string* find_line_containing(const std::string &target);
+    std::string* find_line_starting_with(const std::string &target);
+    static std::string strip_quote_marks(const std::string& word) { return word.substr(1, word.size() - 2); }
 
-    std::vector<std::string> mRawMetadata;
-    bool mIsSpectral;
-    float mInTheta;
-    float mInPhi;
-    std::string mSampleName;
-    int mPointsInFile;
-    int mDataPointsPerLoop;
+    std::vector<std::string> m_raw_metadata;
+    bool m_is_spectral;
+    float m_in_theta;
+    float m_in_phi;
+    std::string m_sample_name;
+    int m_points_in_file;
+    int m_data_points_per_loop;
 };
 
 TEKARI_NAMESPACE_END

@@ -17,82 +17,82 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, bool isSpectral, unsigned int maxWaveLengthIndex)
+DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, bool is_spectral, unsigned int max_wave_length_index)
 :   Widget{ parent }
-,   mLabel{ label }
-,   mDisplayLabel{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
-,	mSelected(false)
-,   mVisible(true)
-,	mDirty(false)
-,   mToggleViewButtonPos{ 155, 15 }
-,   mDeleteButtonPos{ 155 + 2*BUTTON_RADIUS + 2, 15 }
-,   mToggleViewButtonHovered(false)
-,   mDeleteButtonHovered(false)
+,   m_label{ label }
+,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
+,    m_selected(false)
+,   m_visible(true)
+,    m_dirty(false)
+,   m_toggle_view_button_pos{ 155, 15 }
+,   m_delete_button_pos{ 155 + 2*BUTTON_RADIUS + 2, 15 }
+,   m_toggle_view_button_hovered(false)
+,   m_delete_button_hovered(false)
 {
-    setTooltip(mLabel);
+    set_tooltip(m_label);
 
-    Window *parentWindow = window();
+    Window *parent_window = window();
 
-    mPopup = new Popup{ parentWindow->parent(), window() };
-    mPopup->setVisible(false);
-    mPopup->setLayout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
+    m_popup = new Popup{ parent_window->parent(), window() };
+    m_popup->set_visible(false);
+    m_popup->set_layout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
 
-    new Label{ mPopup, "View Modes" , "sans-bold", 18};
-    mDisplayAsLog = new CheckBox{ mPopup, "Display as log" };
+    new Label{ m_popup, "View Modes" , "sans-bold", 18};
+    m_display_as_log = new CheckBox{ m_popup, "Display as log" };
 
-    auto buttonContainer = new Widget{ mPopup };
-    buttonContainer->setLayout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
+    auto button_container = new Widget{ m_popup };
+    button_container->set_layout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
 
-    auto makeViewButton = [this, buttonContainer](const string& label, const string& tooltip, bool pushed) {
-        auto button = new Button(buttonContainer, label);
-        button->setFlags(Button::Flags::ToggleButton);
-        button->setTooltip(tooltip);
-        button->setPushed(pushed);
+    auto make_view_button = [this, button_container](const string& label, const string& tooltip, bool pushed) {
+        auto button = new Button(button_container, label);
+        button->set_flags(Button::Flags::Toggle_button);
+        button->set_tooltip(tooltip);
+        button->set_pushed(pushed);
         return button;
     };
-    mViewToggles[DataSample::Views::PATH]   = makeViewButton("Path", "Show/Hide path for this data sample (P)", false);
-    mViewToggles[DataSample::Views::POINTS] = makeViewButton("Points", "Toggle points view for this data sample (Shift + P)", false);
-    mViewToggles[DataSample::Views::INCIDENT_ANGLE] = makeViewButton("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
+    m_view_toggles[DataSample::Views::PATH]   = make_view_button("Path", "Show/Hide path for this data sample (P)", false);
+    m_view_toggles[DataSample::Views::POINTS] = make_view_button("Points", "Toggle points view for this data sample (Shift + P)", false);
+    m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
 
-	if (isSpectral)
-	{
-		auto waveLengthIndexLabel = new Label{ mPopup, "Wave length index : 0", "sans-bold", 18 };
-		auto waveLengthSlider = new Slider{ mPopup };
-		waveLengthSlider->setRange(make_pair(0, maxWaveLengthIndex));
-		waveLengthSlider->setCallback([this, waveLengthSlider, waveLengthIndexLabel](float value) {
-			unsigned int waveLengthIndex = static_cast<unsigned int>(round(value));
-			waveLengthSlider->setValue(waveLengthIndex);
-			waveLengthIndexLabel->setCaption("Wave length index : " + to_string(waveLengthIndex));
-			mWaveLengthSliderCallback(waveLengthIndex);
-		});
-	}
+    if (is_spectral)
+    {
+        auto wave_length_index_label = new Label{ m_popup, "Wave length index : 0", "sans-bold", 18 };
+        auto wave_length_slider = new Slider{ m_popup };
+        wave_length_slider->set_range(make_pair(0, max_wave_length_index));
+        wave_length_slider->set_callback([this, wave_length_slider, wave_length_index_label](float value) {
+            unsigned int wave_length_index = static_cast<unsigned int>(round(value));
+            wave_length_slider->set_value(wave_length_index);
+            wave_length_index_label->set_caption("Wave length index : " + to_string(wave_length_index));
+            m_wave_length_slider_callback(wave_length_index);
+        });
+    }
 }
 
-bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, bool down, int modifiers)
+bool DataSampleButton::mouse_button_event(const Eigen::Vector2i & p, int button, bool down, int modifiers)
 {
-    if (Widget::mouseButtonEvent(p, button, down, modifiers)) {
+    if (Widget::mouse_button_event(p, button, down, modifiers)) {
         return true;
     }
 
-    if (!mEnabled || !down) {
+    if (!m_enabled || !down) {
         return false;
     }
 
     if (button == GLFW_MOUSE_BUTTON_1) {
-        if (InDeleteButton(p))
+        if (In_delete_button(p))
         {
-            mDeleteCallback();
+            m_delete_callback();
             return true;
         }
-        else if (InToggleViewButton(p))
+        else if (In_toggle_view_button(p))
         {
-            toggleView();
+            toggle_view();
             return true;
         }
-        else if (mCallback)
+        else if (m_callback)
         {
-			mPopup->setVisible(!mPopup->visible());
-            mCallback();
+            m_popup->set_visible(!m_popup->visible());
+            m_callback();
             return true;
         }
     }
@@ -100,127 +100,127 @@ bool DataSampleButton::mouseButtonEvent(const Eigen::Vector2i & p, int button, b
     return false;
 }
 
-bool DataSampleButton::mouseEnterEvent(const Vector2i & p, bool enter)
+bool DataSampleButton::mouse_enter_event(const Vector2i & p, bool enter)
 {
-    Widget::mouseEnterEvent(p, enter);
-    mDeleteButtonHovered = false;
-    mToggleViewButtonHovered = false;
+    Widget::mouse_enter_event(p, enter);
+    m_delete_button_hovered = false;
+    m_toggle_view_button_hovered = false;
     return false;
 }
 
-bool DataSampleButton::mouseMotionEvent(const Vector2i &p, const Vector2i &rel, int button, int modifiers)
+bool DataSampleButton::mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers)
 {
-    if (Widget::mouseMotionEvent(p, rel, button, modifiers)) {
+    if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
         return true;
     }
 
-    mDeleteButtonHovered = InDeleteButton(p);
-    mToggleViewButtonHovered = InToggleViewButton(p);
+    m_delete_button_hovered = In_delete_button(p);
+    m_toggle_view_button_hovered = In_toggle_view_button(p);
     return false;
 }
 
 void DataSampleButton::draw(NVGcontext * ctx)
 {
-    Color fillColor =	mSelected ? Color(0.0f, 0.8f, 0.2f, 0.5f) :
-						mMouseFocus ? mTheme->mButtonGradientTopFocused :
-						mTheme->mButtonGradientTopUnfocused;
-    float deleteButtonFillOpacity = mDeleteButtonHovered ? 0.4f : 0.2f;
-    float toggleViewButtonFillOpacity = mToggleViewButtonHovered ? 0.4f : mVisible ? 0.5f : 0.2f;
+    Color fill_color =    m_selected ? Color(0.0f, 0.8f, 0.2f, 0.5f) :
+                        m_mouse_focus ? m_theme->m_button_gradient_top_focused :
+                        m_theme->m_button_gradient_top_unfocused;
+    float delete_button_fill_opacity = m_delete_button_hovered ? 0.4f : 0.2f;
+    float toggle_view_button_fill_opacity = m_toggle_view_button_hovered ? 0.4f : m_visible ? 0.5f : 0.2f;
 
     // save current nvg state
-    nvgSave(ctx);
-    nvgTranslate(ctx, mPos.x(), mPos.y());
+    nvg_save(ctx);
+    nvg_translate(ctx, m_pos.x(), m_pos.y());
 
     // draw background
-    nvgBeginPath(ctx);
-    nvgRect(ctx, 0, 0, mSize.x(), mSize.y());
-    nvgFillColor(ctx, fillColor);
-    nvgFill(ctx);
-    if (mMouseFocus)
+    nvg_begin_path(ctx);
+    nvg_rect(ctx, 0, 0, m_size.x(), m_size.y());
+    nvg_fill_color(ctx, fill_color);
+    nvg_fill(ctx);
+    if (m_mouse_focus)
     {
-        nvgStrokeColor(ctx, Color(1.0f, 0.8f));
-        nvgStrokeWidth(ctx, 1.0f);
-        nvgStroke(ctx);
+        nvg_stroke_color(ctx, Color(1.0f, 0.8f));
+        nvg_stroke_width(ctx, 1.0f);
+        nvg_stroke(ctx);
     }
 
     // draw label
-	string label = mDirty ? mDisplayLabel + "*" : mDisplayLabel;
-    nvgFontSize(ctx, 18.0f);
-    nvgFontFace(ctx, "sans");
-    nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-    nvgFillColor(ctx, mTheme->mTextColorShadow);
-    nvgText(ctx, 5, mSize.y() * 0.5f - 1.0f, label.c_str(), nullptr);
-    nvgFillColor(ctx, mTheme->mTextColor);
-    nvgText(ctx, 5, mSize.y() * 0.5f, label.c_str(), nullptr);
+    string label = m_dirty ? m_display_label + "*" : m_display_label;
+    nvg_font_size(ctx, 18.0f);
+    nvg_font_face(ctx, "sans");
+    nvg_text_align(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+    nvg_fill_color(ctx, m_theme->m_text_color_shadow);
+    nvg_text(ctx, 5, m_size.y() * 0.5f - 1.0f, label.c_str(), nullptr);
+    nvg_fill_color(ctx, m_theme->m_text_color);
+    nvg_text(ctx, 5, m_size.y() * 0.5f, label.c_str(), nullptr);
 
     // font settings for icons
-    nvgFontSize(ctx, BUTTON_RADIUS * 1.3f);
-    nvgFontFace(ctx, "icons");
-    nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+    nvg_font_size(ctx, BUTTON_RADIUS * 1.3f);
+    nvg_font_face(ctx, "icons");
+    nvg_text_align(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
     // draw delete button
-    auto makeToolButton = [this, &ctx](float opacity, int icon, const Vector2i& pos) {
-        nvgBeginPath(ctx);
-        nvgCircle(ctx, pos.x(), pos.y(), BUTTON_RADIUS);
-        nvgFillColor(ctx, Color(0.0f, opacity));
-        nvgFill(ctx);
-        auto iconData = utf8(icon);
-        nvgFillColor(ctx, Color(0.0f, 0.8f));
-        nvgText(ctx, pos.x(), pos.y() - 1.0f, iconData.data(), nullptr);
-        nvgFillColor(ctx, Color(1.0f, 0.8f));
-        nvgText(ctx, pos.x(), pos.y(), iconData.data(), nullptr);
+    auto make_tool_button = [this, &ctx](float opacity, int icon, const Vector2i& pos) {
+        nvg_begin_path(ctx);
+        nvg_circle(ctx, pos.x(), pos.y(), BUTTON_RADIUS);
+        nvg_fill_color(ctx, Color(0.0f, opacity));
+        nvg_fill(ctx);
+        auto icon_data = utf8(icon);
+        nvg_fill_color(ctx, Color(0.0f, 0.8f));
+        nvg_text(ctx, pos.x(), pos.y() - 1.0f, icon_data.data(), nullptr);
+        nvg_fill_color(ctx, Color(1.0f, 0.8f));
+        nvg_text(ctx, pos.x(), pos.y(), icon_data.data(), nullptr);
     };
-    makeToolButton(deleteButtonFillOpacity, ENTYPO_ICON_CROSS, mDeleteButtonPos);
-    makeToolButton(toggleViewButtonFillOpacity, mVisible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, mToggleViewButtonPos);
+    make_tool_button(delete_button_fill_opacity, ENTYPO_ICON_CROSS, m_delete_button_pos);
+    make_tool_button(toggle_view_button_fill_opacity, m_visible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, m_toggle_view_button_pos);
 
-    nvgRestore(ctx);
+    nvg_restore(ctx);
 }
 
-void DataSampleButton::performLayout(NVGcontext * ctx)
+void DataSampleButton::perform_layout(NVGcontext * ctx)
 {
-    Widget::performLayout(ctx);
+    Widget::perform_layout(ctx);
 
-    const Window *parentWindow = window();
+    const Window *parent_window = window();
 
-    int posY = absolutePosition().y() - parentWindow->position().y() + mSize.y() / 2;
-    if (mPopup->side() == Popup::Right)
-        mPopup->setAnchorPos(Vector2i(parentWindow->width() + 15, posY));
+    int pos_y = absolute_position().y() - parent_window->position().y() + m_size.y() / 2;
+    if (m_popup->side() == Popup::Right)
+        m_popup->set_anchor_pos(Vector2i(parent_window->width() + 15, pos_y));
     else
-        mPopup->setAnchorPos(Vector2i(0 - 15, posY));
+        m_popup->set_anchor_pos(Vector2i(0 - 15, pos_y));
 }
 
-void DataSampleButton::toggleView()
+void DataSampleButton::toggle_view()
 {
-    mVisible = !mVisible;
-    mToggleViewCallback(mVisible);
+    m_visible = !m_visible;
+    m_toggle_view_callback(m_visible);
 }
 
-void DataSampleButton::toggleView(DataSample::Views view, bool check)
+void DataSampleButton::toggle_view(DataSample::Views view, bool check)
 {
-    mViewToggles[static_cast<int>(view)]->setPushed(check);
+    m_view_toggles[static_cast<int>(view)]->set_pushed(check);
 }
 
-bool DataSampleButton::isViewToggled(DataSample::Views view)
+bool DataSampleButton::is_view_toggled(DataSample::Views view)
 {
-    return mViewToggles[static_cast<int>(view)]->pushed();
+    return m_view_toggles[static_cast<int>(view)]->pushed();
 }
 
-void DataSampleButton::toggleLogView()
+void DataSampleButton::toggle_log_view()
 {
-    mDisplayAsLog->setChecked(!mDisplayAsLog->checked());
+    m_display_as_log->set_checked(!m_display_as_log->checked());
 }
 
-void DataSampleButton::setViewTogglesCallback(std::function<void(bool)> callback) {
+void DataSampleButton::set_view_toggles_callback(std::function<void(bool)> callback) {
     for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
     {
         DataSample::Views view = static_cast<DataSample::Views>(i);
-        mViewToggles[view]->setChangeCallback(callback);
+        m_view_toggles[view]->set_change_callback(callback);
     }
 }
 
-void DataSampleButton::setDisplayAsLogCallback(std::function<void(bool)> callback)
+void DataSampleButton::set_display_as_log_callback(std::function<void(bool)> callback)
 {
-    mDisplayAsLog->setCallback(callback);
+    m_display_as_log->set_callback(callback);
 }
 
 TEKARI_NAMESPACE_END

@@ -12,42 +12,42 @@ using namespace nanogui;
 
 TEKARI_NAMESPACE_BEGIN
 
-MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::function<void(void)> closeCallback)
+MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::function<void(void)> close_callback)
     : Window(parent, "Metadata")
-    , mCloseCallback(closeCallback)
+    , m_close_callback(close_callback)
 {
-    auto closeButton = new Button{ buttonPanel(), "", ENTYPO_ICON_CROSS };
-    closeButton->setCallback(mCloseCallback);
+    auto close_button = new Button{ button_panel(), "", ENTYPO_ICON_CROSS };
+    close_button->set_callback(m_close_callback);
 
-    setLayout(new GroupLayout{});
+    set_layout(new GroupLayout{});
 
-	auto scrollContainer = new VScrollPanel{ this };
-	scrollContainer->setFixedHeight(300);
-	auto container = new Widget{ scrollContainer };
-	container->setLayout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 15, 2 });
+    auto scroll_container = new VScrollPanel{ this };
+    scroll_container->set_fixed_height(300);
+    auto container = new Widget{ scroll_container };
+    container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 15, 2 });
 
-	auto rawMeta = metadata->rawMetadata();
-	for (const std::string& line : rawMeta) {
-		auto pos = line.find_first_of("\t ");
-		if (pos == std::string::npos)
-			continue;
+    auto raw_meta = metadata->raw_metadata();
+    for (const std::string& line : raw_meta) {
+        auto pos = line.find_first_of("\t ");
+        if (pos == std::string::npos)
+            continue;
 
-		std::string title = line.substr(1, pos);
-		std::string value = line.substr(pos + 1, line.length());
-		if (value.length() > 100) value = value.substr(0, 100);
+        std::string title = line.substr(1, pos);
+        std::string value = line.substr(pos + 1, line.length());
+        if (value.length() > 100) value = value.substr(0, 100);
 
-		new Label(container, title, "sans-bold", 18);
-		new Label(container, value);
-	}
+        new Label(container, title, "sans-bold", 18);
+        new Label(container, value);
+    }
 }
 
-bool MetadataWindow::keyboardEvent(int key, int scancode, int action, int modifiers) {
-    if (Window::keyboardEvent(key, scancode, action, modifiers)) {
+bool MetadataWindow::keyboard_event(int key, int scancode, int action, int modifiers) {
+    if (Window::keyboard_event(key, scancode, action, modifiers)) {
         return true;
     }
 
     if (key == GLFW_KEY_ESCAPE) {
-        mCloseCallback();
+        m_close_callback();
         return true;
     }
 

@@ -28,46 +28,46 @@ const vector<pair<const string, const string>> ColorMap::PREDEFINED_MAPS =
     { "Terrain",        "terrain.png" },
 };
 
-ColorMap::ColorMap(const string& name, const string& filePath)
-:   mName(name)
+ColorMap::ColorMap(const string& name, const string& file_path)
+:   m_name(name)
 {
-    glGenTextures(1, &mRenderId);
-    glBindTexture(GL_TEXTURE_1D, mRenderId);
+    gl_gen_textures(1, &m_render_id);
+    gl_bind_texture(GL_TEXTURE_1D, m_render_id);
 
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl_tex_parameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl_tex_parameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    gl_tex_parameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl_tex_parameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    int w, h, numChanels;
-    unsigned char* data = stbi_load(filePath.c_str(), &w, &h, &numChanels, 0);
+    int w, h, num_chanels;
+    unsigned char* data = stbi_load(file_path.c_str(), &w, &h, &num_chanels, 0);
     if (!data)
     {
-        throw runtime_error("Unable to open color map " + filePath);
+        throw runtime_error("Unable to open color map " + file_path);
     }
     if (h != 1)
     {
-		stbi_image_free(data);
-        throw runtime_error("Wrong color map format " + filePath + " (height should be 1)");
+        stbi_image_free(data);
+        throw runtime_error("Wrong color map format " + file_path + " (height should be 1)");
     }
     GLenum format = GL_RGB;
-    if (numChanels == 3) format = GL_RGB;
-    if (numChanels == 4) format = GL_RGBA;
-    glTexImage1D(GL_TEXTURE_1D, 0, format, w, 0, format, GL_UNSIGNED_BYTE, data);
-    glBindTexture(GL_TEXTURE_1D, 0);
+    if (num_chanels == 3) format = GL_RGB;
+    if (num_chanels == 4) format = GL_RGBA;
+    gl_tex_image1D(GL_TEXTURE_1D, 0, format, w, 0, format, GL_UNSIGNED_BYTE, data);
+    gl_bind_texture(GL_TEXTURE_1D, 0);
     stbi_image_free(data);
 }
 
 void ColorMap::bind(unsigned int target)
 {
-    glActiveTexture(GL_TEXTURE0 + target);
-    glBindTexture(GL_TEXTURE_1D, mRenderId);
+    gl_active_texture(GL_TEXTURE0 + target);
+    gl_bind_texture(GL_TEXTURE_1D, m_render_id);
 }
 void ColorMap::unbind(unsigned int target)
 {
-    glActiveTexture(GL_TEXTURE0 + target);
-    glBindTexture(GL_TEXTURE_1D, 0);
+    gl_active_texture(GL_TEXTURE0 + target);
+    gl_bind_texture(GL_TEXTURE_1D, 0);
 }
 
 TEKARI_NAMESPACE_END
