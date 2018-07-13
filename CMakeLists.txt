@@ -136,7 +136,13 @@ add_executable(tekari
   tekari.rc
   )
 
+add_executable(tests
+  "src/tests.cpp"
+  )
+
 add_definitions(${NANOGUI_EXTRA_DEFS})
 target_link_libraries(tekari tbb_static nanogui triangle ${NANOGUI_EXTRA_LIBS})
+target_link_libraries(tests tbb_static nanogui triangle ${NANOGUI_EXTRA_LIBS})
 
 set_target_properties(tekari PROPERTIES OUTPUT_NAME "tekari")
+set_target_properties(tests PROPERTIES OUTPUT_NAME "tests")

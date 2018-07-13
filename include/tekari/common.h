@@ -12,7 +12,11 @@
 #    pragma warning(disable : 4714) // warning C4714: function X marked as __forceinline not inlined
 #endif
 
+#include <algorithm>
+#include <cctype>
 #include <nanogui/glutil.h>
+#include <enoki/array.h>
+#include <enoki/matrix.h>
 
 // (re)define M_PI locally since it's not necessarily defined on some platforms
 #undef M_PI
@@ -35,52 +39,101 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-using MatrixXf  = nanogui::MatrixXf;
-using MatrixXu  = nanogui::MatrixXu;
-using VectorXu  = Eigen::Matrix<unsigned int, 1, Eigen::Dynamic>;
-using VectorXu8 = Eigen::Matrix<uint8_t, 1, Eigen::Dynamic>;
-using VectorXf  = Eigen::Matrix<float, 1, Eigen::Dynamic>;
+using Vector2f = nanogui::Vector2f;
+using Vector3f = nanogui::Vector3f;
+using Vector4f = nanogui::Vector4f;
+using Vector2i = nanogui::Vector2i;
+using Vector3u = enoki::Array<uint32_t, 3>;
 
-using nanogui::Matrix4f;
-using nanogui::Vector4f;
-using nanogui::Vector3f;
-using nanogui::Vector2f;
-using nanogui::Vector2i;
+using Matrix3f = enoki::Matrix<float, 3>;
+using Matrix4f = nanogui::Matrix4f;
 
-inline Vector4f project_on_screen(const Vector3f &point,
-    const Vector2i &canvas_size,
-    const Matrix4f &mvp)
+using Matrix2Xf = std::vector<Vector2f>;
+using Matrix3Xf = std::vector<Vector3f>;
+using MatrixXXf = std::vector<std::vector<float>>;
+using Matrix3Xu = std::vector<Vector3u>;
+using VectorXu  = std::vector<uint32_t>;
+using VectorXi8 = std::vector<int8_t>;
+using VectorXf  = std::vector<float>;
+
+using Quaternion4f = nanogui::Quaternion4f;
+
+using Index = size_t;
+
+inline Vector4f project_on_screen(const Vector3f& point,
+    const Vector2i& canvas_size,
+    const Matrix4f& mvp)
 {
-    Vector4f homogeneous_point;
-    homogeneous_point << point, 1.0f;
-    Vector4f projected_point{ mvp * homogeneous_point };
+    Vector4f projected_point{ mvp* concat(point, 1.0f) };
 
     projected_point /= projected_point[3];
-    projected_point[0] = (projected_point[0] + 1.0f) * 0.5f * canvas_size.x();
-    projected_point[1] = canvas_size.y() - (projected_point[1] + 1.0f) * 0.5f * canvas_size.y();
+    projected_point[0] = (projected_point[0] + 1.0f)* 0.5f* canvas_size.x();
+    projected_point[1] = canvas_size.y() - (projected_point[1] + 1.0f)* 0.5f* canvas_size.y();
     return projected_point;
 }
 
-inline MatrixXf get3DPoint(const MatrixXf &V2D, const VectorXf &H, unsigned int index)
+inline Vector3f get3DPoint(const Matrix2Xf& V2D, const VectorXf& H, unsigned int index)
 {
-    return Vector3f{ V2D(0, index), H(index), V2D(1, index) };
+    return Vector3f{ V2D[index][0], H[index], V2D[index][1] };
 }
 
-inline MatrixXf get3DPoints(const MatrixXf &V2D, const std::vector<VectorXf> &H, unsigned int index)
+inline Matrix3Xf get3DPoints(const Matrix2Xf& V2D, const std::vector<VectorXf>& H, unsigned int index)
 {
-    MatrixXf result;
-    result.resize(3, H.size());
+    Matrix3Xf result;
+    result.resize(H.size()) ;
     for (size_t i = 0; i < H.size(); i++)
     {
-        result.col(i) = get3DPoint(V2D, H[i], index);
+        result[i] = get3DPoint(V2D, H[i], index);
     }
     return result;
 }
 
 inline Vector2f transform_raw_point(const Vector2f& raw2DPoint)
 {
-    return Vector2f{   (float)(raw2DPoint[0] * cos(raw2DPoint[1] * M_PI / 180.0f) / 90.0f),
-                       (float)(raw2DPoint[0] * sin(raw2DPoint[1] * M_PI / 180.0f) / 90.0f) };
+
+    return Vector2f{   (float)(raw2DPoint[0]* cos(raw2DPoint[1]* M_PI / 180.0f) / 90.0f),
+                       (float)(raw2DPoint[0]* sin(raw2DPoint[1]* M_PI / 180.0f) / 90.0f) };
+}
+
+
+// ================= String Utils ================
+
+// trim from start (in place)
+inline void ltrim(std::string &s, std::function<int(int)> pred = [](int c) { return std::isspace(c); }) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [pred](int ch) {
+        return !pred(ch);
+    }));
+}
+
+// trim from end (in place)
+inline void rtrim(std::string &s, std::function<int(int)> pred = [](int c) { return std::isspace(c); }) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), [pred](int ch) {
+        return !pred(ch);
+    }).base(), s.end());
+}
+
+// trim from both ends (in place)
+inline void trim(std::string &s, std::function<int(int)> pred = [](int c) { return std::isspace(c); }) {
+    ltrim(s, pred);
+    rtrim(s, pred);
+}
+
+// trim from start (copying)
+inline std::string ltrim_copy(std::string s, std::function<int(int)> pred = [](int c) { return std::isspace(c); }) {
+    ltrim(s, pred);
+    return s;
+}
+
+// trim from end (copying)
+inline std::string rtrim_copy(std::string s, std::function<int(int)> pred = [](int c) { return std::isspace(c); }) {
+    rtrim(s, pred);
+    return s;
+}
+
+// trim from both ends (copying)
+inline std::string trim_copy(std::string s, std::function<int(int)> pred = [](int c) { return std::isspace(c); }) {
+    trim(s, pred);
+    return s;
 }
 
 TEKARI_NAMESPACE_END

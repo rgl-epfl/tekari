@@ -1,5 +1,6 @@
 #include "tekari/BSDFCanvas.h"
 
+#include <enoki/transform.h>
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 #include <string>
@@ -15,10 +16,10 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-const Vector3f BSDFCanvas::VIEW_ORIGIN{ 0, 0, 4 };
-const Vector3f BSDFCanvas::VIEW_UP{ 0, 1, 0 };
-const Vector3f BSDFCanvas::VIEW_RIGHT{ 1, 0, 0 };
-const Matrix4f BSDFCanvas::VIEW{ look_at(VIEW_ORIGIN, Vector3f{ 0.0f,0.0f,0.0f }, VIEW_UP) };
+const Vector3f BSDFCanvas::VIEW_ORIGIN( 0, 0, 4 );
+const Vector3f BSDFCanvas::VIEW_UP( 0, 1, 0 );
+const Vector3f BSDFCanvas::VIEW_RIGHT( 1, 0, 0 );
+const Matrix4f BSDFCanvas::VIEW(enoki::look_at<Matrix4f>(VIEW_ORIGIN, Vector3f{ 0.0f,0.0f,0.0f }, VIEW_UP));
 
 const int BSDFCanvas::BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT] =
 {
@@ -26,21 +27,21 @@ const int BSDFCanvas::BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT] =
     { GLFW_MOUSE_BUTTON_2, GLFW_MOUSE_BUTTON_3, GLFW_MOUSE_BUTTON_5 }
 };
 
-BSDFCanvas::BSDFCanvas(Widget *parent)
+BSDFCanvas::BSDFCanvas(Widget* parent)
 :   GLCanvas(parent)
 ,   m_translation(0, 0, 0)
-,    m_zoom(0)
+,   m_zoom(0)
 ,   m_point_size_scale(1.0f)
-,    m_ortho_mode(false)
+,   m_ortho_mode(false)
+,   m_mouse_mode(ROTATE)
 ,   m_selection_region(make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_draw_flags(DISPLAY_AXIS | USES_SHADOWS)
-,   m_mouse_mode(ROTATE)
 {
-    m_arcball.set_state(Quaternionf(Eigen::AngleAxisf(static_cast<float>(M_PI / 4.0), Vector3f::UnitX())));
+    m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(1, 0, 0), static_cast<float>(M_PI / 4.0)));
 }
 
-bool BSDFCanvas::mouse_motion_event(const Vector2i &p,
-                              const Vector2i &rel,
+bool BSDFCanvas::mouse_motion_event(const Vector2i& p,
+                              const Vector2i& rel,
                               int button, int modifiers) {
     if (GLCanvas::mouse_motion_event(p, rel, button, modifiers))
         return true;
@@ -59,14 +60,14 @@ bool BSDFCanvas::mouse_motion_event(const Vector2i &p,
     else if (button == translation_mouse_button(true))
     {
         float move_speed = 0.04f / (m_zoom + MAX_ZOOM + 0.1f);
-        Vector3f translation = m_arcball.matrix().block<3,3>(0,0).inverse() * (-rel[0] * move_speed * VIEW_RIGHT + rel[1] * move_speed * VIEW_UP);
+        Vector3f translation = inverse(Matrix3f(m_arcball.matrix()))* (-rel[0]* move_speed* VIEW_RIGHT + rel[1]* move_speed* VIEW_UP);
         m_translation += translation;
         return true;
     }
     return false;
 }
 
-bool BSDFCanvas::mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) {
+bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) {
     if (GLCanvas::mouse_button_event(p, button, down, modifiers))
         return true;
     if (!focused() && !down)
@@ -85,10 +86,10 @@ bool BSDFCanvas::mouse_button_event(const Vector2i &p, int button, bool down, in
     {
         if (!down && m_selected_data_sample)
         {
-            Matrix4f model = m_arcball.matrix() * translate(-m_translation);
+            Matrix4f model = m_arcball.matrix()* enoki::translate<Matrix4f, Vector3f>(-m_translation);
             Matrix4f proj = get_projection_matrix();
 
-            Matrix4f mvp = proj * VIEW * model;
+            Matrix4f mvp = proj* VIEW* model;
 
             SelectionBox selection_box = get_selection_box();
             
@@ -108,11 +109,11 @@ bool BSDFCanvas::mouse_button_event(const Vector2i &p, int button, bool down, in
     return false;
 }
 
-bool BSDFCanvas::scroll_event(const Vector2i &p, const Vector2f &rel)
+bool BSDFCanvas::scroll_event(const Vector2i& p, const Vector2f& rel)
 {
     if (!GLCanvas::scroll_event(p, rel))
     {
-        m_zoom += rel[1] * 0.2f;
+        m_zoom += rel[1]* 0.2f;
         m_zoom = min(MAX_ZOOM, max(MIN_ZOOM, m_zoom));
     }
     return true;
@@ -122,28 +123,28 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 {
     GLCanvas::draw(ctx);
 
-    Matrix4f model = m_arcball.matrix() * translate(-m_translation);
+    Matrix4f model = m_arcball.matrix()* enoki::translate<Matrix4f>(-m_translation);
     Matrix4f proj = get_projection_matrix();
 
     m_grid.draw(ctx, m_size, model, VIEW, proj);
 
     // draw selection region
     SelectionBox selection_box = get_selection_box();
-    nvg_begin_path(ctx);
-    nvg_rect(ctx, selection_box.top_left.x(), selection_box.top_left.y(),
+    nvgBeginPath(ctx);
+    nvgRect(ctx, selection_box.top_left.x(), selection_box.top_left.y(),
         selection_box.size.x(), selection_box.size.y());
-    nvg_stroke_color(ctx, Color(1.0f, 1.0f));
-    nvg_stroke(ctx);
-    nvg_fill_color(ctx, Color(1.0f, 0.1f));
-    nvg_fill(ctx);
+    nvgStrokeColor(ctx, Color(1.0f, 1.0f));
+    nvgStroke(ctx);
+    nvgFillColor(ctx, Color(1.0f, 0.1f));
+    nvgFill(ctx);
 }
 
 void BSDFCanvas::draw_gl() {
-    Matrix4f model = m_arcball.matrix() * translate(-m_translation);
+    Matrix4f model = m_arcball.matrix()* enoki::translate<Matrix4f>(-m_translation);
     Matrix4f proj = get_projection_matrix();
 
     float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-    gl_point_size(point_size_factor * point_size_factor * m_point_size_scale);
+    glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
     for (const auto& data_sample: m_data_samples_to_draw)
     {
         data_sample->draw_gl(VIEW_ORIGIN, model, VIEW, proj, m_draw_flags, m_color_map);
@@ -185,17 +186,17 @@ void BSDFCanvas::set_view_angle(ViewAngles view_angle)
     case UP:
         dir = (float)M_PI;
     case DOWN:
-        m_arcball.set_state(Quaternionf(Eigen::AngleAxisf(-M_PI * 0.5f + dir, Vector3f::UnitX())));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(1, 0, 0), -M_PI* 0.5f + dir));
         break;
     case LEFT:
         dir = (float)M_PI;
     case RIGHT:
-        m_arcball.set_state(Quaternionf(Eigen::AngleAxisf(- M_PI * 0.5f + dir, Vector3f::Unit_y())));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 1, 0), - M_PI* 0.5f + dir));
         break;
     case BACK:
         dir = (float)M_PI;
     case FRONT:
-        m_arcball.set_state(Quaternionf(Eigen::AngleAxisf(dir, Vector3f::Unit_y())));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 0, 1), dir));
         break;
     }
 }
@@ -207,27 +208,23 @@ Matrix4f BSDFCanvas::get_projection_matrix() const
     float size_ratio = (float)m_size.x() / (float)m_size.y();
     if (m_ortho_mode)
     {
-        zoom_factor = (1.02f - zoom_factor) * 2.0f;
-        return ortho(-zoom_factor * size_ratio, zoom_factor * size_ratio,
+        zoom_factor = (1.02f - zoom_factor)* 2.0f;
+        return enoki::ortho<Matrix4f>(-zoom_factor* size_ratio, zoom_factor* size_ratio,
                      -zoom_factor, zoom_factor,
                      near, far);
     }
     else {
-        const float view_angle = 81.0f - zoom_factor * 80.0f;
-        float f_h = tan(view_angle / 360.0f * M_PI) * near;
-        float f_w = f_h * size_ratio;
-        return frustum(-f_w, f_w, -f_h, f_h, near, far);
+        const float view_angle = 81.0f - zoom_factor* 80.0f;
+        float f_h = tan(view_angle / 360.0f* M_PI)* near;
+        float f_w = f_h* size_ratio;
+        return enoki::frustum<Matrix4f>(-f_w, f_w, -f_h, f_h, near, far);
     }
 }
 
 SelectionBox BSDFCanvas::get_selection_box() const
 {
-    SelectionBox res;
-    res.top_left = { min(m_selection_region.first[0], m_selection_region.second[0]),
-                    min(m_selection_region.first[1], m_selection_region.second[1]) };
-    res.size    = { abs(m_selection_region.first[0] - m_selection_region.second[0]),
-                    abs(m_selection_region.first[1] - m_selection_region.second[1]) };
-    return res;
+    return {enoki::min(m_selection_region.first, m_selection_region.second),
+            enoki::abs(m_selection_region.first - m_selection_region.second)};
 }
 
 TEKARI_NAMESPACE_END

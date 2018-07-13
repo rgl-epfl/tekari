@@ -37,7 +37,7 @@ private:
     unsigned int m_selected_color_map_index;
     std::vector<ColorMapButton*> m_color_map_buttons;
 
-    nanogui::Button *m_close_button;
+    nanogui::Button* m_close_button;
 };
 
 TEKARI_NAMESPACE_END

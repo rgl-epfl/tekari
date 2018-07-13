@@ -17,8 +17,8 @@ public:
     ColorMapButton(nanogui::Widget* parent, std::shared_ptr<ColorMap> color_map);
     ~ColorMapButton();
 
-    virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
-    void draw(NVGcontext *ctx) override;
+    virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
+    void draw(NVGcontext* ctx) override;
 
     void set_callback(std::function<void(ColorMapButton*)> callback) { m_callback = callback; }
 

@@ -1,8 +1,8 @@
 #version 150 core
 uniform vec3 color;
-out vec4 outColor;
+out vec4 out_color;
 
 void main()
 {
-    outColor = vec4(color, 1.0);
+    out_color = vec4(color, 1.0);
 }

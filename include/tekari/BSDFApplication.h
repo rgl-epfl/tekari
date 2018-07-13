@@ -48,7 +48,7 @@ public:
     void save_screen_shot();
     void save_selected_data_sample();
 
-    void toggle_window(Window* &window, std::function<Window*(void)> create_window);
+    void toggle_window(Window*& window, std::function<Window*(void)> create_window);
     void toggle_metadata_window();
     void toggle_help_window();
     void toggle_selection_info_window();
@@ -63,7 +63,7 @@ public:
     void select_data_sample(int index, bool clamped = true);
 
     int data_sample_index(const std::shared_ptr<const DataSample> data_sample) const;
-    int selected_data_sample_index() const { return data_sample_index(m_selected_d_s); }
+    int selected_data_sample_index() const { return data_sample_index(m_selected_ds); }
 
     DataSampleButton* corresponding_button(const std::shared_ptr<const DataSample> data_sample);
     const DataSampleButton* corresponding_button(const std::shared_ptr<const DataSample> data_sample) const;
@@ -82,7 +82,7 @@ private:
     void open_files(const std::vector<std::string>& data_sample_paths);
     void try_load_data_sample(std::string file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
 
-    void toggle_canvas_draw_flags(int flag, CheckBox *checkbox);
+    void toggle_canvas_draw_flags(int flag, CheckBox* checkbox);
 
     void reprint_footer();
 
@@ -124,14 +124,14 @@ private:
     Window* m_unsaved_data_window;
 
     // canvas
-    BSDFCanvas *m_bsdf_canvas;
+    BSDFCanvas* m_bsdf_canvas;
 
     // cursors and mouse mode
-    ComboBox *m_mouse_mode_selector;
+    ComboBox* m_mouse_mode_selector;
     GLFWcursor* m_cursors[BSDFCanvas::MOUSE_MODE_COUNT];
 
     std::vector<std::shared_ptr<DataSample>> m_data_samples;
-    std::shared_ptr<DataSample> m_selected_d_s;
+    std::shared_ptr<DataSample> m_selected_ds;
     std::vector<std::shared_ptr<ColorMap>> m_color_maps;
 
     // offscreen buffer

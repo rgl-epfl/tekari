@@ -11,32 +11,32 @@ using namespace nanogui;
 
 struct Vector2f_hash : unary_function<Vector2f, size_t>
 {
-    size_t operator()(const Vector2f &v) const {
-        size_t hash1 = std::hash<Vector2f::Scalar>()(v[0]);
-        size_t hash2 = std::hash<Vector2f::Scalar>()(v[1]);
+    size_t operator()(const Vector2f& v) const {
+        size_t hash1 = std::hash<Vector2f::Value>()(v[0]);
+        size_t hash2 = std::hash<Vector2f::Value>()(v[1]);
         return hash1 ^ (hash2 << 1);
     }
 };
 
 void load_standard_data_sample(
     ifstream& file,
-    MatrixXf &raw_points,
-    MatrixXf  &V2D,
-    Metadata &metadata
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    Metadata& metadata
 );
 void load_spectral_data_sample(
     ifstream& file,
-    MatrixXf &raw_points,
-    MatrixXf  &V2D,
-    Metadata &metadata
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    Metadata& metadata
 );
 
 void load_data_sample(
     const std::string& file_name,
-    MatrixXf &raw_points,
-    MatrixXf  &V2D,
-    VectorXu8 &selected_points,
-    Metadata &metadata
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    VectorXi8& selected_points,
+    Metadata& metadata
 )
 {
     START_PROFILING("Loading data sample");
@@ -64,12 +64,15 @@ void load_data_sample(
 
             metadata.init_infos();
             if (metadata.is_spectral())
+            {
                 load_spectral_data_sample(file, raw_points, V2D, metadata);
+            }
             else
+            {
                 load_standard_data_sample(file, raw_points, V2D, metadata);
+            }
 
-            selected_points.resize(metadata.points_in_file());
-            selected_points.set_zero();
+            selected_points.assign(metadata.points_in_file(), 0);
             break;
         }
     }
@@ -78,21 +81,26 @@ void load_data_sample(
 
 void load_standard_data_sample(
     ifstream& file,
-    MatrixXf &raw_points,
-    MatrixXf  &V2D,
-    Metadata &metadata
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    Metadata& metadata
 )
 {
     unordered_set<Vector2f, Vector2f_hash> read_vertices;
 
-    V2D.resize(2, metadata.points_in_file());
-    raw_points.resize(3, metadata.points_in_file());
+    V2D.resize(metadata.points_in_file());
+    raw_points.resize(metadata.points_in_file());
+    for (Index i = 0; i < raw_points.size(); ++i)
+    {
+        raw_points[i].resize(3);
+    }
 
     unsigned int line_number = 0;
     unsigned int n_points = 0;
     for (string line; getline(file, line); )
     {
         ++line_number;
+        trim(line);
 
         if (line.empty() || line[0] == '#')
         {
@@ -114,22 +122,22 @@ void load_standard_data_sample(
             }
             read_vertices.insert(p2d);
             Vector2f transformed_point = transform_raw_point(p2d);
-            raw_points.col(n_points) = Vector3f{ theta, phi, intensity };
-            V2D.col(n_points) = transformed_point;
+            raw_points[n_points][0] = theta;
+            raw_points[n_points][1] = phi;
+            raw_points[n_points][2] = intensity;
+            V2D[n_points] = transformed_point;
             ++n_points;
         }
     }
 }
 void load_spectral_data_sample(
     ifstream& file,
-    MatrixXf &raw_points,
-    MatrixXf  &V2D,
-    Metadata &metadata
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    Metadata& metadata
 )
 {
     int n_data_points_per_loop = metadata.data_points_per_loop();
-    vector<vector<float>> raw_data;
-    vector<Vector2f> v2d;
 
     unordered_set<Vector2f, Vector2f_hash> read_vertices;
 
@@ -138,6 +146,7 @@ void load_spectral_data_sample(
     for (string line; getline(file, line); )
     {
         ++line_number;
+        trim(line);
 
         if (line.empty() || line[0] == '#')
         {
@@ -155,35 +164,26 @@ void load_spectral_data_sample(
             }
             read_vertices.insert(angles);
 
-            v2d.push_back(transform_raw_point(angles));
-            raw_data.push_back(vector<float>{});
-            raw_data[n_points].resize(n_data_points_per_loop + 2, 0);
-            raw_data[n_points][0] = angles[0];
-            raw_data[n_points][1] = angles[1];
+            V2D.push_back(transform_raw_point(angles));
+            raw_points.push_back(vector<float>{});
+            raw_points[n_points].resize(n_data_points_per_loop + 2, 0);
+            raw_points[n_points][0] = angles[0];
+            raw_points[n_points][1] = angles[1];
 
             for (int i = 0; i < n_data_points_per_loop; ++i)
             {
-                line_stream >> raw_data[n_points][i+2];
+                line_stream >> raw_points[n_points][i+2];
             }
             ++n_points;
         }
     }
     metadata.set_points_in_file(n_points);
-
-    raw_points.resize(n_data_points_per_loop + 2, n_points);
-    for (size_t i = 0; i < n_points; i++)
-    {
-        memcpy(raw_points.col(i).data(), raw_data[i].data(), sizeof(float) * (n_data_points_per_loop + 2));
-    }
-
-    V2D.resize(2, n_points);
-    memcpy(V2D.data(), v2d.data(), sizeof(Vector2f) * n_points);
 }
 
 void save_data_sample(
     const std::string& path,
-    const MatrixXf &raw_points,
-    const Metadata &metadata
+    const MatrixXXf& raw_points,
+    const Metadata& metadata
 )
 {
     START_PROFILING("Save data sample");
@@ -197,11 +197,11 @@ void save_data_sample(
         fprintf(dataset_file, "%s\n", line.c_str());
 
     //!feof(dataset_file) && !ferror(dataset_file))
-    for (Eigen::Index i = 0; i < raw_points.cols(); ++i)
+    for (Index i = 0; i < raw_points.size(); ++i)
     {
-        for (Eigen::Index j = 0; j < raw_points.rows(); ++j)
+        for (Index j = 0; j < raw_points[i].size(); ++j)
         {
-            fprintf(dataset_file, "%lf ", raw_points(j, i));
+            fprintf(dataset_file, "%lf ", raw_points[i][j]);
         }
         fprintf(dataset_file, "\n");
     }

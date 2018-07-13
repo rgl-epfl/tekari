@@ -12,13 +12,13 @@ TEKARI_NAMESPACE_BEGIN
 class DataSampleButton : public nanogui::Widget
 {
 public:
-    DataSampleButton(nanogui::Widget* parent, const std::string &label, bool is_spectral, unsigned int max_wave_length_index);
+    DataSampleButton(nanogui::Widget* parent, const std::string& label, bool is_spectral, unsigned int max_wave_length_index);
 
-    virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
-    virtual bool mouse_enter_event(const Vector2i &p, bool enter) override;
-    virtual bool mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers) override;
-    virtual void draw(NVGcontext *ctx) override;
-    virtual void perform_layout(NVGcontext *ctx) override;
+    virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
+    virtual bool mouse_enter_event(const Vector2i& p, bool enter) override;
+    virtual bool mouse_motion_event(const Vector2i& p, const Vector2i& rel, int button, int modifiers) override;
+    virtual void draw(NVGcontext* ctx) override;
+    virtual void perform_layout(NVGcontext* ctx) override;
 
     void toggle_view();
 
@@ -44,10 +44,10 @@ public:
 
 private:
     bool In_toggle_view_button(const Vector2i& p) const {
-        return (p - m_pos - m_toggle_view_button_pos).squared_norm() <= BUTTON_RADIUS*BUTTON_RADIUS;
+        return squared_norm(p - m_pos - m_toggle_view_button_pos) <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
     bool In_delete_button(const Vector2i& p) const {
-        return (p - m_pos - m_delete_button_pos).squared_norm() <= BUTTON_RADIUS*BUTTON_RADIUS;
+        return squared_norm(p - m_pos - m_delete_button_pos) <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
 
     static constexpr float BUTTON_RADIUS = 10.0f;
@@ -69,7 +69,7 @@ private:
     std::function<void(unsigned int)> m_wave_length_slider_callback;
 
     //std::shared_ptr<DataSample> m_data_sample;
-    nanogui::Popup *m_popup;
+    nanogui::Popup* m_popup;
     nanogui::CheckBox* m_display_as_log;
     nanogui::Button* m_view_toggles[DataSample::Views::VIEW_COUNT];
 };

@@ -26,9 +26,9 @@ public:
     inline const std::vector<std::string>& raw_metadata() const { return m_raw_metadata; }
 
 private:
-    std::string* find_line_containing(const std::string &target);
-    std::string* find_line_starting_with(const std::string &target);
-    static std::string strip_quote_marks(const std::string& word) { return word.substr(1, word.size() - 2); }
+    std::string* find_line_containing(const std::string& target);
+    std::string* find_line_starting_with(const std::string& target);
+    static std::string strip_quote_marks(const std::string& word) { return trim_copy(word, [](int c){ return c == '\"' || std::isspace(c); }); }
 
     std::vector<std::string> m_raw_metadata;
     bool m_is_spectral;

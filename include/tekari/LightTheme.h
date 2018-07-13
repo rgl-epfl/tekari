@@ -11,7 +11,7 @@ TEKARI_NAMESPACE_BEGIN
 class LightTheme : public nanogui::Theme
 {
 public:
-    LightTheme(NVGcontext *ctx)
+    LightTheme(NVGcontext* ctx)
     :    Theme(ctx)
     {
         m_drop_shadow = nanogui::Color(0, 128);
@@ -31,7 +31,7 @@ public:
         m_button_gradient_top_pushed    = nanogui::Color(216, 255);
         m_button_gradient_bot_pushed    = nanogui::Color(224, 255);
 
-        /* Window-related */
+        /* Window-related*/
         m_window_fill_unfocused = nanogui::Color(255, 230);
         m_window_fill_focused = nanogui::Color(255, 230);
         m_window_title_unfocused = nanogui::Color(35, 160);

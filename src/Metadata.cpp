@@ -11,8 +11,8 @@ using namespace std;
 
 Metadata::Metadata()
 :   m_is_spectral(false)
-,   m_in_phi(0.0f)
 ,   m_in_theta(0.0f)
+,   m_in_phi(0.0f)
 ,   m_sample_name("Untilted")
 ,   m_points_in_file(-1)
 ,   m_data_points_per_loop(-1)
@@ -31,16 +31,16 @@ void Metadata::init_infos()
 
     vector<pair<string, function<void(const string&, const string*)>>> parsing_funcs =
     {
-        make_pair("#number of datapoints per loop in file:", [this](const string &keyword, const string* line) {
-            sscanf(line->c_str() + keyword.length(), "%d", &m_data_points_per_loop);
+        make_pair("#number of datapoints per loop in file:", [this](const string& keyword, const string* line) {
+            sscanf(line->c_str() + keyword.length(), "%d",& m_data_points_per_loop);
         }),
-        make_pair("#inphi", [this](const string &keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_in_phi); }),
-        make_pair("#phi_in", [this](const string &keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_in_phi); }),
-        make_pair("#intheta", [this](const string &keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_in_theta); }),
-        make_pair("#theta_in", [this](const string &keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_in_theta); }),
-        make_pair("#datapoints_in_file", [this](const string &keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%d", &m_points_in_file); }),
-        make_pair("#sample_name", [this](const string &, const string* line) { m_sample_name = strip_quote_marks(line->substr(13)); }),
-        make_pair("sample_name=", [this](const string &keyword, const string* line) {
+        make_pair("#inphi", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_phi); }),
+        make_pair("#phi_in", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_phi); }),
+        make_pair("#intheta", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_theta); }),
+        make_pair("#theta_in", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_theta); }),
+        make_pair("#datapoints_in_file", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%d",& m_points_in_file); }),
+        make_pair("#sample_name", [this](const string& , const string* line) { m_sample_name = strip_quote_marks(line->substr(13)); }),
+        make_pair("sample_name=", [this](const string& keyword, const string* line) {
             size_t pos = line->find(keyword);    // we know this will work
             m_sample_name = strip_quote_marks(line->substr(pos + keyword.length(), line->length()));
         }),
@@ -65,19 +65,19 @@ void Metadata::init_infos()
     }
 }
 
-string* Metadata::find_line_containing(const string &target)
+string* Metadata::find_line_containing(const string& target)
 {
     for (auto& line : m_raw_metadata)
         if (line.find(target) != string::npos)
-            return &line;
+            return& line;
     return nullptr;
 }
 
-string* Metadata::find_line_starting_with(const string &target)
+string* Metadata::find_line_starting_with(const string& target)
 {
     for (auto& line : m_raw_metadata)
         if (line.find(target) == 0)
-            return &line;
+            return& line;
     return nullptr;
 }
 
@@ -91,7 +91,7 @@ void Metadata::set_points_in_file(int points_in_file)
     if (points_in_file_line == nullptr)
         return;
 
-    *points_in_file_line = dp_in_file_starter + to_string(points_in_file);
+   * points_in_file_line = dp_in_file_starter + to_string(points_in_file);
 }
 
 TEKARI_NAMESPACE_END

@@ -27,7 +27,7 @@ string HelpWindow::ALT = "Alt";
 #endif
 
 
-HelpWindow::HelpWindow(Widget *parent, function<void()> close_callback)
+HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
 :   Window{ parent, "Help" }
 ,   m_close_callback{ close_callback }
 {
@@ -189,7 +189,7 @@ bool HelpWindow::keyboard_event(int key, int scancode, int action, int modifiers
     return false;
 }
 
-void HelpWindow::perform_layout(NVGcontext *ctx)
+void HelpWindow::perform_layout(NVGcontext* ctx)
 {
     Window::perform_layout(ctx);
     //m_scroll_panel->set_fixed_height(m_parent->height() / 2);

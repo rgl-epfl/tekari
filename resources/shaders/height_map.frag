@@ -1,8 +1,8 @@
 #version 330
 
 uniform vec3 view;
-uniform bool useShadows;
-uniform bool useSpecular;
+uniform bool use_shadows;
+uniform bool use_specular;
 
 uniform sampler1D color_map;
 
@@ -19,9 +19,9 @@ void main() {
 	
 	vec3 pos_to_light = normalize(view - position);
 	float specular = dot(reflect(-pos_to_light, normal), pos_to_light);
-	vec3 out_color3 = 	float(useShadows) * (0.2f + abs(dot(pos_to_light, normal))) * color * light_color +
-						float(useShadows && useSpecular && specular > 0.0f) * pow(specular, 20.0f) * light_color +
-				 		float(!useShadows) * color;
+	vec3 out_color3 = 	float(use_shadows) * (0.2f + abs(dot(pos_to_light, normal))) * color * light_color +
+						float(use_shadows && use_specular && specular > 0.0f) * pow(specular, 20.0f) * light_color +
+				 		float(!use_shadows) * color;
 
 	out_color = vec4(out_color3, 1.0f);
 }

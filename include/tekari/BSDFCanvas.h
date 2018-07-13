@@ -39,14 +39,14 @@ private:
     static const int BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT];
 
 public:
-    BSDFCanvas(nanogui::Widget *parent);
+    BSDFCanvas(nanogui::Widget* parent);
 
     // nanogui specific methods
-    virtual bool mouse_motion_event(const Vector2i &p,
-                                  const Vector2i &rel,
+    virtual bool mouse_motion_event(const Vector2i& p,
+                                  const Vector2i& rel,
                                   int button, int modifiers) override;
-    virtual bool mouse_button_event(const Vector2i &p, int button, bool down, int modifiers) override;
-    virtual bool scroll_event(const Vector2i &p, const Vector2f &rel) override;
+    virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
+    virtual bool scroll_event(const Vector2i& p, const Vector2f& rel) override;
     virtual void perform_layout(NVGcontext*) override { m_arcball.set_size(m_size); }
     virtual void draw(NVGcontext* ctx) override;
     virtual void draw_gl() override;

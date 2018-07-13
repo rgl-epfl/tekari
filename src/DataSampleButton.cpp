@@ -17,7 +17,7 @@ using namespace std;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, bool is_spectral, unsigned int max_wave_length_index)
+DataSampleButton::DataSampleButton(Widget* parent, const std::string & label, bool is_spectral, unsigned int max_wave_length_index)
 :   Widget{ parent }
 ,   m_label{ label }
 ,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
@@ -31,7 +31,7 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, b
 {
     set_tooltip(m_label);
 
-    Window *parent_window = window();
+    Window* parent_window = window();
 
     m_popup = new Popup{ parent_window->parent(), window() };
     m_popup->set_visible(false);
@@ -45,7 +45,7 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, b
 
     auto make_view_button = [this, button_container](const string& label, const string& tooltip, bool pushed) {
         auto button = new Button(button_container, label);
-        button->set_flags(Button::Flags::Toggle_button);
+        button->set_flags(Button::Flags::ToggleButton);
         button->set_tooltip(tooltip);
         button->set_pushed(pushed);
         return button;
@@ -68,7 +68,7 @@ DataSampleButton::DataSampleButton(Widget * parent, const std::string & label, b
     }
 }
 
-bool DataSampleButton::mouse_button_event(const Eigen::Vector2i & p, int button, bool down, int modifiers)
+bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool down, int modifiers)
 {
     if (Widget::mouse_button_event(p, button, down, modifiers)) {
         return true;
@@ -108,7 +108,7 @@ bool DataSampleButton::mouse_enter_event(const Vector2i & p, bool enter)
     return false;
 }
 
-bool DataSampleButton::mouse_motion_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers)
+bool DataSampleButton::mouse_motion_event(const Vector2i& p, const Vector2i& rel, int button, int modifiers)
 {
     if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
         return true;
@@ -119,68 +119,68 @@ bool DataSampleButton::mouse_motion_event(const Vector2i &p, const Vector2i &rel
     return false;
 }
 
-void DataSampleButton::draw(NVGcontext * ctx)
+void DataSampleButton::draw(NVGcontext* ctx)
 {
-    Color fill_color =    m_selected ? Color(0.0f, 0.8f, 0.2f, 0.5f) :
+    Color fill_color =  m_selected ? Color(0.0f, 0.8f, 0.2f, 0.5f) :
                         m_mouse_focus ? m_theme->m_button_gradient_top_focused :
                         m_theme->m_button_gradient_top_unfocused;
     float delete_button_fill_opacity = m_delete_button_hovered ? 0.4f : 0.2f;
     float toggle_view_button_fill_opacity = m_toggle_view_button_hovered ? 0.4f : m_visible ? 0.5f : 0.2f;
 
     // save current nvg state
-    nvg_save(ctx);
-    nvg_translate(ctx, m_pos.x(), m_pos.y());
+    nvgSave(ctx);
+    nvgTranslate(ctx, m_pos.x(), m_pos.y());
 
     // draw background
-    nvg_begin_path(ctx);
-    nvg_rect(ctx, 0, 0, m_size.x(), m_size.y());
-    nvg_fill_color(ctx, fill_color);
-    nvg_fill(ctx);
+    nvgBeginPath(ctx);
+    nvgRect(ctx, 0, 0, m_size.x(), m_size.y());
+    nvgFillColor(ctx, fill_color);
+    nvgFill(ctx);
     if (m_mouse_focus)
     {
-        nvg_stroke_color(ctx, Color(1.0f, 0.8f));
-        nvg_stroke_width(ctx, 1.0f);
-        nvg_stroke(ctx);
+        nvgStrokeColor(ctx, Color(1.0f, 0.8f));
+        nvgStrokeWidth(ctx, 1.0f);
+        nvgStroke(ctx);
     }
 
     // draw label
     string label = m_dirty ? m_display_label + "*" : m_display_label;
-    nvg_font_size(ctx, 18.0f);
-    nvg_font_face(ctx, "sans");
-    nvg_text_align(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-    nvg_fill_color(ctx, m_theme->m_text_color_shadow);
-    nvg_text(ctx, 5, m_size.y() * 0.5f - 1.0f, label.c_str(), nullptr);
-    nvg_fill_color(ctx, m_theme->m_text_color);
-    nvg_text(ctx, 5, m_size.y() * 0.5f, label.c_str(), nullptr);
+    nvgFontSize(ctx, 18.0f);
+    nvgFontFace(ctx, "sans");
+    nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
+    nvgFillColor(ctx, m_theme->m_text_color_shadow);
+    nvgText(ctx, 5, m_size.y()* 0.5f - 1.0f, label.c_str(), nullptr);
+    nvgFillColor(ctx, m_theme->m_text_color);
+    nvgText(ctx, 5, m_size.y()* 0.5f, label.c_str(), nullptr);
 
     // font settings for icons
-    nvg_font_size(ctx, BUTTON_RADIUS * 1.3f);
-    nvg_font_face(ctx, "icons");
-    nvg_text_align(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
+    nvgFontSize(ctx, BUTTON_RADIUS* 1.3f);
+    nvgFontFace(ctx, "icons");
+    nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
     // draw delete button
-    auto make_tool_button = [this, &ctx](float opacity, int icon, const Vector2i& pos) {
-        nvg_begin_path(ctx);
-        nvg_circle(ctx, pos.x(), pos.y(), BUTTON_RADIUS);
-        nvg_fill_color(ctx, Color(0.0f, opacity));
-        nvg_fill(ctx);
+    auto make_tool_button = [this,& ctx](float opacity, int icon, const Vector2i& pos) {
+        nvgBeginPath(ctx);
+        nvgCircle(ctx, pos.x(), pos.y(), BUTTON_RADIUS);
+        nvgFillColor(ctx, Color(0.0f, opacity));
+        nvgFill(ctx);
         auto icon_data = utf8(icon);
-        nvg_fill_color(ctx, Color(0.0f, 0.8f));
-        nvg_text(ctx, pos.x(), pos.y() - 1.0f, icon_data.data(), nullptr);
-        nvg_fill_color(ctx, Color(1.0f, 0.8f));
-        nvg_text(ctx, pos.x(), pos.y(), icon_data.data(), nullptr);
+        nvgFillColor(ctx, Color(0.0f, 0.8f));
+        nvgText(ctx, pos.x(), pos.y() - 1.0f, icon_data.data(), nullptr);
+        nvgFillColor(ctx, Color(1.0f, 0.8f));
+        nvgText(ctx, pos.x(), pos.y(), icon_data.data(), nullptr);
     };
     make_tool_button(delete_button_fill_opacity, ENTYPO_ICON_CROSS, m_delete_button_pos);
     make_tool_button(toggle_view_button_fill_opacity, m_visible ? ENTYPO_ICON_EYE : ENTYPO_ICON_EYE_WITH_LINE, m_toggle_view_button_pos);
 
-    nvg_restore(ctx);
+    nvgRestore(ctx);
 }
 
-void DataSampleButton::perform_layout(NVGcontext * ctx)
+void DataSampleButton::perform_layout(NVGcontext* ctx)
 {
     Widget::perform_layout(ctx);
 
-    const Window *parent_window = window();
+    const Window* parent_window = window();
 
     int pos_y = absolute_position().y() - parent_window->position().y() + m_size.y() / 2;
     if (m_popup->side() == Popup::Right)

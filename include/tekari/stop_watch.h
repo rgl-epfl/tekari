@@ -102,7 +102,7 @@ public:
     {
 #ifdef _WIN32 // Windows
         return ((double)(endtime_.Quad_part - starttime_.Quad_part)
-                / (double)freq_.Quad_part * 1000.0f);
+                / (double)freq_.Quad_part* 1000.0f);
 #else // Unix
         return ((endtime_.tv_sec  - starttime_.tv_sec )*1000.0 +
                 (endtime_.tv_usec - starttime_.tv_usec)*0.001);

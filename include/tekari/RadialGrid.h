@@ -17,7 +17,7 @@ public:
         const Matrix4f& view,
         const Matrix4f& proj);
 
-    void draw(NVGcontext *ctx,
+    void draw(NVGcontext* ctx,
         const Vector2i& canvas_size,
         const Matrix4f& model,
         const Matrix4f& view,
@@ -32,8 +32,8 @@ public:
     const nanogui::Color& color() const { return m_color; }
     void set_color(const nanogui::Color& new_color) { m_color = new_color; }
 
-    const float& alpha() const { return m_color(3); }
-    void set_alpha(float alpha) { m_color(3) = alpha; }
+    const float& alpha() const { return m_color[3]; }
+    void set_alpha(float alpha) { m_color[3] = alpha; }
 
 private:
     static constexpr unsigned int CIRCLE_COUNT = 10;

@@ -11,36 +11,34 @@ DataSample::DataSample()
 :   m_wave_length_index(0)
 ,   m_display_as_log(false)
 ,   m_display_views{ false, false, true }
-,   m_points_stats()
-,   m_selection_stats()
 ,   m_selection_axis{Vector3f{0.0f, 0.0f, 0.0f}}
-,    m_dirty(false)
+,   m_dirty(false)
 {
-    m_draw_functions[PATH] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
+    m_draw_functions[PATH] = [this](const Matrix4f& mvp, std::shared_ptr<ColorMap>) {
         if (m_display_views[PATH])
         {
-            gl_polygon_mode(GL_FRONT_AND_BACK, GL_LINE);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             m_shaders[PATH].bind();
             m_shaders[PATH].set_uniform("model_view_proj", mvp);
-            for (Eigen::Index i = 0; i < m_path_segments.size() - 1; ++i)
+            for (Index i = 0; i < m_path_segments.size() - 1; ++i)
             {
                 int offset = m_path_segments[i];
                 int count = m_path_segments[i + 1] - m_path_segments[i] - 1;
                 m_shaders[PATH].draw_array(GL_LINE_STRIP, offset, count);
             }
-            gl_polygon_mode(GL_FRONT_AND_BACK, GL_FILL);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
     };
 
-    m_draw_functions[POINTS] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap> color_map) {
+    m_draw_functions[POINTS] = [this](const Matrix4f& mvp, std::shared_ptr<ColorMap> color_map) {
         m_shaders[POINTS].bind();
         color_map->bind();
         m_shaders[POINTS].set_uniform("model_view_proj", mvp);
         m_shaders[POINTS].set_uniform("show_all_points", m_display_views[POINTS]);
-        m_shaders[POINTS].draw_array(GL_POINTS, 0, m_v2D.cols());
+        m_shaders[POINTS].draw_array(GL_POINTS, 0, m_v2D.size());
     };
 
-    m_draw_functions[INCIDENT_ANGLE] = [this](const Matrix4f &mvp, std::shared_ptr<ColorMap>) {
+    m_draw_functions[INCIDENT_ANGLE] = [this](const Matrix4f& mvp, std::shared_ptr<ColorMap>) {
         if (m_display_views[INCIDENT_ANGLE])
         {
             m_shaders[INCIDENT_ANGLE].bind();
@@ -69,14 +67,14 @@ void DataSample::draw_gl(
     shared_ptr<ColorMap> color_map)
 {
     // Every draw call requires depth testing
-    gl_enable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
 
     // Precompute mvp
-    Matrix4f mvp = proj * view * model;
+    Matrix4f mvp = proj* view* model;
 
     // Draw the mesh
-    gl_enable(GL_POLYGON_OFFSET_FILL);
-    gl_polygon_offset(2.0, 2.0);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(2.0, 2.0);
     m_mesh_shader.bind();
     color_map->bind();
     m_mesh_shader.set_uniform("model_view_proj", mvp);
@@ -84,8 +82,8 @@ void DataSample::draw_gl(
     m_mesh_shader.set_uniform("view", view_origin);
     m_mesh_shader.set_uniform("use_shadows", flags & USES_SHADOWS);
     m_mesh_shader.set_uniform("use_specular", flags & USES_SPECULAR);
-    m_mesh_shader.draw_indexed(GL_TRIANGLES, 0, m_f.cols());
-    gl_disable(GL_POLYGON_OFFSET_FILL);
+    m_mesh_shader.draw_indexed(GL_TRIANGLES, 0, m_f.size());
+    glDisable(GL_POLYGON_OFFSET_FILL);
 
     // draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
@@ -99,7 +97,7 @@ void DataSample::draw_gl(
         draw_func(mvp, color_map);
 
     // Don't forget to disable depth testing for later opengl draw calls
-    gl_disable(GL_DEPTH_TEST);
+    glDisable(GL_DEPTH_TEST);
 
     // Draw the axis if points are selected
     if (flags & DISPLAY_AXIS && has_selection())
@@ -126,10 +124,10 @@ void DataSample::link_data_to_shaders()
 
     m_mesh_shader.bind();
     m_mesh_shader.set_uniform("color_map", 0);
-    m_mesh_shader.upload_attrib("in_pos2d", m_v2D);
-    m_mesh_shader.upload_attrib("in_normal", curr_n());
-    m_mesh_shader.upload_attrib("in_height", curr_h());
-    m_mesh_shader.upload_indices(m_f);
+    m_mesh_shader.upload_attrib("in_pos2d", (float*)m_v2D.data(), 2, m_v2D.size());
+    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 3, curr_n().size());
+    m_mesh_shader.upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
+    m_mesh_shader.upload_indices((uint32_t*)m_f.data(), 3, m_f.size());
 
     m_shaders[PATH].bind();
     m_shaders[PATH].share_attrib(m_mesh_shader, "in_pos2d");
@@ -139,12 +137,12 @@ void DataSample::link_data_to_shaders()
     m_shaders[POINTS].set_uniform("color_map", 0);
     m_shaders[POINTS].share_attrib(m_mesh_shader, "in_pos2d");
     m_shaders[POINTS].share_attrib(m_mesh_shader, "in_height");
-    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points);
+    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
     Vector2f origin2D = transform_raw_point({ m_metadata.incident_theta(), m_metadata.incident_phi() });
-    Vector3f origin3D = Vector3f{ origin2D(0), 0.0f, origin2D(1) };
+    Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
     m_shaders[INCIDENT_ANGLE].bind();
-    m_shaders[INCIDENT_ANGLE].upload_attrib("pos", Vector3f{ 0, 0, 0 });
+    m_shaders[INCIDENT_ANGLE].upload_attrib("pos", (float*)Vector3f{ 0, 0, 0 }.data(), 3, 1);
     m_shaders[INCIDENT_ANGLE].set_uniform("origin", origin3D);
     m_shaders[INCIDENT_ANGLE].set_uniform("direction", Vector3f{ 0, 1, 0 });
     m_shaders[INCIDENT_ANGLE].set_uniform("color", Vector3f{ 1, 0, 1 });
@@ -152,7 +150,7 @@ void DataSample::link_data_to_shaders()
 
     origin3D = -origin3D;
     m_predicted_outgoing_angle_shader.bind();
-    m_predicted_outgoing_angle_shader.upload_attrib("pos", Vector3f{ 0, 0, 0 });
+    m_predicted_outgoing_angle_shader.upload_attrib("pos", (float*)Vector3f{ 0, 0, 0 }.data(), 3, 1);
     m_predicted_outgoing_angle_shader.set_uniform("origin", origin3D);
     m_predicted_outgoing_angle_shader.set_uniform("direction", Vector3f{ 0, 1, 0 });
     m_predicted_outgoing_angle_shader.set_uniform("color", Vector3f{ 0, 0.1f, 0.8f });
@@ -166,8 +164,8 @@ void DataSample::toggle_log_view()
     m_display_as_log = !m_display_as_log;
 
     m_mesh_shader.bind();
-    m_mesh_shader.upload_attrib("in_normal", curr_n());
-    m_mesh_shader.upload_attrib("in_height", curr_h());
+    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 3, curr_n().size());
+    m_mesh_shader.upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
 
     m_shaders[PATH].bind();
     m_shaders[PATH].share_attrib(m_mesh_shader, "in_height");
@@ -175,7 +173,7 @@ void DataSample::toggle_log_view()
     m_shaders[POINTS].share_attrib(m_mesh_shader, "in_height");
 
     if (has_selection()) {
-        update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2D, m_display_as_log ? m_l_h : m_h);
+        update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2D, m_display_as_log ? m_lh : m_h);
         m_selection_axis.set_origin(selection_center());
     }
 }
@@ -183,9 +181,9 @@ void DataSample::toggle_log_view()
 void DataSample::update_point_selection()
 {
     m_shaders[POINTS].bind();
-    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points);
+    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
-    update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2D, m_display_as_log ? m_l_h : m_h);
+    update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2D, m_display_as_log ? m_lh : m_h);
     m_selection_axis.set_origin(selection_center());
 }
 
@@ -198,8 +196,8 @@ void DataSample::set_wave_length_index(size_t displayed_wave_length)
     m_wave_length_index = displayed_wave_length;
 
     m_mesh_shader.bind();
-    m_mesh_shader.upload_attrib("in_normal", curr_n());
-    m_mesh_shader.upload_attrib("in_height", curr_h());
+    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 3, curr_n().size());
+    m_mesh_shader.upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
 
     m_shaders[PATH].bind();
     m_shaders[PATH].share_attrib(m_mesh_shader, "in_height");

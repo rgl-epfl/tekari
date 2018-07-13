@@ -6,13 +6,13 @@
 TEKARI_NAMESPACE_BEGIN
 
 extern void recompute_data(
-    const MatrixXf &raw_points,
-    PointsStats &points_stats,
-    VectorXu &path_segments,
-    MatrixXu &F,
-    MatrixXf &V2D,
-    std::vector<VectorXf> &H, std::vector<VectorXf> &LH,
-    std::vector<MatrixXf> &N, std::vector<MatrixXf> &LN
+    const MatrixXXf& raw_points,
+    PointsStats& points_stats,
+    VectorXu& path_segments,
+    Matrix3Xu& F,
+    Matrix2Xf& V2D,
+    std::vector<VectorXf>& H, std::vector<VectorXf>& LH,
+    std::vector<Matrix3Xf>& N, std::vector<Matrix3Xf>& LN
 );
 
 

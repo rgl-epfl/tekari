@@ -1,9 +1,13 @@
-#include "tekari/BSDFApplication.h"
+#include <tekari/BSDFApplication.h>
+
+#include <nanogui/glutil.h>
 
 #include <vector>
 #include <string>
+#include <iostream>
 
-int main(int argc, char ** argv) {
+int main(int argc, char* * argv) {
+
     std::vector<std::string> data_sample_paths;
     for (int i = 1; i < argc; ++i)
     {
@@ -22,7 +26,7 @@ int main(int argc, char ** argv) {
         }
 
         nanogui::shutdown();
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
         #if defined(_WIN32)
             Message_box_a(nullptr, error_msg.c_str(), NULL, MB_ICONERROR | MB_OK);
@@ -31,5 +35,6 @@ int main(int argc, char ** argv) {
         #endif
         return -1;
     }
+    
     return 0;
 }

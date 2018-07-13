@@ -10,17 +10,17 @@ using namespace std;
 using namespace nanogui;
 
 void select_points(
-    const MatrixXf &V2D,
-    const VectorXf &H,
-    VectorXu8 &selected_points,
+    const Matrix2Xf& V2D,
+    const VectorXf& H,
+    VectorXi8& selected_points,
     const Matrix4f & mvp,
     const SelectionBox& selection_box,
     const Vector2i & canvas_size,
     SelectionMode mode)
 {
     START_PROFILING("Selecting points");
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.cols(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.size(), GRAIN_SIZE),
+        [&](const tbb::blocked_range<uint32_t>& range) {
         for (uint32_t i = range.begin(); i < range.end(); ++i)
         {
             Vector3f point = get3DPoint(V2D, H, i);
@@ -31,13 +31,13 @@ void select_points(
             switch (mode)
             {
             case STANDARD:
-                selected_points(i) = in_selection;
+                selected_points[i] = in_selection;
                 break;
             case ADD:
-                selected_points(i) = in_selection || selected_points[i];
+                selected_points[i] = in_selection || selected_points[i];
                 break;
             case SUBTRACT:
-                selected_points(i) = !in_selection && selected_points[i];
+                selected_points[i] = !in_selection && selected_points[i];
                 break;
             }
         }
@@ -46,27 +46,27 @@ void select_points(
 }
 
 void select_closest_point(
-    const MatrixXf &V2D,
-    const VectorXf &H,
-    VectorXu8 &selected_points,
+    const Matrix2Xf& V2D,
+    const VectorXf& H,
+    VectorXi8& selected_points,
     const Matrix4f& mvp,
     const Vector2i & mouse_pos,
     const Vector2i & canvas_size)
 {
     START_PROFILING("Selecting closest point");
-    size_t n_threads = V2D.cols() / GRAIN_SIZE + ((V2D.cols() % GRAIN_SIZE) > 0);
-    vector<float> smallest_distances(n_threads, MAX_SELECTION_DISTANCE * MAX_SELECTION_DISTANCE);
+    size_t n_threads = V2D.size() / GRAIN_SIZE + ((V2D.size() % GRAIN_SIZE) > 0);
+    vector<float> smallest_distances(n_threads, MAX_SELECTION_DISTANCE* MAX_SELECTION_DISTANCE);
     vector<int> closest_point_indices(n_threads, -1);
 
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.cols(), GRAIN_SIZE),
-        [&](const tbb::blocked_range<uint32_t> &range) {
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.size(), GRAIN_SIZE),
+        [&](const tbb::blocked_range<uint32_t>& range) {
         uint32_t thread_id = range.begin() / GRAIN_SIZE;
         for (uint32_t i = range.begin(); i < range.end(); ++i)
         {
             Vector3f point = get3DPoint(V2D, H, i);
             Vector4f proj_point = project_on_screen(point, canvas_size, mvp);
 
-            float dist_sqr = Vector2f{ proj_point[0] - mouse_pos[0], proj_point[1] - mouse_pos[1] }.squared_norm();
+            float dist_sqr = enoki::squared_norm(Vector2f{ proj_point[0] - mouse_pos[0], proj_point[1] - mouse_pos[1] });
 
             if (smallest_distances[thread_id] > dist_sqr)
             {
@@ -74,11 +74,11 @@ void select_closest_point(
                 smallest_distances[thread_id]     = dist_sqr;
             }
 
-            selected_points(i) = false;
+            selected_points[i] = false;
         }
     });
 
-    float smallest_distance = MAX_SELECTION_DISTANCE * MAX_SELECTION_DISTANCE;
+    float smallest_distance = MAX_SELECTION_DISTANCE* MAX_SELECTION_DISTANCE;
     int closest_point_index = -1;
 
     for (size_t i = 0; i < smallest_distances.size(); i++)
@@ -92,15 +92,15 @@ void select_closest_point(
 
     if (closest_point_index != -1)
     {
-        selected_points(closest_point_index) = true;
+        selected_points[closest_point_index] = true;
     }
     END_PROFILING();
 }
 
 void select_extreme_point(
-    const PointsStats &points_info,
-    const PointsStats &selection_info,
-    VectorXu8 &selected_points,
+    const PointsStats& points_info,
+    const PointsStats& selection_info,
+    VectorXi8& selected_points,
     unsigned int wave_length_index,
     bool highest
 )
@@ -117,88 +117,87 @@ void select_extreme_point(
                 : selection_info.lowest_point_index(wave_length_index)));
 
     deselect_all_points(selected_points);
-    selected_points(point_index) = 1;
+    selected_points[point_index] = 1;
 
     END_PROFILING();
 }
 
-void select_all_points(VectorXu8 &selected_points)
+void select_all_points(VectorXi8& selected_points)
 {
     START_PROFILING("Selecting all points");
-    selected_points.set_ones();
+    memset(selected_points.data(), ~0, selected_points.size());
     END_PROFILING();
 }
 
-void deselect_all_points(VectorXu8 &selected_points)
+void deselect_all_points(VectorXi8& selected_points)
 {
     START_PROFILING("Deselecting all points");
-    selected_points.set_zero();
+    memset(selected_points.data(), 0, selected_points.size());
     END_PROFILING();
 }
 
-void move_selection_along_path(bool up, VectorXu8 &selected_points
-)
+void move_selection_along_path(bool up, VectorXi8& selected_points)
 {
     START_PROFILING("Moving selection along path");
     uint8_t extremity;
     if (up)
     {
-        extremity = selected_points.tail(1)(0);
+        extremity = selected_points.back();
         memmove(selected_points.data() + 1, selected_points.data(), selected_points.size() - 1);
-        selected_points.head(1)(0) = extremity;
+        selected_points.front() = extremity;
     }
     else
     {
-        extremity = selected_points.head(1)(0);
+        extremity = selected_points.front();
         memmove(selected_points.data(), selected_points.data() + 1, selected_points.size() - 1);
-        selected_points.tail(1)(0) = extremity;
+        selected_points.back() = extremity;
     }
     END_PROFILING();
 }
 
 void delete_selected_points(
-    VectorXu8 &selected_points,
-    MatrixXf &raw_points,
-    MatrixXf &V2D,
-    PointsStats &selection_info,
+    VectorXi8& selected_points,
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    PointsStats& selection_info,
     Metadata& metadata
 )
 {
     START_PROFILING("Deleting selection");
     selection_info = PointsStats();
 
-    Eigen::Index last_valid = 0;
-    for (Eigen::Index i = 0; i < selected_points.size(); ++i)
+    Index last_valid = 0;
+    for (Index i = 0; i < selected_points.size(); ++i)
     {
-        if (!selected_points(i))
+        if (!selected_points[i])
         {
             if (last_valid != i)         // prevent unnecessary copies
             {
                 // move undeleted point to last valid position
-                V2D.col(last_valid) = V2D.col(i);
-                raw_points.col(last_valid) = raw_points.col(i);
+                V2D[last_valid] = V2D[i];
+                raw_points[last_valid] = std::move(raw_points[i]);
             }
             ++last_valid;
         }
     }
 
     // resize vectors
-    V2D.conservative_resize(2, last_valid);
-    raw_points.conservative_resize(raw_points.rows(), last_valid);
+    V2D.resize(last_valid);
+    raw_points.resize(last_valid);
     selected_points.resize(last_valid);
-    selected_points.set_zero();
+    memset(selected_points.data(), 0, selected_points.size());
 
     metadata.set_points_in_file(last_valid);
 
     END_PROFILING();
 }
 
-unsigned int count_selected_points(const VectorXu8 &selected_points)
+unsigned int count_selected_points(const VectorXi8& selected_points)
 {
     unsigned int count = 0;
     START_PROFILING("Counting selected points");
-    for (Eigen::Index i = 0; i < selected_points.size(); ++i) {
-        count += (selected_points(i) != 0);
+    for (Index i = 0; i < selected_points.size(); ++i) {
+        count += (selected_points[i] != 0);
     }
     END_PROFILING();
     return count;
