@@ -1,4 +1,4 @@
-#include "tekari/Axis.h"
+#include <tekari/Axis.h>
 
 #include <nanogui/glutil.h>
 #include <string>
@@ -6,7 +6,7 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-using namespace nanogui;
+
 
 Axis::Axis(Vector3f origin)
     : m_origin(origin)
@@ -18,7 +18,7 @@ Axis::~Axis()
 
 void Axis::load_shader()
 {
-    const std::string shader_path = "../resources/shaders/";
+    const string shader_path = "../resources/shaders/";
     m_shader.init_from_files("axis", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
     m_shader.bind();
     m_shader.set_uniform("length", 0.15f);

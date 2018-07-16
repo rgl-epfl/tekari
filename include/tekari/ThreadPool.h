@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include <condition_variable>
 #include <thread>
-#include <functional>
 #include <mutex>
-#include "SharedQueue.h"
+#include <tekari/SharedQueue.h>
 
 template<unsigned int N = 10>
 class ThreadPool

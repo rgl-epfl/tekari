@@ -1,4 +1,4 @@
-#include "tekari/MetadataWindow.h"
+#include <tekari/MetadataWindow.h>
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
@@ -6,13 +6,18 @@
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/label.h>
 #include <nanogui/glutil.h>
-#include <functional>
 
-using namespace nanogui;
+using nanogui::Button;
+using nanogui::VScrollPanel;
+using nanogui::GridLayout;
+using nanogui::GroupLayout;
+using nanogui::Alignment;
+using nanogui::Orientation;
+using nanogui::Label;
 
 TEKARI_NAMESPACE_BEGIN
 
-MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::function<void(void)> close_callback)
+MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, function<void(void)> close_callback)
     : Window(parent, "Metadata")
     , m_close_callback(close_callback)
 {
@@ -27,13 +32,13 @@ MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, std::fu
     container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 15, 2 });
 
     auto raw_meta = metadata->raw_metadata();
-    for (const std::string& line : raw_meta) {
+    for (const string& line : raw_meta) {
         auto pos = line.find_first_of("\t ");
-        if (pos == std::string::npos)
+        if (pos == string::npos)
             continue;
 
-        std::string title = line.substr(1, pos);
-        std::string value = line.substr(pos + 1, line.length());
+        string title = line.substr(1, pos);
+        string value = line.substr(pos + 1, line.length());
         if (value.length() > 100) value = value.substr(0, 100);
 
         new Label(container, title, "sans-bold", 18);

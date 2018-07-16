@@ -1,13 +1,11 @@
-#include "tekari/points_stats.h"
+#include <tekari/points_stats.h>
 
+#include <limits>
 #include <iostream>
-#include "tekari/selections.h"
-#include "tekari/stop_watch.h"
+#include <tekari/selections.h>
+#include <tekari/stop_watch.h>
 
 TEKARI_NAMESPACE_BEGIN
-
-using namespace nanogui;
-using namespace std;
 
 PointsStats::PointsStats()
     : m_points_count(0)
@@ -19,11 +17,11 @@ void PointsStats::set_size(unsigned int n_wave_lengths)
     m_average_raw_point.assign(n_wave_lengths + 2, 0);
     m_lowest_point_index.assign(n_wave_lengths, 0);
     m_highest_point_index.assign(n_wave_lengths, 0);
-    m_min_intensity.assign(n_wave_lengths, numeric_limits<float>::max());
-    m_max_intensity.assign(n_wave_lengths, numeric_limits<float>::min());
+    m_min_intensity.assign(n_wave_lengths, std::numeric_limits<float>::max());
+    m_max_intensity.assign(n_wave_lengths, std::numeric_limits<float>::min());
 }
 
-void PointsStats::add_point(const VectorXf& raw_point, const Matrix3Xf& transformed_points)
+void PointsStats::add_point(const VectorXf& raw_point, const Matrix4Xf& transformed_points)
 {
     for (Index i = 0; i < raw_point.size(); ++i)
     {

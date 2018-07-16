@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common.h"
-#include "points_stats.h"
+#include <tekari/common.h>
+#include <tekari/points_stats.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -11,8 +11,8 @@ extern void recompute_data(
     VectorXu& path_segments,
     Matrix3Xu& F,
     Matrix2Xf& V2D,
-    std::vector<VectorXf>& H, std::vector<VectorXf>& LH,
-    std::vector<Matrix3Xf>& N, std::vector<Matrix3Xf>& LN
+    vector<VectorXf>& H, vector<VectorXf>& LH,
+    vector<Matrix4Xf>& N, vector<Matrix4Xf>& LN
 );
 
 

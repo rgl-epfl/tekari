@@ -1,4 +1,4 @@
-#include "tekari/ThreadPool.h"
+#include <tekari/ThreadPool.h>
 
 template<class N>
 ThreadPool<N>::ThreadPool()
@@ -44,7 +44,7 @@ ThreadPool<N>::~ThreadPool()
 }
 
 template<typename N>
-void ThreadPool<N>::add_task(const std::function<void(void)> task) {
+void ThreadPool<N>::add_task(const function<void(void)> task) {
     std::unique_lock<std::mutex> lock{ m_Tasks_mutex };
     m_Task_queue.push(task);
     ++m_Tasks_available;

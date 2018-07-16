@@ -1,9 +1,7 @@
 #pragma once
 
-#include "common.h"
-
+#include <tekari/common.h>
 #include <nanogui/opengl.h>
-#include <limits>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -24,13 +22,13 @@ public:
 
     void add_intensity(unsigned int index, const VectorXf& raw_point);
 private:
-    void add_point(const VectorXf& raw_point, const Matrix3Xf& transformed_point);
+    void add_point(const VectorXf& raw_point, const Matrix4Xf& transformed_point);
 
     void normalize_average();
     void normalize();
 
     unsigned int m_points_count;
-    Matrix3Xf m_average_point;
+    Matrix4Xf m_average_point;
     VectorXf m_average_raw_point;
     VectorXf m_min_intensity;
     VectorXf m_max_intensity;
@@ -42,14 +40,14 @@ private:
         const VectorXi8& selected_points,
         const MatrixXXf& raw_points,
         const Matrix2Xf& V2D,
-        const std::vector<VectorXf>& H
+        const vector<VectorXf>& H
     );
 
     friend void update_points_stats(
         PointsStats& points_stats,
         const MatrixXXf& raw_points,
         const Matrix2Xf& V2D,
-        const std::vector<VectorXf>& H
+        const vector<VectorXf>& H
     );
 
     friend void compute_min_max_intensities(
@@ -63,7 +61,7 @@ extern void update_selection_stats(
     const VectorXi8& selected_points,
     const MatrixXXf& raw_points,
     const Matrix2Xf& V2D,
-    const std::vector<VectorXf>& H
+    const vector<VectorXf>& H
 );
 
 extern void compute_min_max_intensities(
@@ -75,7 +73,7 @@ extern void update_points_stats(
     PointsStats& points_stats,
     const MatrixXXf& raw_points,
     const Matrix2Xf& V2D,
-    const std::vector<VectorXf>& H
+    const vector<VectorXf>& H
 );
 
 

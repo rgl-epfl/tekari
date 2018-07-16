@@ -1,19 +1,19 @@
 #pragma once
 
-#include "common.h"
+#include <tekari/common.h>
 
 #include <nanogui/screen.h>
-#include <memory>
+
 #include <thread>
 
-#include "BSDFCanvas.h"
-#include "DataSampleButton.h"
-#include "MetadataWindow.h"
-#include "ColorMapSelectionWindow.h"
-#include "HelpWindow.h"
-#include "ColorMap.h"
-#include "SharedQueue.h"
-#include "ThreadPool.h"
+#include <tekari/BSDFCanvas.h>
+#include <tekari/DataSampleButton.h>
+#include <tekari/MetadataWindow.h>
+#include <tekari/ColorMapSelectionWindow.h>
+#include <tekari/HelpWindow.h>
+#include <tekari/ColorMap.h>
+#include <tekari/SharedQueue.h>
+#include <tekari/ThreadPool.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -30,13 +30,13 @@ using nanogui::GLFramebuffer;
 
 struct DataSample_to_add
 {
-    std::string error_msg;
+    string error_msg;
     std::shared_ptr<DataSample> data_sample;
 };
 
 class BSDFApplication : public Screen {
 public:
-    BSDFApplication(const std::vector<std::string>& data_sample_paths);
+    BSDFApplication(const vector<string>& data_sample_paths);
     ~BSDFApplication();
 
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
@@ -48,12 +48,12 @@ public:
     void save_screen_shot();
     void save_selected_data_sample();
 
-    void toggle_window(Window*& window, std::function<Window*(void)> create_window);
+    void toggle_window(Window*& window, function<Window*(void)> create_window);
     void toggle_metadata_window();
     void toggle_help_window();
     void toggle_selection_info_window();
     void update_selection_info_window();
-    void toggle_unsaved_data_window(const std::vector<std::string>& data_sample_names, std::function<void(void)> continue_callback);
+    void toggle_unsaved_data_window(const vector<string>& data_sample_names, function<void(void)> continue_callback);
     void toggle_color_map_selection_window();
     
     void select_color_map(std::shared_ptr<ColorMap> color_map);
@@ -79,8 +79,8 @@ private:
 
     void toggle_tool_button(Button* button);
 
-    void open_files(const std::vector<std::string>& data_sample_paths);
-    void try_load_data_sample(std::string file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
+    void open_files(const vector<string>& data_sample_paths);
+    void try_load_data_sample(string file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
 
     void toggle_canvas_draw_flags(int flag, CheckBox* checkbox);
 
@@ -91,7 +91,7 @@ private:
     bool m_distraction_free_mode = false;
 
     Window* m_tool_window;
-    Widget* m3DView;
+    Widget* m_3d_view;
 
     PopupButton* m_hidden_options_button;
     CheckBox* m_use_shadows_checkbox;
@@ -130,9 +130,9 @@ private:
     ComboBox* m_mouse_mode_selector;
     GLFWcursor* m_cursors[BSDFCanvas::MOUSE_MODE_COUNT];
 
-    std::vector<std::shared_ptr<DataSample>> m_data_samples;
+    vector<std::shared_ptr<DataSample>> m_data_samples;
     std::shared_ptr<DataSample> m_selected_ds;
-    std::vector<std::shared_ptr<ColorMap>> m_color_maps;
+    vector<std::shared_ptr<ColorMap>> m_color_maps;
 
     // offscreen buffer
     GLFramebuffer m_framebuffer;

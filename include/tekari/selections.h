@@ -2,8 +2,8 @@
 
 #include <nanogui/opengl.h>
 #include <tbb/parallel_for.h>
-#include "points_stats.h"
-#include "Metadata.h"
+#include <tekari/points_stats.h>
+#include <tekari/Metadata.h>
 
 TEKARI_NAMESPACE_BEGIN
 

@@ -1,13 +1,10 @@
 #pragma once
 
-#include "common.h"
+#include <tekari/common.h>
 #include <nanogui/widget.h>
 #include <nanogui/opengl.h>
 #include <nanogui/button.h>
-#include <functional>
-#include <memory>
-
-#include "ColorMap.h"
+#include <tekari/ColorMap.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -20,7 +17,7 @@ public:
     virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
     void draw(NVGcontext* ctx) override;
 
-    void set_callback(std::function<void(ColorMapButton*)> callback) { m_callback = callback; }
+    void set_callback(function<void(ColorMapButton*)> callback) { m_callback = callback; }
 
     bool selected() const { return m_selected; }
     void set_selected(bool selected) { m_selected = selected; }
@@ -31,7 +28,7 @@ private:
     nanogui::GLShader m_color_map_shader;
     std::shared_ptr<ColorMap> m_color_map;
 
-    std::function<void(ColorMapButton*)> m_callback;
+    function<void(ColorMapButton*)> m_callback;
 
     bool m_selected;
 };

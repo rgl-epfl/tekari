@@ -1,7 +1,6 @@
-#include "tekari/DataSampleButton.h"
+#include <tekari/DataSampleButton.h>
 
 #include <iostream>
-#include <functional>
 
 #include <nanogui/opengl.h>
 #include <nanogui/common.h>
@@ -12,12 +11,21 @@
 #include <nanogui/button.h>
 #include <nanogui/checkbox.h>
 
-using namespace nanogui;
-using namespace std;
+using nanogui::Widget;
+using nanogui::Window;
+using nanogui::Slider;
+using nanogui::Button;
+using nanogui::GridLayout;
+using nanogui::CheckBox;
+using nanogui::Alignment;
+using nanogui::Orientation;
+using nanogui::BoxLayout;
+using nanogui::Popup;
+using nanogui::Label;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget* parent, const std::string & label, bool is_spectral, unsigned int max_wave_length_index)
+DataSampleButton::DataSampleButton(Widget* parent, const string & label, bool is_spectral, unsigned int max_wave_length_index)
 :   Widget{ parent }
 ,   m_label{ label }
 ,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
@@ -43,7 +51,7 @@ DataSampleButton::DataSampleButton(Widget* parent, const std::string & label, bo
     auto button_container = new Widget{ m_popup };
     button_container->set_layout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
 
-    auto make_view_button = [this, button_container](const string& label, const string& tooltip, bool pushed) {
+    auto make_view_button = [button_container](const string& label, const string& tooltip, bool pushed) {
         auto button = new Button(button_container, label);
         button->set_flags(Button::Flags::ToggleButton);
         button->set_tooltip(tooltip);
@@ -159,12 +167,12 @@ void DataSampleButton::draw(NVGcontext* ctx)
     nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
 
     // draw delete button
-    auto make_tool_button = [this,& ctx](float opacity, int icon, const Vector2i& pos) {
+    auto make_tool_button = [&ctx](float opacity, int icon, const Vector2i& pos) {
         nvgBeginPath(ctx);
         nvgCircle(ctx, pos.x(), pos.y(), BUTTON_RADIUS);
         nvgFillColor(ctx, Color(0.0f, opacity));
         nvgFill(ctx);
-        auto icon_data = utf8(icon);
+        auto icon_data = nanogui::utf8(icon);
         nvgFillColor(ctx, Color(0.0f, 0.8f));
         nvgText(ctx, pos.x(), pos.y() - 1.0f, icon_data.data(), nullptr);
         nvgFillColor(ctx, Color(1.0f, 0.8f));
@@ -210,7 +218,7 @@ void DataSampleButton::toggle_log_view()
     m_display_as_log->set_checked(!m_display_as_log->checked());
 }
 
-void DataSampleButton::set_view_toggles_callback(std::function<void(bool)> callback) {
+void DataSampleButton::set_view_toggles_callback(function<void(bool)> callback) {
     for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
     {
         DataSample::Views view = static_cast<DataSample::Views>(i);
@@ -218,7 +226,7 @@ void DataSampleButton::set_view_toggles_callback(std::function<void(bool)> callb
     }
 }
 
-void DataSampleButton::set_display_as_log_callback(std::function<void(bool)> callback)
+void DataSampleButton::set_display_as_log_callback(function<void(bool)> callback)
 {
     m_display_as_log->set_callback(callback);
 }

@@ -1,4 +1,4 @@
-#include "tekari/BSDFApplication.h"
+#include <tekari/BSDFApplication.h>
 
 #include <nanogui/layout.h>
 #include <nanogui/button.h>
@@ -17,20 +17,30 @@
 #include <bitset>
 #include <string>
 
-#include "stb_image.h"
-#include "tekari/selections.h"
-#include "tekari/raw_data_processing.h"
-#include "tekari/data_io.h"
-#include "tekari/LightTheme.h"
+#include <stb_image.h>
+#include <tekari/selections.h>
+#include <tekari/raw_data_processing.h>
+#include <tekari/data_io.h>
+#include <tekari/LightTheme.h>
 
 #define FOOTER_HEIGHT 25
 
-using namespace nanogui;
-using namespace std;
+using nanogui::Window;
+using nanogui::Widget;
+using nanogui::MessageDialog;
+using nanogui::BoxLayout;
+using nanogui::GridLayout;
+using nanogui::GroupLayout;
+using nanogui::Orientation;
+using nanogui::Label;
+using nanogui::ColorWheel;
+using nanogui::Slider;
+using nanogui::Alignment;
+using nanogui::Theme;
 
 TEKARI_NAMESPACE_BEGIN
 
-BSDFApplication::BSDFApplication(const std::vector<std::string>& data_sample_paths)
+BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 :   Screen(Vector2i(1200, 750), "Tekari", true, false, 8, 8, 24, 8, 2)
 ,   m_metadata_window(nullptr)
 ,   m_help_window(nullptr)
@@ -45,12 +55,12 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& data_sample_pat
         m_color_maps.push_back(make_shared<ColorMap>(p.first, ColorMap::FOLDER_PATH + p.second));
     }
 
-    m3DView = new Widget{this};
-    m3DView->set_layout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
+    m_3d_view = new Widget{this};
+    m_3d_view->set_layout(new BoxLayout{ Orientation::Vertical, Alignment::Fill });
 
     // canvas
-    m_bsdf_canvas = new BSDFCanvas{ m3DView };
-    m_bsdf_canvas->set_background_color(Color( 50, 50, 50, 255 ));
+    m_bsdf_canvas = new BSDFCanvas{ m_3d_view };
+    m_bsdf_canvas->set_background_color(Color(55, 255));
     m_bsdf_canvas->set_selection_callback([this](const Matrix4f& mvp, const SelectionBox& selection_box,
         const Vector2i& canvas_size, SelectionMode mode) {
         if (!m_selected_ds)
@@ -75,7 +85,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& data_sample_pat
 
     // Footer
     {
-        m_footer = new Widget{ m3DView };
+        m_footer = new Widget{ m_3d_view };
         m_footer->set_layout(new GridLayout{ Orientation::Horizontal, 3, Alignment::Fill, 5});
 
         auto make_footer_info = [this](string label) {
@@ -302,8 +312,7 @@ BSDFApplication::BSDFApplication(const std::vector<std::string>& data_sample_pat
         }
     }
 
-    //set_resize_callback([this](Vector2i) { request_layout_update(); });
-    
+    set_resize_callback([this](Vector2i) { request_layout_update(); });
     set_background(m_theme->m_window_fill_focused);
 
     request_layout_update();
@@ -336,7 +345,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 open_data_sample_dialog();
                 return true;
             case GLFW_KEY_S:
-                cout << "Save data\n";
+                save_selected_data_sample();
                 return true;
             case GLFW_KEY_A:
                 if (!m_selected_ds)
@@ -597,15 +606,15 @@ void BSDFApplication::draw_contents() {
             }
         }
     }
-    catch (runtime_error) {
+    catch (std::runtime_error) {
     }
 }
 
 void BSDFApplication::update_layout()
 {
-    m3DView->set_fixed_size(m_size);
+    m_3d_view->set_fixed_size(m_size);
 
-    m_footer->set_fixed_size(Vector2i{ m_size.x(), FOOTER_HEIGHT });
+    m_footer->set_fixed_size(Vector2i( m_size.x(), FOOTER_HEIGHT ));
     for(auto& footer_infos: m_footer->children())
         footer_infos->set_fixed_width(width() / m_footer->children().size());
 
@@ -629,14 +638,14 @@ void BSDFApplication::update_layout()
 void BSDFApplication::open_data_sample_dialog()
 {
     m_thread_pool.add_task([this]() {
-        vector<string> data_sample_paths = file_dialog({ { "txt",  "Data samples" } }, false, true);
+        vector<string> data_sample_paths = nanogui::file_dialog({ { "txt",  "Data samples" } }, false, true);
         open_files(data_sample_paths);
         // Make sure we gain focus after seleting a file to be loaded.
         glfwFocusWindow(m_glfw_window);
     });
 }
 
-void BSDFApplication::open_files(const std::vector<std::string>& data_sample_paths)
+void BSDFApplication::open_files(const vector<string>& data_sample_paths)
 {
     for (const auto& data_sample_path : data_sample_paths)
     {
@@ -653,7 +662,7 @@ void BSDFApplication::save_selected_data_sample()
     if (!m_selected_ds)
         return;
     
-    string path = file_dialog(
+    string path = nanogui::file_dialog(
     {
         { "txt",  "Data samples" },
     }, true);
@@ -668,7 +677,7 @@ void BSDFApplication::save_selected_data_sample()
 
 void BSDFApplication::save_screen_shot()
 {
-    string screenshot_name = file_dialog(
+    string screenshot_name = nanogui::file_dialog(
     {
         { "tga", "TGA images" }
     }, true);
@@ -745,7 +754,7 @@ void BSDFApplication::toggle_selection_info_window()
         auto window = new Window{ this, "Selection Info" };
         window->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 5, 5 });
 
-        auto make_selection_info_labels = [this, window](const string& caption, const string& value) {
+        auto make_selection_info_labels = [window](const string& caption, const string& value) {
             new Label{ window, caption, "sans-bold" };
             new Label{ window, value };
         };
@@ -767,7 +776,7 @@ void BSDFApplication::toggle_unsaved_data_window(const vector<string>& data_samp
         return;
 
     toggle_window(m_unsaved_data_window, [this,& data_sample_names, continue_callback]() {
-        ostringstream error_msg;
+        std::ostringstream error_msg;
         error_msg << data_sample_names[0];
         for (size_t i = 1; i < data_sample_names.size(); ++i)
             error_msg << " and " << data_sample_names[i];
@@ -827,7 +836,7 @@ void BSDFApplication::select_data_sample(int index, bool clamped)
         return;
 
     if (clamped)
-        index = max(0, min(static_cast<int>(m_data_samples.size()-1), index));
+        index = std::max(0, std::min(static_cast<int>(m_data_samples.size()-1), index));
     else if (index < 0 || index >= static_cast<int>(m_data_samples.size()))
         return;
 
@@ -916,7 +925,7 @@ void BSDFApplication::delete_data_sample(shared_ptr<DataSample> data_sample)
 void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
 {
     if (!data_sample) {
-        throw invalid_argument{ "Data sample may not be null." };
+        throw std::invalid_argument{ "Data sample may not be null." };
     }
 
     string clean_name = data_sample->name();
@@ -956,7 +965,7 @@ void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
         }
     });
 
-    data_sample_button->set_display_as_log_callback([this, data_sample](bool /* unused*/) {
+    data_sample_button->set_display_as_log_callback([data_sample](bool /* unused*/) {
         data_sample->toggle_log_view();
     });
 
@@ -1041,7 +1050,7 @@ void BSDFApplication::try_load_data_sample(string file_path, shared_ptr<DataSamp
         shared_ptr<DataSample> ds = make_shared<DataSample>();
 
         size_t pos = file_path.find_last_of("\\/");
-        string file_name = file_path.substr(pos+1, file_name.length());
+        string file_name = file_path.substr(pos+1, file_path.length());
         cout << "====================== Loading " << file_name << " ======================\n";
         load_data_sample(file_path,
                          ds->raw_points(),
@@ -1059,7 +1068,7 @@ void BSDFApplication::try_load_data_sample(string file_path, shared_ptr<DataSamp
         data_sample_to_add->data_sample = ds;
         cout << "================== Finished loading " << file_name << " =================\n";
     }
-    catch (exception e) {
+    catch (std::exception e) {
         string error_msg = "Could not open data sample at " + file_path + " : " + e.what();
         cerr << error_msg << endl;
         data_sample_to_add->error_msg = error_msg;

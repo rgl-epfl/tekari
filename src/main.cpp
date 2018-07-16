@@ -22,7 +22,7 @@ int main(int argc, char* * argv) {
             nanogui::ref<tekari::BSDFApplication> app = new tekari::BSDFApplication(data_sample_paths);
             app->draw_all();
             app->set_visible(true);
-            nanogui::mainloop();
+            nanogui::mainloop(50);
         }
 
         nanogui::shutdown();

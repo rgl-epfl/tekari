@@ -1,4 +1,4 @@
-#include "tekari/ColorMapSelectionWindow.h"
+#include <tekari/ColorMapSelectionWindow.h>
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
@@ -9,8 +9,12 @@
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/window.h>
 
-using namespace nanogui;
-using namespace std;
+using nanogui::Label;
+using nanogui::GridLayout;
+using nanogui::GroupLayout;
+using nanogui::Orientation;
+using nanogui::Alignment;
+using nanogui::Button;
 
 TEKARI_NAMESPACE_BEGIN
 

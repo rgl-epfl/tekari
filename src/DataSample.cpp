@@ -1,7 +1,4 @@
-#include "tekari/DataSample.h"
-
-using namespace std;
-using namespace nanogui;
+#include <tekari/DataSample.h>
 
 #define MAX_SELECTION_DISTANCE 30.0f
 
@@ -80,8 +77,8 @@ void DataSample::draw_gl(
     m_mesh_shader.set_uniform("model_view_proj", mvp);
     m_mesh_shader.set_uniform("model", model);
     m_mesh_shader.set_uniform("view", view_origin);
-    m_mesh_shader.set_uniform("use_shadows", flags & USES_SHADOWS);
-    m_mesh_shader.set_uniform("use_specular", flags & USES_SPECULAR);
+    m_mesh_shader.set_uniform("use_shadows", (bool)(flags & USES_SHADOWS));
+    m_mesh_shader.set_uniform("use_specular", (bool)(flags & USES_SPECULAR));
     m_mesh_shader.draw_indexed(GL_TRIANGLES, 0, m_f.size());
     glDisable(GL_POLYGON_OFFSET_FILL);
 
@@ -119,13 +116,13 @@ void DataSample::link_data_to_shaders()
 {
     if (m_f.size() == 0)
     {
-        throw runtime_error("ERROR: cannot link data to shader before loading data.");
+        throw std::runtime_error("ERROR: cannot link data to shader before loading data.");
     }
 
     m_mesh_shader.bind();
     m_mesh_shader.set_uniform("color_map", 0);
     m_mesh_shader.upload_attrib("in_pos2d", (float*)m_v2D.data(), 2, m_v2D.size());
-    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 3, curr_n().size());
+    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().size());
     m_mesh_shader.upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
     m_mesh_shader.upload_indices((uint32_t*)m_f.data(), 3, m_f.size());
 
@@ -164,7 +161,7 @@ void DataSample::toggle_log_view()
     m_display_as_log = !m_display_as_log;
 
     m_mesh_shader.bind();
-    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 3, curr_n().size());
+    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().size());
     m_mesh_shader.upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
 
     m_shaders[PATH].bind();
@@ -196,7 +193,7 @@ void DataSample::set_wave_length_index(size_t displayed_wave_length)
     m_wave_length_index = displayed_wave_length;
 
     m_mesh_shader.bind();
-    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 3, curr_n().size());
+    m_mesh_shader.upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().size());
     m_mesh_shader.upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
 
     m_shaders[PATH].bind();

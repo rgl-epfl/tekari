@@ -1,15 +1,15 @@
 #pragma once
 
-#include "common.h"
+#include <tekari/common.h>
 #include <nanogui/glcanvas.h>
 #include <nanogui/widget.h>
 #include <nanogui/label.h>
 #include <nanogui/window.h>
-#include <memory>
-#include "Axis.h"
-#include "RadialGrid.h"
-#include "selections.h"
-#include "DataSample.h"
+
+#include <tekari/Axis.h>
+#include <tekari/RadialGrid.h>
+#include <tekari/selections.h>
+#include <tekari/DataSample.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -61,7 +61,7 @@ public:
 
     void set_ortho_mode(bool ortho_mode) { m_ortho_mode = ortho_mode; }
     void set_view_angle(ViewAngles view_angle);
-    void set_selection_callback(std::function<void(const Matrix4f&, const SelectionBox&,
+    void set_selection_callback(function<void(const Matrix4f&, const SelectionBox&,
         const Vector2i&, SelectionMode)> callback) { m_select_callback = callback; }
 
     // Setters/Getters
@@ -89,8 +89,8 @@ private:
     inline int selection_mouse_button(bool dragging)     const { return BUTTON_MAPPINGS[dragging][(m_mouse_mode + 1) % MOUSE_MODE_COUNT]; }
 
     // data samples
-    std::vector<std::shared_ptr<DataSample>>    m_data_samples_to_draw;
-    std::shared_ptr<DataSample>                 m_selected_data_sample;
+    vector<std::shared_ptr<DataSample>>    m_data_samples_to_draw;
+    std::shared_ptr<DataSample>            m_selected_data_sample;
 
     RadialGrid          m_grid;
     nanogui::Arcball    m_arcball;
@@ -104,7 +104,7 @@ private:
 
     // selection
     std::pair<Vector2i, Vector2i> m_selection_region;
-    std::function<void(const Matrix4f&, const SelectionBox&,
+    function<void(const Matrix4f&, const SelectionBox&,
         const Vector2i&, SelectionMode)> m_select_callback;
 
     // global state for sample display

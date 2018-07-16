@@ -1,4 +1,4 @@
-#include "tekari/HelpWindow.h"
+#include <tekari/HelpWindow.h>
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
@@ -9,8 +9,15 @@
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/window.h>
 
-using namespace nanogui;
-using namespace std;
+using nanogui::Button;
+using nanogui::VScrollPanel;
+using nanogui::GridLayout;
+using nanogui::GroupLayout;
+using nanogui::BoxLayout;
+using nanogui::Alignment;
+using nanogui::Orientation;
+using nanogui::TabWidget;
+using nanogui::Label;
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -48,7 +55,7 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
         scroll_content->set_layout(new GroupLayout{});
         m_scroll_panel->set_fixed_height(500);
 
-        auto add_shortcut_section = [&scroll_content](const std::string& label, const std::string& tooltip="") {
+        auto add_shortcut_section = [&scroll_content](const string& label, const string& tooltip="") {
             auto l = new Label{ scroll_content, label, "sans-bold"};
             l->set_tooltip(tooltip);
             auto section = new Widget{ scroll_content };

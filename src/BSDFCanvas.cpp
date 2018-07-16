@@ -1,18 +1,14 @@
-#include "tekari/BSDFCanvas.h"
+#include <tekari/BSDFCanvas.h>
 
 #include <enoki/transform.h>
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 #include <string>
 
-#include "tekari/DataSample.h"
+#include <tekari/DataSample.h>
 
 #define MAX_ZOOM 10.0f
 #define MIN_ZOOM -MAX_ZOOM
-
-using namespace nanogui;
-using namespace std;
-
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -114,7 +110,7 @@ bool BSDFCanvas::scroll_event(const Vector2i& p, const Vector2f& rel)
     if (!GLCanvas::scroll_event(p, rel))
     {
         m_zoom += rel[1]* 0.2f;
-        m_zoom = min(MAX_ZOOM, max(MIN_ZOOM, m_zoom));
+        m_zoom = std::min(MAX_ZOOM, std::max(MIN_ZOOM, m_zoom));
     }
     return true;
 }

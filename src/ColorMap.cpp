@@ -1,8 +1,6 @@
-#include "tekari/ColorMap.h"
+#include <tekari/ColorMap.h>
 
-#include "stb_image.h"
-
-using namespace std;
+#include <stb_image.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -44,12 +42,12 @@ ColorMap::ColorMap(const string& name, const string& file_path)
     unsigned char* data = stbi_load(file_path.c_str(),& w,& h,& num_chanels, 0);
     if (!data)
     {
-        throw runtime_error("Unable to open color map " + file_path);
+        throw std::runtime_error("Unable to open color map " + file_path);
     }
     if (h != 1)
     {
         stbi_image_free(data);
-        throw runtime_error("Wrong color map format " + file_path + " (height should be 1)");
+        throw std::runtime_error("Wrong color map format " + file_path + " (height should be 1)");
     }
     GLenum format = GL_RGB;
     if (num_chanels == 3) format = GL_RGB;

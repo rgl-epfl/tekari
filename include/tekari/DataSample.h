@@ -1,15 +1,12 @@
 #pragma once
 
-#include "common.h"
+#include <tekari/common.h>
 #include <nanogui/common.h>
 #include <vector>
-#include <memory>
-#include <functional>
-
-#include "points_stats.h"
-#include "Metadata.h"
-#include "ColorMap.h"
-#include "Axis.h"
+#include <tekari/points_stats.h>
+#include <tekari/Metadata.h>
+#include <tekari/ColorMap.h>
+#include <tekari/Axis.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -53,7 +50,7 @@ public:
     void init_shaders();
 
     // info accessors
-    inline const std::string name()             const { return m_metadata.sample_name(); }
+    inline const string name()             const { return m_metadata.sample_name(); }
     inline const Metadata& metadata()           const { return m_metadata; }
     inline bool has_selection()                 const { return m_selection_stats.points_count() > 0; }
     inline const PointsStats& points_stats()    const { return m_points_stats; }
@@ -75,17 +72,17 @@ public:
     void set_wave_length_index(size_t displayed_wave_length);
 
     inline const VectorXf& curr_h()             const { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
-    inline const Matrix3Xf& curr_n()            const { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
+    inline const Matrix4Xf& curr_n()            const { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
     inline const Matrix2Xf& V2D()               const { return m_v2D; }
     inline const MatrixXXf& raw_points()        const { return m_raw_points; }
     inline const VectorXi8& selected_points()   const { return m_selected_points; }
 
     inline VectorXf& curr_h()           { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
-    inline Matrix3Xf& curr_n()          { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
-    inline std::vector<VectorXf>& H()   { return m_h; }
-    inline std::vector<VectorXf>& LH()  { return m_lh; }
-    inline std::vector<Matrix3Xf>& N()  { return m_n; }
-    inline std::vector<Matrix3Xf>& LN() { return m_ln; }
+    inline Matrix4Xf& curr_n()          { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
+    inline vector<VectorXf>& H()   { return m_h; }
+    inline vector<VectorXf>& LH()  { return m_lh; }
+    inline vector<Matrix4Xf>& N()  { return m_n; }
+    inline vector<Matrix4Xf>& LN() { return m_ln; }
     inline Matrix2Xf& V2D()             { return m_v2D; }
     inline MatrixXXf& raw_points()      { return m_raw_points; }
     inline VectorXu& path_segments()    { return m_path_segments; }
@@ -103,12 +100,12 @@ public:
 
 private:
     // Raw sample data
-    Matrix3Xu               m_f;                // face indices
-    Matrix2Xf               m_v2D;              // 2d coordinates (x,z)
-    std::vector<VectorXf>   m_h;                // heights per point (one for each wavelenght)
-    std::vector<VectorXf>   m_lh;               // logarithmic heights per point (one for each wavelenght)
-    std::vector<Matrix3Xf>  m_n;                // normals per point (one for each wavelenght)
-    std::vector<Matrix3Xf>  m_ln;               // logarithmic normals per point (one for each wavelenght)
+    Matrix3Xu          m_f;                // face indices
+    Matrix2Xf          m_v2D;              // 2d coordinates (x,z)
+    vector<VectorXf>   m_h;                // heights per point (one for each wavelenght)
+    vector<VectorXf>   m_lh;               // logarithmic heights per point (one for each wavelenght)
+    vector<Matrix4Xf>  m_n;                // normals per point (one for each wavelenght)
+    vector<Matrix4Xf>  m_ln;               // logarithmic normals per point (one for each wavelenght)
     VectorXu                m_path_segments;
     unsigned int            m_wave_length_index;
     // Untransformed data
@@ -121,7 +118,7 @@ private:
     // display Shaders
     nanogui::GLShader m_mesh_shader;
     nanogui::GLShader m_shaders[VIEW_COUNT];
-    std::function<void(const Matrix4f&, std::shared_ptr<ColorMap>)> m_draw_functions[VIEW_COUNT];
+    function<void(const Matrix4f&, std::shared_ptr<ColorMap>)> m_draw_functions[VIEW_COUNT];
     nanogui::GLShader m_predicted_outgoing_angle_shader;
 
     // display options

@@ -1,10 +1,11 @@
-#include "tekari/raw_data_processing.h"
-#include "tekari/stop_watch.h"
+#include <tekari/raw_data_processing.h>
+#include <tekari/stop_watch.h>
 
 #define REAL float
 #define VOID void
-#include "triangle.h"
+#include <triangle.h>
 
+#include <limits>
 #include <tbb/parallel_for.h>
 
 TEKARI_NAMESPACE_BEGIN
@@ -12,22 +13,19 @@ TEKARI_NAMESPACE_BEGIN
 #define MAX_SAMPLING_DISTANCE 0.05f
 #define CORRECTION_FACTOR 1e-5
 
-using namespace std;
-using namespace nanogui;
-
 void compute_normals(
     const Matrix3Xu& F,
     const Matrix2Xf& V2D,
     const vector<VectorXf>& H,
     const vector<VectorXf>& LH,
-    vector<Matrix3Xf>& N,
-    vector<Matrix3Xf>& LN
+    vector<Matrix4Xf>& N,
+    vector<Matrix4Xf>& LN
 );
 
 void compute_triangle_normal(
     const Matrix2Xf& V2D,
     const VectorXf& H,
-    Matrix3Xf& N,
+    Matrix4Xf& N,
     unsigned int i0,
     unsigned int i1,
     unsigned int i2
@@ -57,7 +55,7 @@ void recompute_data(
     Matrix3Xu& F,
     Matrix2Xf& V2D,
     vector<VectorXf>& H, vector<VectorXf>& LH,
-    vector<Matrix3Xf>& N, vector<Matrix3Xf>& LN
+    vector<Matrix4Xf>& N, vector<Matrix4Xf>& LN
 )
 {
     compute_min_max_intensities(points_stats, raw_points);
@@ -73,8 +71,8 @@ void compute_normals(
     const Matrix2Xf& V2D,
     const vector<VectorXf>& H,
     const vector<VectorXf>& LH,
-    vector<Matrix3Xf>& N,
-    vector<Matrix3Xf>& LN
+    vector<Matrix4Xf>& N,
+    vector<Matrix4Xf>& LN
 )
 {
     START_PROFILING("Computing normals");
@@ -84,19 +82,13 @@ void compute_normals(
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N.size(), 1),
         [&](const tbb::blocked_range<uint32_t>& range) {
             for (uint32_t j = range.begin(); j != range.end(); ++j) {
-                N[j].resize(V2D.size());
-                LN[j].resize(V2D.size());
-                memset(N[j].data(), 0, N[j].size() * sizeof(N[j][0]));
-                memset(LN[j].data(), 0, LN[j].size() * sizeof(LN[j][0]));
+                N[j].assign(V2D.size(), 0);
+                LN[j].assign(V2D.size(), 0);
 
                 for (Index i = 0; i < F.size(); ++i)
                 {
-                    const unsigned int& i0 = F[i][0];
-                    const unsigned int& i1 = F[i][1];
-                    const unsigned int& i2 = F[i][2];
-
-                    compute_triangle_normal(V2D, H[j], N[j], i0, i1, i2);
-                    compute_triangle_normal(V2D, LH[j], LN[j], i0, i1, i2);
+                    compute_triangle_normal(V2D,  H[j],  N[j], F[i][0], F[i][1], F[i][2]);
+                    compute_triangle_normal(V2D, LH[j], LN[j], F[i][0], F[i][1], F[i][2]);
                 }
 
                 tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N[j].size(), GRAIN_SIZE),
@@ -116,13 +108,14 @@ void compute_normals(
 void compute_triangle_normal(
     const Matrix2Xf& V2D,
     const VectorXf& H,
-    Matrix3Xf& N,
+    Matrix4Xf& N,
     unsigned int i0,
     unsigned int i1,
     unsigned int i2
 )
 {
     using namespace enoki;
+
     const Vector3f e01 = normalize(get3DPoint(V2D, H, i1) - get3DPoint(V2D, H, i0));
     const Vector3f e12 = normalize(get3DPoint(V2D, H, i2) - get3DPoint(V2D, H, i1));
     const Vector3f e20 = normalize(get3DPoint(V2D, H, i0) - get3DPoint(V2D, H, i2));
@@ -130,13 +123,13 @@ void compute_triangle_normal(
     Vector3f face_normal = normalize(cross(e12, -e01));
 
     Vector3f weights = Vector3f( dot(e01, -e20),
-                            dot(e12, -e01),
-                            dot(e20, -e12));
+                                 dot(e12, -e01),
+                                 dot(e20, -e12));
     weights = acos(max(-1.0f, (min(1.0f, weights)))); 
 
-    N[i0] += weights[0] * face_normal;
-    N[i1] += weights[1] * face_normal;
-    N[i2] += weights[2] * face_normal;
+    N[i0] += weights[0] * concat(face_normal, 0.0f);
+    N[i1] += weights[1] * concat(face_normal, 0.0f);
+    N[i2] += weights[2] * concat(face_normal, 0.0f);
 }
 
 void compute_normalized_heights(
@@ -150,6 +143,19 @@ void compute_normalized_heights(
     Index wave_length_count = raw_points[0].size() - 2;     // don't take into account theta and phi angles
     Index points_count = raw_points.size();
 
+    // compute overall min/max intensity
+    float min_intensity = std::numeric_limits<float>::max();
+    float max_intensity = std::numeric_limits<float>::min();
+    for (size_t j = 0; j < wave_length_count; ++j)
+    {
+        min_intensity = std::min(min_intensity, points_stats.min_intensity(j));
+        max_intensity = std::max(max_intensity, points_stats.max_intensity(j));
+    }
+    float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
+
+    float min_log_intensity = log(min_intensity + correction_factor);
+    float max_log_intensity = log(max_intensity + correction_factor);
+
     H.resize(wave_length_count);
     LH.resize(wave_length_count);
     for (size_t j = 0; j < wave_length_count; ++j)
@@ -158,13 +164,6 @@ void compute_normalized_heights(
         LH[j].resize(points_count);
 
         // normalize intensities
-        float min_intensity = points_stats.min_intensity(j);
-        float max_intensity = points_stats.max_intensity(j);
-        float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
-
-        float min_log_intensity = log(min_intensity + correction_factor);
-        float max_log_intensity = log(max_intensity + correction_factor);
-
         tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)points_count, GRAIN_SIZE),
             [&](const tbb::blocked_range<uint32_t>& range)
         {

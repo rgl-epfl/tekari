@@ -1,13 +1,10 @@
-#include "tekari/Metadata.h"
+#include <tekari/Metadata.h>
 
 #include <sstream>
 #include <vector>
 #include <utility>
-#include <functional>
 
 TEKARI_NAMESPACE_BEGIN
-
-using namespace std;
 
 Metadata::Metadata()
 :   m_is_spectral(false)
@@ -55,12 +52,12 @@ void Metadata::init_infos()
 
     if (m_is_spectral) {
         if (m_data_points_per_loop == -1)
-            throw runtime_error("Invalid spectral data format (points per loop not found)");
+            throw std::runtime_error("Invalid spectral data format (points per loop not found)");
     } else {
         if (m_data_points_per_loop != -1)
-            throw runtime_error("Invalid standard data format (points per loop found)");
+            throw std::runtime_error("Invalid standard data format (points per loop found)");
         if (m_points_in_file == -1)
-            throw runtime_error("Invalid standard data format (points in file not found)");
+            throw std::runtime_error("Invalid standard data format (points in file not found)");
         m_data_points_per_loop = 1;
     }
 }

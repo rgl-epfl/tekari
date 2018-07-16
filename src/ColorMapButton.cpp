@@ -1,9 +1,9 @@
-#include "tekari/ColorMapButton.h"
+#include <tekari/ColorMapButton.h>
 
 #include <nanogui/screen.h>
 #include <nanogui/window.h>
 
-using namespace nanogui;
+using nanogui::Screen;
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -15,21 +15,24 @@ ColorMapButton::ColorMapButton(Widget* parent, std::shared_ptr<ColorMap> color_m
     m_color_map_shader.init_from_files("color_map_viewer", "../resources/shaders/color_map.vert",
         "../resources/shaders/color_map.frag");
 
-    Matrix3Xu indices;
-    indices.resize(2);
-    indices[0] = Vector3f{ 0, 1, 2 };
-    indices[1] = Vector3f{ 2, 3, 1 };
+    uint32_t indices[3*2] =
+    {
+        0, 1, 2,
+        2, 3, 1
+    };
 
-    Matrix2Xf vertices;
-    vertices.resize(4);
-    vertices[0] = Vector2f{ 0, 0 };
-    vertices[1] = Vector2f{ 1, 0 };
-    vertices[2] = Vector2f{ 0, 1 };
-    vertices[3] = Vector2f{ 1, 1 };
+
+    float vertices[2*4] =
+    {
+        0, 0,
+        1, 0,
+        0, 1,
+        1, 1
+    };
 
     m_color_map_shader.bind();
-    m_color_map_shader.upload_indices((uint32_t*)indices.data(), 3, indices.size());
-    m_color_map_shader.upload_attrib("in_pos", (float*)vertices.data(), 3, vertices.size());
+    m_color_map_shader.upload_indices(indices, 3, 2);
+    m_color_map_shader.upload_attrib("in_pos", vertices, 2, 4);
     m_color_map_shader.set_uniform("color_map", 0);
 
     set_tooltip(m_color_map->name());

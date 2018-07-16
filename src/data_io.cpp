@@ -1,15 +1,12 @@
-#include "tekari/data_io.h"
+#include <tekari/data_io.h>
 
 #include <unordered_set>
 #include <fstream>
-#include "tekari/stop_watch.h"
+#include <tekari/stop_watch.h>
 
 TEKARI_NAMESPACE_BEGIN
 
-using namespace std;
-using namespace nanogui;
-
-struct Vector2f_hash : unary_function<Vector2f, size_t>
+struct Vector2f_hash : std::unary_function<Vector2f, size_t>
 {
     size_t operator()(const Vector2f& v) const {
         size_t hash1 = std::hash<Vector2f::Value>()(v[0]);
@@ -19,20 +16,20 @@ struct Vector2f_hash : unary_function<Vector2f, size_t>
 };
 
 void load_standard_data_sample(
-    ifstream& file,
+    std::ifstream& file,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
     Metadata& metadata
 );
 void load_spectral_data_sample(
-    ifstream& file,
+    std::ifstream& file,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
     Metadata& metadata
 );
 
 void load_data_sample(
-    const std::string& file_name,
+    const string& file_name,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
     VectorXi8& selected_points,
@@ -41,9 +38,9 @@ void load_data_sample(
 {
     START_PROFILING("Loading data sample");
     // try open file
-    ifstream file(file_name);
+    std::ifstream file(file_name);
     if (!file)
-        throw runtime_error("Unable to open file " + file_name);
+        throw std::runtime_error("Unable to open file " + file_name);
 
     unsigned int line_number = 0;
     for (string line; getline(file, line); )
@@ -80,13 +77,13 @@ void load_data_sample(
 }
 
 void load_standard_data_sample(
-    ifstream& file,
+    std::ifstream& file,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
     Metadata& metadata
 )
 {
-    unordered_set<Vector2f, Vector2f_hash> read_vertices;
+    std::unordered_set<Vector2f, Vector2f_hash> read_vertices;
 
     V2D.resize(metadata.points_in_file());
     raw_points.resize(metadata.points_in_file());
@@ -111,7 +108,7 @@ void load_standard_data_sample(
             float theta, phi, intensity;
             if (sscanf(line.c_str(), "%f %f %f", &theta, &phi, &intensity) != 3)
             {
-                throw runtime_error("Error reading file");
+                throw std::runtime_error("Error reading file");
             }
 
             Vector2f p2d = Vector2f{ theta, phi };
@@ -131,7 +128,7 @@ void load_standard_data_sample(
     }
 }
 void load_spectral_data_sample(
-    ifstream& file,
+    std::ifstream& file,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
     Metadata& metadata
@@ -139,7 +136,7 @@ void load_spectral_data_sample(
 {
     int n_data_points_per_loop = metadata.data_points_per_loop();
 
-    unordered_set<Vector2f, Vector2f_hash> read_vertices;
+    std::unordered_set<Vector2f, Vector2f_hash> read_vertices;
 
     unsigned int line_number = 0;
     unsigned int n_points = 0;
@@ -154,7 +151,7 @@ void load_spectral_data_sample(
         }
         else
         {
-            istringstream line_stream{ line };
+            std::istringstream line_stream{ line };
             Vector2f angles;
             line_stream >> angles[0] >> angles[1];
             if (read_vertices.count(angles) > 0)
@@ -181,7 +178,7 @@ void load_spectral_data_sample(
 }
 
 void save_data_sample(
-    const std::string& path,
+    const string& path,
     const MatrixXXf& raw_points,
     const Metadata& metadata
 )
@@ -190,7 +187,7 @@ void save_data_sample(
     // try open file
     FILE* dataset_file = fopen(path.c_str(), "w");
     if (!dataset_file)
-        throw runtime_error("Unable to open file " + path);
+        throw std::runtime_error("Unable to open file " + path);
 
     // save metadata
     for(const auto& line: metadata.raw_metadata())

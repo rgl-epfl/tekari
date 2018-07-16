@@ -3,7 +3,7 @@
 uniform mat4 model_view_proj;
 uniform mat4 model;
 
-in vec3 in_normal;
+in vec4 in_normal;
 in vec2 in_pos2d;
 in float in_height;
 in int in_selected;
@@ -17,5 +17,5 @@ void main() {
     gl_Position = model_view_proj * vec4(pos, 1.0);
     height = in_height;
     position = (model * vec4(pos, 1.0)).xyz;
-    normal = (transpose(inverse(model)) * vec4(in_normal, 0.0)).xyz;
+    normal = (transpose(inverse(model)) * in_normal).xyz;
 }

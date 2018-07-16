@@ -1,7 +1,6 @@
 #pragma once
 
-#include "common.h"
-
+#include <tekari/common.h>
 #include <nanogui/theme.h>
 #include <nanogui/opengl.h>
 #include <nanogui/entypo.h>

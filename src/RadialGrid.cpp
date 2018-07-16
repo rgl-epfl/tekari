@@ -1,7 +1,4 @@
-#include "tekari/RadialGrid.h"
-
-using namespace nanogui;
-using namespace std;
+#include <tekari/RadialGrid.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -14,7 +11,7 @@ RadialGrid::RadialGrid()
         "../resources/shaders/radial_grid.vert",
         "../resources/shaders/radial_grid.frag");
 
-    vector<Vector3f> vertices(CIRCLE_COUNT* VERTEX_PER_CIRCLE_COUNT +
+    vector<Vector4f> vertices(CIRCLE_COUNT* VERTEX_PER_CIRCLE_COUNT +
         LINE_COUNT* VERTEX_PER_LINE_COUNT);
 
     for (unsigned int i = 0; i < CIRCLE_COUNT; ++i)
@@ -22,17 +19,18 @@ RadialGrid::RadialGrid()
         float radius = (float)(i + 1) / CIRCLE_COUNT;
         for (unsigned int j = 0; j < VERTEX_PER_CIRCLE_COUNT; ++j)
         {
-            Vector3f point{
-                radius* (float)cos(2* M_PI* j / VERTEX_PER_CIRCLE_COUNT), // x coord
-                0,                                              // y coord
-                radius* (float)sin(2* M_PI* j / VERTEX_PER_CIRCLE_COUNT)  // z coord
+            Vector4f point{
+                radius* (float)cos(2* M_PI* j / VERTEX_PER_CIRCLE_COUNT),   // x coord
+                0,                                                          // y coord
+                radius* (float)sin(2* M_PI* j / VERTEX_PER_CIRCLE_COUNT),   // z coord
+                1.0f                                                        // w coord (homogeneous)
             };
             vertices[i*VERTEX_PER_CIRCLE_COUNT + j] = point;
         }
         int theta = (i + 1)* 90 / CIRCLE_COUNT;
         if (theta != 0)
         {
-            Vector3f& pos = vertices[i*VERTEX_PER_CIRCLE_COUNT];
+            Vector3f pos = Vector3f(vertices[i*VERTEX_PER_CIRCLE_COUNT]);
             m_theta_labels.push_back(make_pair(to_string(theta), pos + Vector3f{0.02f, 0.02f, -0.02f}));
         }
     }
@@ -41,15 +39,19 @@ RadialGrid::RadialGrid()
     {
         unsigned int index = CIRCLE_COUNT* VERTEX_PER_CIRCLE_COUNT + i* VERTEX_PER_LINE_COUNT;
         double angle = M_PI* i / LINE_COUNT;
-        vertices[index] = Vector3f{ (float)cos(angle), 0, (float)sin(angle) };
-        vertices[index + 1] = -vertices[index];
+        float cosa = static_cast<float>(cos(angle));
+        float sina = static_cast<float>(sin(angle));
+        vertices[index]     = Vector4f{ cosa, 0, sina, 1.0f };
+        vertices[index+1]   = Vector4f{ -cosa, 0, -sina, 1.0f };
 
-        m_phi_labels.push_back(make_pair(to_string(180* i / LINE_COUNT), vertices[index] + enoki::normalize(vertices[index])* 0.04f));
-        m_phi_labels.push_back(make_pair(to_string(180* i / LINE_COUNT + 180), vertices[index+1] + enoki::normalize(vertices[index + 1])* 0.04f));
+        Vector3f pos0 = Vector3f(vertices[index]);
+        Vector3f pos1 = Vector3f(vertices[index+1]);
+        m_phi_labels.push_back(make_pair(to_string(180* i / LINE_COUNT), pos0 + enoki::normalize(pos0)* 0.04f));
+        m_phi_labels.push_back(make_pair(to_string(180* i / LINE_COUNT + 180), pos1 + enoki::normalize(pos1)* 0.04f));
     }
 
     m_shader.bind();
-    m_shader.upload_attrib("in_pos", (float*)vertices.data(), 3, vertices.size());
+    m_shader.upload_attrib("in_pos", (float*)vertices.data(), 4, vertices.size());
 }
 
 RadialGrid::~RadialGrid()

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.h"
+#include <tekari/common.h>
 #include <nanogui/glutil.h>
 #include <vector>
 
@@ -43,8 +43,8 @@ private:
 
     nanogui::GLShader m_shader;
     nanogui::Color m_color;
-    std::vector<std::pair<std::string, Vector3f>> m_phi_labels;
-    std::vector<std::pair<std::string, Vector3f>> m_theta_labels;
+    vector<std::pair<string, Vector3f>> m_phi_labels;
+    vector<std::pair<string, Vector3f>> m_theta_labels;
     bool m_visible;
     bool m_show_degrees;
 };

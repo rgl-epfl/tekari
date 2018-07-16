@@ -1,13 +1,10 @@
-#include "tekari/selections.h"
+#include <tekari/selections.h>
 
-#include "tekari/stop_watch.h"
+#include <tekari/stop_watch.h>
 
 TEKARI_NAMESPACE_BEGIN
 
 #define MAX_SELECTION_DISTANCE 30.0f
-
-using namespace std;
-using namespace nanogui;
 
 void select_points(
     const Matrix2Xf& V2D,
