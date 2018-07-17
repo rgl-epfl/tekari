@@ -119,7 +119,6 @@ private:
     nanogui::GLShader m_mesh_shader;
     nanogui::GLShader m_shaders[VIEW_COUNT];
     function<void(const Matrix4f&, std::shared_ptr<ColorMap>)> m_draw_functions[VIEW_COUNT];
-    nanogui::GLShader m_predicted_outgoing_angle_shader;
 
     // display options
     bool m_display_as_log;

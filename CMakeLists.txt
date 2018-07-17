@@ -69,7 +69,8 @@ set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
 set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui ext_build/nanogui)
-set_property(TARGET nanogui glfw glfw_objects PROPERTY FOLDER "dependencies")
+set_property(TARGET nanogui PROPERTY FOLDER "dependencies")
+# set_property(TARGET nanogui glfw glfw_objects PROPERTY FOLDER "dependencies")
 
 # Prefer libc++ in conjunction with Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -93,15 +94,25 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui/ext/enoki)
 enoki_set_compile_flags()
 enoki_set_native_flags()
 
-# Build TBB
-set(TBB_BUILD_STATIC ON CACHE BOOL " " FORCE)
-set(TBB_BUILD_SHARED OFF CACHE BOOL " " FORCE)
-set(TBB_BUILD_TBBMALLOC OFF CACHE BOOL " " FORCE)
-set(TBB_BUILD_TBBMALLOC_PROXY OFF CACHE BOOL " " FORCE)
-set(TBB_BUILD_TESTS OFF CACHE BOOL " " FORCE)
+# if (CMAKE_CXX_COMPILER_ID MATCHES "Emscripten")
+  # add_library(tbb_static
+  #     "ext/tbb_dummy/include/tbb/parallel_for.h"
+  #   )
+  # set_target_properties(tbb_static PROPERTIES LINKER_LANGUAGE CXX)
+  # message(STATUS "TBB: using dummy implementation.")
+# else()
+  # Build TBB
+  set(TBB_BUILD_STATIC ON CACHE BOOL " " FORCE)
+  set(TBB_BUILD_SHARED OFF CACHE BOOL " " FORCE)
+  set(TBB_BUILD_TBBMALLOC OFF CACHE BOOL " " FORCE)
+  set(TBB_BUILD_TBBMALLOC_PROXY OFF CACHE BOOL " " FORCE)
+  set(TBB_BUILD_TESTS OFF CACHE BOOL " " FORCE)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb ext_build/tbb)
-set_property(TARGET tbb_static tbb_def_files PROPERTY FOLDER "dependencies")
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb ext_build/tbb)
+  set_property(TARGET tbb_static tbb_def_files PROPERTY FOLDER "dependencies")
+  message(STATUS "TBB: NOT using dummy implementation.")
+# endif()
+
 
 # Build Triangle
 # Preprocessor constant to make triangle use floats instead of doubles
@@ -130,13 +141,19 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui/include
   # NanoGUI dependencies (Eigen, GLFW, NanoVG, GLAD?)
   ${NANOGUI_EXTRA_INCS}
-  # Intel Thread Building Blocks
-  ${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb/include
   # Triangle
   ${CMAKE_CURRENT_SOURCE_DIR}/ext/triangle
 
+  # Tekari's include directory
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+# Conditionaly add TBB include directory
+if (NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "Emscripten")
+  include_directories(
+    # Intel Thread Building Blocks
+    ${CMAKE_CURRENT_SOURCE_DIR}/ext/tbb/include
+  )
+endif()
 
 add_executable(tekari
   "src/main.cpp"
@@ -156,6 +173,7 @@ add_executable(tekari
   "include/tekari/raw_data_processing.h"        "src/raw_data_processing.cpp"
   "include/tekari/points_stats.h"               "src/points_stats.cpp"
   "include/tekari/data_io.h"                    "src/data_io.cpp"
+  "include/tekari/Arrow.h"
   "include/tekari/LightTheme.h"
   "include/tekari/ThreadPool.h"
   "include/tekari/SharedQueue.h"

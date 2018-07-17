@@ -4,8 +4,8 @@
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 #include <string>
-
 #include <tekari/DataSample.h>
+#include <tekari/Arrow.h>
 
 #define MAX_ZOOM 10.0f
 #define MIN_ZOOM -MAX_ZOOM
@@ -119,7 +119,7 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 {
     GLCanvas::draw(ctx);
 
-    Matrix4f model = m_arcball.matrix()* enoki::translate<Matrix4f>(-m_translation);
+    Matrix4f model = m_arcball.matrix() * enoki::translate<Matrix4f>(-m_translation);
     Matrix4f proj = get_projection_matrix();
 
     m_grid.draw(ctx, m_size, model, VIEW, proj);

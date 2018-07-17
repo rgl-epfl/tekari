@@ -21,7 +21,7 @@ void PointsStats::set_size(unsigned int n_wave_lengths)
     m_max_intensity.assign(n_wave_lengths, std::numeric_limits<float>::min());
 }
 
-void PointsStats::add_point(const VectorXf& raw_point, const Matrix4Xf& transformed_points)
+void PointsStats::add_point(const VectorXf& raw_point, const Matrix3Xf& transformed_points)
 {
     for (Index i = 0; i < raw_point.size(); ++i)
     {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <nanogui/opengl.h>
-#include <tbb/parallel_for.h>
 #include <tekari/points_stats.h>
 #include <tekari/Metadata.h>
 

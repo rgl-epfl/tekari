@@ -1,5 +1,6 @@
 #include <tekari/selections.h>
 
+#include <tbb/parallel_for.h>
 #include <tekari/stop_watch.h>
 
 TEKARI_NAMESPACE_BEGIN

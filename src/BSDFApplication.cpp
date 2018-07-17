@@ -22,6 +22,7 @@
 #include <tekari/raw_data_processing.h>
 #include <tekari/data_io.h>
 #include <tekari/LightTheme.h>
+#include <tekari/Arrow.h>
 
 #define FOOTER_HEIGHT 25
 
@@ -49,6 +50,8 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 ,   m_unsaved_data_window(nullptr)
 ,   m_selected_ds(nullptr)
 {
+    Arrow::instance().load_shaders();
+
     // load color maps
     for (auto& p : ColorMap::PREDEFINED_MAPS)
     {

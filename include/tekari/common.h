@@ -107,9 +107,9 @@ inline Vector3f get3DPoint(const Matrix2Xf& V2D, const VectorXf& H, unsigned int
     return Vector3f( V2D[index][0], H[index], V2D[index][1] );
 }
 
-inline Matrix4Xf get3DPoints(const Matrix2Xf& V2D, const vector<VectorXf>& H, unsigned int index)
+inline Matrix3Xf get3DPoints(const Matrix2Xf& V2D, const vector<VectorXf>& H, unsigned int index)
 {
-    Matrix4Xf result;
+    Matrix3Xf result;
     result.resize(H.size()) ;
     for (size_t i = 0; i < H.size(); i++)
     {

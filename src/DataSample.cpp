@@ -1,5 +1,7 @@
 #include <tekari/DataSample.h>
 
+#include <tekari/Arrow.h>
+
 #define MAX_SELECTION_DISTANCE 30.0f
 
 TEKARI_NAMESPACE_BEGIN
@@ -38,9 +40,14 @@ DataSample::DataSample()
     m_draw_functions[INCIDENT_ANGLE] = [this](const Matrix4f& mvp, std::shared_ptr<ColorMap>) {
         if (m_display_views[INCIDENT_ANGLE])
         {
-            m_shaders[INCIDENT_ANGLE].bind();
-            m_shaders[INCIDENT_ANGLE].set_uniform("model_view_proj", mvp);
-            m_shaders[INCIDENT_ANGLE].draw_array(GL_POINTS, 0, 1);
+            Vector2f origin2D = transform_raw_point({ m_metadata.incident_theta(), m_metadata.incident_phi() });
+            Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
+            Arrow::instance().draw_gl(
+                origin3D,
+                Vector3f(0, 1, 0),
+                1.0f,
+                mvp,
+                Color(1.0f, 0.0f, 1.0f, 1.0f));
         }
     };
 }
@@ -48,7 +55,6 @@ DataSample::DataSample()
 DataSample::~DataSample()
 {
     m_mesh_shader.free();
-    m_predicted_outgoing_angle_shader.free();
     for (int i = 0; i != VIEW_COUNT; ++i)
     {
         m_shaders[i].free();
@@ -85,9 +91,14 @@ void DataSample::draw_gl(
     // draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
-        m_predicted_outgoing_angle_shader.bind();
-        m_predicted_outgoing_angle_shader.set_uniform("model_view_proj", mvp);
-        m_predicted_outgoing_angle_shader.draw_array(GL_POINTS, 0, 1);
+        Vector2f origin2D = transform_raw_point({ m_metadata.incident_theta(), m_metadata.incident_phi() });
+        Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
+        Arrow::instance().draw_gl(
+            -origin3D,
+            Vector3f(0, 1, 0),
+            1.0f,
+            mvp,
+            Color(0.0f, 1.0f, 1.0f, 1.0f));
     }
     // call every draw func
     for (const auto& draw_func: m_draw_functions)
@@ -107,9 +118,6 @@ void DataSample::init_shaders()
     m_mesh_shader.init_from_files("height_map", shader_path + "height_map.vert", shader_path + "height_map.frag");
     m_shaders[PATH].init_from_files("path", shader_path + "path.vert", shader_path + "path.frag");
     m_shaders[POINTS].init_from_files("points", shader_path + "points.vert", shader_path + "points.frag");
-    m_shaders[INCIDENT_ANGLE].init_from_files("incident_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
-
-    m_predicted_outgoing_angle_shader.init_from_files("predicted_outgoing_angle", shader_path + "arrow.vert", shader_path + "arrow.frag", shader_path + "arrow.geom");
 }
 
 void DataSample::link_data_to_shaders()
@@ -135,25 +143,6 @@ void DataSample::link_data_to_shaders()
     m_shaders[POINTS].share_attrib(m_mesh_shader, "in_pos2d");
     m_shaders[POINTS].share_attrib(m_mesh_shader, "in_height");
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
-
-    Vector2f origin2D = transform_raw_point({ m_metadata.incident_theta(), m_metadata.incident_phi() });
-    Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
-    m_shaders[INCIDENT_ANGLE].bind();
-    m_shaders[INCIDENT_ANGLE].upload_attrib("pos", (float*)Vector3f{ 0, 0, 0 }.data(), 3, 1);
-    m_shaders[INCIDENT_ANGLE].set_uniform("origin", origin3D);
-    m_shaders[INCIDENT_ANGLE].set_uniform("direction", Vector3f{ 0, 1, 0 });
-    m_shaders[INCIDENT_ANGLE].set_uniform("color", Vector3f{ 1, 0, 1 });
-    m_shaders[INCIDENT_ANGLE].set_uniform("length", 1.0f);
-
-    origin3D = -origin3D;
-    m_predicted_outgoing_angle_shader.bind();
-    m_predicted_outgoing_angle_shader.upload_attrib("pos", (float*)Vector3f{ 0, 0, 0 }.data(), 3, 1);
-    m_predicted_outgoing_angle_shader.set_uniform("origin", origin3D);
-    m_predicted_outgoing_angle_shader.set_uniform("direction", Vector3f{ 0, 1, 0 });
-    m_predicted_outgoing_angle_shader.set_uniform("color", Vector3f{ 0, 0.1f, 0.8f });
-    m_predicted_outgoing_angle_shader.set_uniform("length", 1.0f);
-
-    m_selection_axis.load_shader();
 }
 
 void DataSample::toggle_log_view()

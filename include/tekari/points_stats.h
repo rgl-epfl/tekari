@@ -12,23 +12,23 @@ public:
 
     void set_size(unsigned int n_wave_lengths);
 
-    unsigned int    points_count () const { return m_points_count; }
-    Vector3f        average_point        (unsigned int wave_length_index) const { return m_average_point[wave_length_index]; }
-    float           average_intensity    (unsigned int wave_length_index) const { return m_average_raw_point[wave_length_index + 2]; }
-    float           min_intensity        (unsigned int wave_length_index) const { return m_min_intensity[wave_length_index]; }
-    float           max_intensity        (unsigned int wave_length_index) const { return m_max_intensity[wave_length_index]; }
-    unsigned int    highest_point_index    (unsigned int wave_length_index) const { return m_highest_point_index[wave_length_index]; }
-    unsigned int    lowest_point_index    (unsigned int wave_length_index) const { return m_lowest_point_index[wave_length_index]; }
+    unsigned int    points_count        () const { return m_points_count; }
+    Vector3f        average_point       (unsigned int wave_length_index) const { return m_average_point[wave_length_index]; }
+    float           average_intensity   (unsigned int wave_length_index) const { return m_average_raw_point[wave_length_index + 2]; }
+    float           min_intensity       (unsigned int wave_length_index) const { return m_min_intensity[wave_length_index]; }
+    float           max_intensity       (unsigned int wave_length_index) const { return m_max_intensity[wave_length_index]; }
+    unsigned int    highest_point_index (unsigned int wave_length_index) const { return m_highest_point_index[wave_length_index]; }
+    unsigned int    lowest_point_index  (unsigned int wave_length_index) const { return m_lowest_point_index[wave_length_index]; }
 
     void add_intensity(unsigned int index, const VectorXf& raw_point);
 private:
-    void add_point(const VectorXf& raw_point, const Matrix4Xf& transformed_point);
+    void add_point(const VectorXf& raw_point, const Matrix3Xf& transformed_point);
 
     void normalize_average();
     void normalize();
 
     unsigned int m_points_count;
-    Matrix4Xf m_average_point;
+    Matrix3Xf m_average_point;
     VectorXf m_average_raw_point;
     VectorXf m_min_intensity;
     VectorXf m_max_intensity;
