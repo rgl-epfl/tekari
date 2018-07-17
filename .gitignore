@@ -2,6 +2,8 @@ Makefile
 *.cmake
 .DS_Store
 build/
+build_webgl/
+build_debug/
 resources/screenshots/
 CMakeCache.txt
 TODO.md
