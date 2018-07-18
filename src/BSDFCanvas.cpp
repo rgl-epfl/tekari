@@ -140,7 +140,7 @@ void BSDFCanvas::draw_gl() {
     Matrix4f proj = get_projection_matrix();
 
     float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-    glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
+    // glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
     for (const auto& data_sample: m_data_samples_to_draw)
     {
         data_sample->draw_gl(VIEW_ORIGIN, model, VIEW, proj, m_draw_flags, m_color_map);

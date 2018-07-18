@@ -55,7 +55,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
     // load color maps
     for (auto& p : ColorMap::PREDEFINED_MAPS)
     {
-        m_color_maps.push_back(make_shared<ColorMap>(p.first, ColorMap::FOLDER_PATH + p.second));
+        m_color_maps.push_back(make_shared<ColorMap>(p.first, COLOR_MAPS_PATH + p.second));
     }
 
     m_3d_view = new Widget{this};
@@ -282,16 +282,17 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         m_data_sample_button_container->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
+#if !defined(__EMSCRIPTEN__)
     // load application icon
     {
         constexpr unsigned int icon_count = 5;
         const char* icon_paths[icon_count] =
         {
-            "../resources/icons/tekari_icon_16x16.png",
-            "../resources/icons/tekari_icon_32x32.png",
-            "../resources/icons/tekari_icon_64x64.png",
-            "../resources/icons/tekari_icon_128x128.png",
-            "../resources/icons/tekari_icon_256x256.png"
+            ICONS_PATH "tekari_icon_16x16.png",
+            ICONS_PATH "tekari_icon_32x32.png",
+            ICONS_PATH "tekari_icon_64x64.png",
+            ICONS_PATH "tekari_icon_128x128.png",
+            ICONS_PATH "tekari_icon_256x256.png"
         };
 
         GLFWimage icons[icon_count];
@@ -314,6 +315,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             stbi_image_free(icons[j].pixels);
         }
     }
+#endif
 
     set_resize_callback([this](Vector2i) { request_layout_update(); });
     set_background(m_theme->m_window_fill_focused);
@@ -603,6 +605,7 @@ void BSDFApplication::draw_contents() {
             }
             else
             {
+                std::cout << __FILE__ << " : data opened\n";
                 new_data_sample->data_sample->init_shaders();
                 new_data_sample->data_sample->link_data_to_shaders();
                 add_data_sample(new_data_sample->data_sample);
@@ -1028,9 +1031,9 @@ void BSDFApplication::toggle_canvas_draw_flags(int flag, CheckBox* checkbox)
 
 void BSDFApplication::reprint_footer()
 {
-    m_data_sample_name->set_caption            (!m_selected_ds ? "-" : m_selected_ds->name());
-    m_data_sample_points_count->set_caption    (!m_selected_ds ? "-" : to_string(m_selected_ds->points_stats().points_count()));
-    m_data_sample_average_height->set_caption(!m_selected_ds ? "-" : to_string(m_selected_ds->average_intensity()));
+    m_data_sample_name->set_caption             (!m_selected_ds ? "-" : m_selected_ds->name());
+    m_data_sample_points_count->set_caption     (!m_selected_ds ? "-" : to_string(m_selected_ds->points_stats().points_count()));
+    m_data_sample_average_height->set_caption   (!m_selected_ds ? "-" : to_string(m_selected_ds->average_intensity()));
 }
 
 void BSDFApplication::hide_windows()

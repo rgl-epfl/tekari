@@ -12,8 +12,8 @@ ColorMapButton::ColorMapButton(Widget* parent, std::shared_ptr<ColorMap> color_m
 ,   m_color_map(color_map)
 ,   m_selected(false)
 {
-    m_color_map_shader.init_from_files("color_map_viewer", "../resources/shaders/color_map.vert",
-        "../resources/shaders/color_map.frag");
+    m_color_map_shader.init_from_files("color_map_viewer", SHADERS_PATH "color_map.vert",
+        SHADERS_PATH "color_map.frag");
 
     uint32_t indices[3*2] =
     {

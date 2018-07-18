@@ -4,7 +4,7 @@ uniform vec3 view;
 uniform bool use_shadows;
 uniform bool use_specular;
 
-uniform sampler1D color_map;
+uniform sampler2D color_map;
 
 in float height;
 in vec3 position;
@@ -15,7 +15,7 @@ out vec4 out_color;
 const vec3 light_color = vec3(0.8f, 0.8f, 0.7f);
 
 void main() {
-	vec3 color = texture(color_map, height).rgb;
+	vec3 color = texture(color_map, vec2(height, 0)).rgb;
 	
 	vec3 pos_to_light = normalize(view - position);
 	float specular = abs(dot(reflect(-pos_to_light, normal), pos_to_light));

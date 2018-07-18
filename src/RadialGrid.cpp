@@ -7,9 +7,14 @@ RadialGrid::RadialGrid()
 ,    m_visible(true)
 ,   m_show_degrees(true)
 {
-    m_shader.init_from_files("grid",
-        "../resources/shaders/radial_grid.vert",
-        "../resources/shaders/radial_grid.frag");
+    if (!m_shader.init_from_files("grid",
+        SHADERS_PATH "radial_grid.vert",
+        SHADERS_PATH "radial_grid.frag"))
+    {
+        cerr << "Unable to load radial grid shader" << endl;
+        exit(-1);
+    }
+
     vector<Vector2f> vertices(  CIRCLE_COUNT * VERTEX_PER_CIRCLE_COUNT +
                                 LINE_COUNT * VERTEX_PER_LINE_COUNT);
 

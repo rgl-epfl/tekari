@@ -1,16 +1,16 @@
-#version 330
+precision highp float;
 
 uniform mat4 model_view_proj;
 uniform mat4 model;
 uniform mat4 inverse_transpose_model;
 
-in vec4 in_normal;
-in vec2 in_pos2d;
-in float in_height;
+attribute vec2 in_pos2d;
+attribute float in_height;
+attribute vec4 in_normal;
 
-out float height;
-out vec3 position;
-out vec3 normal;
+varying float height;
+varying vec3 position;
+varying vec3 normal;
 
 void main() {
     vec3 pos = vec3(in_pos2d.x, in_height, in_pos2d.y);

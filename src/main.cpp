@@ -1,18 +1,18 @@
+
 #include <tekari/BSDFApplication.h>
+#include <tekari/common.h>
 
-#include <nanogui/glutil.h>
+using namespace tekari;
 
-#include <vector>
-#include <string>
-#include <iostream>
+int main(int argc, char** argv) {
 
-int main(int argc, char* * argv) {
-
-    std::vector<std::string> data_sample_paths;
+    vector<string> data_sample_paths;
     for (int i = 1; i < argc; ++i)
     {
         data_sample_paths.push_back(argv[i]);
     }
+    // for debugging purposes
+    data_sample_paths.push_back(RESOURCES_PATH "iridescent_paper.txt");
 
     // nanogui
     try {
@@ -27,11 +27,11 @@ int main(int argc, char* * argv) {
 
         nanogui::shutdown();
     } catch (const std::runtime_error& e) {
-        std::string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
+        string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
         #if defined(_WIN32)
             Message_box_a(nullptr, error_msg.c_str(), NULL, MB_ICONERROR | MB_OK);
         #else
-            std::cerr << error_msg << std::endl;
+            cerr << error_msg << endl;
         #endif
         return -1;
     }

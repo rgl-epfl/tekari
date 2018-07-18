@@ -45,6 +45,17 @@
 
 #define GRAIN_SIZE 1024u
 
+#if defined(__EMSCRIPTEN__)
+    #define RESOURCES_PATH "resources/"
+    #define SHADERS_PATH "resources/shaders/"
+    #define COLOR_MAPS_PATH "resources/color_maps/"
+#else
+    #define RESOURCES_PATH "../resources/"
+    #define SHADERS_PATH "../resources/shaders/"
+    #define COLOR_MAPS_PATH "../resources/color_maps/"
+    #define ICONS_PATH "../resources/color_maps/"
+#endif
+
 TEKARI_NAMESPACE_BEGIN
 
 // ============== Extract useful types from namespaces ===========

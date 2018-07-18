@@ -7,7 +7,6 @@ TEKARI_NAMESPACE_BEGIN
 class ColorMap
 {
 public:
-    static const string FOLDER_PATH;
     static const vector<std::pair<const string, const string>> PREDEFINED_MAPS;
 
 public:
