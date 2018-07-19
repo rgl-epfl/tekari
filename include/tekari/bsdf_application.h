@@ -6,14 +6,14 @@
 
 #include <thread>
 
-#include <tekari/BSDFCanvas.h>
-#include <tekari/DataSampleButton.h>
-#include <tekari/MetadataWindow.h>
-#include <tekari/ColorMapSelectionWindow.h>
-#include <tekari/HelpWindow.h>
-#include <tekari/ColorMap.h>
-#include <tekari/SharedQueue.h>
-#include <tekari/ThreadPool.h>
+#include <tekari/bsdf_canvas.h>
+#include <tekari/data_sample_button.h>
+#include <tekari/metadata_window.h>
+#include <tekari/color_map_selection_window.h>
+#include <tekari/help_window.h>
+#include <tekari/color_map.h>
+#include <tekari/shared_queue.h>
+#include <tekari/thread_pool.h>
 
 TEKARI_NAMESPACE_BEGIN
 

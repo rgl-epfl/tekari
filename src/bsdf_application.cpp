@@ -1,4 +1,4 @@
-#include <tekari/BSDFApplication.h>
+#include <tekari/bsdf_application.h>
 
 #include <nanogui/layout.h>
 #include <nanogui/button.h>
@@ -21,8 +21,8 @@
 #include <tekari/selections.h>
 #include <tekari/raw_data_processing.h>
 #include <tekari/data_io.h>
-#include <tekari/LightTheme.h>
-#include <tekari/Arrow.h>
+#include <tekari/light_theme.h>
+#include <tekari/arrow.h>
 #include <tekari_resources.h>
 
 #define FOOTER_HEIGHT 25

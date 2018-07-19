@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tekari/DataSample.h>
+#include <tekari/data_sample.h>
 #include <nanogui/widget.h>
 #include <nanogui/popup.h>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tekari/common.h>
-#include <tekari/Metadata.h>
+#include <tekari/metadata.h>
 #include <tekari/points_stats.h>
 
 TEKARI_NAMESPACE_BEGIN

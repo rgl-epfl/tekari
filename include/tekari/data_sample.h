@@ -4,9 +4,9 @@
 #include <nanogui/common.h>
 #include <vector>
 #include <tekari/points_stats.h>
-#include <tekari/Metadata.h>
-#include <tekari/ColorMap.h>
-#include <tekari/Axis.h>
+#include <tekari/metadata.h>
+#include <tekari/color_map.h>
+#include <tekari/axis.h>
 
 TEKARI_NAMESPACE_BEGIN
 

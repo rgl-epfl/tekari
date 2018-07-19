@@ -1,4 +1,4 @@
-#include <tekari/Arrow.h>
+#include <tekari/arrow.h>
 
 #include <enoki/transform.h>
 #include <enoki/quaternion.h>

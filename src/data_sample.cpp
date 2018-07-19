@@ -1,6 +1,6 @@
-#include <tekari/DataSample.h>
+#include <tekari/data_sample.h>
 
-#include <tekari/Arrow.h>
+#include <tekari/arrow.h>
 #include <tekari_resources.h>
 
 #define MAX_SELECTION_DISTANCE 30.0f

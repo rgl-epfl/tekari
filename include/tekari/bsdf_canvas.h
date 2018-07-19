@@ -6,10 +6,10 @@
 #include <nanogui/label.h>
 #include <nanogui/window.h>
 
-#include <tekari/Axis.h>
-#include <tekari/RadialGrid.h>
+#include <tekari/axis.h>
+#include <tekari/radial_grid.h>
 #include <tekari/selections.h>
-#include <tekari/DataSample.h>
+#include <tekari/data_sample.h>
 
 TEKARI_NAMESPACE_BEGIN
 

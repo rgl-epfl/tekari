@@ -179,26 +179,26 @@ include_directories(
 
 add_executable(tekari
   src/main.cpp
-  include/tekari/BSDFApplication.h            src/BSDFApplication.cpp
-  include/tekari/BSDFCanvas.h                 src/BSDFCanvas.cpp
-  include/tekari/DataSample.h                 src/DataSample.cpp
-  include/tekari/RadialGrid.h                 src/RadialGrid.cpp
-  include/tekari/DataSampleButton.h           src/DataSampleButton.cpp
-  include/tekari/Metadata.h                   src/Metadata.cpp
-  include/tekari/ColorMap.h                   src/ColorMap.cpp 
-  include/tekari/ColorMapSelectionWindow.h    src/ColorMapSelectionWindow.cpp 
-  include/tekari/ColorMapButton.h             src/ColorMapButton.cpp
-  include/tekari/MetadataWindow.h             src/MetadataWindow.cpp
-  include/tekari/HelpWindow.h                 src/HelpWindow.cpp
-  include/tekari/Axis.h                       src/Axis.cpp
+  include/tekari/bsdf_application.h            src/bsdf_application.cpp
+  include/tekari/bsdf_canvas.h                 src/bsdf_canvas.cpp
+  include/tekari/data_sample.h                 src/data_sample.cpp
+  include/tekari/radial_grid.h                 src/radial_grid.cpp
+  include/tekari/data_sample_button.h           src/data_sample_button.cpp
+  include/tekari/metadata.h                   src/metadata.cpp
+  include/tekari/color_map.h                   src/color_map.cpp 
+  include/tekari/color_map_selection_window.h    src/color_map_selection_window.cpp 
+  include/tekari/color_map_button.h             src/color_map_button.cpp
+  include/tekari/metadata_window.h             src/metadata_window.cpp
+  include/tekari/help_window.h                 src/help_window.cpp
+  include/tekari/axis.h                       src/axis.cpp
   include/tekari/selections.h                 src/selections.cpp
   include/tekari/raw_data_processing.h        src/raw_data_processing.cpp
   include/tekari/points_stats.h               src/points_stats.cpp
   include/tekari/data_io.h                    src/data_io.cpp
-  include/tekari/Arrow.h                      src/Arrow.cpp
-  include/tekari/LightTheme.h
-  include/tekari/ThreadPool.h
-  include/tekari/SharedQueue.h
+  include/tekari/arrow.h                      src/arrow.cpp
+  include/tekari/light_theme.h
+  include/tekari/thread_pool.h
+  include/tekari/shared_queue.h
   include/tekari/common.h
   include/tekari/stop_watch.h
   ${CMAKE_CURRENT_BINARY_DIR}/tekari_resources.cpp

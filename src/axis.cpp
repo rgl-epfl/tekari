@@ -1,9 +1,9 @@
-#include <tekari/Axis.h>
+#include <tekari/axis.h>
 
 #include <nanogui/glutil.h>
 #include <string>
 #include <iostream>
-#include <tekari/Arrow.h>
+#include <tekari/arrow.h>
 
 TEKARI_NAMESPACE_BEGIN
 

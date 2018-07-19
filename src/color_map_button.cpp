@@ -1,4 +1,4 @@
-#include <tekari/ColorMapButton.h>
+#include <tekari/color_map_button.h>
 
 #include <nanogui/screen.h>
 #include <nanogui/window.h>

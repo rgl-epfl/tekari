@@ -6,7 +6,7 @@
 #include <condition_variable>
 #include <thread>
 #include <mutex>
-#include <tekari/SharedQueue.h>
+#include <tekari/shared_queue.h>
 
 template<unsigned int N = 10>
 class ThreadPool

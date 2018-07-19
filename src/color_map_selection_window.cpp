@@ -1,4 +1,4 @@
-#include <tekari/ColorMapSelectionWindow.h>
+#include <tekari/color_map_selection_window.h>
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>

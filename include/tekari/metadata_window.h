@@ -1,7 +1,7 @@
 #pragma once
 
 #include <nanogui/window.h>
-#include <tekari/Metadata.h>
+#include <tekari/metadata.h>
 
 TEKARI_NAMESPACE_BEGIN
 

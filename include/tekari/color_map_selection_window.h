@@ -1,8 +1,8 @@
 #pragma once
 
 #include <tekari/common.h>
-#include <tekari/ColorMap.h>
-#include <tekari/ColorMapButton.h>
+#include <tekari/color_map.h>
+#include <tekari/color_map_button.h>
 #include <nanogui/window.h>
 #include <vector>
 

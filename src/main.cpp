@@ -1,5 +1,5 @@
 
-#include <tekari/BSDFApplication.h>
+#include <tekari/bsdf_application.h>
 #include <tekari/common.h>
 
 using namespace tekari;

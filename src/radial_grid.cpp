@@ -1,4 +1,4 @@
-#include <tekari/RadialGrid.h>
+#include <tekari/radial_grid.h>
 #include <tekari_resources.h>
 
 TEKARI_NAMESPACE_BEGIN

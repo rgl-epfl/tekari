@@ -2,7 +2,7 @@
 
 #include <nanogui/opengl.h>
 #include <tekari/points_stats.h>
-#include <tekari/Metadata.h>
+#include <tekari/metadata.h>
 
 #define NOT_SELECTED_FLAG 0.0f  // arbitrary zero value
 #define SELECTED_FLAG 1.0f  // arbitrary non-zero value

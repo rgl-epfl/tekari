@@ -1,4 +1,4 @@
-#include <tekari/DataSampleButton.h>
+#include <tekari/data_sample_button.h>
 
 #include <iostream>
 

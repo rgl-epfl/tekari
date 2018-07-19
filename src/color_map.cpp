@@ -1,4 +1,4 @@
-#include <tekari/ColorMap.h>
+#include <tekari/color_map.h>
 #include <tekari_resources.h>
 #include <stb_image.h>
 

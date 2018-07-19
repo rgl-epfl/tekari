@@ -1,4 +1,4 @@
-#include <tekari/HelpWindow.h>
+#include <tekari/help_window.h>
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>

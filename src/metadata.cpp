@@ -1,4 +1,4 @@
-#include <tekari/Metadata.h>
+#include <tekari/metadata.h>
 
 #include <sstream>
 #include <vector>

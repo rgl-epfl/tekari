@@ -1,11 +1,11 @@
-#include <tekari/BSDFCanvas.h>
+#include <tekari/bsdf_canvas.h>
 
 #include <enoki/transform.h>
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 #include <string>
-#include <tekari/DataSample.h>
-#include <tekari/Arrow.h>
+#include <tekari/data_sample.h>
+#include <tekari/arrow.h>
 
 #define MAX_ZOOM 10.0f
 #define MIN_ZOOM -MAX_ZOOM

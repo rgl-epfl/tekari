@@ -1,4 +1,4 @@
-#include <tekari/MetadataWindow.h>
+#include <tekari/metadata_window.h>
 
 #include <nanogui/button.h>
 #include <nanogui/entypo.h>
