@@ -37,7 +37,7 @@ private:
 
     friend void update_selection_stats(
         PointsStats& selection_stats,
-        const VectorXi8& selected_points,
+        const VectorXf& selected_points,
         const MatrixXXf& raw_points,
         const Matrix2Xf& V2D,
         const vector<VectorXf>& H
@@ -58,7 +58,7 @@ private:
 
 extern void update_selection_stats(
     PointsStats& selection_stats,
-    const VectorXi8& selected_points,
+    const VectorXf& selected_points,
     const MatrixXXf& raw_points,
     const Matrix2Xf& V2D,
     const vector<VectorXf>& H

@@ -2,6 +2,7 @@
 
 #include <enoki/transform.h>
 #include <enoki/quaternion.h>
+#include <tekari_resources.h>
 
 #define CIRCLE_VERTEX_COUNT 10u				// The number of vertices per circle
 #define CONE_CYLINDER_HEIGHT_RATIO 0.9f	// The ratio between the cone and cylinder's heights
@@ -54,8 +55,8 @@ void Arrow::draw_gl(const Vector3f& origin,
 
 void Arrow::load_shaders()
 {
-    if (!m_cone_shader.init_from_files("cone", SHADERS_PATH "arrow.vert", SHADERS_PATH "arrow.frag") ||
-        !m_cylinder_shader.init_from_files("cylinder", SHADERS_PATH "arrow.vert", SHADERS_PATH "arrow.frag"))
+    if (!m_cone_shader.init("cone", VERTEX_SHADER_STR(arrow), FRAGMENT_SHADER_STR(arrow)) ||
+        !m_cylinder_shader.init("cylinder", VERTEX_SHADER_STR(arrow), FRAGMENT_SHADER_STR(arrow)))
     {
         cerr << "Unable to load shaders for arrow" << endl;
         exit(-1);

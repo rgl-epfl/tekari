@@ -7,10 +7,22 @@ TEKARI_NAMESPACE_BEGIN
 
 #define MAX_SELECTION_DISTANCE 30.0f
 
+void set_all_points(
+    VectorXf& selected_points,
+    float value)
+{
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)selected_points.size(), GRAIN_SIZE),
+        [&](const tbb::blocked_range<uint32_t>& range) {
+        for (uint32_t i = range.begin(); i < range.end(); ++i)
+            selected_points[i] = value;
+    });
+    cout << count_selected_points(selected_points) << endl;
+}
+
 void select_points(
     const Matrix2Xf& V2D,
     const VectorXf& H,
-    VectorXi8& selected_points,
+    VectorXf& selected_points,
     const Matrix4f & mvp,
     const SelectionBox& selection_box,
     const Vector2i & canvas_size,
@@ -28,16 +40,11 @@ void select_points(
 
             switch (mode)
             {
-            case STANDARD:
-                selected_points[i] = in_selection;
-                break;
-            case ADD:
-                selected_points[i] = in_selection || selected_points[i];
-                break;
-            case SUBTRACT:
-                selected_points[i] = !in_selection && selected_points[i];
-                break;
+            case ADD: in_selection = in_selection || SELECTED(selected_points[i]); break;
+            case SUBTRACT: in_selection = !in_selection && SELECTED(selected_points[i]); break;
+            default: break;
             }
+            selected_points[i] = in_selection ? SELECTED_FLAG : NOT_SELECTED_FLAG;  // arbitrary non-zero value
         }
     });
     END_PROFILING();
@@ -46,7 +53,7 @@ void select_points(
 void select_closest_point(
     const Matrix2Xf& V2D,
     const VectorXf& H,
-    VectorXi8& selected_points,
+    VectorXf& selected_points,
     const Matrix4f& mvp,
     const Vector2i & mouse_pos,
     const Vector2i & canvas_size)
@@ -72,7 +79,7 @@ void select_closest_point(
                 smallest_distances[thread_id]     = dist_sqr;
             }
 
-            selected_points[i] = false;
+            selected_points[i] = NOT_SELECTED_FLAG;
         }
     });
 
@@ -90,7 +97,7 @@ void select_closest_point(
 
     if (closest_point_index != -1)
     {
-        selected_points[closest_point_index] = true;
+        selected_points[closest_point_index] = SELECTED_FLAG;
     }
     END_PROFILING();
 }
@@ -98,7 +105,7 @@ void select_closest_point(
 void select_extreme_point(
     const PointsStats& points_info,
     const PointsStats& selection_info,
-    VectorXi8& selected_points,
+    VectorXf& selected_points,
     unsigned int wave_length_index,
     bool highest
 )
@@ -115,29 +122,29 @@ void select_extreme_point(
                 : selection_info.lowest_point_index(wave_length_index)));
 
     deselect_all_points(selected_points);
-    selected_points[point_index] = 1;
+    selected_points[point_index] = SELECTED_FLAG;
 
     END_PROFILING();
 }
 
-void select_all_points(VectorXi8& selected_points)
+void select_all_points(VectorXf& selected_points)
 {
     START_PROFILING("Selecting all points");
-    memset(selected_points.data(), ~0, selected_points.size());
+    set_all_points(selected_points, SELECTED_FLAG);
     END_PROFILING();
 }
 
-void deselect_all_points(VectorXi8& selected_points)
+void deselect_all_points(VectorXf& selected_points)
 {
     START_PROFILING("Deselecting all points");
-    memset(selected_points.data(), 0, selected_points.size());
+    set_all_points(selected_points, NOT_SELECTED_FLAG);
     END_PROFILING();
 }
 
-void move_selection_along_path(bool up, VectorXi8& selected_points)
+void move_selection_along_path(bool up, VectorXf& selected_points)
 {
     START_PROFILING("Moving selection along path");
-    uint8_t extremity;
+    float extremity;
     if (up)
     {
         extremity = selected_points.back();
@@ -154,7 +161,7 @@ void move_selection_along_path(bool up, VectorXi8& selected_points)
 }
 
 void delete_selected_points(
-    VectorXi8& selected_points,
+    VectorXf& selected_points,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
     PointsStats& selection_info,
@@ -167,7 +174,7 @@ void delete_selected_points(
     Index last_valid = 0;
     for (Index i = 0; i < selected_points.size(); ++i)
     {
-        if (!selected_points[i])
+        if (!SELECTED(selected_points[i]))
         {
             if (last_valid != i)         // prevent unnecessary copies
             {
@@ -183,19 +190,19 @@ void delete_selected_points(
     V2D.resize(last_valid);
     raw_points.resize(last_valid);
     selected_points.resize(last_valid);
-    memset(selected_points.data(), 0, selected_points.size());
+    set_all_points(selected_points, NOT_SELECTED_FLAG);
 
     metadata.set_points_in_file(last_valid);
 
     END_PROFILING();
 }
 
-unsigned int count_selected_points(const VectorXi8& selected_points)
+unsigned int count_selected_points(const VectorXf& selected_points)
 {
     unsigned int count = 0;
     START_PROFILING("Counting selected points");
     for (Index i = 0; i < selected_points.size(); ++i) {
-        count += (selected_points[i] != 0);
+        count += SELECTED(selected_points[i]);
     }
     END_PROFILING();
     return count;

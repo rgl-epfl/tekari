@@ -10,7 +10,7 @@ extern void load_data_sample(
     const string& file_name,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
-    VectorXi8& selected_points,
+    VectorXf& selected_points,
     Metadata& metadata
 );
 

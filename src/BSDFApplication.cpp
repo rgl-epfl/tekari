@@ -23,6 +23,7 @@
 #include <tekari/data_io.h>
 #include <tekari/LightTheme.h>
 #include <tekari/Arrow.h>
+#include <tekari_resources.h>
 
 #define FOOTER_HEIGHT 25
 
@@ -55,7 +56,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
     // load color maps
     for (auto& p : ColorMap::PREDEFINED_MAPS)
     {
-        m_color_maps.push_back(make_shared<ColorMap>(p.first, COLOR_MAPS_PATH + p.second));
+        m_color_maps.push_back(make_shared<ColorMap>(p.first, p.second.first, p.second.second));
     }
 
     m_3d_view = new Widget{this};
@@ -285,30 +286,30 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 #if !defined(__EMSCRIPTEN__)
     // load application icon
     {
-        constexpr unsigned int icon_count = 5;
-        const char* icon_paths[icon_count] =
+        const vector<pair<const uint8_t*, uint32_t>> icon_paths =
         {
-            ICONS_PATH "tekari_icon_16x16.png",
-            ICONS_PATH "tekari_icon_32x32.png",
-            ICONS_PATH "tekari_icon_64x64.png",
-            ICONS_PATH "tekari_icon_128x128.png",
-            ICONS_PATH "tekari_icon_256x256.png"
+            { tekari_icon_16x16_png, tekari_icon_16x16_png_size },
+            { tekari_icon_32x32_png, tekari_icon_32x32_png_size },
+            { tekari_icon_64x64_png, tekari_icon_64x64_png_size },
+            { tekari_icon_128x128_png, tekari_icon_128x128_png_size },
+            { tekari_icon_256x256_png, tekari_icon_256x256_png_size }
         };
 
-        GLFWimage icons[icon_count];
+        GLFWimage icons[icon_paths.size()];
         unsigned int i;
-        for (i = 0; i < icon_count; i++)
+        for (i = 0; i < icon_paths.size(); i++)
         {
             int num_chanels;
-            icons[i].pixels = stbi_load(icon_paths[i],& icons[i].width,& icons[i].height,& num_chanels, 0);
+            icons[i].pixels = stbi_load_from_memory(icon_paths[i].first, icon_paths[i].second,
+                                                    &icons[i].width, &icons[i].height, &num_chanels, 0);
             if (!icons[i].pixels)
             {
                 cout << "Warning : unable to load Tekari's icons\n";
                 break;
             }
         }
-        if (i == icon_count)
-            glfwSetWindowIcon(m_glfw_window, icon_count, icons);
+        if (i == icon_paths.size())
+            glfwSetWindowIcon(m_glfw_window, icon_paths.size(), icons);
 
         for (unsigned int j = 0; j < i; j++)
         {

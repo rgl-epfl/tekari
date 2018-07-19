@@ -1,6 +1,7 @@
 #include <tekari/DataSample.h>
 
 #include <tekari/Arrow.h>
+#include <tekari_resources.h>
 
 #define MAX_SELECTION_DISTANCE 30.0f
 
@@ -78,20 +79,20 @@ void DataSample::draw_gl(
     Matrix4f mvp = proj* view* model;
 
     // Draw the mesh
-    // glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_POLYGON_OFFSET_FILL);
-    // glPolygonOffset(2.0, 2.0);
-    // m_mesh_shader.bind();
-    // color_map->bind();
-    // m_mesh_shader.set_uniform("model_view_proj", mvp);
-    // m_mesh_shader.set_uniform("model", model);
-    // m_mesh_shader.set_uniform("inverse_transpose_model", enoki::inverse_transpose(model));
-    // m_mesh_shader.set_uniform("view", view_origin);
-    // m_mesh_shader.set_uniform("use_shadows", (bool)(flags & USES_SHADOWS));
-    // m_mesh_shader.set_uniform("use_specular", (bool)(flags & USES_SPECULAR));
-    // m_mesh_shader.draw_indexed(GL_TRIANGLES, 0, m_f.size());
-    // glDisable(GL_POLYGON_OFFSET_FILL);
-    // glDisable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(2.0, 2.0);
+    m_mesh_shader.bind();
+    color_map->bind();
+    m_mesh_shader.set_uniform("model_view_proj", mvp);
+    m_mesh_shader.set_uniform("model", model);
+    m_mesh_shader.set_uniform("inverse_transpose_model", enoki::inverse_transpose(model));
+    m_mesh_shader.set_uniform("view", view_origin);
+    m_mesh_shader.set_uniform("use_shadows", (bool)(flags & USES_SHADOWS));
+    m_mesh_shader.set_uniform("use_specular", (bool)(flags & USES_SPECULAR));
+    m_mesh_shader.draw_indexed(GL_TRIANGLES, 0, m_f.size());
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    glDisable(GL_DEPTH_TEST);
 
     // draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
@@ -116,9 +117,9 @@ void DataSample::draw_gl(
 
 void DataSample::init_shaders()
 {
-    m_mesh_shader.init_from_files("height_map", SHADERS_PATH "height_map.vert", SHADERS_PATH "height_map.frag");
-    m_shaders[PATH].init_from_files("path", SHADERS_PATH "path.vert", SHADERS_PATH "path.frag");
-    m_shaders[POINTS].init_from_files("points", SHADERS_PATH "points.vert", SHADERS_PATH "points.frag");
+    m_mesh_shader.init("height_map", VERTEX_SHADER_STR(height_map), FRAGMENT_SHADER_STR(height_map));
+    m_shaders[PATH].init("path", VERTEX_SHADER_STR(path), FRAGMENT_SHADER_STR(path));
+    m_shaders[POINTS].init("points", VERTEX_SHADER_STR(points), FRAGMENT_SHADER_STR(points));
 }
 
 void DataSample::link_data_to_shaders()
@@ -143,7 +144,7 @@ void DataSample::link_data_to_shaders()
     m_shaders[POINTS].set_uniform("color_map", 0);
     m_shaders[POINTS].share_attrib(m_mesh_shader, "in_pos2d");
     m_shaders[POINTS].share_attrib(m_mesh_shader, "in_height");
-    // m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
+    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 }
 
 void DataSample::toggle_log_view()
@@ -168,7 +169,7 @@ void DataSample::toggle_log_view()
 void DataSample::update_point_selection()
 {
     m_shaders[POINTS].bind();
-    // m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
+    m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
     update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2D, m_display_as_log ? m_lh : m_h);
     m_selection_axis.set_origin(selection_center());

@@ -75,7 +75,7 @@ public:
     inline const Matrix4Xf& curr_n()            const { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
     inline const Matrix2Xf& V2D()               const { return m_v2D; }
     inline const MatrixXXf& raw_points()        const { return m_raw_points; }
-    inline const VectorXi8& selected_points()   const { return m_selected_points; }
+    inline const VectorXf& selected_points()   const { return m_selected_points; }
 
     inline VectorXf& curr_h()           { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
     inline Matrix4Xf& curr_n()          { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
@@ -86,7 +86,7 @@ public:
     inline Matrix2Xf& V2D()             { return m_v2D; }
     inline MatrixXXf& raw_points()      { return m_raw_points; }
     inline VectorXu& path_segments()    { return m_path_segments; }
-    inline VectorXi8& selected_points() { return m_selected_points; }
+    inline VectorXf& selected_points() { return m_selected_points; }
 
     inline Matrix3Xu& F()                { return m_f; }
 
@@ -129,7 +129,7 @@ private:
     Axis m_selection_axis;
 
     // Selected point
-    VectorXi8       m_selected_points;
+    VectorXf        m_selected_points;
     PointsStats     m_selection_stats;
 
     // dirty flag to indicate changes in the data

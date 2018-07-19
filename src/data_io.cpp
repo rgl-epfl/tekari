@@ -3,6 +3,7 @@
 #include <unordered_set>
 #include <fstream>
 #include <tekari/stop_watch.h>
+#include <tekari/selections.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -27,12 +28,18 @@ void load_spectral_data_sample(
     Matrix2Xf& V2D,
     Metadata& metadata
 );
+void load_bsdf_data_sample(
+    std::ifstream& file,
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    Metadata& metadata
+);
 
 void load_data_sample(
     const string& file_name,
     MatrixXXf& raw_points,
     Matrix2Xf& V2D,
-    VectorXi8& selected_points,
+    VectorXf& selected_points,
     Metadata& metadata
 )
 {
@@ -69,7 +76,7 @@ void load_data_sample(
                 load_standard_data_sample(file, raw_points, V2D, metadata);
             }
 
-            selected_points.assign(metadata.points_in_file(), 0);
+            selected_points.assign(metadata.points_in_file(), NOT_SELECTED_FLAG);
             break;
         }
     }
@@ -175,6 +182,75 @@ void load_spectral_data_sample(
         }
     }
     metadata.set_points_in_file(n_points);
+}
+
+void load_bsdf_data_sample(
+    const string& file_name,
+    MatrixXXf& raw_points,
+    Matrix2Xf& V2D,
+    Metadata& metadata
+)
+{
+//     struct Field {
+//         /// Data type (uint32, float, ...) of the tensor
+//         Struct::EType dtype;
+
+//         /// Offset within the file
+//         size_t offset;
+
+//         /// Specifies both rank and size along each dimension
+//         std::vector<size_t> shape;
+//     };
+
+
+//     FILE *file = fopen(file_name, "rb");
+
+//     if (file == nullptr)
+//         throw std::runtime_error("Unable to open file " + file_name);
+
+// //
+//     if (size() < 12 + 2 + 4)
+//         Throw("Invalid tensor file: too small, truncated?");
+// //
+
+//     uint8_t header[12], version[2];
+//     uint32_t n_fields;
+//     fread(header, sizeof(uint8_t), 12, file);
+//     fread(version, sizeof(uint8_t), 2, file);
+//     fread(&n_fields, sizeof(n_fields), 1, file);
+
+//     if (memcmp(header, "tensor_file", 12) != 0)
+//         Throw("Invalid tensor file: invalid header.");
+//     else if (version[0] != 0 && version[1] != 0)
+//         Throw("Invalid tensor file: unknown file version.");
+
+//     for (uint32_t i = 0; i < n_fields; ++i) {
+//         uint8_t dtype;
+//         uint16_t name_length, ndim;
+//         uint64_t offset;
+
+//         fread(&name_length, 2, 1, file);
+//         std::string name(name_length, '\0');
+//         fread(name.data(), 1, name_length, file);
+//         fread(&ndim, 2, 1, file);
+//         fread(&dtype, 1, 1, file);
+//         fread(&offset, 4, 1, file);
+//         if (dtype == Struct::EInvalid || dtype > Struct::EFloat64)
+//             Throw("Invalid tensor file: unknown type.");
+
+//         std::vector<size_t> shape(ndim);
+//         for (size_t j = 0; j < (size_t) ndim; ++j) {
+//             uint64_t size_value;
+//             fread(&size_value, sizeof(size_value), 1, file);
+//             shape[j] = (size_t) size_value;
+//         }
+
+//         m_fields[name] =
+//             Field{ (Struct::EType) dtype, static_cast<size_t>(offset), shape,
+//                    (const uint8_t *) data() + offset };
+//     }
+
+//     // load actual tensors
 }
 
 void save_data_sample(

@@ -7,10 +7,10 @@ TEKARI_NAMESPACE_BEGIN
 class ColorMap
 {
 public:
-    static const vector<std::pair<const string, const string>> PREDEFINED_MAPS;
+	static const vector<pair<const string, pair<const uint8_t*, uint32_t>>> PREDEFINED_MAPS;
 
 public:
-    ColorMap(const string& name, const string& file_path);
+    ColorMap(const string& name, const uint8_t* color_map_str, uint32_t color_map_str_size);
 
     void bind(unsigned int target = 0);
     void unbind(unsigned int target = 0);

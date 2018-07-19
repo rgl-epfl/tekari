@@ -1,34 +1,34 @@
 #include <tekari/ColorMap.h>
-
+#include <tekari_resources.h>
 #include <stb_image.h>
 
 TEKARI_NAMESPACE_BEGIN
 
-const vector<pair<const string, const string>> ColorMap::PREDEFINED_MAPS =
+const vector<pair<const string, pair<const uint8_t*, uint32_t>>> ColorMap::PREDEFINED_MAPS =
 {
-    { "Jet",            "jet.png" },
-    { "BRG",            "brg.png" },
-    { "CMR Map",        "CMRmap.png" },
-    { "Cube Helix",     "cubehelix.png" },
-    { "Gist Earth",     "gist_earth.png" },
-    { "Gist Ncar",      "gist_ncar.png" },
-    { "Gist Rainbow",   "gist_rainbow.png" },
-    { "Gist Stern",     "gist_stern.png" },
-    { "GNU Plot",       "gnu_plot.png" },
-    { "GNU Plot 2",     "gnu_plot2.png" },
-    { "HSV",            "hsv.png" },
-    { "Inferno",        "inferno.png" },
-    { "Numpy Spectral", "npy_spectral.png" },
-    { "Ocean",          "ocean.png" },
-    { "Prism",          "prism.png" },
-    { "Rainbow",        "rainbow.png" },
-    { "Terrain",        "terrain.png" },
+    { "Jet",            { jet_png, jet_png_size } },
+    { "BRG",            { brg_png, brg_png_size } },
+    { "CMR Map",        { cmrmap_png, cmrmap_png_size } },
+    { "Cube Helix",     { cubehelix_png, cubehelix_png_size } },
+    { "Gist Earth",     { gist_earth_png, gist_earth_png_size } },
+    { "Gist Ncar",      { gist_ncar_png, gist_ncar_png_size } },
+    { "Gist Rainbow",   { gist_rainbow_png, gist_rainbow_png_size } },
+    { "Gist Stern",     { gist_stern_png, gist_stern_png_size } },
+    { "GNU Plot",       { gnu_plot_png, gnu_plot_png_size } },
+    { "GNU Plot 2",     { gnu_plot2_png, gnu_plot2_png_size } },
+    { "HSV",            { hsv_png, hsv_png_size } },
+    { "Inferno",        { inferno_png, inferno_png_size } },
+    { "Numpy Spectral", { npy_spectral_png, npy_spectral_png_size } },
+    { "Ocean",          { ocean_png, ocean_png_size } },
+    { "Prism",          { prism_png, prism_png_size } },
+    { "Rainbow",        { rainbow_png, rainbow_png_size } },
+    { "Terrain",        { terrain_png, terrain_png_size } },
 };
 
-ColorMap::ColorMap(const string& name, const string& file_path)
+ColorMap::ColorMap(const string& name, const uint8_t* color_map_str, uint32_t color_map_str_size)
 :   m_name(name)
 {
-    glGenTextures(1,& m_render_id);
+    glGenTextures(1, &m_render_id);
     glBindTexture(GL_TEXTURE_2D, m_render_id);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -38,10 +38,10 @@ ColorMap::ColorMap(const string& name, const string& file_path)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int w, h, num_chanels;
-    unsigned char* data = stbi_load(file_path.c_str(),& w,& h,& num_chanels, 0);
+    unsigned char* data = stbi_load_from_memory(color_map_str, color_map_str_size, &w, &h, &num_chanels, 0);
     if (!data)
     {
-        throw std::runtime_error("Unable to open color map " + file_path);
+        throw std::runtime_error("Unable to open color map " + name);
     }
     GLenum format = GL_RGB;
     if (num_chanels == 3) format = GL_RGB;

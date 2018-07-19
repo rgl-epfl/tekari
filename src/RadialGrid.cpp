@@ -1,4 +1,5 @@
 #include <tekari/RadialGrid.h>
+#include <tekari_resources.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -7,9 +8,7 @@ RadialGrid::RadialGrid()
 ,    m_visible(true)
 ,   m_show_degrees(true)
 {
-    if (!m_shader.init_from_files("grid",
-        SHADERS_PATH "radial_grid.vert",
-        SHADERS_PATH "radial_grid.frag"))
+    if (!m_shader.init("grid", VERTEX_SHADER_STR(radial_grid), FRAGMENT_SHADER_STR(radial_grid)))
     {
         cerr << "Unable to load radial grid shader" << endl;
         exit(-1);

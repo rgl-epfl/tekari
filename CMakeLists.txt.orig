@@ -56,9 +56,9 @@ macro(CHECK_CXX_COMPILER_AND_LINKER_FLAGS _RESULT _CXX_FLAGS _LINKER_FLAGS)
 endmacro()
 
 # Build NanoGUI
-set(NANOGUI_BUILD_EXAMPLES OFF CACHE BOOL " " FORCE)
-set(NANOGUI_BUILD_SHARED   OFF CACHE BOOL " " FORCE)
-set(NANOGUI_BUILD_PYTHON   OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_EXAMPLE OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_SHARED  OFF CACHE BOOL " " FORCE)
+set(NANOGUI_BUILD_PYTHON  OFF CACHE BOOL " " FORCE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ext/nanogui ext_build/nanogui)
 set_property(TARGET nanogui PROPERTY FOLDER "dependencies")
 # set_property(TARGET nanogui glfw glfw_objects PROPERTY FOLDER "dependencies")
@@ -124,9 +124,9 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "
 endif()
 
 # Run simple cmake converter (from Nanogui) to put resource files into the data segment
+
 file(GLOB resources "${CMAKE_CURRENT_SOURCE_DIR}/resources/shaders/*"
                     "${CMAKE_CURRENT_SOURCE_DIR}/resources/webgl_shaders/*"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/resources/color_maps/*"
                     "${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/*")
 
 # Concatenate resource files into a comma separated string
@@ -179,6 +179,7 @@ include_directories(
 
 add_executable(tekari
   src/main.cpp
+  tekari_resources.cpp
   include/tekari/BSDFApplication.h            src/BSDFApplication.cpp
   include/tekari/BSDFCanvas.h                 src/BSDFCanvas.cpp
   include/tekari/DataSample.h                 src/DataSample.cpp
@@ -201,8 +202,6 @@ add_executable(tekari
   include/tekari/SharedQueue.h
   include/tekari/common.h
   include/tekari/stop_watch.h
-  ${CMAKE_CURRENT_BINARY_DIR}/tekari_resources.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/tekari_resources.h
   tekari.rc
 )
 

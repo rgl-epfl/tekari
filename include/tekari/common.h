@@ -46,14 +46,13 @@
 #define GRAIN_SIZE 1024u
 
 #if defined(__EMSCRIPTEN__)
-    #define RESOURCES_PATH "resources/"
-    #define SHADERS_PATH "resources/shaders/"
-    #define COLOR_MAPS_PATH "resources/color_maps/"
+    #define VERTEX_SHADER_STR(name) std::string((char*)webgl_##name##_vert, webgl_##name##_vert_size)
+    #define FRAGMENT_SHADER_STR(name) std::string((char*)webgl_##name##_frag, webgl_##name##_frag_size)
+    #define DATA_SAMPLES_PATH "data_samples/"
 #else
-    #define RESOURCES_PATH "../resources/"
-    #define SHADERS_PATH "../resources/shaders/"
-    #define COLOR_MAPS_PATH "../resources/color_maps/"
-    #define ICONS_PATH "../resources/color_maps/"
+    #define DATA_SAMPLES_PATH "../resources/"
+    #define VERTEX_SHADER_STR(name) std::string((char*)opengl_##name##_vert, opengl_##name##_vert_size)
+    #define FRAGMENT_SHADER_STR(name) std::string((char*)opengl_##name##_frag, opengl_##name##_frag_size)
 #endif
 
 TEKARI_NAMESPACE_BEGIN
@@ -97,7 +96,6 @@ using VectorXi8 = vector<int8_t>;
 using VectorXf  = vector<float>;
 
 using Index = size_t;
-
 
 // ============= 3D Utils =============
 

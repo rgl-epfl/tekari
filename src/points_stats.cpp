@@ -74,7 +74,7 @@ void PointsStats::normalize_average()
 
 void update_selection_stats(
     PointsStats& selection_stats,
-    const VectorXi8& selected_points,
+    const VectorXf& selected_points,
     const MatrixXXf& raw_points,
     const Matrix2Xf& V2D,
     const vector<VectorXf>& H)
@@ -84,7 +84,7 @@ void update_selection_stats(
     selection_stats.set_size(raw_points[0].size() - 2);
     for (Index i = 0; i < selected_points.size(); ++i)
     {
-        if (selected_points[i])
+        if (SELECTED(selected_points[i]))
         {
             selection_stats.add_intensity(i, raw_points[i]);
             selection_stats.add_point(raw_points[i], get3DPoints(V2D, H, i));
