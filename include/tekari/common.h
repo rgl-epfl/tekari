@@ -32,14 +32,6 @@
 
 #define ENABLE_PROFILING
 
-// Define command key for windows/mac/linux
-#if defined(__APPLE__) || defined(DOXYGEN_DOCUMENTATION_BUILD)
-    /// If on OSX, maps to ``GLFW_MOD_SUPER``.  Otherwise, maps to ``GLFW_MOD_CONTROL``.
-    #define SYSTEM_COMMAND_MOD GLFW_MOD_SUPER
-#else
-    #define SYSTEM_COMMAND_MOD GLFW_MOD_CONTROL
-#endif
-
 #define TEKARI_NAMESPACE_BEGIN namespace tekari {
 #define TEKARI_NAMESPACE_END }
 
