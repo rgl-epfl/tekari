@@ -24,6 +24,8 @@ public:
 
     T try_pop()
     {
+        using std::cout;
+        using std::endl;
         std::lock_guard<std::mutex> lock{ m_queue_mutex };
         if (m_raw_queue.empty())
         {

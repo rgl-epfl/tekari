@@ -3,6 +3,7 @@
 #include <tekari/common.h>
 #include <tekari/metadata.h>
 #include <tekari/points_stats.h>
+#include <unordered_map>
 
 TEKARI_NAMESPACE_BEGIN
 

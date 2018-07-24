@@ -35,9 +35,9 @@ extern void select_points(
     const Matrix2Xf& V2D,
     const VectorXf& H,
     VectorXf& selected_points,
-    const Matrix4f & mvp,
+    const Matrix4f& mvp,
     const SelectionBox& selection_box,
-    const Vector2i & canvas_size,
+    const Vector2i& canvas_size,
     SelectionMode mode
 );
 
@@ -46,8 +46,8 @@ extern void select_closest_point(
     const VectorXf& H,
     VectorXf& selected_points,
     const Matrix4f& mvp,
-    const Vector2i & mouse_pos,
-    const Vector2i & canvas_size
+    const Vector2i& mouse_pos,
+    const Vector2i& canvas_size
 );
 
 extern void select_extreme_point(

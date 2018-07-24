@@ -3,6 +3,7 @@
 #include <tekari/common.h>
 
 #include <nanogui/screen.h>
+#include <nanogui/textbox.h>
 
 #include <thread>
 
@@ -13,6 +14,7 @@
 #include <tekari/help_window.h>
 #include <tekari/color_map.h>
 #include <tekari/shared_queue.h>
+#include <tekari/slider_2d.h>
 #include <tekari/thread_pool.h>
 
 TEKARI_NAMESPACE_BEGIN
@@ -26,6 +28,8 @@ using nanogui::PopupButton;
 using nanogui::Label;
 using nanogui::VScrollPanel;
 using nanogui::ComboBox;
+using nanogui::Slider;
+using nanogui::FloatBox;
 using nanogui::GLFramebuffer;
 
 struct DataSample_to_add
@@ -80,7 +84,7 @@ private:
     void toggle_tool_button(Button* button);
 
     void open_files(const vector<string>& data_sample_paths);
-    void try_load_data_sample(string file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
+    void try_load_data_sample(const string& file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
 
     void toggle_canvas_draw_flags(int flag, CheckBox* checkbox);
 
@@ -93,6 +97,7 @@ private:
     Window* m_tool_window;
     Widget* m_3d_view;
 
+    // Hidden options widgets
     PopupButton* m_hidden_options_button;
     CheckBox* m_use_shadows_checkbox;
     CheckBox* m_use_specular_checkbox;
@@ -115,6 +120,12 @@ private:
     Button* m_help_button;
     Button* m_grid_view_toggle;
     Button* m_ortho_view_toggle;
+
+    // Data sample sliders
+    Slider* m_wave_length_slider;
+    FloatBox<float>* m_phi_float_box;
+    FloatBox<float>* m_theta_float_box;
+    Slider2D* m_incident_angle_slider;
 
     // dialog windows
     Window* m_metadata_window;

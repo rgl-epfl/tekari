@@ -48,7 +48,7 @@ bool BSDFCanvas::mouse_motion_event(const Vector2i& p,
     if (!focused())
         return false;
 
-    if (modifiers & SYSTEM_COMMAND_MOD && button == rotation_mouse_button(true))
+    if (modifiers & SYSTEM_COMMAND_MOD && button == GLFW_MOUSE_BUTTON_2)
     {
         m_selected_data_sample->set_incident_angle(get_incident_angle(p));
         return true;
@@ -62,6 +62,7 @@ bool BSDFCanvas::mouse_motion_event(const Vector2i& p,
     else if (button == selection_mouse_button(true))
     {
         m_selection_region.second = p;
+        return true;
     }
     else if (button == translation_mouse_button(true))
     {
@@ -83,7 +84,7 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
     if (down)
         request_focus();
 
-    if (modifiers & SYSTEM_COMMAND_MOD)
+    if (modifiers & SYSTEM_COMMAND_MOD && button == GLFW_MOUSE_BUTTON_1)
     {
         m_selected_data_sample->set_incident_angle(get_incident_angle(p));
         return true;

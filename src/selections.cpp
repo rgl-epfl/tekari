@@ -16,7 +16,6 @@ void set_all_points(
         for (uint32_t i = range.begin(); i < range.end(); ++i)
             selected_points[i] = value;
     });
-    cout << count_selected_points(selected_points) << endl;
 }
 
 void select_points(

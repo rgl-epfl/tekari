@@ -18,11 +18,9 @@
 #include <string>
 
 #include <stb_image.h>
-#include <tekari/selections.h>
-#include <tekari/raw_data_processing.h>
-#include <tekari/data_io.h>
 #include <tekari/light_theme.h>
 #include <tekari/arrow.h>
+#include <tekari/test_data_sample.h>
 #include <tekari_resources.h>
 
 #define FOOTER_HEIGHT 25
@@ -72,15 +70,11 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         
         if (selection_box.empty())
         {
-            select_closest_point(   m_selected_ds->V2D(), m_selected_ds->curr_h(),
-                                    m_selected_ds->selected_points(),
-                                    mvp, selection_box.top_left, canvas_size);
+            m_selected_ds->select_closest_point(mvp, selection_box.top_left, canvas_size);
         }
         else
         {
-            select_points(  m_selected_ds->V2D(), m_selected_ds->curr_h(),
-                            m_selected_ds->selected_points(),
-                            mvp, selection_box, canvas_size, mode);
+            m_selected_ds->select_points(mvp, selection_box, canvas_size, mode);
         }
         m_selected_ds->update_point_selection();
         update_selection_info_window();
@@ -251,9 +245,37 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         }
     }
 
+    // Data Sample Sliders
+    {
+        new Label{ m_tool_window, "Incident angle", "sans-bold"};
+        m_incident_angle_slider = new Slider2D{ m_tool_window };
+
+        auto float_boxes_container = new Widget{m_tool_window};
+        float_boxes_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
+        m_phi_float_box = new FloatBox<float>{ float_boxes_container };
+        m_theta_float_box = new FloatBox<float>{ float_boxes_container };
+
+        m_incident_angle_slider->set_callback([this](Vector2f value) {
+            m_phi_float_box->set_value(value.x());
+            m_theta_float_box->set_value(value.y());
+        });
+        m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, 0.0f), Vector2f(90.0f, 360.0f)));
+
+        m_phi_float_box->set_editable(true);
+        m_theta_float_box->set_editable(true);
+        m_phi_float_box->set_callback([this](float value) {
+            m_incident_angle_slider->set_value({value, m_theta_float_box->value()});
+        });
+        m_theta_float_box->set_callback([this](float value) {
+            m_incident_angle_slider->set_value({m_phi_float_box->value(), value});
+        });
+
+        m_wave_length_slider = new Slider{ m_tool_window };
+    }
+
     // Open, save screenshot, save data
     {
-        new Label(m_tool_window, "Data Samples", "sans-bold");
+        new Label{ m_tool_window, "Data Samples", "sans-bold" };
         auto tools = new Widget{ m_tool_window };
         tools->set_layout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
 
@@ -357,8 +379,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 if (!m_selected_ds)
                     return false;
 
-                select_all_points(m_selected_ds->selected_points());
-                m_selected_ds->update_point_selection();
+                m_selected_ds->select_all_points();
                 update_selection_info_window();
                 return true;
             case GLFW_KEY_P:
@@ -407,12 +428,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     if (!m_selected_ds)
                         return false;
                     
-                    select_extreme_point( m_selected_ds->points_stats(),
-                                            m_selected_ds->selection_stats(),
-                                            m_selected_ds->selected_points(),
-                                            m_selected_ds->wave_length_index(),
-                                            key == GLFW_KEY_H);
-                    m_selected_ds->update_point_selection();
+                    m_selected_ds->select_extreme_point(key == GLFW_KEY_H);
                     update_selection_info_window();
                     return true;
                 case GLFW_KEY_1:
@@ -420,8 +436,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     if (!m_selected_ds || !m_selected_ds->has_selection())
                         return false;
 
-                    move_selection_along_path(key == GLFW_KEY_1, m_selected_ds->selected_points());
-                    m_selected_ds->update_point_selection();
+                    m_selected_ds->move_selection_along_path(key == GLFW_KEY_1);
                     update_selection_info_window();
                     return true;
                 default:
@@ -457,8 +472,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 if (!m_selected_ds || !m_selected_ds->has_selection())
                     return false;
                  
-                deselect_all_points(m_selected_ds->selected_points());
-                m_selected_ds->update_point_selection();
+                m_selected_ds->deselect_all_points();
                 update_selection_info_window();
                 return true;
             case GLFW_KEY_Q:
@@ -486,25 +500,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 if (!m_selected_ds || !m_selected_ds->has_selection())
                     return false;
 
-                delete_selected_points(
-                    m_selected_ds->selected_points(),
-                    m_selected_ds->raw_points(),
-                    m_selected_ds->V2D(),
-                    m_selected_ds->selection_stats(),
-                    m_selected_ds->metadata()
-                );
-
-                recompute_data(
-                    m_selected_ds->raw_points(),
-                    m_selected_ds->points_stats(),
-                    m_selected_ds->path_segments(),
-                    m_selected_ds->F(),
-                    m_selected_ds->V2D(),
-                    m_selected_ds->H(), m_selected_ds->LH(),
-                    m_selected_ds->N(), m_selected_ds->LN()
-                );
-
-                m_selected_ds->link_data_to_shaders();
+                m_selected_ds->delete_selected_points();
                 m_selected_ds->set_dirty(true);
                 corresponding_button(m_selected_ds)->set_dirty(true);
 
@@ -574,8 +570,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 if (!m_selected_ds || !m_selected_ds->has_selection())
                     return false;
 
-                move_selection_along_path(key == GLFW_KEY_KP_ADD, m_selected_ds->selected_points());
-                m_selected_ds->update_point_selection();
+                m_selected_ds->move_selection_along_path(key == GLFW_KEY_KP_ADD);
                 update_selection_info_window();
                 return true;
             default:
@@ -606,7 +601,6 @@ void BSDFApplication::draw_contents() {
             }
             else
             {
-                std::cout << __FILE__ << " : data opened\n";
                 new_data_sample->data_sample->init_shaders();
                 new_data_sample->data_sample->link_data_to_shaders();
                 add_data_sample(new_data_sample->data_sample);
@@ -626,7 +620,9 @@ void BSDFApplication::update_layout()
         footer_infos->set_fixed_width(width() / m_footer->children().size());
 
     m_bsdf_canvas->set_fixed_size(Vector2i{ m_size.x(), m_size.y() - FOOTER_HEIGHT });
-    m_tool_window->set_fixed_size({ 210, 400 });
+    m_tool_window->set_fixed_size({ 210, 600 });
+
+    m_incident_angle_slider->set_fixed_size({ 200, 200 });
 
     m_data_samples_scroll_panel->set_fixed_height(
         m_tool_window->height() - m_data_samples_scroll_panel->position().y()
@@ -677,7 +673,7 @@ void BSDFApplication::save_selected_data_sample()
     if (path.empty())
         return;
 
-    save_data_sample(path, m_selected_ds->raw_points(), m_selected_ds->metadata());
+    m_selected_ds->save(path);
     m_selected_ds->set_dirty(false);
     corresponding_button(m_selected_ds)->set_dirty(false);
 }
@@ -753,7 +749,7 @@ void BSDFApplication::toggle_selection_info_window()
 {
     // if we are trying to toggle the selection window without a selection, just return
     if (!m_selection_info_window &&
-        (!m_selected_ds || m_selected_ds->selection_stats().points_count() == 0))
+        (!m_selected_ds || !m_selected_ds->has_selection()))
         return;
 
     toggle_window(m_selection_info_window, [this]() {
@@ -766,7 +762,7 @@ void BSDFApplication::toggle_selection_info_window()
             new Label{ window, value };
         };
         
-        make_selection_info_labels("Points In Selection :", to_string(m_selected_ds->selection_stats().points_count()));
+        make_selection_info_labels("Points In Selection :", to_string(m_selected_ds->selection_points_count()));
         make_selection_info_labels("Minimum Intensity :", to_string(m_selected_ds->selection_min_intensity()));
         make_selection_info_labels("Maximum Intensity :", to_string(m_selected_ds->selection_max_intensity()));
         make_selection_info_labels("Average Intensity :", to_string(m_selected_ds->selection_average_intensity()));
@@ -1033,7 +1029,7 @@ void BSDFApplication::toggle_canvas_draw_flags(int flag, CheckBox* checkbox)
 void BSDFApplication::reprint_footer()
 {
     m_data_sample_name->set_caption             (!m_selected_ds ? "-" : m_selected_ds->name());
-    m_data_sample_points_count->set_caption     (!m_selected_ds ? "-" : to_string(m_selected_ds->points_stats().points_count()));
+    m_data_sample_points_count->set_caption     (!m_selected_ds ? "-" : to_string(m_selected_ds->points_count()));
     m_data_sample_average_height->set_caption   (!m_selected_ds ? "-" : to_string(m_selected_ds->average_intensity()));
 }
 
@@ -1051,27 +1047,14 @@ void BSDFApplication::hide_windows()
     toggle_visibility(m_unsaved_data_window);
 }
 
-void BSDFApplication::try_load_data_sample(string file_path, shared_ptr<DataSample_to_add> data_sample_to_add)
+void BSDFApplication::try_load_data_sample(const string& file_path, shared_ptr<DataSample_to_add> data_sample_to_add)
 {
     try {
-        shared_ptr<DataSample> ds = make_shared<DataSample>();
-
         size_t pos = file_path.find_last_of("\\/");
         string file_name = file_path.substr(pos+1, file_path.length());
-        cout << "====================== Loading " << file_name << " ======================\n";
-        load_data_sample(file_path,
-                         ds->raw_points(),
-                         ds->V2D(),
-                         ds->selected_points(),
-                         ds->metadata());
 
-        recompute_data( ds->raw_points(),
-                        ds->points_stats(),
-                        ds->path_segments(),
-                        ds->F(),
-                        ds->V2D(),
-                        ds->H(), ds->LH(),
-                        ds->N(), ds->LN());
+        cout << "====================== Loading " << file_name << " ======================\n";
+        shared_ptr<DataSample> ds = make_shared<TestDataSample>(file_path);
         data_sample_to_add->data_sample = ds;
         cout << "================== Finished loading " << file_name << " =================\n";
     }

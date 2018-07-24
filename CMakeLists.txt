@@ -179,23 +179,26 @@ include_directories(
 
 add_executable(tekari
   src/main.cpp
-  include/tekari/bsdf_application.h            src/bsdf_application.cpp
-  include/tekari/bsdf_canvas.h                 src/bsdf_canvas.cpp
-  include/tekari/data_sample.h                 src/data_sample.cpp
-  include/tekari/radial_grid.h                 src/radial_grid.cpp
+  include/tekari/bsdf_application.h             src/bsdf_application.cpp
+  include/tekari/bsdf_canvas.h                  src/bsdf_canvas.cpp
+  include/tekari/data_sample.h                  src/data_sample.cpp
+  include/tekari/radial_grid.h                  src/radial_grid.cpp
   include/tekari/data_sample_button.h           src/data_sample_button.cpp
-  include/tekari/metadata.h                   src/metadata.cpp
-  include/tekari/color_map.h                   src/color_map.cpp 
-  include/tekari/color_map_selection_window.h    src/color_map_selection_window.cpp 
+  include/tekari/metadata.h                     src/metadata.cpp
+  include/tekari/color_map.h                    src/color_map.cpp 
+  include/tekari/color_map_selection_window.h   src/color_map_selection_window.cpp 
   include/tekari/color_map_button.h             src/color_map_button.cpp
-  include/tekari/metadata_window.h             src/metadata_window.cpp
-  include/tekari/help_window.h                 src/help_window.cpp
-  include/tekari/axis.h                       src/axis.cpp
-  include/tekari/selections.h                 src/selections.cpp
-  include/tekari/raw_data_processing.h        src/raw_data_processing.cpp
-  include/tekari/points_stats.h               src/points_stats.cpp
-  include/tekari/data_io.h                    src/data_io.cpp
-  include/tekari/arrow.h                      src/arrow.cpp
+  include/tekari/metadata_window.h              src/metadata_window.cpp
+  include/tekari/help_window.h                  src/help_window.cpp
+  include/tekari/axis.h                         src/axis.cpp
+  include/tekari/selections.h                   src/selections.cpp
+  include/tekari/raw_data_processing.h          src/raw_data_processing.cpp
+  include/tekari/points_stats.h                 src/points_stats.cpp
+  include/tekari/data_io.h                      src/data_io.cpp
+  include/tekari/arrow.h                        src/arrow.cpp
+  include/tekari/slider_2d.h                        src/slider_2d.cpp
+  include/tekari/tensor.h                       src/tensor.cpp
+  include/tekari/test_data_sample.h
   include/tekari/light_theme.h
   include/tekari/thread_pool.h
   include/tekari/shared_queue.h

@@ -191,18 +191,6 @@ void load_bsdf_data_sample(
     Metadata& metadata
 )
 {
-//     struct Field {
-//         /// Data type (uint32, float, ...) of the tensor
-//         Struct::EType dtype;
-
-//         /// Offset within the file
-//         size_t offset;
-
-//         /// Specifies both rank and size along each dimension
-//         std::vector<size_t> shape;
-//     };
-
-
 //     FILE *file = fopen(file_name, "rb");
 
 //     if (file == nullptr)
@@ -250,7 +238,7 @@ void load_bsdf_data_sample(
 //                    (const uint8_t *) data() + offset };
 //     }
 
-//     // load actual tensors
+    // load actual tensors
 }
 
 void save_data_sample(
