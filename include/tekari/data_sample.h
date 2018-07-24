@@ -98,6 +98,9 @@ public:
     inline bool dirty() const            { return m_dirty; }
     inline void set_dirty(bool dirty)    { m_dirty = dirty; }
 
+
+    void set_incident_angle(const Vector2f& i) { m_metadata.set_incident_angle(i); }
+
 private:
     // Raw sample data
     Matrix3Xu          m_f;                // face indices

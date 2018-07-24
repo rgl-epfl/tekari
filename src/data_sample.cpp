@@ -44,7 +44,7 @@ DataSample::DataSample()
         if (m_display_views[INCIDENT_ANGLE])
         {
             glEnable(GL_DEPTH_TEST);
-            Vector2f origin2D = transform_raw_point({ m_metadata.incident_theta(), m_metadata.incident_phi() });
+            Vector2f origin2D = transform_raw_point(m_metadata.incident_angle());
             Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
             Arrow::instance().draw_gl(
                 origin3D,
@@ -97,7 +97,7 @@ void DataSample::draw_gl(
     // draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
-        Vector2f origin2D = transform_raw_point({ m_metadata.incident_theta(), m_metadata.incident_phi() });
+        Vector2f origin2D = transform_raw_point(m_metadata.incident_angle());
         Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
         Arrow::instance().draw_gl(
             -origin3D,

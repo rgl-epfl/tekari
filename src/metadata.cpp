@@ -8,8 +8,7 @@ TEKARI_NAMESPACE_BEGIN
 
 Metadata::Metadata()
 :   m_is_spectral(false)
-,   m_in_theta(0.0f)
-,   m_in_phi(0.0f)
+,   m_incident_angle(0.0f)
 ,   m_sample_name("Untilted")
 ,   m_points_in_file(-1)
 ,   m_data_points_per_loop(-1)
@@ -31,11 +30,11 @@ void Metadata::init_infos()
         make_pair("#number of datapoints per loop in file:", [this](const string& keyword, const string* line) {
             sscanf(line->c_str() + keyword.length(), "%d",& m_data_points_per_loop);
         }),
-        make_pair("#inphi", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_phi); }),
-        make_pair("#phi_in", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_phi); }),
-        make_pair("#intheta", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_theta); }),
-        make_pair("#theta_in", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f",& m_in_theta); }),
-        make_pair("#datapoints_in_file", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%d",& m_points_in_file); }),
+        make_pair("#inphi", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_incident_angle[0]); }),
+        make_pair("#phi_in", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_incident_angle[0]); }),
+        make_pair("#intheta", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_incident_angle[1]); }),
+        make_pair("#theta_in", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%f", &m_incident_angle[1]); }),
+        make_pair("#datapoints_in_file", [this](const string& keyword, const string* line) { sscanf(line->c_str() + keyword.length(), "%d", &m_points_in_file); }),
         make_pair("#sample_name", [this](const string& , const string* line) { m_sample_name = strip_quote_marks(line->substr(13)); }),
         make_pair("sample_name=", [this](const string& keyword, const string* line) {
             size_t pos = line->find(keyword);    // we know this will work
