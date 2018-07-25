@@ -1,4 +1,7 @@
-cmake_minimum_required (VERSION 2.8.3)
+cmake_minimum_required (VERSION 3.1)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 project(tekari)
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -196,9 +199,10 @@ add_executable(tekari
   include/tekari/points_stats.h                 src/points_stats.cpp
   include/tekari/data_io.h                      src/data_io.cpp
   include/tekari/arrow.h                        src/arrow.cpp
-  include/tekari/slider_2d.h                        src/slider_2d.cpp
-  include/tekari/tensor.h                       src/tensor.cpp
-  include/tekari/test_data_sample.h
+  include/tekari/slider_2d.h                    src/slider_2d.cpp
+  include/tekari/brdf.h                         src/brdf.cpp
+  include/tekari/bsdf_data_sample.h
+  include/tekari/standard_data_sample.h
   include/tekari/light_theme.h
   include/tekari/thread_pool.h
   include/tekari/shared_queue.h

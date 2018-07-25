@@ -1,7 +1,4 @@
-
 #include <tekari/bsdf_application.h>
-#include <tekari/common.h>
-#include <tekari/tensor.h>
 
 using namespace tekari;
 

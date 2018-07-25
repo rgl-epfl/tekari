@@ -20,7 +20,8 @@
 #include <stb_image.h>
 #include <tekari/light_theme.h>
 #include <tekari/arrow.h>
-#include <tekari/test_data_sample.h>
+#include <tekari/bsdf_data_sample.h>
+#include <tekari/standard_data_sample.h>
 #include <tekari_resources.h>
 
 #define FOOTER_HEIGHT 25
@@ -1104,8 +1105,19 @@ void BSDFApplication::try_load_data_sample(const string& file_path, shared_ptr<D
         size_t pos = file_path.find_last_of("\\/");
         string file_name = file_path.substr(pos+1, file_path.length());
 
+        pos = file_path.find_last_of(".");
+        string extension = file_path.substr(pos+1, file_path.length());
+
         cout << "====================== Loading " << file_name << " ======================\n";
-        shared_ptr<DataSample> ds = make_shared<DataSample>(file_path);
+        shared_ptr<DataSample> ds;
+        if (extension == "bsdf")
+        {
+            ds = make_shared<BSDFDataSample>(file_path);
+        }
+        else
+        {
+            ds = make_shared<StandardDataSample>(file_path);
+        }
         data_sample_to_add->data_sample = ds;
         cout << "================== Finished loading " << file_name << " =================\n";
     }

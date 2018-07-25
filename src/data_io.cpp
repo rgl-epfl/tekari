@@ -125,7 +125,7 @@ void load_standard_data_sample(
                 continue;
             }
             read_vertices.insert(p2d);
-            Vector2f transformed_point = transform_raw_point(p2d);
+            Vector2f transformed_point = hemisphere_to_disk(p2d);
             raw_points[n_points][0] = theta;
             raw_points[n_points][1] = phi;
             raw_points[n_points][2] = intensity;
@@ -168,7 +168,7 @@ void load_spectral_data_sample(
             }
             read_vertices.insert(angles);
 
-            V2D.push_back(transform_raw_point(angles));
+            V2D.push_back(hemisphere_to_disk(angles));
             raw_points.push_back(vector<float>{});
             raw_points[n_points].resize(n_data_points_per_loop + 2, 0);
             raw_points[n_points][0] = angles[0];

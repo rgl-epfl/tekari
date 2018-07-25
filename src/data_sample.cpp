@@ -1,7 +1,6 @@
 #include <tekari/data_sample.h>
 
 #include <tekari/raw_data_processing.h>
-#include <tekari/data_io.h>
 #include <tekari/arrow.h>
 #include <tekari_resources.h>
 
@@ -9,16 +8,13 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSample::DataSample(const string& file_path)
+DataSample::DataSample()
 :   m_wave_length_index(0)
 ,   m_display_as_log(false)
 ,   m_display_views{ true, false, false, true }
 ,   m_selection_axis{Vector3f{0.0f, 0.0f, 0.0f}}
 ,   m_dirty(false)
-{
-    load_data_sample(file_path, m_raw_points, m_v2d, m_selected_points, m_metadata);
-    recompute_data();
-}
+{}
 
 DataSample::~DataSample()
 {
@@ -40,7 +36,7 @@ void DataSample::draw_gl(
     // draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
-        Vector2f origin2D = transform_raw_point(m_metadata.incident_angle());
+        Vector2f origin2D = hemisphere_to_disk(m_metadata.incident_angle());
         Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
         Arrow::instance().draw_gl(
             -origin3D,
@@ -103,7 +99,7 @@ void DataSample::draw_gl(
         if (m_display_views[INCIDENT_ANGLE])
         {
             glEnable(GL_DEPTH_TEST);
-            Vector2f origin2D = transform_raw_point(m_metadata.incident_angle());
+            Vector2f origin2D = hemisphere_to_disk(m_metadata.incident_angle());
             Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
             Arrow::instance().draw_gl(
                 origin3D,

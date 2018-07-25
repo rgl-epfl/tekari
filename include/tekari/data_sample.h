@@ -6,6 +6,7 @@
 #include <tekari/points_stats.h>
 #include <tekari/metadata.h>
 #include <tekari/color_map.h>
+#include <tekari/data_io.h>
 #include <tekari/axis.h>
 
 TEKARI_NAMESPACE_BEGIN
@@ -29,12 +30,14 @@ public:
     };
 
     // constructors/destructors, assignement operators
-    DataSample(const string& file_path);
+    DataSample();
     DataSample(const DataSample&) = delete;
     DataSample(DataSample&&) = default;
     virtual ~DataSample();
     DataSample& operator=(const DataSample&) = delete;
     DataSample& operator=(DataSample&&) = default;
+
+    virtual void load_from_file(const string& file_path);
 
     void draw_gl(const Vector3f& view_origin,
                 const Matrix4f& model,

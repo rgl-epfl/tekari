@@ -25,10 +25,13 @@
 #include <array>
 #include <enoki/array.h>
 #include <enoki/matrix.h>
+#include <tekari/brdf.h>
 
 // (re)define M_PI locally since it's not necessarily defined on some platforms
 #undef M_PI
 #define M_PI 3.141592653589793238463
+#define TO_DEG(rad) ((rad) * 57.295779513)
+#define TO_RAD(deg) ((deg) * 0.017453293)
 
 #define ENABLE_PROFILING
 
@@ -119,13 +122,40 @@ inline Matrix3Xf get3DPoints(const Matrix2Xf& V2D, const vector<VectorXf>& H, un
     return result;
 }
 
-inline Vector2f transform_raw_point(const Vector2f& raw2DPoint)
+inline Vector2f hemisphere_to_disk(const Vector2f& i)
 {
-
-    return Vector2f(   (float)(raw2DPoint[0]* cos(raw2DPoint[1]* M_PI / 180.0f) / 90.0f),
-                       (float)(raw2DPoint[0]* sin(raw2DPoint[1]* M_PI / 180.0f) / 90.0f) );
+    return Vector2f(i[0] * cos(TO_RAD(i[1])) / 90.0f,
+                    i[0] * sin(TO_RAD(i[1])) / 90.0f );
 }
 
+inline powitacq::vec3 enoki_to_powitacq_vec3(const Vector3f& v) { return powitacq::vec3(v[0], v[1], v[2]); }
+inline Vector3f powitacq_to_enoki_vec3(const powitacq::vec3& v) { return Vector3f(v[0], v[1], v[2]); }
+
+inline Vector3f hemisphere_to_vec3(const Vector2f& i)
+{
+    return Vector3f(
+            sin(TO_RAD(i[0])) * cos(TO_RAD(i[1])),
+            sin(TO_RAD(i[0])) * sin(TO_RAD(i[1])),
+            cos(TO_RAD(i[0]))
+        );
+}
+
+inline Vector2f vec3_to_hemisphere(const Vector3f& wi)
+{
+    return Vector2f(
+            TO_DEG(acos(wi[2] / enoki::norm(wi))),
+            TO_DEG(atan2(wi[0], wi[1]))
+        );
+}
+
+inline Vector2f vec3_to_disk(const Vector3f& wi)
+{
+    float   norm_v = enoki::norm(wi),
+            acos_v = acos(wi[2] / norm_v),
+            atan_v = atan2(wi[0], wi[1]);
+    return Vector2f(TO_DEG(acos_v) * cos(atan_v) / 90.0f,
+                    TO_DEG(acos_v) * sin(atan_v) / 90.0f );
+}
 
 // ================= String Utils ================
 
