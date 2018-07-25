@@ -49,8 +49,8 @@ RadialGrid::RadialGrid()
 
         Vector3f pos0 = Vector3f(vertices[index].x(), 0.0f, vertices[index].y());
         Vector3f pos1 = Vector3f(vertices[index+1].x(), 0.0f, vertices[index+1].y());
-        m_phi_labels.push_back(make_pair(to_string(180 * i / LINE_COUNT), pos0 + enoki::normalize(pos0) * 0.04f));
-        m_phi_labels.push_back(make_pair(to_string(180 * i / LINE_COUNT + 180), pos1 + enoki::normalize(pos1) * 0.04f));
+        m_phi_labels.push_back(make_pair(to_string(static_cast<int>(i * 180 / LINE_COUNT)), pos0 + enoki::normalize(pos0) * 0.04f));
+        m_phi_labels.push_back(make_pair(to_string(static_cast<int>(i * 180 / LINE_COUNT) - 180), pos1 + enoki::normalize(pos1) * 0.04f));
     }
 
     m_shader.bind();
