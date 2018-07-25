@@ -50,7 +50,7 @@ bool BSDFCanvas::mouse_motion_event(const Vector2i& p,
 
     if (modifiers & SYSTEM_COMMAND_MOD && button == GLFW_MOUSE_BUTTON_2)
     {
-        m_selected_data_sample->set_incident_angle(get_incident_angle(p));
+        m_update_incident_angle_callback(get_incident_angle(p));
         return true;
     }
     
@@ -86,7 +86,7 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
 
     if (modifiers & SYSTEM_COMMAND_MOD && button == GLFW_MOUSE_BUTTON_1)
     {
-        m_selected_data_sample->set_incident_angle(get_incident_angle(p));
+        m_update_incident_angle_callback(get_incident_angle(p));
         return true;
     }
 
@@ -148,11 +148,11 @@ Vector2f BSDFCanvas::get_incident_angle(const Vector2i &p)
     Vector4f incident_pos = oray + dray * t;
 
     Vector2f i = Vector2f(incident_pos.x(), incident_pos.z());
-    float phi = enoki::norm(i) * 90.0f;
-    if (phi > 90.0f) phi = 90.0f;
-    float theta = atan2(i.y(), i.x()) * 180.0f / M_PI;
+    float theta = enoki::norm(i) * 90.0f;
+    if (theta > 90.0f) theta = 90.0f;
+    float phi = atan2(i.y(), i.x()) * 180.0f / M_PI;
 
-    return Vector2f(phi, theta);
+    return Vector2f(theta, phi);
 } 
 
 

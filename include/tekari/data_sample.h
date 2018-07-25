@@ -91,6 +91,7 @@ public:
     inline void set_dirty(bool dirty)    { m_dirty = dirty; }
 
     virtual void set_incident_angle(const Vector2f& i) { m_metadata.set_incident_angle(i); }
+    virtual Vector2f incident_angle() const { return m_metadata.incident_angle(); }
 
 private:
     inline const VectorXf&  curr_h() const  { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }

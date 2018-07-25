@@ -54,9 +54,10 @@ public:
 
     void toggle_window(Window*& window, function<Window*(void)> create_window);
     void toggle_metadata_window();
+    void toggle_data_sample_sliders_window();
     void toggle_help_window();
     void toggle_selection_info_window();
-    void update_selection_info_window();
+    void update_window(Window* window, function<void(void)> toggle);
     void toggle_unsaved_data_window(const vector<string>& data_sample_names, function<void(void)> continue_callback);
     void toggle_color_map_selection_window();
     
@@ -129,6 +130,7 @@ private:
 
     // dialog windows
     Window* m_metadata_window;
+    Window* m_data_sample_sliders_window;
     Window* m_help_window;
     Window* m_color_map_selection_window;
     Window* m_selection_info_window;

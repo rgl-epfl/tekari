@@ -65,6 +65,7 @@ public:
     void set_ortho_mode(bool ortho_mode) { m_ortho_mode = ortho_mode; }
     void set_selection_callback(function<void(const Matrix4f&, const SelectionBox&,
         const Vector2i&, SelectionMode)> callback) { m_select_callback = callback; }
+    void set_update_incident_angle_callback(function<void(const Vector2f&)> callback) { m_update_incident_angle_callback = callback; }
 
     // Setters/Getters
     const RadialGrid& grid() const  { return m_grid; }
@@ -113,6 +114,7 @@ private:
     std::pair<Vector2i, Vector2i> m_selection_region;
     function<void(const Matrix4f&, const SelectionBox&,
         const Vector2i&, SelectionMode)> m_select_callback;
+    function<void(const Vector2f&)> m_update_incident_angle_callback;
 
     // global state for sample display
     int m_draw_flags;
