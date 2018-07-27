@@ -54,6 +54,7 @@ void DataSample::draw_gl(
         {
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_POLYGON_OFFSET_FILL);
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             glPolygonOffset(2.0, 2.0);
             m_shaders[MESH].bind();
             color_map->bind();
@@ -64,6 +65,7 @@ void DataSample::draw_gl(
             m_shaders[MESH].set_uniform("use_shadows", (bool)(flags & USES_SHADOWS));
             m_shaders[MESH].set_uniform("use_specular", (bool)(flags & USES_SPECULAR));
             m_shaders[MESH].draw_indexed(GL_TRIANGLES, 0, m_f.size());
+            // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glDisable(GL_POLYGON_OFFSET_FILL);
             glDisable(GL_DEPTH_TEST);
         }
@@ -137,8 +139,8 @@ void DataSample::link_data_to_shaders()
     m_shaders[MESH].bind();
     m_shaders[MESH].set_uniform("color_map", 0);
     m_shaders[MESH].upload_attrib("in_pos2d", (float*)m_v2d.data(), 2, m_v2d.size());
-    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
-    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().size());
+    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
+    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
     m_shaders[MESH].upload_indices((uint32_t*)m_f.data(), 3, m_f.size());
 
     m_shaders[PATH].bind();
@@ -157,8 +159,8 @@ void DataSample::toggle_log_view()
     m_display_as_log = !m_display_as_log;
 
     m_shaders[MESH].bind();
-    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().size());
-    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
+    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
+    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
 
     m_shaders[PATH].bind();
     m_shaders[PATH].share_attrib(m_shaders[MESH], "in_height");
@@ -166,7 +168,7 @@ void DataSample::toggle_log_view()
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
 
     if (has_selection()) {
-        update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2d, m_display_as_log ? m_lh : m_h);
+        update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_display_as_log ? m_lh : m_h);
         m_selection_axis.set_origin(selection_center());
     }
 }
@@ -176,21 +178,21 @@ void DataSample::update_point_selection()
     m_shaders[POINTS].bind();
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
-    update_selection_stats(m_selection_stats, m_selected_points, m_raw_points, m_v2d, m_display_as_log ? m_lh : m_h);
+    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_display_as_log ? m_lh : m_h);
     m_selection_axis.set_origin(selection_center());
 }
 
-void DataSample::set_wave_length_index(unsigned int displayed_wave_length)
+void DataSample::set_wave_length_index(size_t displayed_wave_length)
 {
-    displayed_wave_length = std::min(displayed_wave_length, static_cast<unsigned int>(m_h.size()-1));
+    displayed_wave_length = std::min(displayed_wave_length, m_raw_measurement.n_wave_lengths());
     if (m_wave_length_index == displayed_wave_length)
         return;
 
     m_wave_length_index = displayed_wave_length;
 
     m_shaders[MESH].bind();
-    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().size());
-    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().size());
+    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
+    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
 
     m_shaders[PATH].bind();
     m_shaders[PATH].share_attrib(m_shaders[MESH], "in_height");
@@ -233,22 +235,22 @@ void DataSample::move_selection_along_path(bool up)
 }
 void DataSample::delete_selected_points()
 {
-    tekari::delete_selected_points(m_selected_points, m_raw_points, m_v2d, m_selection_stats, m_metadata);
+    tekari::delete_selected_points(m_selected_points, m_raw_measurement, m_v2d, m_selection_stats, m_metadata);
     recompute_data();
     link_data_to_shaders();
 }
-unsigned int DataSample::count_selected_points() const
+size_t DataSample::count_selected_points() const
 {
     return tekari::count_selected_points(m_selected_points);
 }
 void DataSample::recompute_data()
 {
-    tekari::recompute_data(m_raw_points, m_points_stats, m_path_segments, m_f, m_v2d, m_h, m_lh, m_n, m_ln);
+    tekari::recompute_data(m_raw_measurement, m_points_stats, m_path_segments, m_f, m_v2d, m_h, m_lh, m_n, m_ln);
 }
 
 void DataSample::save(const string& path)
 {
-    save_data_sample(path, m_raw_points, m_metadata);
+    save_data_sample(path, m_raw_measurement, m_metadata);
 }
 
 TEKARI_NAMESPACE_END

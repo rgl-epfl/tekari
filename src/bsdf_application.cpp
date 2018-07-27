@@ -70,6 +70,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         const Vector2i& canvas_size, SelectionMode mode) {
         if (!m_selected_ds)
             return;
+
         
         if (selection_box.empty())
         {
@@ -303,7 +304,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         };
 
         GLFWimage icons[icon_paths.size()];
-        unsigned int i;
+        size_t i;
         for (i = 0; i < icon_paths.size(); i++)
         {
             int num_chanels;
@@ -318,7 +319,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         if (i == icon_paths.size())
             glfwSetWindowIcon(m_glfw_window, icon_paths.size(), icons);
 
-        for (unsigned int j = 0; j < i; j++)
+        for (size_t j = 0; j < i; j++)
         {
             stbi_image_free(icons[j].pixels);
         }
@@ -631,7 +632,11 @@ void BSDFApplication::update_layout()
 void BSDFApplication::open_data_sample_dialog()
 {
     m_thread_pool.add_task([this]() {
-        vector<string> data_sample_paths = nanogui::file_dialog({ { "txt",  "Data samples" } }, false, true);
+        vector<string> data_sample_paths = nanogui::file_dialog(
+            {
+                { "txt",  "Data samples" },
+                { "bsdf",  "Data samples" }
+            }, false, true);
         open_files(data_sample_paths);
         // Make sure we gain focus after seleting a file to be loaded.
         glfwFocusWindow(m_glfw_window);
@@ -715,7 +720,7 @@ void BSDFApplication::toggle_metadata_window()
         Window* window;
         if (m_selected_ds)
         {
-            window = new MetadataWindow(this,& m_selected_ds->metadata(), [this]() { toggle_metadata_window(); });
+            window = new MetadataWindow(this, &m_selected_ds->metadata(), [this]() { toggle_metadata_window(); });
         }
         else
         {
@@ -741,7 +746,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         new Label{ window, "Incident angle", "sans-bold"};
         m_incident_angle_slider = new Slider2D{ window };
         m_incident_angle_slider->set_value(curr_i_angle);
-        m_incident_angle_slider->set_callback([this](Vector2f value) {
+        m_incident_angle_slider->set_final_callback([this](Vector2f value) {
             m_phi_float_box->set_value(value[0]);
             m_theta_float_box->set_value(value[1]);
 
@@ -775,8 +780,11 @@ void BSDFApplication::toggle_data_sample_sliders_window()
 
         new Label{window, "Wave length"};
         m_wave_length_slider = new Slider{ window };
-        m_wave_length_slider->set_callback([](float value) {
-
+        m_wave_length_slider->set_range(make_pair(0, m_selected_ds->n_wave_lengths()-1));
+        m_wave_length_slider->set_callback([this](float value) {
+            int int_val = static_cast<int>(round(value));
+            m_wave_length_slider->set_value(int_val);
+            m_selected_ds->set_wave_length_index(int_val);
         });
 
         return window;
@@ -986,15 +994,10 @@ void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
     string clean_name = data_sample->name();
     replace(clean_name.begin(), clean_name.end(), '_', ' ');
     auto data_sample_button = new DataSampleButton{ m_data_sample_button_container, clean_name,
-        data_sample->is_spectral(), data_sample->max_wave_length_index() };
+        data_sample->is_spectral()};
     data_sample_button->set_fixed_height(30);
 
     data_sample_button->set_callback([this, data_sample]() { select_data_sample(data_sample); });
-
-    data_sample_button->set_wave_length_slider_callback([this, data_sample](unsigned int wave_length_index) {
-        data_sample->set_wave_length_index(wave_length_index);
-        reprint_footer();
-    });
 
     data_sample_button->set_delete_callback([this, data_sample]() {
         if (data_sample->dirty())

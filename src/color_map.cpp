@@ -51,12 +51,12 @@ ColorMap::ColorMap(const string& name, const uint8_t* color_map_str, uint32_t co
     stbi_image_free(data);
 }
 
-void ColorMap::bind(unsigned int target)
+void ColorMap::bind(size_t target)
 {
     glActiveTexture(GL_TEXTURE0 + target);
     glBindTexture(GL_TEXTURE_2D, m_render_id);
 }
-void ColorMap::unbind(unsigned int target)
+void ColorMap::unbind(size_t target)
 {
     glActiveTexture(GL_TEXTURE0 + target);
     glBindTexture(GL_TEXTURE_2D, 0);

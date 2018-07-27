@@ -17,10 +17,10 @@ RadialGrid::RadialGrid()
     vector<Vector2f> vertices(  CIRCLE_COUNT * VERTEX_PER_CIRCLE_COUNT +
                                 LINE_COUNT * VERTEX_PER_LINE_COUNT);
 
-    for (unsigned int i = 0; i < CIRCLE_COUNT; ++i)
+    for (size_t i = 0; i < CIRCLE_COUNT; ++i)
     {
         float radius = (float)(i + 1) / CIRCLE_COUNT;
-        for (unsigned int j = 0; j < VERTEX_PER_CIRCLE_COUNT; ++j)
+        for (size_t j = 0; j < VERTEX_PER_CIRCLE_COUNT; ++j)
         {
             Vector2f point{
                 radius* (float)cos(2 * M_PI * j / VERTEX_PER_CIRCLE_COUNT),   // x coord
@@ -38,9 +38,9 @@ RadialGrid::RadialGrid()
         }
     }
 
-    for (unsigned int i = 0; i < LINE_COUNT; ++i)
+    for (size_t i = 0; i < LINE_COUNT; ++i)
     {
-        unsigned int index = CIRCLE_COUNT* VERTEX_PER_CIRCLE_COUNT + i* VERTEX_PER_LINE_COUNT;
+        size_t index = CIRCLE_COUNT* VERTEX_PER_CIRCLE_COUNT + i* VERTEX_PER_LINE_COUNT;
         double angle = M_PI * i / LINE_COUNT;
         float cosa = static_cast<float>(cos(angle));
         float sina = static_cast<float>(sin(angle));
@@ -80,7 +80,7 @@ void RadialGrid::draw_gl(
         {
             glDepthFunc(j % 2 == 0 ? GL_LESS : GL_GREATER);
             m_shader.set_uniform("in_color", j % 2 == 0 ? m_color : m_color * 0.6f);
-            for (unsigned int i = 0; i < CIRCLE_COUNT; ++i)
+            for (size_t i = 0; i < CIRCLE_COUNT; ++i)
             {
                 m_shader.draw_array(GL_LINE_LOOP, i*VERTEX_PER_CIRCLE_COUNT, VERTEX_PER_CIRCLE_COUNT);
             }

@@ -8,7 +8,7 @@
 #include <mutex>
 #include <tekari/shared_queue.h>
 
-template<unsigned int N = 10>
+template<size_t N = 10>
 class ThreadPool
 {
 public:
@@ -16,7 +16,7 @@ public:
     ThreadPool()
     {
 #if !defined(__EMSCRIPTEN__)
-        for (unsigned int i = 0; i < N; i++)
+        for (size_t i = 0; i < N; i++)
         {
             m_threads.emplace_back([this](void) {
                 while (!m_should_terminate) {
@@ -75,7 +75,7 @@ public:
 #endif
     }
 
-    constexpr unsigned int size() const { return N; }
+    constexpr size_t size() const { return N; }
 
 private:
 

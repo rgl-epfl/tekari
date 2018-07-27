@@ -200,9 +200,11 @@ add_executable(tekari
   include/tekari/data_io.h                      src/data_io.cpp
   include/tekari/arrow.h                        src/arrow.cpp
   include/tekari/slider_2d.h                    src/slider_2d.cpp
-  include/tekari/brdf.h                         src/brdf.cpp
-  include/tekari/bsdf_data_sample.h
+  include/tekari/powitacq.h                     include/tekari/powitacq.inl
+  include/tekari/bsdf_data_sample.h             src/bsdf_data_sample.cpp
   include/tekari/standard_data_sample.h
+  include/tekari/matrix_xx.h
+  include/tekari/raw_measurement.h
   include/tekari/light_theme.h
   include/tekari/thread_pool.h
   include/tekari/shared_queue.h
@@ -222,7 +224,6 @@ if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Emscripten")
 endif()
 
 target_link_libraries(tekari nanogui triangle ${NANOGUI_EXTRA_LIBS})
-target_link_libraries(tests nanogui triangle ${NANOGUI_EXTRA_LIBS})
 
 set_target_properties(tekari PROPERTIES OUTPUT_NAME "tekari")
 set_target_properties(tests PROPERTIES OUTPUT_NAME "tests")

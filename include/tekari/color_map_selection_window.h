@@ -31,7 +31,7 @@ private:
     function<void(void)> m_close_callback;
     function<void(std::shared_ptr<ColorMap>)> m_selection_callback;
 
-    unsigned int m_selected_color_map_index;
+    size_t m_selected_color_map_index;
     vector<ColorMapButton*> m_color_map_buttons;
 
     nanogui::Button* m_close_button;

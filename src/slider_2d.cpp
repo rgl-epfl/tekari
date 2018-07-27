@@ -16,10 +16,10 @@ Vector2i Slider2D::preferred_size(NVGcontext *ctx) const
 }
 bool Slider2D::mouse_drag_event(const Vector2i &p, const Vector2i &rel, int button, int modifiers)
 {
-	if (!m_enabled)
+    if (!m_enabled)
         return false;
 
-	float kr = std::max(std::min(m_size.x(), m_size.y()) * 0.05f, 3.0f), kshadow = 3;
+    float kr = std::max(std::min(m_size.x(), m_size.y()) * 0.05f, 3.0f), kshadow = 3;
     Vector2f start = Vector2f(m_pos) + kr + kshadow;
     Vector2f size = Vector2f(m_size) - 2 * (kr + kshadow);
 
@@ -35,7 +35,7 @@ bool Slider2D::mouse_button_event(const Vector2i &p, int button, bool down, int 
     if (!m_enabled)
         return false;
 
-	float kr = std::max(std::min(m_size.x(), m_size.y()) * 0.05f, 3.0f), kshadow = 3;
+    float kr = std::max(std::min(m_size.x(), m_size.y()) * 0.05f, 3.0f), kshadow = 3;
     Vector2f start = Vector2f(m_pos) + kr + kshadow;
     Vector2f size = Vector2f(m_size) - 2 * (kr + kshadow);
 
@@ -50,8 +50,8 @@ bool Slider2D::mouse_button_event(const Vector2i &p, int button, bool down, int 
 }
 void Slider2D::draw(NVGcontext* ctx)
 {
-	float kr = std::max(std::min(m_size.x(), m_size.y()) * 0.05f, 3.0f), kshadow = 3;;
-	Vector2f center = Vector2f(m_pos) + Vector2f(m_size) * 0.5f;
+    float kr = std::max(std::min(m_size.x(), m_size.y()) * 0.05f, 3.0f), kshadow = 3;;
+    // Vector2f center = Vector2f(m_pos) + Vector2f(m_size) * 0.5f;
 
     Vector2f start = Vector2f(m_pos) + kr + kshadow;
     Vector2f size = Vector2f(m_size) - 2 * (kr + kshadow);
@@ -72,12 +72,12 @@ void Slider2D::draw(NVGcontext* ctx)
     nvgBeginPath(ctx);
     for (int i = 0; i <= 10; ++i)
     {
-    	Vector2f offset = start + i * div;
-    	nvgMoveTo(ctx, start.x(), offset.y());
-    	nvgLineTo(ctx, start.x() + size.x(), offset.y());
+        Vector2f offset = start + i * div;
+        nvgMoveTo(ctx, start.x(), offset.y());
+        nvgLineTo(ctx, start.x() + size.x(), offset.y());
 
-    	nvgMoveTo(ctx, offset.x(), start.y());
-    	nvgLineTo(ctx, offset.x(), start.y() + size.y());
+        nvgMoveTo(ctx, offset.x(), start.y());
+        nvgLineTo(ctx, offset.x(), start.y() + size.y());
     }
     nvgStrokeWidth(ctx, 0.5f);
     nvgStrokeColor(ctx, Color(255, 100));

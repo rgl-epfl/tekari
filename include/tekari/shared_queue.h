@@ -52,5 +52,5 @@ private:
     std::queue<T> m_raw_queue;
     std::mutex m_queue_mutex;
 
-    unsigned int m_size = 0;
+    size_t m_size = 0;
 };

@@ -10,7 +10,8 @@ int main(int argc, char** argv) {
         data_sample_paths.push_back(argv[i]);
     }
     // for debugging purposes
-    data_sample_paths.push_back(DATA_SAMPLES_PATH "iridescent_paper.txt");
+    // data_sample_paths.push_back(DATA_SAMPLES_PATH "gold_satin_spec.bsdf");
+    // data_sample_paths.push_back(DATA_SAMPLES_PATH "iridescent_paper.txt");
 
     // nanogui
     try {

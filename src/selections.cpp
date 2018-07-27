@@ -20,7 +20,7 @@ void set_all_points(
 
 void select_points(
     const Matrix2Xf& V2D,
-    const VectorXf& H,
+    const MatrixXXf::Row& H,
     VectorXf& selected_points,
     const Matrix4f & mvp,
     const SelectionBox& selection_box,
@@ -32,7 +32,7 @@ void select_points(
         [&](const tbb::blocked_range<uint32_t>& range) {
         for (uint32_t i = range.begin(); i < range.end(); ++i)
         {
-            Vector3f point = get3DPoint(V2D, H, i);
+            Vector3f point = get_3d_point(V2D, H, i);
             Vector4f proj_point = project_on_screen(point, canvas_size, mvp);
 
             bool in_selection = selection_box.contains(Vector2i{ proj_point[0], proj_point[1] });
@@ -51,7 +51,7 @@ void select_points(
 
 void select_closest_point(
     const Matrix2Xf& V2D,
-    const VectorXf& H,
+    const MatrixXXf::Row& H,
     VectorXf& selected_points,
     const Matrix4f& mvp,
     const Vector2i & mouse_pos,
@@ -67,7 +67,7 @@ void select_closest_point(
         uint32_t thread_id = range.begin() / GRAIN_SIZE;
         for (uint32_t i = range.begin(); i < range.end(); ++i)
         {
-            Vector3f point = get3DPoint(V2D, H, i);
+            Vector3f point = get_3d_point(V2D, H, i);
             Vector4f proj_point = project_on_screen(point, canvas_size, mvp);
 
             float dist_sqr = enoki::squared_norm(Vector2f{ proj_point[0] - mouse_pos[0], proj_point[1] - mouse_pos[1] });
@@ -105,7 +105,7 @@ void select_extreme_point(
     const PointsStats& points_info,
     const PointsStats& selection_info,
     VectorXf& selected_points,
-    unsigned int wave_length_index,
+    size_t wave_length_index,
     bool highest
 )
 {
@@ -161,7 +161,7 @@ void move_selection_along_path(bool up, VectorXf& selected_points)
 
 void delete_selected_points(
     VectorXf& selected_points,
-    MatrixXXf& raw_points,
+    RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     PointsStats& selection_info,
     Metadata& metadata
@@ -179,7 +179,7 @@ void delete_selected_points(
             {
                 // move undeleted point to last valid position
                 V2D[last_valid] = V2D[i];
-                raw_points[last_valid] = std::move(raw_points[i]);
+                raw_measurement[last_valid] = raw_measurement[i];
             }
             ++last_valid;
         }
@@ -187,7 +187,7 @@ void delete_selected_points(
 
     // resize vectors
     V2D.resize(last_valid);
-    raw_points.resize(last_valid);
+    raw_measurement.resize(last_valid, raw_measurement.n_wave_lengths());
     selected_points.resize(last_valid);
     set_all_points(selected_points, NOT_SELECTED_FLAG);
 
@@ -196,9 +196,9 @@ void delete_selected_points(
     END_PROFILING();
 }
 
-unsigned int count_selected_points(const VectorXf& selected_points)
+size_t count_selected_points(const VectorXf& selected_points)
 {
-    unsigned int count = 0;
+    size_t count = 0;
     START_PROFILING("Counting selected points");
     for (Index i = 0; i < selected_points.size(); ++i) {
         count += SELECTED(selected_points[i]);

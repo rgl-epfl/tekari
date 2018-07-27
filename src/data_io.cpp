@@ -18,26 +18,20 @@ struct Vector2f_hash : std::unary_function<Vector2f, size_t>
 
 void load_standard_data_sample(
     std::ifstream& file,
-    MatrixXXf& raw_points,
+    RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     Metadata& metadata
 );
 void load_spectral_data_sample(
     std::ifstream& file,
-    MatrixXXf& raw_points,
-    Matrix2Xf& V2D,
-    Metadata& metadata
-);
-void load_bsdf_data_sample(
-    std::ifstream& file,
-    MatrixXXf& raw_points,
+    RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     Metadata& metadata
 );
 
 void load_data_sample(
     const string& file_name,
-    MatrixXXf& raw_points,
+    RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     VectorXf& selected_points,
     Metadata& metadata
@@ -49,7 +43,7 @@ void load_data_sample(
     if (!file)
         throw std::runtime_error("Unable to open file " + file_name);
 
-    unsigned int line_number = 0;
+    size_t line_number = 0;
     for (string line; getline(file, line); )
     {
         ++line_number;
@@ -69,11 +63,11 @@ void load_data_sample(
             metadata.init_infos();
             if (metadata.is_spectral())
             {
-                load_spectral_data_sample(file, raw_points, V2D, metadata);
+                load_spectral_data_sample(file, raw_measurement, V2D, metadata);
             }
             else
             {
-                load_standard_data_sample(file, raw_points, V2D, metadata);
+                load_standard_data_sample(file, raw_measurement, V2D, metadata);
             }
 
             selected_points.assign(metadata.points_in_file(), NOT_SELECTED_FLAG);
@@ -85,7 +79,7 @@ void load_data_sample(
 
 void load_standard_data_sample(
     std::ifstream& file,
-    MatrixXXf& raw_points,
+    RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     Metadata& metadata
 )
@@ -93,14 +87,10 @@ void load_standard_data_sample(
     std::unordered_set<Vector2f, Vector2f_hash> read_vertices;
 
     V2D.resize(metadata.points_in_file());
-    raw_points.resize(metadata.points_in_file());
-    for (Index i = 0; i < raw_points.size(); ++i)
-    {
-        raw_points[i].resize(3);
-    }
+    raw_measurement.resize(metadata.points_in_file(), 0);
 
-    unsigned int line_number = 0;
-    unsigned int n_points = 0;
+    size_t line_number = 0;
+    size_t n_points = 0;
     for (string line; getline(file, line); )
     {
         ++line_number;
@@ -112,8 +102,8 @@ void load_standard_data_sample(
         }
         else
         {
-            float theta, phi, intensity;
-            if (sscanf(line.c_str(), "%f %f %f", &theta, &phi, &intensity) != 3)
+            float theta, phi, luminance;
+            if (sscanf(line.c_str(), "%f %f %f", &theta, &phi, &luminance) != 3)
             {
                 throw std::runtime_error("Error reading file");
             }
@@ -126,9 +116,9 @@ void load_standard_data_sample(
             }
             read_vertices.insert(p2d);
             Vector2f transformed_point = hemisphere_to_disk(p2d);
-            raw_points[n_points][0] = theta;
-            raw_points[n_points][1] = phi;
-            raw_points[n_points][2] = intensity;
+            raw_measurement[n_points].set_theta(theta);
+            raw_measurement[n_points].set_phi(phi);
+            raw_measurement[n_points].set_luminance(luminance);
             V2D[n_points] = transformed_point;
             ++n_points;
         }
@@ -136,17 +126,19 @@ void load_standard_data_sample(
 }
 void load_spectral_data_sample(
     std::ifstream& file,
-    MatrixXXf& raw_points,
+    RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     Metadata& metadata
 )
 {
-    int n_data_points_per_loop = metadata.data_points_per_loop();
+    int n_wave_lengths = metadata.data_points_per_loop();
 
     std::unordered_set<Vector2f, Vector2f_hash> read_vertices;
+    vector<vector<float>> raw_m;
 
-    unsigned int line_number = 0;
-    unsigned int n_points = 0;
+
+    size_t line_number = 0;
+    size_t n_points = 0;
     for (string line; getline(file, line); )
     {
         ++line_number;
@@ -169,81 +161,30 @@ void load_spectral_data_sample(
             read_vertices.insert(angles);
 
             V2D.push_back(hemisphere_to_disk(angles));
-            raw_points.push_back(vector<float>{});
-            raw_points[n_points].resize(n_data_points_per_loop + 2, 0);
-            raw_points[n_points][0] = angles[0];
-            raw_points[n_points][1] = angles[1];
+            raw_m.push_back(vector<float>{});
+            raw_m[n_points].resize(n_wave_lengths + 3, 0);
+            raw_m[n_points][0] = angles[0];
+            raw_m[n_points][1] = angles[1];
 
-            for (int i = 0; i < n_data_points_per_loop; ++i)
+            for (int i = 0; i < n_wave_lengths; ++i)
             {
-                line_stream >> raw_points[n_points][i+2];
+                line_stream >> raw_m[n_points][i+3];
             }
             ++n_points;
         }
     }
     metadata.set_points_in_file(n_points);
-}
 
-void load_bsdf_data_sample(
-    const string& file_name,
-    MatrixXXf& raw_points,
-    Matrix2Xf& V2D,
-    Metadata& metadata
-)
-{
-//     FILE *file = fopen(file_name, "rb");
-
-//     if (file == nullptr)
-//         throw std::runtime_error("Unable to open file " + file_name);
-
-// //
-//     if (size() < 12 + 2 + 4)
-//         Throw("Invalid tensor file: too small, truncated?");
-// //
-
-//     uint8_t header[12], version[2];
-//     uint32_t n_fields;
-//     fread(header, sizeof(uint8_t), 12, file);
-//     fread(version, sizeof(uint8_t), 2, file);
-//     fread(&n_fields, sizeof(n_fields), 1, file);
-
-//     if (memcmp(header, "tensor_file", 12) != 0)
-//         Throw("Invalid tensor file: invalid header.");
-//     else if (version[0] != 0 && version[1] != 0)
-//         Throw("Invalid tensor file: unknown file version.");
-
-//     for (uint32_t i = 0; i < n_fields; ++i) {
-//         uint8_t dtype;
-//         uint16_t name_length, ndim;
-//         uint64_t offset;
-
-//         fread(&name_length, 2, 1, file);
-//         std::string name(name_length, '\0');
-//         fread(name.data(), 1, name_length, file);
-//         fread(&ndim, 2, 1, file);
-//         fread(&dtype, 1, 1, file);
-//         fread(&offset, 4, 1, file);
-//         if (dtype == Struct::EInvalid || dtype > Struct::EFloat64)
-//             Throw("Invalid tensor file: unknown type.");
-
-//         std::vector<size_t> shape(ndim);
-//         for (size_t j = 0; j < (size_t) ndim; ++j) {
-//             uint64_t size_value;
-//             fread(&size_value, sizeof(size_value), 1, file);
-//             shape[j] = (size_t) size_value;
-//         }
-
-//         m_fields[name] =
-//             Field{ (Struct::EType) dtype, static_cast<size_t>(offset), shape,
-//                    (const uint8_t *) data() + offset };
-//     }
-
-    // load actual tensors
+    raw_measurement.resize(n_points, n_wave_lengths);
+    for (size_t i = 0; i < n_points; ++i)
+    {
+        memcpy(raw_measurement[i].data(), raw_m[i].data(), n_wave_lengths + 3);
+    }
 }
 
 void save_data_sample(
     const string& path,
-    const MatrixXXf& raw_points,
+    const RawMeasurement& raw_measurement,
     const Metadata& metadata
 )
 {
@@ -258,11 +199,12 @@ void save_data_sample(
         fprintf(dataset_file, "%s\n", line.c_str());
 
     //!feof(dataset_file) && !ferror(dataset_file))
-    for (Index i = 0; i < raw_points.size(); ++i)
+    for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
-        for (Index j = 0; j < raw_points[i].size(); ++j)
+        RawMeasurement::SamplePoint sample_point = raw_measurement[i];
+        for (Index j = 0; j < raw_measurement.n_wave_lengths() + 3; ++j)
         {
-            fprintf(dataset_file, "%lf ", raw_points[i][j]);
+            fprintf(dataset_file, "%lf ", sample_point[j]);
         }
         fprintf(dataset_file, "\n");
     }

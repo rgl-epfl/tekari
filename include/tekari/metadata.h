@@ -16,6 +16,7 @@ public:
     const Vector2f& incident_angle() const { return m_incident_angle; }
     void set_incident_angle(const Vector2f& i) { m_incident_angle = i; }
     const string& sample_name() const { return m_sample_name; }
+    void set_sample_name(const string& name) { m_sample_name = name; }
     int points_in_file() const { return m_points_in_file; }
     int data_points_per_loop() const { return m_data_points_per_loop; }
     void set_points_in_file(int points_in_file);

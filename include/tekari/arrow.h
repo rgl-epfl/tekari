@@ -9,22 +9,22 @@ class Arrow
 {
 public:
 
-	static Arrow& instance();
+    static Arrow& instance();
 
-	~Arrow();
+    ~Arrow();
 
-	void draw_gl(	const Vector3f& origin,
-					const Vector3f& direction,
-			  		float scale,
-			  		const Matrix4f& vp,
-			  		const Color& color);
-	void load_shaders();
+    void draw_gl(   const Vector3f& origin,
+                    const Vector3f& direction,
+                    float scale,
+                    const Matrix4f& vp,
+                    const Color& color);
+    void load_shaders();
 
 private:
-	Arrow()	{}
+    Arrow()    {}
 
-	nanogui::GLShader m_cone_shader;
-	nanogui::GLShader m_cylinder_shader;
+    nanogui::GLShader m_cone_shader;
+    nanogui::GLShader m_cylinder_shader;
 };
 
 TEKARI_NAMESPACE_END

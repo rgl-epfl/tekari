@@ -16,26 +16,26 @@ TEKARI_NAMESPACE_BEGIN
 void compute_normals(
     const Matrix3Xu& F,
     const Matrix2Xf& V2D,
-    const vector<VectorXf>& H,
-    const vector<VectorXf>& LH,
-    vector<Matrix4Xf>& N,
-    vector<Matrix4Xf>& LN
+    const MatrixXXf& H,
+    const MatrixXXf& LH,
+    Matrix4XXf& N,
+    Matrix4XXf& LN
 );
 
-void compute_triangle_normal(
-    const Matrix2Xf& V2D,
-    const VectorXf& H,
-    Matrix4Xf& N,
-    unsigned int i0,
-    unsigned int i1,
-    unsigned int i2
-);
+// inline void compute_triangle_normal(
+//     const Matrix2Xf& V2D,
+//     const VectorXf& H,
+//     Matrix4XXf::Row& N,
+//     size_t i0,
+//     size_t i1,
+//     size_t i2
+// );
 
 void compute_normalized_heights(
-    const MatrixXXf& raw_points,
+    const RawMeasurement& raw_measurement,
     PointsStats& points_stats,
-    vector<VectorXf>& H,
-    vector<VectorXf>& LH
+    MatrixXXf& H,
+    MatrixXXf& LH
 );
 
 void triangulate_data(
@@ -49,49 +49,74 @@ void compute_path_segments(
 );
 
 void recompute_data(
-    const MatrixXXf& raw_points,
+    const RawMeasurement& raw_measurement,
     PointsStats& points_stats,
     VectorXu& path_segments,
     Matrix3Xu& F,
     Matrix2Xf& V2D,
-    vector<VectorXf>& H, vector<VectorXf>& LH,
-    vector<Matrix4Xf>& N, vector<Matrix4Xf>& LN
+    MatrixXXf& H, MatrixXXf& LH,
+    Matrix4XXf& N, Matrix4XXf& LN
 )
 {
-    compute_min_max_intensities(points_stats, raw_points);
-    compute_normalized_heights(raw_points, points_stats, H, LH);
+    compute_min_max_intensities(points_stats, raw_measurement);
+    compute_normalized_heights(raw_measurement, points_stats, H, LH);
     triangulate_data(F, V2D);
     compute_path_segments(path_segments, V2D);
     compute_normals(F, V2D, H, LH, N, LN);
-    update_points_stats(points_stats, raw_points, V2D, H);
+    update_points_stats(points_stats, raw_measurement, V2D, H);
 }
 
 void compute_normals(
     const Matrix3Xu& F,
     const Matrix2Xf& V2D,
-    const vector<VectorXf>& H,
-    const vector<VectorXf>& LH,
-    vector<Matrix4Xf>& N,
-    vector<Matrix4Xf>& LN
+    const MatrixXXf& H,
+    const MatrixXXf& LH,
+    Matrix4XXf& N,
+    Matrix4XXf& LN
 )
 {
     START_PROFILING("Computing normals");
-    N.resize(H.size());
-    LN.resize(LH.size());
+    N.assign (H.n_rows(),  H.n_cols(),  Vector4f(0));
+    LN.assign(LH.n_rows(), LH.n_cols(), Vector4f(0));
 
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N.size(), 1),
         [&](const tbb::blocked_range<uint32_t>& range) {
             for (uint32_t j = range.begin(); j != range.end(); ++j) {
-                N[j].assign(V2D.size(), 0);
-                LN[j].assign(V2D.size(), 0);
-
-                for (Index i = 0; i < F.size(); ++i)
+                for (Index f = 0; f < F.size(); ++f)
                 {
-                    compute_triangle_normal(V2D,  H[j],  N[j], F[i][0], F[i][1], F[i][2]);
-                    compute_triangle_normal(V2D, LH[j], LN[j], F[i][0], F[i][1], F[i][2]);
+                    Vector3f fn = Vector3f(0.0f);
+                    Vector3f lfn = Vector3f(0.0f);
+                    for (int i = 0; i < 3; ++i) {
+                        Vector3f v0 = get_3d_point(V2D, H[j], F[f][i]),
+                                 v1 = get_3d_point(V2D, H[j], F[f][(i+1)%3]),
+                                 v2 = get_3d_point(V2D, H[j], F[f][(i+2)%3]),
+                                 d0 = v1-v0,
+                                 d1 = v2-v0;
+
+                        if (i == 0) {
+                            fn = enoki::normalize(enoki::cross(d0, d1));
+                        }
+                        float angle = fast_acos(enoki::dot(d0, d1) / std::sqrt(enoki::squared_norm(d0) * enoki::squared_norm(d1)));
+                        N[j][F[f][i]] += enoki::concat(fn*angle, 0.0f);
+
+                        // same for log mesh
+
+                        v0 = get_3d_point(V2D, LH[j], F[f][i]);
+                        v1 = get_3d_point(V2D, LH[j], F[f][(i+1)%3]);
+                        v2 = get_3d_point(V2D, LH[j], F[f][(i+2)%3]);
+                        d0 = v1-v0;
+                        d1 = v2-v0;
+
+                        if (i == 0) {
+                            lfn = enoki::normalize(enoki::cross(d0, d1));
+                        }
+                        angle = fast_acos(enoki::dot(d0, d1) / std::sqrt(enoki::squared_norm(d0) * enoki::squared_norm(d1)));
+                        LN[j][F[f][i]] += enoki::concat(lfn*angle, 0.0f);
+                    }
+
                 }
 
-                tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N[j].size(), GRAIN_SIZE),
+                tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N.n_cols(), GRAIN_SIZE),
                     [&](const tbb::blocked_range<uint32_t>& range) {
                         for (uint32_t i = range.begin(); i != range.end(); ++i) {
                             N[j][i] = enoki::normalize(N[j][i]);
@@ -105,48 +130,48 @@ void compute_normals(
     END_PROFILING();
 }
 
-void compute_triangle_normal(
-    const Matrix2Xf& V2D,
-    const VectorXf& H,
-    Matrix4Xf& N,
-    unsigned int i0,
-    unsigned int i1,
-    unsigned int i2
-)
-{
-    using namespace enoki;
+// inline void compute_triangle_normal(
+//     const Matrix2Xf& V2D,
+//     const MatrixXXf::Row& H,
+//     Matrix4Xf& N,
+//     size_t i0,
+//     size_t i1,
+//     size_t i2
+// )
+// {
+//     using namespace enoki;
 
-    const Vector3f e01 = normalize(get3DPoint(V2D, H, i1) - get3DPoint(V2D, H, i0));
-    const Vector3f e12 = normalize(get3DPoint(V2D, H, i2) - get3DPoint(V2D, H, i1));
-    const Vector3f e20 = normalize(get3DPoint(V2D, H, i0) - get3DPoint(V2D, H, i2));
+//     const Vector3f e01 = normalize(get_3d_point(V2D, H, i1) - get_3d_point(V2D, H, i0));
+//     const Vector3f e12 = normalize(get_3d_point(V2D, H, i2) - get_3d_point(V2D, H, i1));
+//     const Vector3f e20 = normalize(get_3d_point(V2D, H, i0) - get_3d_point(V2D, H, i2));
 
-    Vector3f face_normal = normalize(cross(e12, -e01));
+//     Vector3f face_normal = normalize(cross(e12, -e01));
 
-    Vector3f weights = Vector3f( dot(e01, -e20),
-                                 dot(e12, -e01),
-                                 dot(e20, -e12));
-    weights = acos(max(-1.0f, (min(1.0f, weights)))); 
+//     Vector3f weights = Vector3f( dot(e01, -e20),
+//                                  dot(e12, -e01),
+//                                  dot(e20, -e12));
+//     weights = acos(max(-1.0f, (min(1.0f, weights)))); 
 
-    N[i0] += weights[0] * concat(face_normal, 0.0f);
-    N[i1] += weights[1] * concat(face_normal, 0.0f);
-    N[i2] += weights[2] * concat(face_normal, 0.0f);
-}
+//     N[i0] += weights[0] * concat(face_normal, 0.0f);
+//     N[i1] += weights[1] * concat(face_normal, 0.0f);
+//     N[i2] += weights[2] * concat(face_normal, 0.0f);
+// }
 
 void compute_normalized_heights(
-    const MatrixXXf& raw_points,
+    const RawMeasurement& raw_measurement,
     PointsStats& points_stats,
-    vector<VectorXf>& H, vector<VectorXf>& LH
+    MatrixXXf& H, MatrixXXf& LH
 )
 {
     START_PROFILING("Computing normalized heights");
 
-    Index wave_length_count = raw_points[0].size() - 2;     // don't take into account theta and phi angles
-    Index points_count = raw_points.size();
+    Index n_intensities = raw_measurement.n_wave_lengths() + 1;
+    Index n_sample_points = raw_measurement.n_sample_points();
 
     // compute overall min/max intensity
     float min_intensity = std::numeric_limits<float>::max();
     float max_intensity = std::numeric_limits<float>::min();
-    for (size_t j = 0; j < wave_length_count; ++j)
+    for (size_t j = 0; j < n_intensities; ++j)
     {
         min_intensity = std::min(min_intensity, points_stats.min_intensity(j));
         max_intensity = std::max(max_intensity, points_stats.max_intensity(j));
@@ -156,21 +181,18 @@ void compute_normalized_heights(
     float min_log_intensity = log(min_intensity + correction_factor);
     float max_log_intensity = log(max_intensity + correction_factor);
 
-    H.resize(wave_length_count);
-    LH.resize(wave_length_count);
-    for (size_t j = 0; j < wave_length_count; ++j)
+    H.resize(n_sample_points, n_intensities);
+    LH.resize(n_sample_points, n_intensities);
+    for (size_t j = 0; j < n_intensities; ++j)
     {
-        H[j].resize(points_count);
-        LH[j].resize(points_count);
-
         // normalize intensities
-        tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)points_count, GRAIN_SIZE),
+        tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)n_sample_points, GRAIN_SIZE),
             [&](const tbb::blocked_range<uint32_t>& range)
         {
             for (uint32_t i = range.begin(); i < range.end(); ++i)
             {
-                H[j][i] = (raw_points[i][2 + j] - min_intensity) / (max_intensity - min_intensity);
-                LH[j][i] = (log(raw_points[i][2 + j] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+                H[j][i] = (raw_measurement[i].intensity(j) - min_intensity) / (max_intensity - min_intensity);
+                LH[j][i] = (log(raw_measurement[i].intensity(j) + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
             }
         }
         );
@@ -188,6 +210,11 @@ void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
 
     in.pointlist = (float*)V2D.data();
     in.numberofpoints = V2D.size();
+
+    // for(int i = 0; i < V2D.size(); ++i)
+    // {
+    //     cout << V2D[i] << endl;
+    // }
 
     char cmds[4] = {'z', 'Q', 'N', '\0'};
     triangulate(cmds, &in, &out, NULL);

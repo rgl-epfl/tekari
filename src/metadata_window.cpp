@@ -32,6 +32,7 @@ MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, functio
     container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 15, 2 });
 
     auto raw_meta = metadata->raw_metadata();
+    // Log(Info, "%d\n", raw_meta.size());
     for (const string& line : raw_meta) {
         auto pos = line.find_first_of("\t ");
         if (pos == string::npos)

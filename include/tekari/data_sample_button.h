@@ -9,7 +9,7 @@ TEKARI_NAMESPACE_BEGIN
 class DataSampleButton : public nanogui::Widget
 {
 public:
-    DataSampleButton(nanogui::Widget* parent, const string& label, bool is_spectral, unsigned int max_wave_length_index);
+    DataSampleButton(nanogui::Widget* parent, const string& label, bool is_spectral);
 
     virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
     virtual bool mouse_enter_event(const Vector2i& p, bool enter) override;
@@ -23,10 +23,9 @@ public:
     void set_selected(bool selected) { m_selected = selected; }
     void set_dirty(bool dirty) { m_dirty = dirty; }
 
-    void set_callback                    (function<void(void)> callback)         { m_callback = callback; }
-    void set_delete_callback                (function<void(void)> callback)         { m_delete_callback = callback; }
-    void set_toggle_view_callback            (function<void(bool)> callback)         { m_toggle_view_callback = callback; }
-    void set_wave_length_slider_callback    (function<void(unsigned int)> callback) { m_wave_length_slider_callback = callback; }
+    void set_callback             (function<void(void)> callback)         { m_callback = callback; }
+    void set_delete_callback      (function<void(void)> callback)         { m_delete_callback = callback; }
+    void set_toggle_view_callback (function<void(bool)> callback)         { m_toggle_view_callback = callback; }
 
     void set_display_as_log_callback(function<void(bool)> callback);
     void set_view_toggles_callback(function<void(bool)> callback);
@@ -63,7 +62,6 @@ private:
     function<void(void)> m_callback;
     function<void(bool)> m_toggle_view_callback;
     function<void(void)> m_delete_callback;
-    function<void(unsigned int)> m_wave_length_slider_callback;
 
     //std::shared_ptr<DataSample> m_data_sample;
     nanogui::Popup* m_popup;

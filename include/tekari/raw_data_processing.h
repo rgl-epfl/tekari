@@ -1,18 +1,19 @@
 #pragma once
 
 #include <tekari/common.h>
+#include <tekari/raw_measurement.h>
 #include <tekari/points_stats.h>
 
 TEKARI_NAMESPACE_BEGIN
 
 extern void recompute_data(
-    const MatrixXXf& raw_points,
+    const RawMeasurement& raw_measurement,
     PointsStats& points_stats,
     VectorXu& path_segments,
     Matrix3Xu& F,
     Matrix2Xf& V2D,
-    vector<VectorXf>& H, vector<VectorXf>& LH,
-    vector<Matrix4Xf>& N, vector<Matrix4Xf>& LN
+    MatrixXXf& H, MatrixXXf& LH,
+    Matrix4XXf& N, Matrix4XXf& LN
 );
 
 

@@ -2,6 +2,7 @@
 
 #include <nanogui/opengl.h>
 #include <tekari/points_stats.h>
+#include <tekari/raw_measurement.h>
 #include <tekari/metadata.h>
 
 #define NOT_SELECTED_FLAG 0.0f  // arbitrary zero value
@@ -33,7 +34,7 @@ struct SelectionBox
 
 extern void select_points(
     const Matrix2Xf& V2D,
-    const VectorXf& H,
+    const MatrixXXf::Row& H,
     VectorXf& selected_points,
     const Matrix4f& mvp,
     const SelectionBox& selection_box,
@@ -43,7 +44,7 @@ extern void select_points(
 
 extern void select_closest_point(
     const Matrix2Xf& V2D,
-    const VectorXf& H,
+    const MatrixXXf::Row& H,
     VectorXf& selected_points,
     const Matrix4f& mvp,
     const Vector2i& mouse_pos,
@@ -54,7 +55,7 @@ extern void select_extreme_point(
     const PointsStats& points_info,
     const PointsStats& selection_info,
     VectorXf& selected_points,
-    unsigned int wave_length_index,
+    size_t wave_length_index,
     bool highest
 );
 
@@ -65,13 +66,13 @@ extern void move_selection_along_path(bool up, VectorXf& selected_points);
 
 extern void delete_selected_points(
     VectorXf& selected_points,
-    MatrixXXf& raw_points,
+    RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     PointsStats& selection_info,
     Metadata& metadata
 );
 
-extern unsigned int count_selected_points(
+extern size_t count_selected_points(
     const VectorXf& selected_points
 );
 

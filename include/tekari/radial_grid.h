@@ -36,10 +36,10 @@ public:
     void set_alpha(float alpha) { m_color[3] = alpha; }
 
 private:
-    static constexpr unsigned int CIRCLE_COUNT = 10;
-    static constexpr unsigned int VERTEX_PER_CIRCLE_COUNT = 100;
-    static constexpr unsigned int LINE_COUNT = 18;
-    static constexpr unsigned int VERTEX_PER_LINE_COUNT = 2;
+    static constexpr size_t CIRCLE_COUNT = 10;
+    static constexpr size_t VERTEX_PER_CIRCLE_COUNT = 100;
+    static constexpr size_t LINE_COUNT = 18;
+    static constexpr size_t VERTEX_PER_LINE_COUNT = 2;
 
     nanogui::GLShader m_shader;
     nanogui::Color m_color;

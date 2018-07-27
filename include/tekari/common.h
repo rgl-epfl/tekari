@@ -21,11 +21,12 @@
 #include <utility>
 #include <functional>
 #include <memory>
+#include <cstdarg>
 #include <nanogui/glutil.h>
 #include <array>
 #include <enoki/array.h>
 #include <enoki/matrix.h>
-#include <tekari/brdf.h>
+#include <tekari/matrix_xx.h>
 
 // (re)define M_PI locally since it's not necessarily defined on some platforms
 #undef M_PI
@@ -83,14 +84,40 @@ using Vector3u = std::array<uint32_t, 3>; // cannot use enoki arrays because it 
 using Matrix3f = enoki::Matrix<float, 3>;
 using Matrix2Xf = vector<Vector2f>;
 using Matrix3Xf = vector<Vector3f>;
-using Matrix4Xf = vector<Vector4f>;
-using MatrixXXf = vector<vector<float>>;
+using Matrix4XXf = MatrixXX<Vector4f>;
+using MatrixXXf = MatrixXX<float>;
 using Matrix3Xu = vector<Vector3u>;
 using VectorXu  = vector<uint32_t>;
 using VectorXi8 = vector<int8_t>;
 using VectorXf  = vector<float>;
 
 using Index = size_t;
+
+// ============= Log Utils =============
+
+enum LogType
+{
+    Info, Warning, Error
+};
+
+#define Log(type, fmt, ...)                                                 \
+    do {                                                                    \
+        switch(type)                                                        \
+        {                                                                   \
+            case LogType::Info:                                             \
+                fprintf(stdout, "[Info:%s:%d] : ", __FILE__, __LINE__);     \
+                fprintf(stdout, fmt, __VA_ARGS__);                          \
+                break;                                                      \
+            case LogType::Warning:                                          \
+                fprintf(stderr, "[Warning:%s:%d] : ", __FILE__, __LINE__);  \
+                fprintf(stderr, fmt, __VA_ARGS__);                          \
+                break;                                                      \
+            case LogType::Error:                                            \
+                fprintf(stderr, "[Error:%s:%d] : ", __FILE__, __LINE__);    \
+                fprintf(stderr, fmt, __VA_ARGS__);                          \
+                break;                                                      \
+        }                                                                   \
+    } while(0)
 
 // ============= 3D Utils =============
 
@@ -106,18 +133,18 @@ inline Vector4f project_on_screen(const Vector3f& point,
     return projected_point;
 }
 
-inline Vector3f get3DPoint(const Matrix2Xf& V2D, const VectorXf& H, unsigned int index)
+inline Vector3f get_3d_point(const Matrix2Xf& V2D, const MatrixXXf::Row& H, size_t index)
 {
     return Vector3f( V2D[index][0], H[index], V2D[index][1] );
 }
 
-inline Matrix3Xf get3DPoints(const Matrix2Xf& V2D, const vector<VectorXf>& H, unsigned int index)
+inline Matrix3Xf get_3d_points(const Matrix2Xf& V2D, const MatrixXXf& H, size_t index)
 {
     Matrix3Xf result;
-    result.resize(H.size()) ;
-    for (size_t i = 0; i < H.size(); i++)
+    result.resize(H.n_rows()) ;
+    for (size_t i = 0; i < H.n_rows(); i++)
     {
-        result[i] = get3DPoint(V2D, H[i], index);
+        result[i] = get_3d_point(V2D, H[i], index);
     }
     return result;
 }
@@ -127,9 +154,6 @@ inline Vector2f hemisphere_to_disk(const Vector2f& i)
     return Vector2f(i[0] * cos(TO_RAD(i[1])) / 90.0f,
                     i[0] * sin(TO_RAD(i[1])) / 90.0f );
 }
-
-inline powitacq::vec3 enoki_to_powitacq_vec3(const Vector3f& v) { return powitacq::vec3(v[0], v[1], v[2]); }
-inline Vector3f powitacq_to_enoki_vec3(const powitacq::vec3& v) { return Vector3f(v[0], v[1], v[2]); }
 
 inline Vector3f hemisphere_to_vec3(const Vector2f& i)
 {
@@ -143,8 +167,8 @@ inline Vector3f hemisphere_to_vec3(const Vector2f& i)
 inline Vector2f vec3_to_hemisphere(const Vector3f& wi)
 {
     return Vector2f(
-            TO_DEG(acos(wi[2] / enoki::norm(wi))),
-            TO_DEG(atan2(wi[0], wi[1]))
+            TO_DEG(acos(wi[2])),
+            TO_DEG(atan2(wi[1], wi[0]))
         );
 }
 
@@ -195,6 +219,20 @@ inline string rtrim_copy(string s, function<int(int)> pred = [](int c) { return 
 inline string trim_copy(string s, function<int(int)> pred = [](int c) { return std::isspace(c); }) {
     trim(s, pred);
     return s;
+}
+
+// ================= Math Utils (from instant-meshes) ================
+
+inline float fast_acos(float x) {
+    float negate = float(x < 0.0f);
+    x = std::abs(x);
+    float ret = -0.0187293f;
+    ret *= x; ret = ret + 0.0742610f;
+    ret *= x; ret = ret - 0.2121144f;
+    ret *= x; ret = ret + 1.5707288f;
+    ret = ret * std::sqrt(1.0f - x);
+    ret = ret - 2.0f * negate * ret;
+    return negate * (float) M_PI + ret;
 }
 
 TEKARI_NAMESPACE_END

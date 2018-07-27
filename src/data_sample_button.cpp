@@ -25,7 +25,7 @@ using nanogui::Label;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget* parent, const string & label, bool is_spectral, unsigned int max_wave_length_index)
+DataSampleButton::DataSampleButton(Widget* parent, const string & label, bool is_spectral)
 :   Widget{ parent }
 ,   m_label{ label }
 ,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
@@ -62,19 +62,6 @@ DataSampleButton::DataSampleButton(Widget* parent, const string & label, bool is
     m_view_toggles[DataSample::Views::PATH]   = make_view_button("Path", "Show/Hide path for this data sample (P)", false);
     m_view_toggles[DataSample::Views::POINTS] = make_view_button("Points", "Toggle points view for this data sample (Shift + P)", false);
     m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
-
-    if (is_spectral)
-    {
-        auto wave_length_index_label = new Label{ m_popup, "Wave length index : 0", "sans-bold", 18 };
-        auto wave_length_slider = new Slider{ m_popup };
-        wave_length_slider->set_range(make_pair(0, max_wave_length_index));
-        wave_length_slider->set_callback([this, wave_length_slider, wave_length_index_label](float value) {
-            unsigned int wave_length_index = static_cast<unsigned int>(round(value));
-            wave_length_slider->set_value(wave_length_index);
-            wave_length_index_label->set_caption("Wave length index : " + to_string(wave_length_index));
-            m_wave_length_slider_callback(wave_length_index);
-        });
-    }
 }
 
 bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool down, int modifiers)

@@ -37,8 +37,6 @@ public:
     DataSample& operator=(const DataSample&) = delete;
     DataSample& operator=(DataSample&&) = default;
 
-    virtual void load_from_file(const string& file_path);
-
     void draw_gl(const Vector3f& view_origin,
                 const Matrix4f& model,
                 const Matrix4f& view,
@@ -59,18 +57,18 @@ public:
     inline const Metadata& metadata()           const { return m_metadata; }
 
     inline bool         has_selection()         const { return m_selection_stats.points_count() > 0; }
-    inline unsigned int selection_points_count()const { return m_selection_stats.points_count(); }
+    inline size_t selection_points_count()const { return m_selection_stats.points_count(); }
 
-    inline unsigned int points_count()          const { return m_points_stats.points_count(); }
-    inline unsigned int max_wave_length_index() const { return m_h.size() - 1; }
+    inline size_t points_count()          const { return m_points_stats.points_count(); }
+    inline size_t n_wave_lengths()        const { return m_raw_measurement.n_wave_lengths(); }
     inline float        average_intensity()     const { return m_points_stats.average_intensity(m_wave_length_index); }
 
     inline float selection_min_intensity()        const { return m_selection_stats.min_intensity(m_wave_length_index); }
     inline float selection_max_intensity()        const { return m_selection_stats.max_intensity(m_wave_length_index); }
     inline float selection_average_intensity()    const { return m_selection_stats.average_intensity(m_wave_length_index); }
 
-    inline unsigned int wave_length_index() const { return m_wave_length_index; }
-    void set_wave_length_index(unsigned int displayed_wave_length);
+    inline size_t wave_length_index() const { return m_wave_length_index; }
+    void set_wave_length_index(size_t displayed_wave_length);
 
     // Data selection/computation methods (wrapers for corresponding routines, easier to call)
     void select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode);
@@ -80,7 +78,7 @@ public:
     void deselect_all_points();
     void move_selection_along_path(bool up);
     void delete_selected_points();
-    unsigned int count_selected_points() const;
+    size_t count_selected_points() const;
     void recompute_data();
 
     void save(const string& file_path);
@@ -93,27 +91,27 @@ public:
     inline bool dirty() const            { return m_dirty; }
     inline void set_dirty(bool dirty)    { m_dirty = dirty; }
 
-    virtual void set_incident_angle(const Vector2f& i) { m_metadata.set_incident_angle(i); }
+    virtual void set_incident_angle(const Vector2f& i) {}
     virtual Vector2f incident_angle() const { return m_metadata.incident_angle(); }
 
 private:
-    inline const VectorXf&  curr_h() const  { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
-    inline const Matrix4Xf& curr_n() const  { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
-    inline VectorXf&        curr_h()        { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
-    inline Matrix4Xf&       curr_n()        { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
+    inline const MatrixXXf::Row     curr_h() const  { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
+    inline const Matrix4XXf::Row    curr_n() const  { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
+    inline MatrixXXf::Row           curr_h()        { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
+    inline Matrix4XXf::Row          curr_n()        { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
 
 protected:
     // Raw sample data
-    Matrix3Xu           m_f;                // face indices
-    Matrix2Xf           m_v2d;              // 2d coordinates (x,z)
-    vector<VectorXf>    m_h;                // heights per point (one for each wavelenght)
-    vector<VectorXf>    m_lh;               // logarithmic heights per point (one for each wavelenght)
-    vector<Matrix4Xf>   m_n;                // normals per point (one for each wavelenght)
-    vector<Matrix4Xf>   m_ln;               // logarithmic normals per point (one for each wavelenght)
-    VectorXu            m_path_segments;
-    unsigned int        m_wave_length_index;
+    Matrix3Xu   m_f;                // face indices
+    Matrix2Xf   m_v2d;              // 2d coordinates (x,z)
+    MatrixXXf   m_h;                // heights per point (one for each wavelenght)
+    MatrixXXf   m_lh;               // logarithmic heights per point (one for each wavelenght)
+    Matrix4XXf  m_n;                // normals per point (one for each wavelenght)
+    Matrix4XXf  m_ln;               // logarithmic normals per point (one for each wavelenght)
+    VectorXu    m_path_segments;
+    size_t      m_wave_length_index;
     // Untransformed data
-    MatrixXXf    m_raw_points;      // point0 : theta, phi, intensity0, intensity1, ...
+    RawMeasurement    m_raw_measurement;      // point0 : theta, phi, intensity0, intensity1, ...
                                     // point1 : theta, phi, intensity0, intensity1, ...
                                     // point2 : theta, phi, intensity0, intensity1, ...
                                     // ...
