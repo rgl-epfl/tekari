@@ -13,7 +13,8 @@ extern void recompute_data(
     Matrix3Xu& F,
     Matrix2Xf& V2D,
     MatrixXXf& H, MatrixXXf& LH,
-    Matrix4XXf& N, Matrix4XXf& LN
+    Matrix4XXf& N, Matrix4XXf& LN,
+    size_t wave_length_index
 );
 
 

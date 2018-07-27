@@ -56,16 +56,16 @@ public:
     inline bool is_spectral()                   const { return m_metadata.is_spectral(); }
     inline const Metadata& metadata()           const { return m_metadata; }
 
-    inline bool         has_selection()         const { return m_selection_stats.points_count() > 0; }
-    inline size_t selection_points_count()const { return m_selection_stats.points_count(); }
+    inline bool         has_selection()         const { return m_selection_stats.points_count > 0; }
+    inline size_t selection_points_count()const { return m_selection_stats.points_count; }
 
-    inline size_t points_count()          const { return m_points_stats.points_count(); }
+    inline size_t points_count()          const { return m_points_stats.points_count; }
     inline size_t n_wave_lengths()        const { return m_raw_measurement.n_wave_lengths(); }
-    inline float        average_intensity()     const { return m_points_stats.average_intensity(m_wave_length_index); }
+    inline float        average_intensity()     const { return m_points_stats.average_intensity; }
 
-    inline float selection_min_intensity()        const { return m_selection_stats.min_intensity(m_wave_length_index); }
-    inline float selection_max_intensity()        const { return m_selection_stats.max_intensity(m_wave_length_index); }
-    inline float selection_average_intensity()    const { return m_selection_stats.average_intensity(m_wave_length_index); }
+    inline float selection_min_intensity()        const { return m_selection_stats.min_intensity; }
+    inline float selection_max_intensity()        const { return m_selection_stats.max_intensity; }
+    inline float selection_average_intensity()    const { return m_selection_stats.average_intensity; }
 
     inline size_t wave_length_index() const { return m_wave_length_index; }
     void set_wave_length_index(size_t displayed_wave_length);
@@ -84,7 +84,7 @@ public:
     void save(const string& file_path);
 
     // Selection
-    inline Vector3f selection_center() const { return has_selection() ? m_selection_stats.average_point(m_wave_length_index) : Vector3f{ 0,0,0 }; }
+    inline Vector3f selection_center() const { return has_selection() ? m_selection_stats.average_point : Vector3f{ 0,0,0 }; }
     void update_point_selection();
 
     // Dirty flag setter/getter

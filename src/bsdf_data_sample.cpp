@@ -80,8 +80,6 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
     END_PROFILING();
 
     recompute_data();
-
-    Log(Info, "Number of triangles normals to compute : %zu\n", m_brdf.wavelengths().size() * 2 * m_f.size());
 }
 
 TEKARI_NAMESPACE_END

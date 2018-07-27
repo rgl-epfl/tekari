@@ -110,15 +110,15 @@ void select_extreme_point(
 )
 {
     START_PROFILING("Selecting extreme point");
-    bool no_selection = selection_info.points_count() == 0;
+    bool no_selection = selection_info.points_count == 0;
     int point_index = 
         (highest ? 
             (no_selection ?
-                points_info.highest_point_index(wave_length_index)
-                : selection_info.highest_point_index(wave_length_index))
+                points_info.highest_point_index
+                : selection_info.highest_point_index)
             : (no_selection ?
-                points_info.lowest_point_index(wave_length_index)
-                : selection_info.lowest_point_index(wave_length_index)));
+                points_info.lowest_point_index
+                : selection_info.lowest_point_index));
 
     deselect_all_points(selected_points);
     selected_points[point_index] = SELECTED_FLAG;

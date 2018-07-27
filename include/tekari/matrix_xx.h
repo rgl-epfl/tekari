@@ -192,6 +192,8 @@ public:
     inline const Row row(size_t i) const        { return Row(m_data + i * m_n_cols, m_n_cols); }
     inline Row operator[](size_t i)             { return row(i); }
     inline const Row operator[](size_t i) const { return row(i); }
+    inline T& operator()(size_t r, size_t c)        { return m_data[r*m_n_cols + c]; }
+    inline T operator()(size_t r, size_t c) const   { return m_data[r*m_n_cols + c]; }
 
     // first row
     inline Row front()              { return row(0); }
