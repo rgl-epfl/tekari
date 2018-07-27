@@ -170,6 +170,7 @@ void load_spectral_data_sample(
             {
                 line_stream >> raw_m[n_points][i+3];
             }
+            raw_m[n_points][2] = raw_m[n_points][3];
             ++n_points;
         }
     }

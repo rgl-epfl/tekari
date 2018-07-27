@@ -8,15 +8,17 @@ TEKARI_NAMESPACE_BEGIN
 
 struct PointsStats
 {
-    size_t      points_count;
-    Vector3f    average_point;
-    float       average_intensity;
-    float       min_intensity;
-    float       max_intensity;
-    size_t      lowest_point_index;
-    size_t      highest_point_index;
+    size_t intensity_count;
+    size_t points_count;
+    Matrix3Xf average_point;
+    VectorXf average_intensity;
+    VectorXf min_intensity;
+    VectorXf max_intensity;
+    VectorXu lowest_point_index;
+    VectorXu highest_point_index;
 
     PointsStats();
+    void reset(size_t intensity_count);
 };
 
 extern void update_selection_stats(
@@ -24,22 +26,19 @@ extern void update_selection_stats(
     const VectorXf& selected_points,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf::Row& H,
-    size_t intensity_index
+    const MatrixXXf& H
 );
 
 extern void compute_min_max_intensities(
     PointsStats& points_stats,
-    const RawMeasurement& raw_measurement,
-    size_t intensity_index
+    const RawMeasurement& raw_measurement
 );
 
 extern void update_points_stats(
     PointsStats& points_stats,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf::Row& H,
-    size_t intensity_index
+    const MatrixXXf& H
 );
 
 

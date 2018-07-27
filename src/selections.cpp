@@ -105,7 +105,7 @@ void select_extreme_point(
     const PointsStats& points_info,
     const PointsStats& selection_info,
     VectorXf& selected_points,
-    size_t wave_length_index,
+    size_t intensity_index,
     bool highest
 )
 {
@@ -114,11 +114,11 @@ void select_extreme_point(
     int point_index = 
         (highest ? 
             (no_selection ?
-                points_info.highest_point_index
-                : selection_info.highest_point_index)
+                points_info.highest_point_index[intensity_index]
+                : selection_info.highest_point_index[intensity_index])
             : (no_selection ?
-                points_info.lowest_point_index
-                : selection_info.lowest_point_index));
+                points_info.lowest_point_index[intensity_index]
+                : selection_info.lowest_point_index[intensity_index]));
 
     deselect_all_points(selected_points);
     selected_points[point_index] = SELECTED_FLAG;

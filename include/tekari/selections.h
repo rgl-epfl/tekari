@@ -55,7 +55,7 @@ extern void select_extreme_point(
     const PointsStats& points_info,
     const PointsStats& selection_info,
     VectorXf& selected_points,
-    size_t wave_length_index,
+    size_t intensity_index,
     bool highest
 );
 

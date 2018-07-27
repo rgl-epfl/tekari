@@ -55,16 +55,15 @@ void recompute_data(
     Matrix3Xu& F,
     Matrix2Xf& V2D,
     MatrixXXf& H, MatrixXXf& LH,
-    Matrix4XXf& N, Matrix4XXf& LN,
-    size_t wave_length_index
+    Matrix4XXf& N, Matrix4XXf& LN
 )
 {
-    compute_min_max_intensities(points_stats, raw_measurement, wave_length_index);
+    compute_min_max_intensities(points_stats, raw_measurement);
     compute_normalized_heights(raw_measurement, points_stats, H, LH);
     triangulate_data(F, V2D);
     compute_path_segments(path_segments, V2D);
     compute_normals(F, V2D, H, LH, N, LN);
-    update_points_stats(points_stats, raw_measurement, V2D, H[wave_length_index], wave_length_index);
+    update_points_stats(points_stats, raw_measurement, V2D, H);
 }
 
 void compute_normals(
@@ -174,28 +173,41 @@ void compute_normalized_heights(
     Index n_sample_points = raw_measurement.n_sample_points();
 
     // compute overall min/max intensity
-    float min_intensity = points_stats.min_intensity;
-    float max_intensity = points_stats.max_intensity;
+    // float min_intensity = std::numeric_limits<float>::max();
+    // float max_intensity = std::numeric_limits<float>::min();
+    // for (size_t j = 0; j < n_intensities; ++j)
+    // {
+    //     min_intensity = std::min(min_intensity, points_stats.min_intensity(j));
+    //     max_intensity = std::max(max_intensity, points_stats.max_intensity(j));
+    // }
+    // float min_intensity = points_stats.min_intensity;
+    // float max_intensity = points_stats.max_intensity;
 
-    float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
+    // float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
 
-    float min_log_intensity = log(min_intensity + correction_factor);
-    float max_log_intensity = log(max_intensity + correction_factor);
+    // float min_log_intensity = log(min_intensity + correction_factor);
+    // float max_log_intensity = log(max_intensity + correction_factor);
 
     H.resize(n_intensities, n_sample_points);
     LH.resize(n_intensities, n_sample_points);
     for (size_t j = 0; j < n_intensities; ++j)
     {
+        float min_intensity = points_stats.min_intensity[j];
+        float max_intensity = points_stats.max_intensity[j];
+        float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
+
+        float min_log_intensity = log(min_intensity + correction_factor);
+        float max_log_intensity = log(max_intensity + correction_factor);
         // normalize intensities
         tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)n_sample_points, GRAIN_SIZE),
             [&](const tbb::blocked_range<uint32_t>& range)
-        {
-            for (uint32_t i = range.begin(); i < range.end(); ++i)
             {
-                H(j, i)     = (raw_measurement[i][j + 2] - min_intensity) / (max_intensity - min_intensity);
-                LH(j, i)    = (log(raw_measurement[i][j + 2] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+                for (uint32_t i = range.begin(); i < range.end(); ++i)
+                {
+                    H(j, i)     = (raw_measurement[i][j + 2] - min_intensity) / (max_intensity - min_intensity);
+                    LH(j, i)    = (log(raw_measurement[i][j + 2] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+                }
             }
-        }
         );
     }
     END_PROFILING();

@@ -52,23 +52,24 @@ public:
     void init_shaders();
 
     // info accessors
-    inline const string name()                  const { return m_metadata.sample_name(); }
-    inline bool is_spectral()                   const { return m_metadata.is_spectral(); }
-    inline const Metadata& metadata()           const { return m_metadata; }
+    inline const string name()              const { return m_metadata.sample_name(); }
+    inline bool is_spectral()               const { return m_metadata.is_spectral(); }
+    inline const Metadata& metadata()       const { return m_metadata; }
 
-    inline bool         has_selection()         const { return m_selection_stats.points_count > 0; }
-    inline size_t selection_points_count()const { return m_selection_stats.points_count; }
+    inline bool has_selection()             const { return m_selection_stats.points_count > 0; }
+    inline size_t selection_points_count()  const { return m_selection_stats.points_count; }
 
-    inline size_t points_count()          const { return m_points_stats.points_count; }
-    inline size_t n_wave_lengths()        const { return m_raw_measurement.n_wave_lengths(); }
-    inline float        average_intensity()     const { return m_points_stats.average_intensity; }
+    inline size_t intensity_count()            const { return m_points_stats.intensity_count; }
+    inline size_t points_count()            const { return m_points_stats.points_count; }
+    inline size_t n_wave_lengths()          const { return m_raw_measurement.n_wave_lengths(); }
+    inline float average_intensity()        const { return m_points_stats.average_intensity[m_intensity_index]; }
 
-    inline float selection_min_intensity()        const { return m_selection_stats.min_intensity; }
-    inline float selection_max_intensity()        const { return m_selection_stats.max_intensity; }
-    inline float selection_average_intensity()    const { return m_selection_stats.average_intensity; }
+    inline float selection_min_intensity()      const { return m_selection_stats.min_intensity[m_intensity_index]; }
+    inline float selection_max_intensity()      const { return m_selection_stats.max_intensity[m_intensity_index]; }
+    inline float selection_average_intensity()  const { return m_selection_stats.average_intensity[m_intensity_index]; }
 
-    inline size_t wave_length_index() const { return m_wave_length_index; }
-    void set_wave_length_index(size_t displayed_wave_length);
+    inline size_t intensity_index() const { return m_intensity_index; }
+    void set_intensity_index(size_t displayed_wave_length);
 
     // Data selection/computation methods (wrapers for corresponding routines, easier to call)
     void select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode);
@@ -84,7 +85,7 @@ public:
     void save(const string& file_path);
 
     // Selection
-    inline Vector3f selection_center() const { return has_selection() ? m_selection_stats.average_point : Vector3f{ 0,0,0 }; }
+    inline Vector3f selection_center() const { return has_selection() ? m_selection_stats.average_point[m_intensity_index] : Vector3f{ 0,0,0 }; }
     void update_point_selection();
 
     // Dirty flag setter/getter
@@ -95,10 +96,10 @@ public:
     virtual Vector2f incident_angle() const { return m_metadata.incident_angle(); }
 
 private:
-    inline const MatrixXXf::Row     curr_h() const  { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
-    inline const Matrix4XXf::Row    curr_n() const  { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
-    inline MatrixXXf::Row           curr_h()        { return m_display_as_log ? m_lh[m_wave_length_index] : m_h[m_wave_length_index]; }
-    inline Matrix4XXf::Row          curr_n()        { return m_display_as_log ? m_ln[m_wave_length_index] : m_n[m_wave_length_index]; }
+    inline const MatrixXXf::Row     curr_h() const  { return m_display_as_log ? m_lh[m_intensity_index] : m_h[m_intensity_index]; }
+    inline const Matrix4XXf::Row    curr_n() const  { return m_display_as_log ? m_ln[m_intensity_index] : m_n[m_intensity_index]; }
+    inline MatrixXXf::Row           curr_h()        { return m_display_as_log ? m_lh[m_intensity_index] : m_h[m_intensity_index]; }
+    inline Matrix4XXf::Row          curr_n()        { return m_display_as_log ? m_ln[m_intensity_index] : m_n[m_intensity_index]; }
 
 protected:
     // Raw sample data
@@ -109,7 +110,7 @@ protected:
     Matrix4XXf  m_n;                // normals per point (one for each wavelenght)
     Matrix4XXf  m_ln;               // logarithmic normals per point (one for each wavelenght)
     VectorXu    m_path_segments;
-    size_t      m_wave_length_index;
+    size_t      m_intensity_index;
     // Untransformed data
     RawMeasurement    m_raw_measurement;      // point0 : theta, phi, intensity0, intensity1, ...
                                     // point1 : theta, phi, intensity0, intensity1, ...

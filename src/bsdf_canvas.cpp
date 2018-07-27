@@ -197,8 +197,6 @@ void BSDFCanvas::draw_gl() {
         data_sample->draw_gl(VIEW_ORIGIN, model, VIEW, proj, m_draw_flags, m_color_map);
     }
     m_grid.draw_gl(model, VIEW, proj);
-
-    Arrow::instance().draw_gl(m_incident_pos, VIEW_UP, 1.0f, proj * VIEW * model, Color(255, 0, 0, 255));
 }
 
 void BSDFCanvas::select_data_sample(shared_ptr<DataSample> data_sample) {

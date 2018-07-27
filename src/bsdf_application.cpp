@@ -784,7 +784,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         m_wave_length_slider->set_callback([this](float value) {
             int int_val = static_cast<int>(round(value));
             m_wave_length_slider->set_value(int_val);
-            m_selected_ds->set_wave_length_index(int_val);
+            m_selected_ds->set_intensity_index(int_val);
         });
 
         return window;

@@ -119,8 +119,6 @@ private:
     // global state for sample display
     int m_draw_flags;
     std::shared_ptr<ColorMap> m_color_map;
-
-    Vector3f m_incident_pos;
 };
 
 TEKARI_NAMESPACE_END
