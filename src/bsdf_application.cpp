@@ -811,12 +811,15 @@ void BSDFApplication::toggle_data_sample_sliders_window()
     });
 }
 
-void BSDFApplication::update_window(Window* window, function<void(void)> toggle)
+void BSDFApplication::update_window(Window* window, function<void(void)> toggle, bool force)
 {
-    if (window)
+    if (window) // if the window is displayed, update it
     {
-        toggle(); toggle();
+        toggle();
+        toggle();
     }
+    else if (force) // otherwise if forcw update, display window
+        toggle();
 }
 
 void BSDFApplication::toggle_selection_info_window()
@@ -939,11 +942,8 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
 
     reprint_footer();
     update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
-    update_window(m_metadata_window, [this]() { toggle_metadata_window(); });
-    update_window(m_data_sample_sliders_window, [this]() {
-        if (m_selected_ds)
-            toggle_data_sample_sliders_window();
-    });
+    update_window(m_metadata_window, [this]() { toggle_metadata_window(); }, false);
+    update_window(m_data_sample_sliders_window, [this]() { if (m_selected_ds) toggle_data_sample_sliders_window(); }, false);
     request_layout_update();
 
     if (!m_selected_ds) // if no data sample is selected, we can stop there
