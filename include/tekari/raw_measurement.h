@@ -55,13 +55,20 @@ public:
     RawMeasurement(size_t n_sample_points, size_t n_wave_lengths)
     : m_data(n_sample_points, n_wave_lengths + 3)
     {}
+    RawMeasurement(size_t n_sample_points, size_t n_wave_lengths, float v)
+    : m_data(n_sample_points, n_wave_lengths + 3, v)
+    {}
 
     void resize(size_t n_sample_points, size_t n_wave_lengths) { m_data.resize(n_sample_points, n_wave_lengths + 3); }
+    void assign(size_t n_sample_points, size_t n_wave_lengths, float v) { m_data.assign(n_sample_points, n_wave_lengths + 3, v); }
     void clear() { m_data.clear(); }
 
     // access a particular sample point
     SamplePoint operator[](size_t i) { return SamplePoint(m_data[i]); }
     const SamplePoint operator[](size_t i) const { return SamplePoint(m_data[i]); }
+
+    float& operator()(size_t i, size_t j) { return m_data(i, j); }
+    float operator()(size_t i, size_t j) const { return m_data(i, j); }
 
     float* data()               { return m_data.data(); }
     const float* data() const   { return m_data.data(); }

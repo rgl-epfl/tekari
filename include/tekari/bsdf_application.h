@@ -30,6 +30,7 @@ using nanogui::VScrollPanel;
 using nanogui::ComboBox;
 using nanogui::Slider;
 using nanogui::FloatBox;
+using nanogui::IntBox;
 using nanogui::GLFramebuffer;
 
 struct DataSample_to_add
@@ -126,6 +127,7 @@ private:
     Slider* m_wave_length_slider;
     FloatBox<float>* m_phi_float_box;
     FloatBox<float>* m_theta_float_box;
+    IntBox<size_t>* m_wave_length_int_box;
     Slider2D* m_incident_angle_slider;
 
     // dialog windows

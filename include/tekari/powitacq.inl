@@ -890,6 +890,7 @@ const Spectrum &BRDF::wavelengths() const {
 // *****************************************************************************
 
 BRDF::BRDF(const std::string &path_to_file) {
+
     Tensor tf = Tensor(path_to_file);
     auto& theta_i = tf.field("theta_i");
     auto& phi_i = tf.field("phi_i");

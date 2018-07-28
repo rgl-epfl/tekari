@@ -179,7 +179,7 @@ void load_spectral_data_sample(
     raw_measurement.resize(n_points, n_wave_lengths);
     for (size_t i = 0; i < n_points; ++i)
     {
-        memcpy(raw_measurement[i].data(), raw_m[i].data(), n_wave_lengths + 3);
+        memcpy(raw_measurement[i].data(), raw_m[i].data(), (n_wave_lengths + 3) * sizeof(float));
     }
 }
 

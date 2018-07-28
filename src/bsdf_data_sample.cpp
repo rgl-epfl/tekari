@@ -4,8 +4,8 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-#define N_PHI 32
-#define N_THETA 32
+#define N_PHI 64
+#define N_THETA 64
 #define N_WAVE_LENGTHS 256
 
 inline powitacq::Vector3f enoki_to_powitacq_vec3(const Vector3f& v) { return powitacq::Vector3f(v[0], v[1], v[2]); }
@@ -20,7 +20,8 @@ static float eval_gaussian(const Vector2f& c, const Vector2f& p)
 BSDFDataSample::BSDFDataSample(const string& file_path)
 : m_brdf(file_path)
 {
-    m_raw_measurement.resize(N_PHI * N_THETA, N_WAVE_LENGTHS);
+    m_raw_measurement.resize(N_PHI * N_THETA + N_PHI, N_WAVE_LENGTHS);
+    m_v2d.resize(N_PHI * N_THETA + N_PHI);
     compute_samples({0.0f, 0.0f});
 
     // artificially assign metadata members
@@ -55,9 +56,24 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
 
             Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wo));
 
-            memcpy(m_raw_measurement[j*N_THETA + i].data(), &samples[0], samples.size());
-            m_v2d.push_back(vec3_to_disk(powitacq_to_enoki_vec3(wo)));
+            samples *= pdf;
+            RawMeasurement::SamplePoint sample_point = m_raw_measurement[j*N_THETA + i];
+            sample_point.set_theta(outgoing_angle[0]);
+            sample_point.set_phi(outgoing_angle[1]);
+            sample_point.set_luminance(samples[0]);
+            memcpy(sample_point.data() + 3, &samples[0], samples.size() * sizeof(float));
+            m_v2d[j*N_THETA + i] = vec3_to_disk(powitacq_to_enoki_vec3(wo));
         }
+    }
+    for (int j = 0; j < N_PHI; ++j)
+    {
+        float theta = 90.0f;
+        float phi = 360.0f * j / N_PHI;
+        RawMeasurement::SamplePoint sample_point = m_raw_measurement[N_PHI*N_THETA + j];
+        sample_point.set_theta(theta);
+        sample_point.set_phi(phi);
+        memset(sample_point.data() + 2, 0, (N_WAVE_LENGTHS + 1) * sizeof(float));
+        m_v2d[N_PHI*N_THETA + j] = hemisphere_to_disk({theta, phi});
     }
 
     // m_raw_measurement.clear();

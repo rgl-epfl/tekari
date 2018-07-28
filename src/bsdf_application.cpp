@@ -778,13 +778,33 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             m_selected_ds->set_incident_angle(incident_angle);
         });
 
-        new Label{window, "Wave length"};
+        auto add_int_box = [window](const string& label, size_t value, function<void(size_t)> callback) {
+            auto int_box_container = new Widget{window};
+            int_box_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
+            new Label{int_box_container, label};
+            auto int_box = new IntBox<size_t>{ int_box_container };
+            int_box->set_value(value);
+            int_box->set_editable(true);
+            int_box->set_callback(callback);
+            int_box->set_spinnable(true);
+            return int_box;
+        };
+
+        m_wave_length_int_box = add_int_box("Wave length", 0, [this](size_t value) {
+            if(value >= m_selected_ds->intensity_count())
+                value = m_selected_ds->intensity_count()-1;
+            m_wave_length_slider->set_value(value);
+            m_selected_ds->set_intensity_index(value);
+            m_wave_length_int_box->set_value(value);
+        });
+
         m_wave_length_slider = new Slider{ window };
         m_wave_length_slider->set_range(make_pair(0, m_selected_ds->n_wave_lengths()-1));
         m_wave_length_slider->set_callback([this](float value) {
             int int_val = static_cast<int>(round(value));
             m_wave_length_slider->set_value(int_val);
             m_selected_ds->set_intensity_index(int_val);
+            m_wave_length_int_box->set_value(int_val);
         });
 
         return window;

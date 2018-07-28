@@ -90,10 +90,11 @@ void compute_normals(
                 {
                     Vector3f fn = Vector3f(0.0f);
                     Vector3f lfn = Vector3f(0.0f);
+                    const Vector3u &face = F[f];
                     for (int i = 0; i < 3; ++i) {
-                        Vector3f v0 = get_3d_point(V2D, h_row, F[f][i]),
-                                 v1 = get_3d_point(V2D, h_row, F[f][(i+1)%3]),
-                                 v2 = get_3d_point(V2D, h_row, F[f][(i+2)%3]),
+                        Vector3f v0 = get_3d_point(V2D, h_row, face[i]),
+                                 v1 = get_3d_point(V2D, h_row, face[(i+1)%3]),
+                                 v2 = get_3d_point(V2D, h_row, face[(i+2)%3]),
                                  d0 = v1-v0,
                                  d1 = v2-v0;
 
@@ -101,13 +102,13 @@ void compute_normals(
                             fn = enoki::normalize(enoki::cross(d0, d1));
                         }
                         float angle = fast_acos(enoki::dot(d0, d1) / std::sqrt(enoki::squared_norm(d0) * enoki::squared_norm(d1)));
-                        n_row[F[f][i]] += enoki::concat(fn*angle, 0.0f);
+                        n_row[face[i]] += enoki::concat(fn*angle, 0.0f);
 
                         // same for log mesh
 
-                        v0 = get_3d_point(V2D, lh_row, F[f][i]);
-                        v1 = get_3d_point(V2D, lh_row, F[f][(i+1)%3]);
-                        v2 = get_3d_point(V2D, lh_row, F[f][(i+2)%3]);
+                        v0 = get_3d_point(V2D, lh_row, face[i]);
+                        v1 = get_3d_point(V2D, lh_row, face[(i+1)%3]);
+                        v2 = get_3d_point(V2D, lh_row, face[(i+2)%3]);
                         d0 = v1-v0;
                         d1 = v2-v0;
 
@@ -115,51 +116,28 @@ void compute_normals(
                             lfn = enoki::normalize(enoki::cross(d0, d1));
                         }
                         angle = fast_acos(enoki::dot(d0, d1) / std::sqrt(enoki::squared_norm(d0) * enoki::squared_norm(d1)));
-                        ln_row[F[f][i]] += enoki::concat(lfn*angle, 0.0f);
+                        ln_row[face[i]] += enoki::concat(lfn*angle, 0.0f);
                     }
 
                 }
 
-                tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N.n_cols(), GRAIN_SIZE),
-                    [&](const tbb::blocked_range<uint32_t>& range) {
-                        for (uint32_t i = range.begin(); i != range.end(); ++i) {
-                            n_row[i] = enoki::normalize(n_row[i]);
-                            ln_row[i] = enoki::normalize(ln_row[i]);
-                        }
-                    }
-                );
+                // tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)N.n_cols(), GRAIN_SIZE),
+                //     [&](const tbb::blocked_range<uint32_t>& range) {
+                //         for (uint32_t i = range.begin(); i != range.end(); ++i) {
+                //             n_row[i] = enoki::normalize(n_row[i]);
+                //             ln_row[i] = enoki::normalize(ln_row[i]);
+                //         }
+                //     }
+                // );
+                for (uint32_t i = 0u; i != (uint32_t)N.n_cols(); ++i) {
+                    n_row[i] = enoki::normalize(n_row[i]);
+                    ln_row[i] = enoki::normalize(ln_row[i]);
+                }
             }
         }
     );
     END_PROFILING();
 }
-
-// inline void compute_triangle_normal(
-//     const Matrix2Xf& V2D,
-//     const MatrixXXf::Row& H,
-//     Matrix4Xf& N,
-//     size_t i0,
-//     size_t i1,
-//     size_t i2
-// )
-// {
-//     using namespace enoki;
-
-//     const Vector3f e01 = normalize(get_3d_point(V2D, H, i1) - get_3d_point(V2D, H, i0));
-//     const Vector3f e12 = normalize(get_3d_point(V2D, H, i2) - get_3d_point(V2D, H, i1));
-//     const Vector3f e20 = normalize(get_3d_point(V2D, H, i0) - get_3d_point(V2D, H, i2));
-
-//     Vector3f face_normal = normalize(cross(e12, -e01));
-
-//     Vector3f weights = Vector3f( dot(e01, -e20),
-//                                  dot(e12, -e01),
-//                                  dot(e20, -e12));
-//     weights = acos(max(-1.0f, (min(1.0f, weights)))); 
-
-//     N[i0] += weights[0] * concat(face_normal, 0.0f);
-//     N[i1] += weights[1] * concat(face_normal, 0.0f);
-//     N[i2] += weights[2] * concat(face_normal, 0.0f);
-// }
 
 void compute_normalized_heights(
     const RawMeasurement& raw_measurement,
@@ -173,31 +151,28 @@ void compute_normalized_heights(
     Index n_sample_points = raw_measurement.n_sample_points();
 
     // compute overall min/max intensity
-    // float min_intensity = std::numeric_limits<float>::max();
-    // float max_intensity = std::numeric_limits<float>::min();
-    // for (size_t j = 0; j < n_intensities; ++j)
-    // {
-    //     min_intensity = std::min(min_intensity, points_stats.min_intensity(j));
-    //     max_intensity = std::max(max_intensity, points_stats.max_intensity(j));
-    // }
-    // float min_intensity = points_stats.min_intensity;
-    // float max_intensity = points_stats.max_intensity;
+    float min_intensity = std::numeric_limits<float>::max();
+    float max_intensity = std::numeric_limits<float>::min();
+    for (size_t j = 0; j < n_intensities; ++j)
+    {
+        min_intensity = std::min(min_intensity, points_stats.min_intensity[j]);
+        max_intensity = std::max(max_intensity, points_stats.max_intensity[j]);
+    }
+    float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
 
-    // float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
-
-    // float min_log_intensity = log(min_intensity + correction_factor);
-    // float max_log_intensity = log(max_intensity + correction_factor);
+    float min_log_intensity = log(min_intensity + correction_factor);
+    float max_log_intensity = log(max_intensity + correction_factor);
 
     H.resize(n_intensities, n_sample_points);
     LH.resize(n_intensities, n_sample_points);
     for (size_t j = 0; j < n_intensities; ++j)
     {
-        float min_intensity = points_stats.min_intensity[j];
-        float max_intensity = points_stats.max_intensity[j];
-        float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
+        // float min_intensity = points_stats.min_intensity[j];
+        // float max_intensity = points_stats.max_intensity[j];
+        // float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
 
-        float min_log_intensity = log(min_intensity + correction_factor);
-        float max_log_intensity = log(max_intensity + correction_factor);
+        // float min_log_intensity = log(min_intensity + correction_factor);
+        // float max_log_intensity = log(max_intensity + correction_factor);
         // normalize intensities
         tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)n_sample_points, GRAIN_SIZE),
             [&](const tbb::blocked_range<uint32_t>& range)
