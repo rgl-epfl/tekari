@@ -104,6 +104,8 @@ public:
 
         inline size_t n_cols() const      { return m_n_cols; }
 
+        inline void fill(const T& v) { std::fill(m_data, m_data + m_n_cols, v); }
+
         friend std::ostream& operator<<(std::ostream& os, const Row& row)
         {
             os << "[";
@@ -184,8 +186,9 @@ public:
     void assign(size_t n_rows, size_t n_cols, const T& value)
     {
         resize(n_rows, n_cols);
-        std::fill(m_data, m_data + (n_rows * n_cols), value);
+        fill(value);
     }
+    void fill(const T& value) { std::fill(m_data, m_data + (m_n_rows * m_n_cols), value); }
 
     // access a particular row
     inline Row row(size_t i)                    { return Row(m_data + i * m_n_cols, m_n_cols); }

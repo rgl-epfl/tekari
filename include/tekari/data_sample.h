@@ -109,6 +109,7 @@ protected:
     MatrixXXf   m_lh;               // logarithmic heights per point (one for each wavelenght)
     Matrix4XXf  m_n;                // normals per point (one for each wavelenght)
     Matrix4XXf  m_ln;               // logarithmic normals per point (one for each wavelenght)
+    Mask        m_cache_mask;       // bit map indicating whether some intensity data is valid
     VectorXu    m_path_segments;
     size_t      m_intensity_index;
     // Untransformed data

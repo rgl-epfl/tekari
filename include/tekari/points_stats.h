@@ -26,19 +26,22 @@ extern void update_selection_stats(
     const VectorXf& selected_points,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H
+    const MatrixXXf::Row H,
+    size_t intensity_index
 );
 
 extern void compute_min_max_intensities(
     PointsStats& points_stats,
-    const RawMeasurement& raw_measurement
+    const RawMeasurement& raw_measurement,
+    size_t intensity_index
 );
 
 extern void update_points_stats(
     PointsStats& points_stats,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H
+    const MatrixXXf::Row H,
+    size_t intensity_index
 );
 
 

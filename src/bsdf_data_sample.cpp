@@ -11,12 +11,6 @@ TEKARI_NAMESPACE_BEGIN
 inline powitacq::Vector3f enoki_to_powitacq_vec3(const Vector3f& v) { return powitacq::Vector3f(v[0], v[1], v[2]); }
 inline Vector3f powitacq_to_enoki_vec3(const powitacq::Vector3f& v) { return Vector3f(v[0], v[1], v[2]); }
 
-static float eval_gaussian(const Vector2f& c, const Vector2f& p)
-{
-    Vector2f diff_spread = (p - c) * 5.0f;
-    return exp(-enoki::squared_norm(diff_spread));
-}
-
 BSDFDataSample::BSDFDataSample(const string& file_path)
 : m_brdf(file_path)
 {
@@ -33,9 +27,12 @@ BSDFDataSample::BSDFDataSample(const string& file_path)
 
 void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 {
+    // clear mask
+    std::fill(m_cache_mask.begin(), m_cache_mask.end(), false);
+
     m_metadata.set_incident_angle(incident_angle);
     compute_samples(incident_angle);
-    update_point_selection();
+    set_intensity_index(m_intensity_index);
     link_data_to_shaders();
 }
 
@@ -52,8 +49,6 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
             float pdf;
             auto samples = m_brdf.sample(powitacq::Vector2f(u, v), enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), &wo, &pdf);
 
-            // printf("[%f, %f] -> [%f, %f, %f]\n", u, v, wo[0], wo[1], wo[2]);
-
             Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wo));
 
             samples *= pdf;
@@ -65,6 +60,7 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
             m_v2d[j*N_THETA + i] = vec3_to_disk(powitacq_to_enoki_vec3(wo));
         }
     }
+    // add outter ring to complete mesh
     for (int j = 0; j < N_PHI; ++j)
     {
         float theta = 90.0f;
@@ -75,24 +71,6 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
         memset(sample_point.data() + 2, 0, (N_WAVE_LENGTHS + 1) * sizeof(float));
         m_v2d[N_PHI*N_THETA + j] = hemisphere_to_disk({theta, phi});
     }
-
-    // m_raw_measurement.clear();
-    // m_v2d.clear();
-    // int n_theta = 20;
-    // int n_phi = 20;
-    // for (int i = 0; i < n_theta; ++i)
-    // {
-    //     float theta = (i + 1) * 90.f / n_theta;
-    //     for (int j = 0; j < n_phi; ++j)
-    //     {
-    //         float phi = j * 360.0f / n_phi;
-    //         Vector2f v2d = hemisphere_to_disk({theta, phi});
-    //         float h = eval_gaussian(hemisphere_to_disk(incident_angle), v2d);
-    //         m_raw_measurement.push_back({theta, phi, h});
-    //         m_v2d.push_back(v2d);
-    //     }
-    // }
-
     END_PROFILING();
 
     recompute_data();

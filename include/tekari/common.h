@@ -90,6 +90,7 @@ using Matrix3Xu = vector<Vector3u>;
 using VectorXu  = vector<uint32_t>;
 using VectorXi8 = vector<int8_t>;
 using VectorXf  = vector<float>;
+using Mask = vector<bool>;
 
 using Index = size_t;
 

@@ -9,7 +9,7 @@
 TEKARI_NAMESPACE_BEGIN
 
 DataSample::DataSample()
-:   m_intensity_index(0)
+:   m_intensity_index(-1)
 ,   m_display_as_log(false)
 ,   m_display_views{ true, false, false, true }
 ,   m_selection_axis{Vector3f{0.0f, 0.0f, 0.0f}}
@@ -139,18 +139,15 @@ void DataSample::link_data_to_shaders()
     m_shaders[MESH].bind();
     m_shaders[MESH].set_uniform("color_map", 0);
     m_shaders[MESH].upload_attrib("in_pos2d", (float*)m_v2d.data(), 2, m_v2d.size());
-    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
-    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
+    // m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
     m_shaders[MESH].upload_indices((uint32_t*)m_f.data(), 3, m_f.size());
 
     m_shaders[PATH].bind();
     m_shaders[PATH].share_attrib(m_shaders[MESH], "in_pos2d");
-    m_shaders[PATH].share_attrib(m_shaders[MESH], "in_height");
 
     m_shaders[POINTS].bind();
     m_shaders[POINTS].set_uniform("color_map", 0);
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_pos2d");
-    m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 }
 
@@ -168,7 +165,8 @@ void DataSample::toggle_log_view()
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
 
     if (has_selection()) {
-        update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_display_as_log ? m_lh : m_h);
+        m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
+        update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, curr_h(), m_intensity_index);
         m_selection_axis.set_origin(selection_center());
     }
 }
@@ -178,17 +176,40 @@ void DataSample::update_point_selection()
     m_shaders[POINTS].bind();
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
-    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_display_as_log ? m_lh : m_h);
+    m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
+    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, curr_h(), m_intensity_index);
     m_selection_axis.set_origin(selection_center());
 }
 
-void DataSample::set_intensity_index(size_t displayed_wave_length)
+void DataSample::set_intensity_index(size_t intensity_index)
 {
-    displayed_wave_length = std::min(displayed_wave_length, m_raw_measurement.n_wave_lengths());
-    if (m_intensity_index == displayed_wave_length)
-        return;
+    intensity_index = std::min(intensity_index, m_raw_measurement.n_wave_lengths());
+    m_intensity_index = intensity_index;
 
-    m_intensity_index = displayed_wave_length;
+    if (!m_cache_mask[m_intensity_index])
+    {
+        m_cache_mask[m_intensity_index] = true;
+
+        tekari::compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
+
+        tekari::compute_normalized_heights(
+            m_raw_measurement,
+            m_points_stats,
+            m_h[m_intensity_index],
+            m_lh[m_intensity_index],
+            m_intensity_index);
+
+        tekari::update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h[m_intensity_index], intensity_index);
+        m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
+        tekari::update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, curr_h(), intensity_index);
+
+        tekari::compute_normals(
+            m_f, m_v2d,
+            m_h[m_intensity_index],
+            m_lh[m_intensity_index],
+            m_n[m_intensity_index],
+            m_ln[m_intensity_index]);
+    }
 
     m_shaders[MESH].bind();
     m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
@@ -245,7 +266,18 @@ size_t DataSample::count_selected_points() const
 }
 void DataSample::recompute_data()
 {
-    tekari::recompute_data(m_raw_measurement, m_points_stats, m_path_segments, m_f, m_v2d, m_h, m_lh, m_n, m_ln);
+    triangulate_data(m_f, m_v2d);
+    compute_path_segments(m_path_segments, m_v2d);
+
+    Index n_intensities = m_raw_measurement.n_wave_lengths() + 1;     // account for luminance
+    Index n_sample_points = m_raw_measurement.n_sample_points();
+    m_h.resize (n_intensities, n_sample_points);
+    m_lh.resize(n_intensities, n_sample_points);
+    m_n.resize (n_intensities, n_sample_points);
+    m_ln.resize(n_intensities, n_sample_points);
+    m_cache_mask.resize(n_intensities);
+    m_points_stats.reset(n_intensities);
+    m_selection_stats.reset(n_intensities);
 }
 
 void DataSample::save(const string& path)

@@ -80,7 +80,6 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         {
             m_selected_ds->select_points(mvp, selection_box, canvas_size, mode);
         }
-        m_selected_ds->update_point_selection();
         update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
     });
     m_bsdf_canvas->set_update_incident_angle_callback([this](const Vector2f& incident_angle) {
@@ -593,6 +592,7 @@ void BSDFApplication::draw_contents() {
             {
                 new_data_sample->data_sample->init_shaders();
                 new_data_sample->data_sample->link_data_to_shaders();
+                new_data_sample->data_sample->set_intensity_index(0);
                 add_data_sample(new_data_sample->data_sample);
             }
         }
