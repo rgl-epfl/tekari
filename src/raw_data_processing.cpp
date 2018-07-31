@@ -86,6 +86,13 @@ void compute_normalized_heights(
 
     float min_intensity = points_stats.min_intensity[intensity_index];
     float max_intensity = points_stats.max_intensity[intensity_index];
+
+    if (std::abs(min_intensity - max_intensity) <= 1e-5)
+    {
+        cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
+        return;
+    }
+
     float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
 
     float min_log_intensity = log(min_intensity + correction_factor);

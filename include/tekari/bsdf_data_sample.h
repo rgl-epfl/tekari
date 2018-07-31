@@ -11,6 +11,7 @@ public:
 
     BSDFDataSample(const string& file_path);
     virtual void set_incident_angle(const Vector2f& incident_angle) override;
+    virtual void set_intensity_index(size_t displayed_wave_length) override;
 
 private:
     void compute_samples(const Vector2f& incident_angle);

@@ -88,13 +88,11 @@ void DataSample::draw_gl(
     };
 
     draw_functors[POINTS] = [&]() {
-        glEnable(GL_DEPTH_TEST);
         m_shaders[POINTS].bind();
         color_map->bind();
         m_shaders[POINTS].set_uniform("model_view_proj", mvp);
         m_shaders[POINTS].set_uniform("show_all_points", m_display_views[POINTS]);
         m_shaders[POINTS].draw_array(GL_POINTS, 0, m_v2d.size());
-        glDisable(GL_DEPTH_TEST);
     };
 
     draw_functors[INCIDENT_ANGLE] = [&]() {
@@ -132,9 +130,7 @@ void DataSample::init_shaders()
 void DataSample::link_data_to_shaders()
 {
     if (m_f.size() == 0)
-    {
         throw std::runtime_error("ERROR: cannot link data to shader before loading data.");
-    }
 
     m_shaders[MESH].bind();
     m_shaders[MESH].set_uniform("color_map", 0);
@@ -154,16 +150,7 @@ void DataSample::link_data_to_shaders()
 void DataSample::toggle_log_view()
 {
     m_display_as_log = !m_display_as_log;
-
-    m_shaders[MESH].bind();
-    m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
-    m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
-
-    m_shaders[PATH].bind();
-    m_shaders[PATH].share_attrib(m_shaders[MESH], "in_height");
-    m_shaders[POINTS].bind();
-    m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
-
+    update_shaders_data();
     m_selection_axis.set_origin(selection_center());
 }
 
@@ -177,36 +164,8 @@ void DataSample::update_point_selection()
     m_selection_axis.set_origin(selection_center());
 }
 
-void DataSample::set_intensity_index(size_t intensity_index)
+void DataSample::update_shaders_data()
 {
-    intensity_index = std::min(intensity_index, m_raw_measurement.n_wave_lengths());
-    m_intensity_index = intensity_index;
-
-    if (!m_cache_mask[m_intensity_index])
-    {
-        m_cache_mask[m_intensity_index] = true;
-
-        compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
-
-        compute_normalized_heights(
-            m_raw_measurement,
-            m_points_stats,
-            m_h[m_intensity_index],
-            m_lh[m_intensity_index],
-            m_intensity_index);
-
-        update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h[m_intensity_index], m_lh[m_intensity_index], intensity_index);
-        m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
-        update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h[m_intensity_index], m_lh[m_intensity_index], intensity_index);
-
-        compute_normals(
-            m_f, m_v2d,
-            m_h[m_intensity_index],
-            m_lh[m_intensity_index],
-            m_n[m_intensity_index],
-            m_ln[m_intensity_index]);
-    }
-
     m_shaders[MESH].bind();
     m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
     m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
@@ -215,8 +174,6 @@ void DataSample::set_intensity_index(size_t intensity_index)
     m_shaders[PATH].share_attrib(m_shaders[MESH], "in_height");
     m_shaders[POINTS].bind();
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
-
-    m_selection_axis.set_origin(selection_center());
 }
 
 void DataSample::select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode)

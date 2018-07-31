@@ -1101,14 +1101,14 @@ Spectrum BRDF::eval(const Vector3f &wi, const Vector3f &wo) const {
 // *****************************************************************************
 
 
-Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
+float BRDF::sample(const Vector2f &u, const Vector3f &wi,
                         size_t wave_length_index, Vector3f *wo_out, float *pdf_out) const {
     if (wi.z() <= 0) {
         if (wo_out)
             *wo_out = Vector3f(0.f);
         if (pdf_out)
             *pdf_out = 0;
-        return zero();
+        return 0.0f;
     }
 
     float theta_i = std::acos(wi.z()),
@@ -1153,15 +1153,13 @@ Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
             *wo_out = Vector3f(0.f);
         if (pdf_out)
             *pdf_out = 0;
-        return zero();
+        return 0.0f;
     }
 
     float fr = 0.0f;
-    // for (int i = 0; i < (int) m_data->wavelengths.size(); ++i) {
-        float params_fr[3] = { phi_i, theta_i, m_data->wavelengths[wave_length_index] };
+    float params_fr[3] = { phi_i, theta_i, m_data->wavelengths[wave_length_index] };
 
-        fr = m_data->spectra.eval(sample, params_fr);
-    // }
+    fr = m_data->spectra.eval(sample, params_fr);
 
     fr *= m_data->ndf.eval(u_wm, params) /
             (4 * m_data->sigma.eval(u_wi, params));

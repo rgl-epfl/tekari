@@ -149,7 +149,7 @@ Vector2f BSDFCanvas::get_incident_angle(const Vector2i &p)
 
     Vector2f i = Vector2f(incident_pos.x(), incident_pos.z());
     float theta = enoki::norm(i) * 90.0f;
-    if (theta > 90.0f) theta = 90.0f;
+    if (theta > 80.0f) theta = 80.0f;
     float phi = atan2(i.y(), i.x()) * 180.0f / M_PI;
 
     return Vector2f(theta, phi);

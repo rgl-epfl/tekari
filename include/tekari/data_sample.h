@@ -49,6 +49,7 @@ public:
     inline bool display_view(Views view) const { return m_display_views[view]; }
 
     void link_data_to_shaders();
+    void update_shaders_data();
     void init_shaders();
 
     // info accessors
@@ -67,9 +68,6 @@ public:
     inline float selection_min_intensity()      const { return m_selection_stats.min_intensity[m_intensity_index]; }
     inline float selection_max_intensity()      const { return m_selection_stats.max_intensity[m_intensity_index]; }
     inline float selection_average_intensity()  const { return m_selection_stats.average_intensity[m_intensity_index]; }
-
-    inline size_t intensity_index() const { return m_intensity_index; }
-    void set_intensity_index(size_t displayed_wave_length);
 
     // Data selection/computation methods (wrapers for corresponding routines, easier to call)
     void select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode);
@@ -99,8 +97,11 @@ public:
     inline bool dirty() const            { return m_dirty; }
     inline void set_dirty(bool dirty)    { m_dirty = dirty; }
 
+    inline size_t intensity_index() const { return m_intensity_index; }
+    virtual void set_intensity_index(size_t displayed_wave_length) {}
+
+    inline Vector2f incident_angle() const { return m_metadata.incident_angle(); }
     virtual void set_incident_angle(const Vector2f& i) {}
-    virtual Vector2f incident_angle() const { return m_metadata.incident_angle(); }
 
 private:
     inline const MatrixXXf::Row     curr_h() const  { return m_display_as_log ? m_lh[m_intensity_index] : m_h[m_intensity_index]; }

@@ -746,7 +746,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         new Label{ window, "Incident angle", "sans-bold"};
         m_incident_angle_slider = new Slider2D{ window };
         m_incident_angle_slider->set_value(curr_i_angle);
-        m_incident_angle_slider->set_final_callback([this](Vector2f value) {
+        m_incident_angle_slider->set_callback([this](Vector2f value) {
             m_phi_float_box->set_value(value[0]);
             m_theta_float_box->set_value(value[1]);
 
