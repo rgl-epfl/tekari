@@ -85,7 +85,14 @@ public:
     void save(const string& file_path);
 
     // Selection
-    inline Vector3f selection_center() const { return has_selection() ? m_selection_stats.average_point[m_intensity_index] : Vector3f{ 0,0,0 }; }
+    inline Vector3f selection_center() const
+    {
+        return  has_selection() ?
+                    m_display_as_log?
+                        m_selection_stats.average_log_point[m_intensity_index] :
+                        m_selection_stats.average_point[m_intensity_index] :
+                    Vector3f{ 0,0,0 };
+    }
     void update_point_selection();
 
     // Dirty flag setter/getter

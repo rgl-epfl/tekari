@@ -11,6 +11,7 @@ struct PointsStats
     size_t intensity_count;
     size_t points_count;
     Matrix3Xf average_point;
+    Matrix3Xf average_log_point;
     VectorXf average_intensity;
     VectorXf min_intensity;
     VectorXf max_intensity;
@@ -27,6 +28,7 @@ extern void update_selection_stats(
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
     const MatrixXXf::Row H,
+    const MatrixXXf::Row LH,
     size_t intensity_index
 );
 
@@ -41,6 +43,7 @@ extern void update_points_stats(
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
     const MatrixXXf::Row H,
+    const MatrixXXf::Row LH,
     size_t intensity_index
 );
 

@@ -164,11 +164,7 @@ void DataSample::toggle_log_view()
     m_shaders[POINTS].bind();
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
 
-    if (has_selection()) {
-        m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
-        update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, curr_h(), m_intensity_index);
-        m_selection_axis.set_origin(selection_center());
-    }
+    m_selection_axis.set_origin(selection_center());
 }
 
 void DataSample::update_point_selection()
@@ -177,7 +173,7 @@ void DataSample::update_point_selection()
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
     m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
-    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, curr_h(), m_intensity_index);
+    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h[m_intensity_index], m_lh[m_intensity_index], m_intensity_index);
     m_selection_axis.set_origin(selection_center());
 }
 
@@ -190,20 +186,20 @@ void DataSample::set_intensity_index(size_t intensity_index)
     {
         m_cache_mask[m_intensity_index] = true;
 
-        tekari::compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
+        compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
 
-        tekari::compute_normalized_heights(
+        compute_normalized_heights(
             m_raw_measurement,
             m_points_stats,
             m_h[m_intensity_index],
             m_lh[m_intensity_index],
             m_intensity_index);
 
-        tekari::update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h[m_intensity_index], intensity_index);
+        update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h[m_intensity_index], m_lh[m_intensity_index], intensity_index);
         m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
-        tekari::update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, curr_h(), intensity_index);
+        update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h[m_intensity_index], m_lh[m_intensity_index], intensity_index);
 
-        tekari::compute_normals(
+        compute_normals(
             m_f, m_v2d,
             m_h[m_intensity_index],
             m_lh[m_intensity_index],
@@ -235,7 +231,11 @@ void DataSample::select_closest_point(const Matrix4f& mvp, const Vector2i& mouse
 }
 void DataSample::select_extreme_point(bool highest)
 {
-    tekari::select_extreme_point( m_points_stats, m_selection_stats, m_selected_points, m_intensity_index, highest);
+    if (m_selection_stats.points_count <= 1)
+        tekari::select_extreme_point( m_points_stats, m_selected_points, m_intensity_index, highest);
+    else
+        tekari::select_extreme_point( m_selection_stats, m_selected_points, m_intensity_index, highest);
+
     update_point_selection();
 }
 void DataSample::select_all_points()

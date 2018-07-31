@@ -102,23 +102,14 @@ void select_closest_point(
 }
 
 void select_extreme_point(
-    const PointsStats& points_info,
-    const PointsStats& selection_info,
+    const PointsStats& stats,
     VectorXf& selected_points,
     size_t intensity_index,
     bool highest
 )
 {
     START_PROFILING("Selecting extreme point");
-    bool no_selection = selection_info.points_count == 0;
-    int point_index = 
-        (highest ? 
-            (no_selection ?
-                points_info.highest_point_index[intensity_index]
-                : selection_info.highest_point_index[intensity_index])
-            : (no_selection ?
-                points_info.lowest_point_index[intensity_index]
-                : selection_info.lowest_point_index[intensity_index]));
+    int point_index = highest ? stats.highest_point_index[intensity_index]: stats.lowest_point_index[intensity_index];
 
     deselect_all_points(selected_points);
     selected_points[point_index] = SELECTED_FLAG;
