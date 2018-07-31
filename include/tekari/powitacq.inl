@@ -1100,6 +1100,83 @@ Spectrum BRDF::eval(const Vector3f &wi, const Vector3f &wo) const {
 // Sample interface
 // *****************************************************************************
 
+
+Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
+                        size_t wave_length_index, Vector3f *wo_out, float *pdf_out) const {
+    if (wi.z() <= 0) {
+        if (wo_out)
+            *wo_out = Vector3f(0.f);
+        if (pdf_out)
+            *pdf_out = 0;
+        return zero();
+    }
+
+    float theta_i = std::acos(wi.z()),
+          phi_i   = std::atan2(wi.y(), wi.x());
+
+    float params[2] = { phi_i, theta_i };
+    Vector2f u_wi = Vector2f(theta2u(theta_i), phi2u(phi_i));
+    Vector2f sample = Vector2f(u.y(), u.x());
+    float lum_pdf = 1.f;
+
+    #if POWITACQ_SAMPLE_LUMINANCE
+        std::tie(sample, lum_pdf) =
+            m_data->luminance.sample(sample, params);
+    #endif
+
+    Vector2f u_wm;
+    float ndf_pdf;
+    std::tie(u_wm, ndf_pdf) =
+        m_data->vndf.sample(sample, params);
+
+    float phi_m   = u2phi(u_wm.y()),
+          theta_m = u2theta(u_wm.x());
+
+    if (m_data->isotropic)
+        phi_m += phi_i;
+
+    /* Spherical -> Cartesian coordinates */
+    float sin_phi_m = std::sin(phi_m),
+          cos_phi_m = std::cos(phi_m),
+          sin_theta_m = std::sin(theta_m),
+          cos_theta_m = std::cos(theta_m);
+
+    Vector3f wm = Vector3f(
+        cos_phi_m * sin_theta_m,
+        sin_phi_m * sin_theta_m,
+        cos_theta_m
+    );
+
+    Vector3f wo = wm * 2.f * dot(wm, wi) - wi;
+    if (wo.z() <= 0) {
+        if (wo_out)
+            *wo_out = Vector3f(0.f);
+        if (pdf_out)
+            *pdf_out = 0;
+        return zero();
+    }
+
+    float fr = 0.0f;
+    // for (int i = 0; i < (int) m_data->wavelengths.size(); ++i) {
+        float params_fr[3] = { phi_i, theta_i, m_data->wavelengths[wave_length_index] };
+
+        fr = m_data->spectra.eval(sample, params_fr);
+    // }
+
+    fr *= m_data->ndf.eval(u_wm, params) /
+            (4 * m_data->sigma.eval(u_wi, params));
+
+    float jacobian = std::max(2.f * sqr(Pi) * u_wm.x() *
+                              sin_theta_m, 1e-6f) * 4.f * dot(wi, wm);
+
+    float pdf = ndf_pdf * lum_pdf / jacobian;
+
+    if (wo_out)  (*wo_out)  = wo;
+    if (pdf_out) (*pdf_out) = pdf;
+
+    return fr / pdf;
+}
+
 Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
                       Vector3f *wo_out, float *pdf_out) const {
     if (wi.z() <= 0) {

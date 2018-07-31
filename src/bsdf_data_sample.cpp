@@ -48,16 +48,16 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
             float u = float(i + 0.5f) / N_THETA;
             powitacq::Vector3f wo;
             float pdf;
-            auto samples = m_brdf.sample(powitacq::Vector2f(u, v), enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), &wo, &pdf);
+            float sample = m_brdf.sample(powitacq::Vector2f(u, v), enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), m_intensity_index, &wo, &pdf);
 
             Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wo));
 
-            samples *= pdf;
+            sample *= pdf;
             RawMeasurement::SamplePoint sample_point = m_raw_measurement[j*N_THETA + i];
             sample_point.set_theta(outgoing_angle[0]);
             sample_point.set_phi(outgoing_angle[1]);
-            sample_point.set_luminance(samples[0]);
-            memcpy(sample_point.data() + 3, &samples[0], samples.size() * sizeof(float));
+            sample_point.set_luminance(sample);
+            sample_point[m_intensity_index+2] = sample;
             m_v2d[j*N_THETA + i] = vec3_to_disk(powitacq_to_enoki_vec3(wo));
         }
     }

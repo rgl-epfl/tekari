@@ -113,6 +113,13 @@ public:
                     Vector3f *wo = nullptr,
                     float *pdf = nullptr) const;
 
+    /// importance sample f_r * cos using two uniform variates
+    Spectrum sample(const Vector2f &u,
+                    const Vector3f &wi,
+                    size_t wave_length_index,
+                    Vector3f *wo = nullptr,
+                    float *pdf = nullptr) const;
+
     /// evaluate the PDF of a sample
     float pdf(const Vector3f &wi, const Vector3f &wo) const;
 
