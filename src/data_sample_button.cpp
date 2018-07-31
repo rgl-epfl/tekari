@@ -28,7 +28,7 @@ TEKARI_NAMESPACE_BEGIN
 DataSampleButton::DataSampleButton(Widget* parent, const string & label, bool is_spectral)
 :   Widget{ parent }
 ,   m_label{ label }
-,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + "..." : label }
+,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + ". .. " : label }
 ,    m_selected(false)
 ,   m_visible(true)
 ,    m_dirty(false)

@@ -3,7 +3,6 @@
 #include <limits>
 #include <iostream>
 #include <tekari/selections.h>
-#include <tekari/stop_watch.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -49,7 +48,9 @@ void update_selection_stats(
     size_t intensity_index
 )
 {
-    START_PROFILING("Updating selection statistics");
+    cout << "Updating selection statistics .. ";
+    Timer<> timer;
+
     for (Index i = 0; i < selected_points.size(); ++i)
     {
         if (SELECTED(selected_points[i]))
@@ -69,7 +70,8 @@ void update_selection_stats(
         selection_stats.average_point[intensity_index] *= scale;
         selection_stats.average_log_point[intensity_index] *= scale;
     }
-    END_PROFILING();
+    
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void compute_min_max_intensities(
@@ -78,10 +80,13 @@ void compute_min_max_intensities(
     size_t intensity_index
 )
 {
-    START_PROFILING("Computing minimum/maximum intensities");
+    cout << "Computing minimum/maximum intensities .. ";
+    Timer<> timer;
+
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
         points_stats_add_intensity(points_stats, raw_measurement[i][intensity_index + 2], i, intensity_index);
-    END_PROFILING();
+
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void update_points_stats(
@@ -93,7 +98,9 @@ void update_points_stats(
     size_t intensity_index
 )
 {
-    START_PROFILING("Updating points statistics");
+    cout << "Updating points statistics .. ";
+    Timer<> timer;
+
     points_stats.points_count = raw_measurement.n_sample_points();
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
@@ -124,7 +131,7 @@ void update_points_stats(
         //     (log(points_stats.average_log_point[intensity_index][1] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
     }
 
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 TEKARI_NAMESPACE_END

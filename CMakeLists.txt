@@ -210,7 +210,6 @@ add_executable(tekari
   include/tekari/thread_pool.h
   include/tekari/shared_queue.h
   include/tekari/common.h
-  include/tekari/stop_watch.h
   ${CMAKE_CURRENT_BINARY_DIR}/tekari_resources.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/tekari_resources.h
   tekari.rc

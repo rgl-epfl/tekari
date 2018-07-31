@@ -21,6 +21,8 @@
 #include <utility>
 #include <functional>
 #include <memory>
+#include <chrono>
+#include <iomanip>
 #include <cstdarg>
 #include <nanogui/glutil.h>
 #include <array>
@@ -180,6 +182,75 @@ inline Vector2f vec3_to_disk(const Vector3f& wi)
             atan_v = atan2(wi[0], wi[1]);
     return Vector2f(TO_DEG(acos_v) * cos(atan_v) / 90.0f,
                     TO_DEG(acos_v) * sin(atan_v) / 90.0f );
+}
+
+// ================= Timer Utils ================
+
+template <typename TimeT = std::chrono::microseconds> class Timer {
+public:
+    Timer() {
+        start = std::chrono::system_clock::now();
+    }
+
+    size_t value() const {
+        auto now = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<TimeT>(now - start);
+        return (size_t) duration.count();
+    }
+
+    size_t reset() {
+        auto now = std::chrono::system_clock::now();
+        auto duration = std::chrono::duration_cast<TimeT>(now - start);
+        start = now;
+        return (size_t) duration.count();
+    }
+private:
+    std::chrono::system_clock::time_point start;
+};
+
+inline std::string time_string(double time, bool precise = false) {
+    if (std::isnan(time) || std::isinf(time))
+        return "inf";
+
+    string suffix = "μs";
+    if (time > 1000) {
+        time /= 1000; suffix = "ms";
+        if (time > 1000) {
+            time /= 1000; suffix = "s";
+            if (time > 60) {
+                time /= 60; suffix = "m";
+                if (time > 60) {
+                    time /= 60; suffix = "h";
+                    if (time > 12) {
+                        time /= 12; suffix = "d";
+                    }
+                }
+            }
+        }
+    }
+
+    std::ostringstream os;
+    os << std::setprecision(precise ? 4 : 1)
+       << std::fixed << time << suffix;
+
+    return os.str();
+}
+
+inline std::string mem_string(size_t size, bool precise = false) {
+    double value = (double) size;
+    const char *suffixes[] = {
+        "B", "KiB", "MiB", "GiB", "TiB", "PiB"
+    };
+    int suffix = 0;
+    while (suffix < 5 && value > 1024.0f) {
+        value /= 1024.0f; ++suffix;
+    }
+
+    std::ostringstream os;
+    os << std::setprecision(suffix == 0 ? 0 : (precise ? 4 : 1))
+       << std::fixed << value << " " << suffixes[suffix];
+
+    return os.str();
 }
 
 // ================= String Utils ================

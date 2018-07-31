@@ -2,7 +2,6 @@
 
 #include <unordered_set>
 #include <fstream>
-#include <tekari/stop_watch.h>
 #include <tekari/selections.h>
 
 TEKARI_NAMESPACE_BEGIN
@@ -37,7 +36,9 @@ void load_data_sample(
     Metadata& metadata
 )
 {
-    START_PROFILING("Loading data sample");
+    cout << "Loading data sample .. ";
+    Timer<> timer;
+
     // try open file
     std::ifstream file(file_name);
     if (!file)
@@ -74,7 +75,7 @@ void load_data_sample(
             break;
         }
     }
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void load_standard_data_sample(
@@ -189,7 +190,9 @@ void save_data_sample(
     const Metadata& metadata
 )
 {
-    START_PROFILING("Save data sample");
+    cout << "Saving data sample .. ";
+    Timer<> timer;
+    
     // try open file
     FILE* dataset_file = fopen(path.c_str(), "w");
     if (!dataset_file)
@@ -210,7 +213,8 @@ void save_data_sample(
         fprintf(dataset_file, "\n");
     }
     fclose(dataset_file);
-    END_PROFILING();
+    
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 TEKARI_NAMESPACE_END

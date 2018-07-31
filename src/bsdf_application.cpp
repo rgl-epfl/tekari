@@ -1125,13 +1125,9 @@ void BSDFApplication::hide_windows()
 void BSDFApplication::try_load_data_sample(const string& file_path, shared_ptr<DataSample_to_add> data_sample_to_add)
 {
     try {
-        size_t pos = file_path.find_last_of("\\/");
-        string file_name = file_path.substr(pos+1, file_path.length());
-
-        pos = file_path.find_last_of(".");
+        size_t pos = file_path.find_last_of(".");
         string extension = file_path.substr(pos+1, file_path.length());
 
-        cout << "====================== Loading " << file_name << " ======================\n";
         shared_ptr<DataSample> ds;
         if (extension == "bsdf")
         {
@@ -1142,7 +1138,6 @@ void BSDFApplication::try_load_data_sample(const string& file_path, shared_ptr<D
             ds = make_shared<StandardDataSample>(file_path);
         }
         data_sample_to_add->data_sample = ds;
-        cout << "================== Finished loading " << file_name << " =================\n";
     }
     catch (std::exception e) {
         string error_msg = "Could not open data sample at " + file_path + " : " + e.what();

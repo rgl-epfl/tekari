@@ -1,7 +1,5 @@
 #include <tekari/selections.h>
-
 #include <tbb/parallel_for.h>
-#include <tekari/stop_watch.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -27,7 +25,8 @@ void select_points(
     const Vector2i & canvas_size,
     SelectionMode mode)
 {
-    START_PROFILING("Selecting points");
+    cout << "Selecting points .. ";
+    Timer<> timer;
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.size(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t>& range) {
         for (uint32_t i = range.begin(); i < range.end(); ++i)
@@ -46,7 +45,7 @@ void select_points(
             selected_points[i] = in_selection ? SELECTED_FLAG : NOT_SELECTED_FLAG;  // arbitrary non-zero value
         }
     });
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void select_closest_point(
@@ -57,7 +56,9 @@ void select_closest_point(
     const Vector2i & mouse_pos,
     const Vector2i & canvas_size)
 {
-    START_PROFILING("Selecting closest point");
+    cout << "Selecting closest point .. ";
+    Timer<> timer;
+
     size_t n_threads = V2D.size() / GRAIN_SIZE + ((V2D.size() % GRAIN_SIZE) > 0);
     vector<float> smallest_distances(n_threads, MAX_SELECTION_DISTANCE* MAX_SELECTION_DISTANCE);
     vector<int> closest_point_indices(n_threads, -1);
@@ -98,7 +99,8 @@ void select_closest_point(
     {
         selected_points[closest_point_index] = SELECTED_FLAG;
     }
-    END_PROFILING();
+
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void select_extreme_point(
@@ -108,32 +110,41 @@ void select_extreme_point(
     bool highest
 )
 {
-    START_PROFILING("Selecting extreme point");
-    int point_index = highest ? stats.highest_point_index[intensity_index]: stats.lowest_point_index[intensity_index];
+    cout << "Selecting extreme point .. ";
+    Timer<> timer;
 
+    int point_index = highest ? stats.highest_point_index[intensity_index]: stats.lowest_point_index[intensity_index];
     deselect_all_points(selected_points);
     selected_points[point_index] = SELECTED_FLAG;
 
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void select_all_points(VectorXf& selected_points)
 {
-    START_PROFILING("Selecting all points");
+    cout << "Selecting all points .. ";
+    Timer<> timer;
+
     set_all_points(selected_points, SELECTED_FLAG);
-    END_PROFILING();
+
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void deselect_all_points(VectorXf& selected_points)
 {
-    START_PROFILING("Deselecting all points");
+    cout << "Deselecting all points .. ";
+    Timer<> timer;
+    
     set_all_points(selected_points, NOT_SELECTED_FLAG);
-    END_PROFILING();
+    
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void move_selection_along_path(bool up, VectorXf& selected_points)
 {
-    START_PROFILING("Moving selection along path");
+    cout << "Moving selection along path";
+    Timer<> timer;
+    
     float extremity;
     if (up)
     {
@@ -147,7 +158,7 @@ void move_selection_along_path(bool up, VectorXf& selected_points)
         memmove(selected_points.data(), selected_points.data() + 1, selected_points.size() - 1);
         selected_points.back() = extremity;
     }
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void delete_selected_points(
@@ -158,7 +169,9 @@ void delete_selected_points(
     Metadata& metadata
 )
 {
-    START_PROFILING("Deleting selection");
+    cout << "Deleting selection .. ";
+    Timer<> timer;
+
     selection_info = PointsStats();
 
     Index last_valid = 0;
@@ -184,17 +197,20 @@ void delete_selected_points(
 
     metadata.set_points_in_file(last_valid);
 
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 size_t count_selected_points(const VectorXf& selected_points)
 {
+    cout << "Selecting extreme point .. ";
+    Timer<> timer;
+
     size_t count = 0;
-    START_PROFILING("Counting selected points");
     for (Index i = 0; i < selected_points.size(); ++i) {
         count += SELECTED(selected_points[i]);
     }
-    END_PROFILING();
+    
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
     return count;
 }
 

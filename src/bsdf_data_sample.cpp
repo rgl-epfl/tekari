@@ -1,6 +1,5 @@
 #define POWITACQ_IMPLEMENTATION
 #include <tekari/bsdf_data_sample.h>
-#include <tekari/stop_watch.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -38,7 +37,9 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
 void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
 {
-    START_PROFILING("Sample brdf");
+    cout << "Sample brdf .. ";
+    Timer<> timer;
+
     for (int j = 0; j < N_PHI; ++j)
     {
         float v = float(j + 0.5f) / N_PHI;
@@ -71,7 +72,7 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
         memset(sample_point.data() + 2, 0, (N_WAVE_LENGTHS + 1) * sizeof(float));
         m_v2d[N_PHI*N_THETA + j] = hemisphere_to_disk({theta, phi});
     }
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 
     recompute_data();
 }

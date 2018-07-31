@@ -1,5 +1,4 @@
 #include <tekari/raw_data_processing.h>
-#include <tekari/stop_watch.h>
 
 #define REAL float
 #define VOID void
@@ -22,7 +21,9 @@ void compute_normals(
     Matrix4XXf::Row ln_row
 )
 {
-    START_PROFILING("Computing normals");
+    cout << "Computing normals .. ";
+    Timer<> timer;
+
     n_row.fill (Vector4f(0));
     ln_row.fill(Vector4f(0));
 
@@ -69,7 +70,7 @@ void compute_normals(
             }
         }
     );
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void compute_normalized_heights(
@@ -80,7 +81,9 @@ void compute_normalized_heights(
     size_t intensity_index
 )
 {
-    START_PROFILING("Computing normalized heights");
+    cout << "Computing normalized heights .. ";
+    Timer<> timer;
+
     float min_intensity = points_stats.min_intensity[intensity_index];
     float max_intensity = points_stats.max_intensity[intensity_index];
     float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
@@ -98,12 +101,14 @@ void compute_normalized_heights(
             }
         }
     );
-    END_PROFILING();
+
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
 {
-    START_PROFILING("Triangulating data");
+    cout << "Triangulating data .. ";
+    Timer<> timer;
 
     struct triangulateio in, out;
     memset(&in, 0, sizeof(struct triangulateio));
@@ -120,12 +125,14 @@ void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
 
     free(out.trianglelist);
 
-    END_PROFILING();
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 void compute_path_segments(VectorXu& path_segments, const Matrix2Xf& V2D)
 {
-    START_PROFILING("Computing path segments");
+    cout << "Computing path segments .. ";
+    Timer<> timer;
+
     path_segments.clear();
     // path segments must always contain the first point
     path_segments.push_back(0);
@@ -141,7 +148,8 @@ void compute_path_segments(VectorXu& path_segments, const Matrix2Xf& V2D)
     }
     // path segments must always contain the last point
     path_segments.push_back(V2D.size());
-    END_PROFILING();
+
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 
