@@ -143,12 +143,16 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         new Label{ hidden_options_popup, "Advanced View Options", "sans-bold" };
         m_use_shadows_checkbox = add_hidden_option_toggle("Shadows", "Enable/Disable shadows (Shift+S)",
             [this](bool checked) {
-            m_bsdf_canvas->set_draw_flag(USES_SHADOWS, checked);
+            m_bsdf_canvas->set_draw_flag(USE_SHADOWS, checked);
             m_use_specular_checkbox->set_enabled(checked);
         }, true);
         m_use_specular_checkbox = add_hidden_option_toggle("Specular", "Enable/Disable specular lighting",
             [this](bool checked) {
-            m_bsdf_canvas->set_draw_flag(USES_SPECULAR, checked);
+            m_bsdf_canvas->set_draw_flag(USE_SPECULAR, checked);
+        }, false);
+        m_use_specular_checkbox = add_hidden_option_toggle("Wireframe", "Enable/Disable wireframe",
+            [this](bool checked) {
+            m_bsdf_canvas->set_draw_flag(USE_WIREFRAME, checked);
         }, false);
         m_display_center_axis = add_hidden_option_toggle("Center Axis", "Show/Hide Center Axis (A)",
             [this](bool checked) {
@@ -392,7 +396,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
             switch (key)
             {
                 case GLFW_KEY_S:
-                    toggle_canvas_draw_flags(USES_SHADOWS, m_use_shadows_checkbox);
+                    toggle_canvas_draw_flags(USE_SHADOWS, m_use_shadows_checkbox);
                     m_use_specular_checkbox->set_enabled(m_use_shadows_checkbox->checked());
                     return true;
                 case GLFW_KEY_G:

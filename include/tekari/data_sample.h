@@ -11,10 +11,11 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-#define USES_SHADOWS                     (1 << 0)
-#define USES_SPECULAR                    (1 << 1)
-#define DISPLAY_AXIS                     (1 << 2)
-#define DISPLAY_PREDICTED_OUTGOING_ANGLE (1 << 3)
+#define USE_SHADOWS                         (1 << 0)
+#define USE_SPECULAR                        (1 << 1)
+#define DISPLAY_AXIS                        (1 << 2)
+#define DISPLAY_PREDICTED_OUTGOING_ANGLE    (1 << 3)
+#define USE_WIREFRAME                       (1 << 4)
 
 class DataSample
 {

@@ -35,7 +35,7 @@ BSDFCanvas::BSDFCanvas(Widget* parent)
 ,   m_ortho_mode(false)
 ,   m_mouse_mode(ROTATE)
 ,   m_selection_region(make_pair(Vector2i(0,0), Vector2i(0,0)))
-,   m_draw_flags(DISPLAY_AXIS | USES_SHADOWS)
+,   m_draw_flags(DISPLAY_AXIS | USE_SHADOWS)
 {
     m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(1, 0, 0), static_cast<float>(M_PI / 4.0)));
 }
