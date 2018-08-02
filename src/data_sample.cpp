@@ -54,7 +54,7 @@ void DataSample::draw_gl(
         {
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_POLYGON_OFFSET_FILL);
-#if !defined(__EMSCRITEN__)
+#if !defined(__EMSCRIPTEN__)
             if (flags & USE_WIREFRAME)
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
@@ -68,7 +68,7 @@ void DataSample::draw_gl(
             m_shaders[MESH].set_uniform("use_shadows", (bool)(flags & USE_SHADOWS));
             m_shaders[MESH].set_uniform("use_specular", (bool)(flags & USE_SPECULAR));
             m_shaders[MESH].draw_indexed(GL_TRIANGLES, 0, m_f.size());
-#if !defined(__EMSCRITEN__)
+#if !defined(__EMSCRIPTEN__)
             if (flags & USE_WIREFRAME)
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
@@ -219,9 +219,14 @@ void DataSample::move_selection_along_path(bool up)
 }
 void DataSample::delete_selected_points()
 {
+
     tekari::delete_selected_points(m_selected_points, m_raw_measurement, m_v2d, m_selection_stats, m_metadata);
     recompute_data();
     link_data_to_shaders();
+    
+    // clear mask
+    std::fill(m_cache_mask.begin(), m_cache_mask.end(), false);
+    set_intensity_index(m_intensity_index);
 }
 size_t DataSample::count_selected_points() const
 {

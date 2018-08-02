@@ -25,7 +25,7 @@ void select_points(
     const Vector2i & canvas_size,
     SelectionMode mode)
 {
-    cout << "Selecting points .. ";
+    cout << std::setw(50) << std::left << "Selecting points .. ";
     Timer<> timer;
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.size(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t>& range) {
@@ -56,7 +56,7 @@ void select_closest_point(
     const Vector2i & mouse_pos,
     const Vector2i & canvas_size)
 {
-    cout << "Selecting closest point .. ";
+    cout << std::setw(50) << std::left << "Selecting closest point .. ";
     Timer<> timer;
 
     size_t n_threads = V2D.size() / GRAIN_SIZE + ((V2D.size() % GRAIN_SIZE) > 0);
@@ -110,7 +110,7 @@ void select_extreme_point(
     bool highest
 )
 {
-    cout << "Selecting extreme point .. ";
+    cout << std::setw(50) << std::left << "Selecting extreme point .. ";
     Timer<> timer;
 
     int point_index = highest ? stats.highest_point_index[intensity_index]: stats.lowest_point_index[intensity_index];
@@ -122,7 +122,7 @@ void select_extreme_point(
 
 void select_all_points(VectorXf& selected_points)
 {
-    cout << "Selecting all points .. ";
+    cout << std::setw(50) << std::left << "Selecting all points .. ";
     Timer<> timer;
 
     set_all_points(selected_points, SELECTED_FLAG);
@@ -132,7 +132,7 @@ void select_all_points(VectorXf& selected_points)
 
 void deselect_all_points(VectorXf& selected_points)
 {
-    cout << "Deselecting all points .. ";
+    cout << std::setw(50) << std::left << "Deselecting all points .. ";
     Timer<> timer;
     
     set_all_points(selected_points, NOT_SELECTED_FLAG);
@@ -142,7 +142,7 @@ void deselect_all_points(VectorXf& selected_points)
 
 void move_selection_along_path(bool up, VectorXf& selected_points)
 {
-    cout << "Moving selection along path";
+    cout << std::setw(50) << std::left << "Moving selection along path";
     Timer<> timer;
     
     float extremity;
@@ -169,7 +169,7 @@ void delete_selected_points(
     Metadata& metadata
 )
 {
-    cout << "Deleting selection .. ";
+    cout << std::setw(50) << std::left << "Deleting selection .. ";
     Timer<> timer;
 
     selection_info = PointsStats();
@@ -202,7 +202,7 @@ void delete_selected_points(
 
 size_t count_selected_points(const VectorXf& selected_points)
 {
-    cout << "Selecting extreme point .. ";
+    cout << std::setw(50) << std::left << "Selecting extreme point .. ";
     Timer<> timer;
 
     size_t count = 0;
