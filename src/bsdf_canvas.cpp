@@ -124,8 +124,8 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
 
 Vector2f BSDFCanvas::get_incident_angle(const Vector2i &p)
 {
-    Vector2f cam_dims = m_ortho_mode ? get_ortho_dims() * Vector2f(1.0f, -1.0f) : get_frustum_dims() * Vector2f(-1.0f, 1.0f);
-    Vector2f relP = (Vector2f(p) - m_size * 0.5f) * 2.0f / m_size * cam_dims;
+    Vector2f cam_dims = m_ortho_mode ? get_ortho_dims() : get_frustum_dims();
+    Vector2f relP = (Vector2f(p << 1) / m_size - Vector2f(1.0f)) * cam_dims;
 
     Vector4f oray;
     Vector4f dray;
@@ -149,8 +149,8 @@ Vector2f BSDFCanvas::get_incident_angle(const Vector2i &p)
 
     Vector2f i = Vector2f(incident_pos.x(), incident_pos.z());
     float theta = enoki::norm(i) * 90.0f;
-    if (theta > 80.0f) theta = 80.0f;
-    float phi = atan2(i.y(), i.x()) * 180.0f / M_PI;
+    theta = std::min(theta, 80.0f);
+    float phi = TO_DEG(atan2(i.y(), i.x()));
 
     return Vector2f(theta, phi);
 } 

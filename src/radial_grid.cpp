@@ -22,9 +22,10 @@ RadialGrid::RadialGrid()
         float radius = (float)(i + 1) / CIRCLE_COUNT;
         for (size_t j = 0; j < VERTEX_PER_CIRCLE_COUNT; ++j)
         {
+            float angle = static_cast<float>(2 * M_PI * j / VERTEX_PER_CIRCLE_COUNT);
             Vector2f point{
-                radius* (float)cos(2 * M_PI * j / VERTEX_PER_CIRCLE_COUNT),   // x coord
-                radius* (float)sin(2 * M_PI * j / VERTEX_PER_CIRCLE_COUNT),   // z coord
+                radius * cos(angle),   // x coord
+                radius * sin(angle),   // z coord
             };
             vertices[i*VERTEX_PER_CIRCLE_COUNT + j] = point;
         }
@@ -34,23 +35,24 @@ RadialGrid::RadialGrid()
             Vector3f pos = Vector3f(vertices[i * VERTEX_PER_CIRCLE_COUNT].x(),
                                     0.0f,
                                     vertices[i * VERTEX_PER_CIRCLE_COUNT].y());
-            m_theta_labels.push_back(make_pair(to_string(theta), pos + Vector3f{0.02f, 0.02f, -0.02f}));
+            m_theta_labels.push_back(make_pair(to_string(theta), pos));
         }
     }
 
     for (size_t i = 0; i < LINE_COUNT; ++i)
     {
         size_t index = CIRCLE_COUNT* VERTEX_PER_CIRCLE_COUNT + i* VERTEX_PER_LINE_COUNT;
-        double angle = M_PI * i / LINE_COUNT;
-        float cosa = static_cast<float>(cos(angle));
-        float sina = static_cast<float>(sin(angle));
+        float angle = static_cast<float>(M_PI * i / LINE_COUNT);
+        float cosa = cos(angle);
+        float sina = sin(angle);
         vertices[index]     = Vector2f{ cosa, sina };
         vertices[index+1]   = Vector2f{ -cosa, -sina };
 
-        Vector3f pos0 = Vector3f(vertices[index].x(), 0.0f, vertices[index].y());
-        Vector3f pos1 = Vector3f(vertices[index+1].x(), 0.0f, vertices[index+1].y());
-        m_phi_labels.push_back(make_pair(to_string(static_cast<int>(i * 180 / LINE_COUNT)), pos0 + enoki::normalize(pos0) * 0.04f));
-        m_phi_labels.push_back(make_pair(to_string(static_cast<int>(i * 180 / LINE_COUNT) - 180), pos1 + enoki::normalize(pos1) * 0.04f));
+        Vector3f pos0 = Vector3f(cosa, 0.0f, -sina);
+        Vector3f pos1 = Vector3f(-cosa, 0.0f, sina);
+        int deg = static_cast<int>(180 * i / LINE_COUNT);
+        m_phi_labels.push_back(make_pair(to_string(deg), pos0 + enoki::normalize(pos0) * 0.04f));
+        m_phi_labels.push_back(make_pair(to_string(deg - 180), pos1 + enoki::normalize(pos1) * 0.04f));
     }
 
     m_shader.bind();
@@ -115,7 +117,7 @@ void RadialGrid::draw(  NVGcontext* ctx,
         for (const auto& theta_label : m_theta_labels)
         {
             Vector4f projected_point = project_on_screen(theta_label.second, canvas_size, mvp);
-            nvgText(ctx, projected_point[0], projected_point[1], theta_label.first.c_str(), nullptr);
+            nvgText(ctx, projected_point[0] + 10, projected_point[1] - 10, theta_label.first.c_str(), nullptr);
         }
     }
 }

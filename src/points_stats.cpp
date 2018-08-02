@@ -48,7 +48,7 @@ void update_selection_stats(
     size_t intensity_index
 )
 {
-    cout << "Updating selection statistics .. ";
+    cout << std::setw(50) << std::left << "Updating selection statistics .. ";
     Timer<> timer;
 
     for (Index i = 0; i < selected_points.size(); ++i)
@@ -80,7 +80,7 @@ void compute_min_max_intensities(
     size_t intensity_index
 )
 {
-    cout << "Computing minimum/maximum intensities .. ";
+    cout << std::setw(50) << std::left << "Computing minimum/maximum intensities .. ";
     Timer<> timer;
 
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
@@ -98,7 +98,7 @@ void update_points_stats(
     size_t intensity_index
 )
 {
-    cout << "Updating points statistics .. ";
+    cout << std::setw(50) << std::left << "Updating points statistics .. ";
     Timer<> timer;
 
     points_stats.points_count = raw_measurement.n_sample_points();

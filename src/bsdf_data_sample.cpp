@@ -73,7 +73,7 @@ void BSDFDataSample::set_intensity_index(size_t intensity_index)
 
 void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 {
-    cout << "Setting incident angle ..\n";
+    cout << std::setw(50) << std::left << "Setting incident angle ..\n";
     Timer<> timer;
 
     // clear mask
@@ -83,6 +83,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     compute_samples(m_metadata.incident_angle());
     triangulate_data(m_f, m_v2d);
     compute_path_segments(m_path_segments, m_v2d);
+    m_points_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
     set_intensity_index(m_intensity_index);
     link_data_to_shaders();
 
@@ -91,8 +92,10 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
 void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
 {
-    cout << "Sample brdf .. ";
+    cout << std::setw(50) << std::left << "Sample brdf .. ";
     Timer<> timer;
+
+    powitacq::Vector3f wi = enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle));
 
     for (int phi = 0; phi < N_PHI; ++phi)
     {
@@ -103,8 +106,8 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
             powitacq::Vector3f wo;
             float pdf;
             float sample = m_intensity_index == 0 ?
-                                m_brdf.sample(powitacq::Vector2f(u, v), enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), m_intensity_index, &wo, &pdf):
-                                m_brdf.sample(powitacq::Vector2f(u, v), enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), m_intensity_index-1, &wo, &pdf);
+                                m_brdf.sample(powitacq::Vector2f(u, v), wi, m_intensity_index, &wo, &pdf):
+                                m_brdf.sample(powitacq::Vector2f(u, v), wi, m_intensity_index-1, &wo, &pdf);
 
             Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wo));
 

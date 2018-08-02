@@ -21,7 +21,7 @@ void compute_normals(
     Matrix4XXf::Row ln_row
 )
 {
-    cout << "Computing normals .. ";
+    cout << std::setw(50) << std::left << "Computing normals .. ";
     Timer<> timer;
 
     n_row.fill (Vector4f(0));
@@ -81,7 +81,7 @@ void compute_normalized_heights(
     size_t intensity_index
 )
 {
-    cout << "Computing normalized heights .. ";
+    cout << std::setw(50) << std::left << "Computing normalized heights .. ";
     Timer<> timer;
 
     float min_intensity = points_stats.min_intensity[intensity_index];
@@ -114,7 +114,7 @@ void compute_normalized_heights(
 
 void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
 {
-    cout << "Triangulating data .. ";
+    cout << std::setw(50) << std::left << "Triangulating data .. ";
     Timer<> timer;
 
     struct triangulateio in, out;
@@ -137,7 +137,7 @@ void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
 
 void compute_path_segments(VectorXu& path_segments, const Matrix2Xf& V2D)
 {
-    cout << "Computing path segments .. ";
+    cout << std::setw(50) << std::left << "Computing path segments .. ";
     Timer<> timer;
 
     path_segments.clear();

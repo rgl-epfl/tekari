@@ -36,7 +36,7 @@ void load_data_sample(
     Metadata& metadata
 )
 {
-    cout << "Loading data sample .. ";
+    cout << std::setw(50) << std::left << "Loading data sample .. ";
     Timer<> timer;
 
     // try open file
@@ -190,7 +190,7 @@ void save_data_sample(
     const Metadata& metadata
 )
 {
-    cout << "Saving data sample .. ";
+    cout << std::setw(50) << std::left << "Saving data sample .. ";
     Timer<> timer;
     
     // try open file
