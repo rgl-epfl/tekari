@@ -14,12 +14,7 @@ public:
         friend class RawMeasurement;
     public:
 
-        void operator=(const SamplePoint& other)
-        {
-            if(m_data.n_cols() != other.m_data.n_cols())
-                throw new std::runtime_error("Invalide assignement operation between SamplePoints.");
-            memcpy(m_data.data(), other.m_data.data(), m_data.n_cols());
-        }
+        void operator=(const SamplePoint& other) { m_data = other.m_data; }
 
         float theta() const             { return m_data[0]; }
         float phi() const               { return m_data[1]; }
