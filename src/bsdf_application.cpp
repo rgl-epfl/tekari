@@ -85,6 +85,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
     m_bsdf_canvas->set_update_incident_angle_callback([this](const Vector2f& incident_angle) {
         if (!m_selected_ds)
             return;
+        
         m_selected_ds->set_incident_angle(incident_angle);
 
         if (!m_data_sample_sliders_window)
@@ -92,6 +93,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         m_theta_float_box->set_value(incident_angle.x());
         m_phi_float_box->set_value(incident_angle.y());
         m_incident_angle_slider->set_value(incident_angle);
+        reprint_footer();
     });
 
     // Footer
@@ -150,7 +152,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_SPECULAR, checked);
         }, false);
-        m_use_specular_checkbox = add_hidden_option_toggle("Wireframe", "Enable/Disable wireframe",
+        m_use_wireframe_checkbox = add_hidden_option_toggle("Wireframe", "Enable/Disable wireframe",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_WIREFRAME, checked);
         }, false);
@@ -755,6 +757,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             m_theta_float_box->set_value(value[1]);
 
             m_selected_ds->set_incident_angle(value);
+            reprint_footer();
         });
         m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(90.0f, 180.0f)));
         m_incident_angle_slider->set_fixed_size({ 200, 200 });
@@ -775,11 +778,13 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             Vector2f incident_angle = {value, m_phi_float_box->value()};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle); 
+            reprint_footer();
         });
         m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), [this](float value) {
             Vector2f incident_angle = {m_theta_float_box->value(), value};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle);
+            reprint_footer();
         });
 
         auto add_int_box = [window](const string& label, size_t value, function<void(size_t)> callback) {
@@ -800,6 +805,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             m_wave_length_slider->set_value(value);
             m_selected_ds->set_intensity_index(value);
             m_wave_length_int_box->set_value(value);
+            reprint_footer();
         });
 
         m_wave_length_slider = new Slider{ window };
@@ -809,6 +815,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             m_wave_length_slider->set_value(int_val);
             m_selected_ds->set_intensity_index(int_val);
             m_wave_length_int_box->set_value(int_val);
+            reprint_footer();
         });
 
         return window;
