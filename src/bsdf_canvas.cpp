@@ -12,11 +12,16 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-const Vector3f BSDFCanvas::VIEW_ORIGIN( 0, 4, 0 );
-const Vector3f BSDFCanvas::VIEW_UP( 0, 0, 1 );
-const Vector3f BSDFCanvas::VIEW_RIGHT( 1, 0, 0 );
-const Vector3f BSDFCanvas::VIEW_FORWARD( 0, -1, 0 );
-const Matrix4f BSDFCanvas::VIEW(enoki::look_at<Matrix4f>(VIEW_ORIGIN, Vector3f(0,0,0), VIEW_UP));
+const Vector3f BSDFCanvas::VIEW_ORIGIN(0, 4, 0);
+const Vector3f BSDFCanvas::VIEW_FORWARD(0, -1, 0);
+const Vector3f BSDFCanvas::VIEW_UP(0, 0, 1);
+const Vector3f BSDFCanvas::VIEW_RIGHT(1, 0, 0);
+const Matrix4f BSDFCanvas::MODEL(
+    -1, 0, 0, 0,
+     0, 0, -1, 0,
+     0, -1, 0, 0,
+     0, 0, 0, 1
+);
 
 const float BSDFCanvas::NEAR = 0.01f;
 const float BSDFCanvas::FAR = 100.0f;
@@ -102,7 +107,7 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
             Matrix4f model = model_matrix();
             Matrix4f proj = projection_matrix();
 
-            Matrix4f mvp = proj* VIEW* model;
+            Matrix4f mvp = proj* model * MODEL;
 
             SelectionBox selection_box = get_selection_box();
             
@@ -170,8 +175,8 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 {
     GLCanvas::draw(ctx);
 
-    Matrix4f model = model_matrix();
-    Matrix4f proj = projection_matrix();
+    //Matrix4f model = model_matrix();
+    //Matrix4f proj = projection_matrix();
 
     // m_grid.draw(ctx, m_size, model, VIEW, proj);
 
@@ -196,11 +201,12 @@ void BSDFCanvas::draw_gl() {
     // {
     //     data_sample->draw_gl(VIEW_ORIGIN, model, VIEW, proj, m_draw_flags, m_color_map);
     // }
-    cout << "view " << VIEW << endl;
-    cout << "model : " << model << endl;
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_UP, 1.0f, proj * VIEW *model, Color(1.0f, 0.0f, 0.0f, 1.0f));
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_RIGHT, 1.0f, proj * VIEW*model, Color(0.0f, 1.0f, 0.0f, 1.0f));
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_FORWARD, 1.0f, proj * VIEW*model, Color(0.0f, 0.0f, 1.0f, 1.0f));
+
+    Matrix4f mvp = proj * enoki::translate<Matrix4f>(Vector3f(0, 0, -4)) * model * MODEL;
+
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_UP, 1.0f, mvp, Color(1.0f, 0.0f, 0.0f, 1.0f));
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_RIGHT, 1.0f, mvp, Color(0.0f, 1.0f, 0.0f, 1.0f));
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_FORWARD, 1.0f, mvp, Color(0.0f, 0.0f, 1.0f, 1.0f));
     // m_grid.draw_gl(model, VIEW, proj);
 }
 

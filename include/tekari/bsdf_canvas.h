@@ -35,7 +35,7 @@ private:
     static const Vector3f VIEW_UP;
     static const Vector3f VIEW_RIGHT;
     static const Vector3f VIEW_FORWARD;
-    static const Matrix4f VIEW;
+    static const Matrix4f MODEL;
 
     static const float NEAR, FAR;
 

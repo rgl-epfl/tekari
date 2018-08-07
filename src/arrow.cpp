@@ -32,14 +32,9 @@ void Arrow::draw_gl(const Vector3f& origin,
     using namespace enoki;
     glEnable(GL_DEPTH_TEST);
 
-    // Find rotation from up vector
-    Vector3f left = normalize(cross(Vector3f(0.0f, 0.0f, 1.0f), direction));
-    float angle = acos(dot(Vector3f(0.0f, 0.0f, 1.0f), direction));
-
-    Matrix4f mvp = vp * transform_compose(
-        Matrix3f(scale<Matrix4f>(Vector3f(1.0f, 1.0f, s))),
-        angle < 1e-5 ? Quaternion4f() : rotate<Quaternion4f>(left, angle),
-        origin);
+    Matrix4f mvp =
+        vp * enoki::look_at<Matrix4f>(origin, origin+direction, normalize(Vector3f(1, 2, 3))) *
+        enoki::scale<Matrix4f>(Vector3f(1.f, 1.f, s));
 
     m_cone_shader.bind();
     m_cone_shader.set_uniform("model_view_proj", mvp);
@@ -66,7 +61,7 @@ void Arrow::load_shaders()
     vector<Vector4f> cone_vertices(2);
 
     cone_vertices[0] = Vector4f(0, 0, 0, 1);
-    cone_vertices[0] = Vector4f(0, 0, 1, 1);
+    cone_vertices[1] = Vector4f(0, 0, 1, 1);
 
     // vector<Vector4f> cylinder_vertices(2 * (CIRCLE_VERTEX_COUNT + 1));
 
