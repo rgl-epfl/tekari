@@ -40,8 +40,7 @@ public:
 
     void draw_gl(const Vector3f& view_origin,
                 const Matrix4f& model,
-                const Matrix4f& view,
-                const Matrix4f& proj,
+                const Matrix4f& mvp,
                 int flags,
                 std::shared_ptr<ColorMap> color_map);
 

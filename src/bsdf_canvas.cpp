@@ -16,6 +16,7 @@ const Vector3f BSDFCanvas::VIEW_ORIGIN(0, 4, 0);
 const Vector3f BSDFCanvas::VIEW_FORWARD(0, -1, 0);
 const Vector3f BSDFCanvas::VIEW_UP(0, 0, 1);
 const Vector3f BSDFCanvas::VIEW_RIGHT(1, 0, 0);
+const Matrix4f BSDFCanvas::VIEW(enoki::translate<Matrix4f>(Vector3f(0, 0, -4)));
 const Matrix4f BSDFCanvas::MODEL(
     -1, 0, 0, 0,
      0, 0, -1, 0,
@@ -42,7 +43,7 @@ BSDFCanvas::BSDFCanvas(Widget* parent)
 ,   m_selection_region(make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_draw_flags(DISPLAY_AXIS | USE_SHADOWS)
 {
-    // m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 0, 1), static_cast<float>(M_PI / 4.0)));
+    m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(1, 0, 0), static_cast<float>(M_PI / 4.0)));
 }
 
 bool BSDFCanvas::mouse_motion_event(const Vector2i& p,
@@ -107,7 +108,7 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
             Matrix4f model = model_matrix();
             Matrix4f proj = projection_matrix();
 
-            Matrix4f mvp = proj* model * MODEL;
+            Matrix4f mvp = proj * VIEW * model;
 
             SelectionBox selection_box = get_selection_box();
             
@@ -175,10 +176,10 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 {
     GLCanvas::draw(ctx);
 
-    //Matrix4f model = model_matrix();
-    //Matrix4f proj = projection_matrix();
+    Matrix4f model = model_matrix();
+    Matrix4f proj = projection_matrix();
 
-    // m_grid.draw(ctx, m_size, model, VIEW, proj);
+    m_grid.draw(ctx, m_size, proj * VIEW * model);
 
     // draw selection region
     SelectionBox selection_box = get_selection_box();
@@ -194,20 +195,19 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 void BSDFCanvas::draw_gl() {
     Matrix4f model = model_matrix();
     Matrix4f proj = projection_matrix();
+    Matrix4f mvp = proj * VIEW * model;
 
     // float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
     // glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
-    // for (const auto& data_sample: m_data_samples_to_draw)
-    // {
-    //     data_sample->draw_gl(VIEW_ORIGIN, model, VIEW, proj, m_draw_flags, m_color_map);
-    // }
-
-    Matrix4f mvp = proj * enoki::translate<Matrix4f>(Vector3f(0, 0, -4)) * model * MODEL;
+    for (const auto& data_sample: m_data_samples_to_draw)
+    {
+        data_sample->draw_gl(VIEW_ORIGIN, model, mvp, m_draw_flags, m_color_map);
+    }
 
     Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_UP, 1.0f, mvp, Color(1.0f, 0.0f, 0.0f, 1.0f));
     Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_RIGHT, 1.0f, mvp, Color(0.0f, 1.0f, 0.0f, 1.0f));
     Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_FORWARD, 1.0f, mvp, Color(0.0f, 0.0f, 1.0f, 1.0f));
-    // m_grid.draw_gl(model, VIEW, proj);
+    m_grid.draw_gl(mvp);
 }
 
 void BSDFCanvas::select_data_sample(shared_ptr<DataSample> data_sample) {
@@ -277,7 +277,7 @@ Vector2f BSDFCanvas::get_ortho_dims() const
 
 Matrix4f BSDFCanvas::model_matrix() const
 {
-    return m_arcball.matrix() /** Matrix4f(0,0,1,0, 1,0,0,0, 0,1,0,0, 0,0,0,1)*/ *  enoki::translate<Matrix4f>(-m_translation);
+    return m_arcball.matrix() * enoki::translate<Matrix4f>(-m_translation) * MODEL;
 }
 
 

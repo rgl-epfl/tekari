@@ -25,14 +25,10 @@ DataSample::~DataSample()
 void DataSample::draw_gl(
     const Vector3f& view_origin,
     const Matrix4f& model,
-    const Matrix4f& view,
-    const Matrix4f& proj,
+    const Matrix4f& mvp,
     int flags,
     shared_ptr<ColorMap> color_map)
 {
-    // Precompute mvp
-    Matrix4f mvp = proj * view * model;
-
     // draw the predicted outgoing angle
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {

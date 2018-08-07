@@ -13,15 +13,11 @@ public:
     ~RadialGrid();
 
     void draw_gl(
-        const Matrix4f& model,
-        const Matrix4f& view,
-        const Matrix4f& proj);
+        const Matrix4f& mvp);
 
     void draw(NVGcontext* ctx,
         const Vector2i& canvas_size,
-        const Matrix4f& model,
-        const Matrix4f& view,
-        const Matrix4f& proj);
+        const Matrix4f& mvp);
 
     void set_visible(bool visible) { m_visible = visible; }
     bool visible() const { return m_visible; }

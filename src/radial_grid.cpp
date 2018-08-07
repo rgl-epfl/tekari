@@ -24,18 +24,15 @@ RadialGrid::RadialGrid()
         {
             float angle = static_cast<float>(2 * M_PI * j / VERTEX_PER_CIRCLE_COUNT);
             Vector2f point{
-                radius * cos(angle),   // x coord
-                radius * sin(angle),   // z coord
+                radius * cos(angle),
+                radius * sin(angle),
             };
             vertices[i*VERTEX_PER_CIRCLE_COUNT + j] = point;
         }
         int theta = (i + 1) * 90 / CIRCLE_COUNT;
         if (theta != 0)
         {
-            Vector3f pos = Vector3f(vertices[i * VERTEX_PER_CIRCLE_COUNT].x(),
-                                    vertices[i * VERTEX_PER_CIRCLE_COUNT].y(),
-                                    0.0f
-                                    );
+            Vector3f pos = enoki::concat(vertices[i * VERTEX_PER_CIRCLE_COUNT], 0.0f);
             m_theta_labels.push_back(make_pair(to_string(theta), pos));
         }
     }
@@ -49,8 +46,8 @@ RadialGrid::RadialGrid()
         vertices[index]     = Vector2f{ cosa, sina };
         vertices[index+1]   = Vector2f{ -cosa, -sina };
 
-        Vector3f pos0 = Vector3f(cosa, -sina, 0.0f);
-        Vector3f pos1 = Vector3f(-cosa, sina, 0.0f);
+        Vector3f pos0 = Vector3f(cosa, sina, 0.0f);
+        Vector3f pos1 = Vector3f(-cosa, -sina, 0.0f);
         int deg = static_cast<int>(180 * i / LINE_COUNT);
         m_phi_labels.push_back(make_pair(to_string(deg), pos0 + enoki::normalize(pos0) * 0.04f));
         m_phi_labels.push_back(make_pair(to_string(deg - 180), pos1 + enoki::normalize(pos1) * 0.04f));
@@ -66,13 +63,10 @@ RadialGrid::~RadialGrid()
 }
 
 void RadialGrid::draw_gl(
-    const Matrix4f& model,
-    const Matrix4f& view,
-    const Matrix4f& proj)
+    const Matrix4f& mvp)
 {
     if (m_visible)
     {
-        Matrix4f mvp = proj* view* model;
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -99,13 +93,10 @@ void RadialGrid::draw_gl(
 
 void RadialGrid::draw(  NVGcontext* ctx,
                         const Vector2i& canvas_size,
-                        const Matrix4f& model,
-                        const Matrix4f& view,
-                        const Matrix4f& proj)
+                        const Matrix4f& mvp)
 {
     if (m_visible && m_show_degrees)
     {
-        Matrix4f mvp = proj * view * model;
         nvgFontSize(ctx, 15.0f);
         nvgFontFace(ctx, "sans");
         nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
