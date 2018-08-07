@@ -33,8 +33,9 @@ RadialGrid::RadialGrid()
         if (theta != 0)
         {
             Vector3f pos = Vector3f(vertices[i * VERTEX_PER_CIRCLE_COUNT].x(),
-                                    0.0f,
-                                    vertices[i * VERTEX_PER_CIRCLE_COUNT].y());
+                                    vertices[i * VERTEX_PER_CIRCLE_COUNT].y(),
+                                    0.0f
+                                    );
             m_theta_labels.push_back(make_pair(to_string(theta), pos));
         }
     }
@@ -48,8 +49,8 @@ RadialGrid::RadialGrid()
         vertices[index]     = Vector2f{ cosa, sina };
         vertices[index+1]   = Vector2f{ -cosa, -sina };
 
-        Vector3f pos0 = Vector3f(cosa, 0.0f, -sina);
-        Vector3f pos1 = Vector3f(-cosa, 0.0f, sina);
+        Vector3f pos0 = Vector3f(cosa, -sina, 0.0f);
+        Vector3f pos1 = Vector3f(-cosa, sina, 0.0f);
         int deg = static_cast<int>(180 * i / LINE_COUNT);
         m_phi_labels.push_back(make_pair(to_string(deg), pos0 + enoki::normalize(pos0) * 0.04f));
         m_phi_labels.push_back(make_pair(to_string(deg - 180), pos1 + enoki::normalize(pos1) * 0.04f));

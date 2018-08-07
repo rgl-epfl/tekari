@@ -34,6 +34,7 @@ private:
     static const Vector3f VIEW_ORIGIN;
     static const Vector3f VIEW_UP;
     static const Vector3f VIEW_RIGHT;
+    static const Vector3f VIEW_FORWARD;
     static const Matrix4f VIEW;
 
     static const float NEAR, FAR;
@@ -85,7 +86,8 @@ public:
 
 private:
     SelectionBox get_selection_box() const;
-    Matrix4f get_projection_matrix() const;
+    Matrix4f projection_matrix() const;
+    Matrix4f model_matrix() const;
 
     inline int rotation_mouse_button(bool dragging)     const { return BUTTON_MAPPINGS[dragging][m_mouse_mode]; }
     inline int translation_mouse_button(bool dragging)  const { return BUTTON_MAPPINGS[dragging][(m_mouse_mode + 2) % MOUSE_MODE_COUNT]; }

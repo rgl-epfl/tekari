@@ -15,7 +15,7 @@ void Axis::draw_gl(const Matrix4f& mvp)
 {
     Arrow::instance().draw_gl(
             m_origin,
-            Vector3f(1, 0.0f, 0.0f),
+            Vector3f(1.0f, 0.0f, 0.0f),
             0.2f,
             mvp,
             Color(1.0f, 0.0f, 0.0f, 1.0f)

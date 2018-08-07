@@ -15,14 +15,20 @@ TEKARI_NAMESPACE_BEGIN
 void compute_normals(
     const Matrix3Xu& F,
     const Matrix2Xf& V2D,
-    const MatrixXXf::Row h_row,
-    const MatrixXXf::Row lh_row,
-    Matrix4XXf::Row n_row,
-    Matrix4XXf::Row ln_row
+    const MatrixXXf& H,
+    const MatrixXXf& LH,
+    Matrix4XXf& N,
+    Matrix4XXf& LN,
+    size_t intensity_index
 )
 {
     cout << std::setw(50) << std::left << "Computing normals .. ";
     Timer<> timer;
+
+    const MatrixXXf::Row h_row  = H[intensity_index];
+    const MatrixXXf::Row lh_row = LH[intensity_index];
+    Matrix4XXf::Row n_row    = N[intensity_index];
+    Matrix4XXf::Row ln_row   = LN[intensity_index];
 
     n_row.fill (Vector4f(0));
     ln_row.fill(Vector4f(0));
@@ -75,17 +81,20 @@ void compute_normals(
 
 void compute_normalized_heights(
     const RawMeasurement& raw_measurement,
-    PointsStats& points_stats,
-    MatrixXXf::Row H,
-    MatrixXXf::Row LH,
+    const PointsStats& points_stats,
+    MatrixXXf& H,
+    MatrixXXf& LH,
     size_t intensity_index
 )
 {
     cout << std::setw(50) << std::left << "Computing normalized heights .. ";
     Timer<> timer;
 
-    float min_intensity = points_stats.min_intensity[intensity_index];
-    float max_intensity = points_stats.max_intensity[intensity_index];
+    MatrixXXf::Row h_row  = H[intensity_index];
+    MatrixXXf::Row lh_row = LH[intensity_index];
+
+    float min_intensity = points_stats[intensity_index].min_intensity;
+    float max_intensity = points_stats[intensity_index].max_intensity;
 
     if (std::abs(min_intensity - max_intensity) <= 1e-5)
     {
@@ -103,8 +112,8 @@ void compute_normalized_heights(
         {
             for (uint32_t i = range.begin(); i < range.end(); ++i)
             {
-                H[i]     = (raw_measurement[i][intensity_index + 2] - min_intensity) / (max_intensity - min_intensity);
-                LH[i]    = (log(raw_measurement[i][intensity_index + 2] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+                h_row[i]     = (raw_measurement[i][intensity_index+2] - min_intensity) / (max_intensity - min_intensity);
+                lh_row[i]    = (log(raw_measurement[i][intensity_index+2] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
             }
         }
     );

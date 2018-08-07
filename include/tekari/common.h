@@ -128,17 +128,17 @@ inline Vector4f project_on_screen(const Vector3f& point,
     const Vector2i& canvas_size,
     const Matrix4f& mvp)
 {
-    Vector4f projected_point( mvp* concat(point, 1.0f) );
+    Vector4f projected_point( mvp * concat(point, 1.0f) );
 
     projected_point /= projected_point[3];
-    projected_point[0] = (projected_point[0] + 1.0f)* 0.5f* canvas_size.x();
-    projected_point[1] = canvas_size.y() - (projected_point[1] + 1.0f)* 0.5f* canvas_size.y();
+    projected_point[0] = (projected_point[0] + 1.0f) * 0.5f * canvas_size.x();
+    projected_point[1] = canvas_size.y() - (projected_point[1] + 1.0f) * 0.5f * canvas_size.y();
     return projected_point;
 }
 
 inline Vector3f get_3d_point(const Matrix2Xf& V2D, const MatrixXXf::Row& H, size_t index)
 {
-    return Vector3f( V2D[index][0], H[index], V2D[index][1] );
+    return concat(V2D[index], H[index]);
 }
 
 inline Matrix3Xf get_3d_points(const Matrix2Xf& V2D, const MatrixXXf& H, size_t index)

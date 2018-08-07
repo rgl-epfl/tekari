@@ -15,5 +15,5 @@ void main() {
 	color = mix(mix(vec4(0.0f), vec4(vec3(1.0f) - texture(color_map, vec2(in_height, 0.0)).rgb, 1.0f), show_all_points_f),
 				vec4(0.0f, 0.8f, 0.3f, 1.0f),
 				in_selected);
-    gl_Position = model_view_proj * vec4(in_pos2d.x, in_height, in_pos2d.y, 1.0);
+    gl_Position = model_view_proj * vec4(in_pos2d, in_height, 1.0);
 }

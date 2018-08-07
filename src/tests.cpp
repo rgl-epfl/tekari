@@ -81,7 +81,7 @@ int main(int argc, char const* argv[])
     test_constructors(54, 23, 2.4);
     test_clear<float>();
     test_resize<uint16_t>(213, 13);
-    test_assign(14, 2, 43);
+    test_assign(14, 2, 2.3);
     test_iterator();
     return 0;
 }

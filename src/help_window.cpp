@@ -173,10 +173,10 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
 
         add_library(about, "Eigen", "", "C++ Template Library for Linear Algebra.");
         add_library(about, "Glad", "", "Multi-Language GL Loader-Generator.");
-        add_library(about, "GLEW", "", "The Open_g_l Extension Wrangler Library.");
-        add_library(about, "GLFW", "", "Open_g_l Desktop Development Library.");
-        add_library(about, "Nano_g_u_i", "", "Small Widget Library for Open_g_l.");
-        add_library(about, "Nano_v_g", "", "Small Vector Graphics Library.");
+        add_library(about, "GLEW", "", "The OpenGL Extension Wrangler Library.");
+        add_library(about, "GLFW", "", "OpenGL Desktop Development Library.");
+        add_library(about, "NanoGUI", "", "Small Widget Library for OpenGL.");
+        add_library(about, "NanoVG", "", "Small Vector Graphics Library.");
         add_library(about, "Triangle", "", "C Delaunay Triangulator.");
     }
 

@@ -113,7 +113,8 @@ void select_extreme_point(
     cout << std::setw(50) << std::left << "Selecting extreme point .. ";
     Timer<> timer;
 
-    int point_index = highest ? stats.highest_point_index[intensity_index]: stats.lowest_point_index[intensity_index];
+    int point_index = highest ? stats[intensity_index].highest_point_index:
+                                stats[intensity_index].lowest_point_index;
     deselect_all_points(selected_points);
     selected_points[point_index] = SELECTED_FLAG;
 

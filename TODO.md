@@ -4,9 +4,8 @@ TODO SORTED:
 - add progress bar
 
 
-README:
-- find name of machine
-
-## Web integration
-emscripten
-
+1. Fix bugs
+2. make a release
+3. luminance height field
+4. rgb visualization
+5. nice spectral widget

@@ -37,10 +37,10 @@ void DataSample::draw_gl(
     if (flags & DISPLAY_PREDICTED_OUTGOING_ANGLE)
     {
         Vector2f origin2D = hemisphere_to_disk(m_metadata.incident_angle());
-        Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
+        Vector3f origin3D = Vector3f{ origin2D[0], origin2D[1], 0.0f };
         Arrow::instance().draw_gl(
             -origin3D,
-            Vector3f(0, 1, 0),
+            Vector3f(0, 0, 1),
             1.0f,
             mvp,
             Color(0.0f, 1.0f, 1.0f, 1.0f));
@@ -106,10 +106,10 @@ void DataSample::draw_gl(
         {
             glEnable(GL_DEPTH_TEST);
             Vector2f origin2D = hemisphere_to_disk(m_metadata.incident_angle());
-            Vector3f origin3D = Vector3f{ origin2D[0], 0.0f, origin2D[1] };
+            Vector3f origin3D = Vector3f{ origin2D[0], origin2D[1], 0.0f };
             Arrow::instance().draw_gl(
                 origin3D,
-                Vector3f(0, 1, 0),
+                Vector3f(0, 0, 1),
                 1.0f,
                 mvp,
                 Color(1.0f, 0.0f, 1.0f, 1.0f));
@@ -166,7 +166,7 @@ void DataSample::update_point_selection()
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
     m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
-    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h[m_intensity_index], m_lh[m_intensity_index], m_intensity_index);
+    update_selection_stats( m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
     m_selection_axis.set_origin(selection_center());
 }
 
@@ -223,7 +223,7 @@ void DataSample::delete_selected_points()
     tekari::delete_selected_points(m_selected_points, m_raw_measurement, m_v2d, m_selection_stats, m_metadata);
     recompute_data();
     link_data_to_shaders();
-    
+
     // clear mask
     std::fill(m_cache_mask.begin(), m_cache_mask.end(), false);
     set_intensity_index(m_intensity_index);

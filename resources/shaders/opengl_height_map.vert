@@ -13,7 +13,7 @@ out vec3 position;
 out vec3 normal;
 
 void main() {
-    vec3 pos = vec3(in_pos2d.x, in_height, in_pos2d.y);
+    vec3 pos = vec3(in_pos2d, in_height);
     gl_Position = model_view_proj * vec4(pos, 1.0);
     height = in_height;
     position = (model * vec4(pos, 1.0)).xyz;

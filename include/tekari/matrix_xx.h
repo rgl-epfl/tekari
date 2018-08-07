@@ -84,20 +84,18 @@ public:
         {}
 
         Row(const Row& other) = default;            // just copy the values
+        Row(Row&& other) = default;                 // just copy the values
         Row& operator=(const Row& other)            // a copy assignement is only valid if the current row is valid (belongs to a matrix) and the two rows have the same size
         {
             if(!m_data || m_n_cols != other.m_n_cols)
                 throw new std::runtime_error("Invalide assignement operation between Rows.");
             memcpy(m_data, other.m_data, m_n_cols * sizeof(T));
-            m_n_cols = other.m_n_cols;
             return *this;
         }
-        Row(Row&& other) = default;                    // just copy the values
-        Row& operator=(Row&& other) = default;        // just copy the values
 
         // access a particular value
-        inline T operator[](size_t i) const    { return m_data[i]; }
-        inline T& operator[](size_t i)         { return m_data[i]; }
+        inline const T& operator[](size_t i) const  { return m_data[i]; }
+        inline T&       operator[](size_t i)        { return m_data[i]; }
 
         inline T *data()               { return m_data; }
         inline const T *data() const   { return m_data; }
@@ -191,12 +189,12 @@ public:
     void fill(const T& value) { std::fill(m_data, m_data + (m_n_rows * m_n_cols), value); }
 
     // access a particular row
-    inline Row row(size_t i)                    { return Row(m_data + i * m_n_cols, m_n_cols); }
+    inline       Row row(size_t i)              { return Row(m_data + i * m_n_cols, m_n_cols); }
     inline const Row row(size_t i) const        { return Row(m_data + i * m_n_cols, m_n_cols); }
-    inline Row operator[](size_t i)             { return row(i); }
+    inline       Row operator[](size_t i)       { return row(i); }
     inline const Row operator[](size_t i) const { return row(i); }
-    inline T& operator()(size_t r, size_t c)        { return m_data[r*m_n_cols + c]; }
-    inline T operator()(size_t r, size_t c) const   { return m_data[r*m_n_cols + c]; }
+    inline       T& operator()(size_t r, size_t c)          { return m_data[r*m_n_cols + c]; }
+    inline const T& operator()(size_t r, size_t c) const    { return m_data[r*m_n_cols + c]; }
 
     // first row
     inline Row front()              { return row(0); }

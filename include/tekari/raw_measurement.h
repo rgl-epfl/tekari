@@ -8,7 +8,6 @@ TEKARI_NAMESPACE_BEGIN
 class RawMeasurement
 {
 public:
-    
     class SamplePoint
     {
         friend class RawMeasurement;

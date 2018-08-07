@@ -64,11 +64,11 @@ public:
     inline size_t intensity_count()            const { return m_points_stats.intensity_count; }
     inline size_t points_count()            const { return m_points_stats.points_count; }
     inline size_t n_wave_lengths()          const { return m_raw_measurement.n_wave_lengths(); }
-    inline float average_intensity()        const { return m_points_stats.average_intensity[m_intensity_index]; }
+    inline float average_intensity()        const { return m_points_stats[m_intensity_index].average_intensity; }
 
-    inline float selection_min_intensity()      const { return m_selection_stats.min_intensity[m_intensity_index]; }
-    inline float selection_max_intensity()      const { return m_selection_stats.max_intensity[m_intensity_index]; }
-    inline float selection_average_intensity()  const { return m_selection_stats.average_intensity[m_intensity_index]; }
+    inline float selection_min_intensity()      const { return m_selection_stats[m_intensity_index].min_intensity; }
+    inline float selection_max_intensity()      const { return m_selection_stats[m_intensity_index].max_intensity; }
+    inline float selection_average_intensity()  const { return m_selection_stats[m_intensity_index].average_intensity; }
 
     // Data selection/computation methods (wrapers for corresponding routines, easier to call)
     void select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode);
@@ -88,8 +88,8 @@ public:
     {
         return  has_selection() ?
                     m_display_as_log?
-                        m_selection_stats.average_log_point[m_intensity_index] :
-                        m_selection_stats.average_point[m_intensity_index] :
+                        m_selection_stats[m_intensity_index].average_log_point :
+                        m_selection_stats[m_intensity_index].average_point :
                     Vector3f{ 0,0,0 };
     }
     void update_point_selection();

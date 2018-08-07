@@ -279,10 +279,16 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             return button;
         };
 
-        make_tool_button(true, [this] { open_data_sample_dialog(); }, ENTYPO_ICON_FOLDER, "Open data sample (CTRL+O)");
-        make_tool_button(true, [this] { save_screen_shot(); }, ENTYPO_ICON_IMAGE, "Save image (CTRL+P)");
-        make_tool_button(true, [this] { save_selected_data_sample(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
-        make_tool_button(true, [this]() { toggle_metadata_window(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
+        auto open_button        = make_tool_button(true, [this] { open_data_sample_dialog(); }, ENTYPO_ICON_FOLDER, "Open data sample (CTRL+O)");
+        auto save_image_button  = make_tool_button(true, [this] { save_screen_shot(); }, ENTYPO_ICON_IMAGE, "Save image (CTRL+P)");
+        auto save_data_button   = make_tool_button(true, [this] { save_selected_data_sample(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
+        auto show_infos_button  = make_tool_button(true, [this]() { toggle_metadata_window(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
+
+#if defined(__EMSCRIPTEN__)
+        open_button->set_enabled(false);
+        save_image_button->set_enabled(false);
+        save_data_button->set_enabled(false);
+#endif
     }
 
     // Data sample selection

@@ -58,6 +58,10 @@ POWITACQ_ARITHMETIC_OPERATOR_COMPOUND(/=)
 #undef POWITACQ_ARITHMETIC_OPERATOR
 #undef POWITACQ_ARITHMETIC_OPERATOR_COMPOUND
 
+float fma(float a, float b, float c) {
+    return a * b + c;
+}
+
 template <typename T> T clamp(T value, T min_value, T max_value) {
     return std::min(std::max(value, min_value), max_value);
 }
@@ -412,8 +416,8 @@ public:
                                       slice_size, param_weight),
               v11 = lookup<Dimension>(m_data.data() + m_size.x() + 1, offset,
                                       slice_size, param_weight),
-              c0  = std::fma((1.f - sample.y()), v00, sample.y() * v01),
-              c1  = std::fma((1.f - sample.y()), v10, sample.y() * v11);
+              c0  = fma((1.f - sample.y()), v00, sample.y() * v01),
+              c1  = fma((1.f - sample.y()), v10, sample.y() * v11);
 
         is_const = std::abs(c0 - c1) < 1e-4f * (c0 + c1);
         sample.x() = is_const ? (2.f * sample.x()) :
@@ -477,9 +481,9 @@ public:
 
         Vector2f w1 = sample, w0 = Vector2f(1.f) - w1;
 
-        float c0  = std::fma(w0.y(), v00, w1.y() * v01),
-              c1  = std::fma(w0.y(), v10, w1.y() * v11),
-              pdf = std::fma(w0.x(), c0, w1.x() * c1);
+        float c0  = fma(w0.y(), v00, w1.y() * v01),
+              c1  = fma(w0.y(), v10, w1.y() * v11),
+              pdf = fma(w0.x(), c0, w1.x() * c1);
 
         sample.x() *= c0 + .5f * sample.x() * (c1 - c0);
 
@@ -569,8 +573,8 @@ public:
               v11 = lookup<Dimension>(m_data.data() + m_size.x() + 1, index, size,
                                       param_weight);
 
-        return std::fma(w0.y(), std::fma(w0.x(), v00, w1.x() * v10),
-                        w1.y() * std::fma(w0.x(), v01, w1.x() * v11)) *
+        return fma(w0.y(), fma(w0.x(), v00, w1.x() * v10),
+                        w1.y() * fma(w0.x(), v01, w1.x() * v11)) *
                hprod(m_inv_patch_size);
     }
 
@@ -585,7 +589,7 @@ private:
                   v0 = lookup<Dim - 1>(data, i0, size, param_weight),
                   v1 = lookup<Dim - 1>(data, i1, size, param_weight);
 
-            return std::fma(v0, w0, v1 * w1);
+            return fma(v0, w0, v1 * w1);
         }
 
         template <size_t Dim, std::enable_if_t<Dim == 0, int> = 0>

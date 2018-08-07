@@ -12,14 +12,14 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-const Vector3f BSDFCanvas::VIEW_ORIGIN( 0, 0, 4 );
-const Vector3f BSDFCanvas::VIEW_UP( 0, 1, 0 );
+const Vector3f BSDFCanvas::VIEW_ORIGIN( 0, 4, 0 );
+const Vector3f BSDFCanvas::VIEW_UP( 0, 0, 1 );
 const Vector3f BSDFCanvas::VIEW_RIGHT( 1, 0, 0 );
-const Matrix4f BSDFCanvas::VIEW(enoki::look_at<Matrix4f>(VIEW_ORIGIN, Vector3f{ 0.0f,0.0f,0.0f }, VIEW_UP));
+const Vector3f BSDFCanvas::VIEW_FORWARD( 0, -1, 0 );
+const Matrix4f BSDFCanvas::VIEW(enoki::look_at<Matrix4f>(VIEW_ORIGIN, Vector3f(0,0,0), VIEW_UP));
 
 const float BSDFCanvas::NEAR = 0.01f;
 const float BSDFCanvas::FAR = 100.0f;
-
 
 const int BSDFCanvas::BUTTON_MAPPINGS[2][BSDFCanvas::MOUSE_MODE_COUNT] =
 {
@@ -37,7 +37,7 @@ BSDFCanvas::BSDFCanvas(Widget* parent)
 ,   m_selection_region(make_pair(Vector2i(0,0), Vector2i(0,0)))
 ,   m_draw_flags(DISPLAY_AXIS | USE_SHADOWS)
 {
-    m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(1, 0, 0), static_cast<float>(M_PI / 4.0)));
+    // m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 0, 1), static_cast<float>(M_PI / 4.0)));
 }
 
 bool BSDFCanvas::mouse_motion_event(const Vector2i& p,
@@ -99,8 +99,8 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
     {
         if (!down && m_selected_data_sample)
         {
-            Matrix4f model = m_arcball.matrix()* enoki::translate<Matrix4f, Vector3f>(-m_translation);
-            Matrix4f proj = get_projection_matrix();
+            Matrix4f model = model_matrix();
+            Matrix4f proj = projection_matrix();
 
             Matrix4f mvp = proj* VIEW* model;
 
@@ -139,7 +139,7 @@ Vector2f BSDFCanvas::get_incident_angle(const Vector2i &p)
         dray = Vector4f(relP.x(), relP.y(), NEAR, 0.0f);
     }
 
-    Matrix4f inv_model = enoki::inverse(m_arcball.matrix() * enoki::translate<Matrix4f, Vector3f>(-m_translation));
+    Matrix4f inv_model = enoki::inverse(model_matrix());
 
     oray = inv_model * oray;
     dray = inv_model * dray;
@@ -170,10 +170,10 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 {
     GLCanvas::draw(ctx);
 
-    Matrix4f model = m_arcball.matrix() * enoki::translate<Matrix4f>(-m_translation);
-    Matrix4f proj = get_projection_matrix();
+    Matrix4f model = model_matrix();
+    Matrix4f proj = projection_matrix();
 
-    m_grid.draw(ctx, m_size, model, VIEW, proj);
+    // m_grid.draw(ctx, m_size, model, VIEW, proj);
 
     // draw selection region
     SelectionBox selection_box = get_selection_box();
@@ -187,16 +187,21 @@ void BSDFCanvas::draw(NVGcontext* ctx)
 }
 
 void BSDFCanvas::draw_gl() {
-    Matrix4f model = m_arcball.matrix()* enoki::translate<Matrix4f>(-m_translation);
-    Matrix4f proj = get_projection_matrix();
+    Matrix4f model = model_matrix();
+    Matrix4f proj = projection_matrix();
 
-    float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
+    // float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
     // glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
-    for (const auto& data_sample: m_data_samples_to_draw)
-    {
-        data_sample->draw_gl(VIEW_ORIGIN, model, VIEW, proj, m_draw_flags, m_color_map);
-    }
-    m_grid.draw_gl(model, VIEW, proj);
+    // for (const auto& data_sample: m_data_samples_to_draw)
+    // {
+    //     data_sample->draw_gl(VIEW_ORIGIN, model, VIEW, proj, m_draw_flags, m_color_map);
+    // }
+    cout << "view " << VIEW << endl;
+    cout << "model : " << model << endl;
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_UP, 1.0f, proj * VIEW *model, Color(1.0f, 0.0f, 0.0f, 1.0f));
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_RIGHT, 1.0f, proj * VIEW*model, Color(0.0f, 1.0f, 0.0f, 1.0f));
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_FORWARD, 1.0f, proj * VIEW*model, Color(0.0f, 0.0f, 1.0f, 1.0f));
+    // m_grid.draw_gl(model, VIEW, proj);
 }
 
 void BSDFCanvas::select_data_sample(shared_ptr<DataSample> data_sample) {
@@ -233,12 +238,12 @@ void BSDFCanvas::set_view_angle(ViewAngles view_angle)
     case UP:
         dir = (float)M_PI;
     case DOWN:
-        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(1, 0, 0), -M_PI* 0.5f + dir));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 1, 0), -M_PI* 0.5f + dir));
         break;
     case LEFT:
         dir = (float)M_PI;
     case RIGHT:
-        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 1, 0), - M_PI* 0.5f + dir));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 0, 1), M_PI* 0.5f + dir));
         break;
     case BACK:
         dir = (float)M_PI;
@@ -264,8 +269,13 @@ Vector2f BSDFCanvas::get_ortho_dims() const
     return Vector2f(zoom_factor * size_ratio, zoom_factor);
 }
 
+Matrix4f BSDFCanvas::model_matrix() const
+{
+    return m_arcball.matrix() /** Matrix4f(0,0,1,0, 1,0,0,0, 0,1,0,0, 0,0,0,1)*/ *  enoki::translate<Matrix4f>(-m_translation);
+}
 
-Matrix4f BSDFCanvas::get_projection_matrix() const
+
+Matrix4f BSDFCanvas::projection_matrix() const
 {
     if (m_ortho_mode)
     {

@@ -15,26 +15,20 @@ void PointsStats::reset(size_t i_count)
 {
     intensity_count = i_count;
     points_count = 0;
-    average_point.assign(i_count, Vector3f(0));
-    average_log_point.assign(i_count, Vector3f(0));
-    average_intensity.assign(i_count, 0);
-    min_intensity.assign(i_count, std::numeric_limits<float>::max());
-    max_intensity.assign(i_count, std::numeric_limits<float>::min());
-    lowest_point_index.assign(i_count, 0);
-    highest_point_index.assign(i_count, 0);
+    m_slices.resize(i_count);
 }
 
-inline void points_stats_add_intensity(PointsStats& points_stats, float intensity, size_t index, size_t intensity_index)
+inline void points_stats_add_intensity(PointsStats::Slice& point_stats, float intensity, size_t index)
 {
-    if (intensity < points_stats.min_intensity[intensity_index])
+    if (intensity < point_stats.min_intensity)
     {
-        points_stats.lowest_point_index[intensity_index] = index;
-        points_stats.min_intensity[intensity_index] = intensity;
+        point_stats.lowest_point_index = index;
+        point_stats.min_intensity = intensity;
     }
-    if (intensity > points_stats.max_intensity[intensity_index])
+    if (intensity > point_stats.max_intensity)
     {
-        points_stats.highest_point_index[intensity_index] = index;
-        points_stats.max_intensity[intensity_index] = intensity;
+        point_stats.highest_point_index = index;
+        point_stats.max_intensity = intensity;
     }
 }
 
@@ -43,13 +37,15 @@ void update_selection_stats(
     const VectorXf& selected_points,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf::Row H,
-    const MatrixXXf::Row LH,
+    const MatrixXXf& H,
+    const MatrixXXf& LH,
     size_t intensity_index
 )
 {
     cout << std::setw(50) << std::left << "Updating selection statistics .. ";
     Timer<> timer;
+
+    PointsStats::Slice& slice = selection_stats[intensity_index];
 
     for (Index i = 0; i < selected_points.size(); ++i)
     {
@@ -57,18 +53,18 @@ void update_selection_stats(
         {
             ++selection_stats.points_count;
 
-            points_stats_add_intensity(selection_stats, raw_measurement[i][intensity_index + 2], i, intensity_index);
-            selection_stats.average_intensity[intensity_index]  += raw_measurement[i][intensity_index + 2];
-            selection_stats.average_point[intensity_index]      += get_3d_point(V2D, H, i);
-            selection_stats.average_log_point[intensity_index]  += get_3d_point(V2D, LH, i);
+            points_stats_add_intensity(slice, raw_measurement[i][intensity_index+2], i);
+            slice.average_intensity  += raw_measurement[i][intensity_index];
+            slice.average_point      += get_3d_point(V2D, H[intensity_index], i);
+            slice.average_log_point  += get_3d_point(V2D, LH[intensity_index], i);
         }
     }
-    if (selection_stats.points_count != 0)
+    if (selection_stats.points_count > 1)
     {
         float scale = 1.0f / selection_stats.points_count;
-        selection_stats.average_intensity[intensity_index] *= scale;
-        selection_stats.average_point[intensity_index] *= scale;
-        selection_stats.average_log_point[intensity_index] *= scale;
+        slice.average_intensity *= scale;
+        slice.average_point *= scale;
+        slice.average_log_point *= scale;
     }
     
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
@@ -84,7 +80,7 @@ void compute_min_max_intensities(
     Timer<> timer;
 
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
-        points_stats_add_intensity(points_stats, raw_measurement[i][intensity_index + 2], i, intensity_index);
+        points_stats_add_intensity(points_stats[intensity_index], raw_measurement[i][intensity_index+2], i);
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
@@ -93,42 +89,29 @@ void update_points_stats(
     PointsStats& points_stats,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf::Row H,
-    const MatrixXXf::Row LH,
+    const MatrixXXf& H,
+    const MatrixXXf& LH,
     size_t intensity_index
 )
 {
     cout << std::setw(50) << std::left << "Updating points statistics .. ";
     Timer<> timer;
 
+    PointsStats::Slice& slice = points_stats[intensity_index];
+
     points_stats.points_count = raw_measurement.n_sample_points();
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
-        points_stats.average_intensity[intensity_index] += raw_measurement[i][intensity_index + 2];
-        points_stats.average_point[intensity_index] += get_3d_point(V2D, H, i);
-        points_stats.average_log_point[intensity_index] += get_3d_point(V2D, LH, i);
+        slice.average_intensity += raw_measurement[i][intensity_index];
+        slice.average_point += get_3d_point(V2D, H[intensity_index], i);
+        slice.average_log_point += get_3d_point(V2D, LH[intensity_index], i);
     }
     if (points_stats.points_count != 0)
     {
         float scale = 1.0f / points_stats.points_count;
-        points_stats.average_intensity[intensity_index] *= scale;
-        points_stats.average_point[intensity_index] *= scale;
-        points_stats.average_log_point[intensity_index] *= scale;
-
-        // // normalize average heights
-
-        // float min_intensity = points_stats.min_intensity[intensity_index];
-        // float max_intensity = points_stats.max_intensity[intensity_index];
-        // float correction_factor = (min_intensity <= 0.0f ? -min_intensity + CORRECTION_FACTOR : 0.0f);
-
-        // float min_log_intensity = log(min_intensity + correction_factor);
-        // float max_log_intensity = log(max_intensity + correction_factor);
-
-        // points_stats.average_point[intensity_index][1] = 
-        //     (points_stats.average_point[intensity_index][1] - min_intensity) / (max_intensity - min_intensity);
-
-        // points_stats.average_log_point[intensity_index][1] = 
-        //     (log(points_stats.average_log_point[intensity_index][1] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+        slice.average_intensity *= scale;
+        slice.average_point *= scale;
+        slice.average_log_point *= scale;
     }
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
