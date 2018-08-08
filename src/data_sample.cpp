@@ -23,7 +23,6 @@ DataSample::~DataSample()
 }
 
 void DataSample::draw_gl(
-    const Vector3f& view_origin,
     const Matrix4f& model,
     const Matrix4f& mvp,
     int flags,
@@ -50,7 +49,7 @@ void DataSample::draw_gl(
         {
             glEnable(GL_DEPTH_TEST);
             glEnable(GL_POLYGON_OFFSET_FILL);
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EMSCRIPTEN)
             if (flags & USE_WIREFRAME)
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
@@ -60,11 +59,10 @@ void DataSample::draw_gl(
             m_shaders[MESH].set_uniform("model_view_proj", mvp);
             m_shaders[MESH].set_uniform("model", model);
             m_shaders[MESH].set_uniform("inverse_transpose_model", enoki::inverse_transpose(model));
-            m_shaders[MESH].set_uniform("view", view_origin);
             m_shaders[MESH].set_uniform("use_shadows", (bool)(flags & USE_SHADOWS));
             m_shaders[MESH].set_uniform("use_specular", (bool)(flags & USE_SPECULAR));
             m_shaders[MESH].draw_indexed(GL_TRIANGLES, 0, m_f.size());
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EMSCRIPTEN)
             if (flags & USE_WIREFRAME)
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif

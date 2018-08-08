@@ -38,8 +38,7 @@ public:
     DataSample& operator=(const DataSample&) = delete;
     DataSample& operator=(DataSample&&) = default;
 
-    void draw_gl(const Vector3f& view_origin,
-                const Matrix4f& model,
+    void draw_gl(const Matrix4f& model,
                 const Matrix4f& mvp,
                 int flags,
                 std::shared_ptr<ColorMap> color_map);
