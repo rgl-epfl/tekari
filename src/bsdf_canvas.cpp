@@ -200,13 +200,8 @@ void BSDFCanvas::draw_gl() {
     // float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
     // glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
     for (const auto& data_sample: m_data_samples_to_draw)
-    {
         data_sample->draw_gl(model, mvp, m_draw_flags, m_color_map);
-    }
 
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_RIGHT, 1.0f, mvp, Color(1.0f, 0.0f, 0.0f, 1.0f));
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_FORWARD, 1.0f, mvp, Color(0.0f, 1.0f, 0.0f, 1.0f));
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_UP, 1.0f, mvp, Color(0.0f, 0.0f, 1.0f, 1.0f));
     m_grid.draw_gl(mvp);
 }
 

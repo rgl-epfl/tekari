@@ -64,9 +64,6 @@ int main(int argc, char** argv) {
                 (em_async_wget2_onload_func) [](unsigned, void* ptr, const char*) {
                     Temp *temp = (Temp *) ptr;
                     temp->screen->remove_child(temp->window);
-                    new MessageDialog(
-                        temp->screen, MessageDialog::Type::Information, "Nice",
-                        "The file is now downloaded and available at 'data.bsdf'");
                     temp->screen->open_files({"data.bsdf"});
                     temp->screen->redraw();
                 },
