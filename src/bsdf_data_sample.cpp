@@ -97,12 +97,12 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
 
     powitacq::Vector3f wi = enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle));
 
-    for (int phi = 0; phi < N_PHI; ++phi)
+    for (int theta = 0; theta < N_THETA; ++theta)
     {
-        float u = float(phi + 0.5f) / N_PHI;
-        for (int theta = 0; theta < N_THETA; ++theta)
+        float v = float(theta + 0.5f) / N_THETA;
+        for (int phi = 0; phi < N_PHI; ++phi)
         {
-            float v = float(theta + 0.5f) / N_THETA;
+            float u = float(phi + 0.5f) / N_PHI;
             powitacq::Vector3f wo;
             float pdf;
             float sample = m_intensity_index == 0 ?
@@ -112,11 +112,11 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
             Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wo));
 
             sample *= pdf;
-            RawMeasurement::SamplePoint sample_point = m_raw_measurement[phi*N_THETA + theta];
+            RawMeasurement::SamplePoint sample_point = m_raw_measurement[theta*N_PHI + phi];
             sample_point.set_theta(outgoing_angle[0]);
             sample_point.set_phi(outgoing_angle[1]);
             sample_point[m_intensity_index+2] = sample;
-            m_v2d[phi*N_THETA + theta] = vec3_to_disk(powitacq_to_enoki_vec3(wo));
+            m_v2d[theta*N_PHI + phi] = vec3_to_disk(powitacq_to_enoki_vec3(wo));
         }
     }
 
