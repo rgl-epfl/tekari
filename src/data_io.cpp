@@ -42,7 +42,7 @@ void load_data_sample(
     // try open file
     std::ifstream file(file_name);
     if (!file)
-        throw std::runtime_error("Unable to open file " + file_name);
+        throw std::runtime_error("Unable to open file \"" + file_name + "\"");
 
     size_t line_number = 0;
     for (string line; getline(file, line); )
@@ -196,7 +196,7 @@ void save_data_sample(
     // try open file
     FILE* dataset_file = fopen(path.c_str(), "w");
     if (!dataset_file)
-        throw std::runtime_error("Unable to open file " + path);
+        throw std::runtime_error("Unable to open file \"" + path + "\"");
 
     // save metadata
     for(const auto& line: metadata.raw_metadata())

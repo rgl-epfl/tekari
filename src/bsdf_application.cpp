@@ -1158,8 +1158,8 @@ void BSDFApplication::try_load_data_sample(const string& file_path, shared_ptr<D
         }
         data_sample_to_add->data_sample = ds;
     }
-    catch (std::exception e) {
-        string error_msg = "Could not open data sample at " + file_path + " : " + e.what();
+    catch (const std::exception &e) {
+        string error_msg = "Could not open data sample \"" + file_path + "\" : " + std::string(e.what());
         cerr << error_msg << endl;
         data_sample_to_add->error_msg = error_msg;
     }
