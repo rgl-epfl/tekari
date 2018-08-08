@@ -29,11 +29,10 @@ void Arrow::draw_gl(const Vector3f& origin,
                     const Matrix4f& vp,
                     const Color& color)
 {
-    using namespace enoki;
     glEnable(GL_DEPTH_TEST);
 
     Matrix4f mvp =
-        vp * enoki::look_at<Matrix4f>(origin, origin+direction, normalize(Vector3f(1, 2, 3))) *
+        vp * enoki::look_at<Matrix4f>(origin, origin-direction, enoki::normalize(Vector3f(1, 2, 3))) *
         enoki::scale<Matrix4f>(Vector3f(1.f, 1.f, s));
 
     m_cone_shader.bind();
