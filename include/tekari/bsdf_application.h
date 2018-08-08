@@ -76,6 +76,7 @@ public:
 
     void hide_windows();
 
+    void open_files(const vector<string>& data_sample_paths);
 private:
     void toggle_view(DataSample::Views view, std::shared_ptr<DataSample> data_sample, bool toggle);
     void toggle_log_view(std::shared_ptr<DataSample> data_sample);
@@ -85,7 +86,6 @@ private:
 
     void toggle_tool_button(Button* button);
 
-    void open_files(const vector<string>& data_sample_paths);
     void try_load_data_sample(const string& file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
 
     void toggle_canvas_draw_flags(int flag, CheckBox* checkbox);
