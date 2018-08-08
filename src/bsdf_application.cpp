@@ -366,21 +366,23 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
         {
             switch (key)
             {
+#if !defined(EMSCRIPTEN)
             case GLFW_KEY_O:
                 open_data_sample_dialog();
                 return true;
             case GLFW_KEY_S:
                 save_selected_data_sample();
                 return true;
+            case GLFW_KEY_P:
+                save_screen_shot();
+                return true;
+#endif
             case GLFW_KEY_A:
                 if (!m_selected_ds)
                     return false;
 
                 m_selected_ds->select_all_points();
                 update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
-                return true;
-            case GLFW_KEY_P:
-                save_screen_shot();
                 return true;
             case GLFW_KEY_1: if (!alt) return false;
             case GLFW_KEY_KP_1:
@@ -472,20 +474,19 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 m_selected_ds->deselect_all_points();
                 update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
                 return true;
+#if !defined(EMSCRIPTEN)
             case GLFW_KEY_Q:
             {
                 vector<string> ds_names;
                 for (const auto& ds : m_data_samples)
-                {
                     if (ds->dirty())
-                    {
                         ds_names.push_back(ds->name());
-                    }
-                }
+                
                 if (ds_names.empty()) set_visible(false);
                 else toggle_unsaved_data_window(ds_names, [this]() { set_visible(false); });
             }
                 return true;
+#endif
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
             case GLFW_KEY_6: case GLFW_KEY_7: case GLFW_KEY_8: case GLFW_KEY_9:
                 select_data_sample(key - GLFW_KEY_1);

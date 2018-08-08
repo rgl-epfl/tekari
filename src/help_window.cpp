@@ -84,9 +84,11 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
         add_row(move_controls, "C", "Snap To Selection Center");
 
         auto file_loading = add_shortcut_section("File Loading");
+#if !defined(EMSCRIPTEN)
         add_row(file_loading, COMMAND + "+O", "Open Data Samples");
         add_row(file_loading, COMMAND + "+S", "Save Data in the same format");
         add_row(file_loading, COMMAND + "+P", "Save Screenshot of Data");
+#endif
         add_row(file_loading, "Delete", "Close Selected Data Sample");
 
         auto data_sample_view_options = add_shortcut_section("Data Sample View Options", "For the currently selected datasample");
@@ -128,7 +130,9 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
         add_row(ui, "H", "Show Help (this Window)");
         add_row(ui, "I", "Show Metadata");
         add_row(ui, "M", "Chose Color Map");
+#if !defined(EMSCRIPTEN)
         add_row(ui, "Q", "Quit");
+#endif
     }
 
 
