@@ -284,7 +284,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         auto save_data_button   = make_tool_button(true, [this] { save_selected_data_sample(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
         auto show_infos_button  = make_tool_button(true, [this]() { toggle_metadata_window(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
 
-#if defined(__EMSCRIPTEN__)
+#if defined(EMSCRIPTEN)
         open_button->set_enabled(false);
         save_image_button->set_enabled(false);
         save_data_button->set_enabled(false);
@@ -302,7 +302,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         m_data_sample_button_container->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EMSCRIPTEN)
     // load application icon
     {
         const vector<pair<const uint8_t*, uint32_t>> icon_paths =
@@ -663,6 +663,7 @@ void BSDFApplication::open_files(const vector<string>& data_sample_paths)
             auto new_data_sample = make_shared<DataSample_to_add>();
             try_load_data_sample(data_sample_path, new_data_sample);
             m_data_samples_to_add.push(new_data_sample);
+            redraw();
         });
     }
 }

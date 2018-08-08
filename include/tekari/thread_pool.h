@@ -15,7 +15,7 @@ public:
 
     ThreadPool()
     {
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EMSCRIPTEN)
         for (size_t i = 0; i < N; i++)
         {
             m_threads.emplace_back([this](void) {
@@ -44,7 +44,7 @@ public:
     }
 
     ~ThreadPool() {
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EMSCRIPTEN)
         std::unique_lock<std::mutex> lock{ m_tasks_mutex };
         m_should_terminate = true;
         m_tasks_cond.notify_all();
@@ -56,7 +56,7 @@ public:
     }
 
     void add_task(const std::function<void(void)> task) {
-#if defined(__EMSCRIPTEN__)
+#if defined(EMSCRIPTEN)
         task();
 #else
         std::unique_lock<std::mutex> lock{ m_tasks_mutex };
@@ -67,7 +67,7 @@ public:
     }
 
     void wait_for_tasks() {
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EMSCRIPTEN)
         std::unique_lock<std::mutex> lock{ m_tasks_mutex };
         while (m_tasks_available) {
             m_tasks_cond.wait(lock);
@@ -79,7 +79,7 @@ public:
 
 private:
 
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EMSCRIPTEN)
     std::vector<std::thread> m_threads;
     SharedQueue<std::function<void(void)>> m_task_queue;
     std::mutex m_tasks_mutex;
