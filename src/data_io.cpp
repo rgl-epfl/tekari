@@ -156,7 +156,7 @@ void load_spectral_data_sample(
             line_stream >> angles[0] >> angles[1];
             if (read_vertices.count(angles) > 0)
             {
-                cerr << "Warning: found two points with exact same coordinates\n";
+                Log(Warning, "%s\n", "found two points with exact same coordinates");
                 continue;                                   // skip similar points
             }
             read_vertices.insert(angles);

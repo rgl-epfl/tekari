@@ -44,8 +44,8 @@ void Metadata::init_infos()
 
     for (const auto& p : parsing_funcs)
     {
-        if ((line = find_line_starting_with(p.first))    != nullptr ||
-            (line = find_line_containing(p.first))    != nullptr)
+        if ((line = find_line_starting_with(p.first))   != nullptr ||
+            (line = find_line_containing(p.first))      != nullptr)
             p.second(p.first, line);
     }
 

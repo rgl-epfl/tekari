@@ -266,7 +266,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 
     // Open, save screenshot, save data
     {
-        new Label{ m_tool_window, "Data Samples", "sans-bold" };
+        new Label{ m_tool_window, "Loaded materials", "sans-bold" };
         auto tools = new Widget{ m_tool_window };
         tools->set_layout(new GridLayout{Orientation::Horizontal, 4, Alignment::Fill});
 
@@ -751,7 +751,7 @@ void BSDFApplication::toggle_metadata_window()
 void BSDFApplication::toggle_data_sample_sliders_window()
 {
     toggle_window(m_data_sample_sliders_window, [this]() -> Window* {
-        Window *window = new Window(this, "Data Sample Options");
+        Window *window = new Window(this, "BRDF Parameters");
         window->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 5, 5));
 
         Vector2f curr_i_angle = m_selected_ds->incident_angle();
@@ -778,7 +778,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             float_box->set_value(value);
             float_box->set_editable(true);
             float_box->set_callback(callback);
-            float_box->set_units("deg");
+            float_box->set_units("°");
             float_box->set_spinnable(true);
             return float_box;
         };
@@ -807,7 +807,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             return int_box;
         };
 
-        m_wave_length_int_box = add_int_box("Wave length", 0, [this](size_t value) {
+        m_wave_length_int_box = add_int_box("Wavelength", 0, [this](size_t value) {
             if(value >= m_selected_ds->intensity_count())
                 value = m_selected_ds->intensity_count()-1;
             m_wave_length_slider->set_value(value);
