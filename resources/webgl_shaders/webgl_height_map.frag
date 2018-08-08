@@ -1,6 +1,5 @@
 precision highp float;
 
-uniform vec3 view;
 uniform bool use_shadows;
 uniform bool use_specular;
 
@@ -15,7 +14,7 @@ const vec3 light_color = vec3(0.8, 0.8, 0.7);
 void main() {
 	vec3 color = texture2D(color_map, vec2(height, 0)).rgb;
 	
-	vec3 pos_to_light = normalize(view - position);
+	vec3 pos_to_light = normalize(vec3(0,0,4) - position);
 	float specular = clamp(dot(reflect(-pos_to_light, normal), pos_to_light), 0.0, 1.0);
 	vec3 out_color3 = vec3(0.0);
 	out_color3 += float(use_shadows) * (0.2 + abs(dot(pos_to_light, normal))) * color * light_color;

@@ -13,9 +13,9 @@ varying vec3 position;
 varying vec3 normal;
 
 void main() {
-    vec3 pos = vec3(in_pos2d.x, in_height, in_pos2d.y);
-    gl_Position = model_view_proj * vec4(pos, 1.0);
+    vec4 pos = vec4(in_pos2d, in_height, 1.0);
+    gl_Position = model_view_proj * pos;
     height = in_height;
-    position = (model * vec4(pos, 1.0)).xyz;
+    position = (model * pos).xyz;
     normal = (inverse_transpose_model * in_normal).xyz;
 }
