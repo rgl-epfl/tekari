@@ -18,8 +18,8 @@ const Vector3f BSDFCanvas::VIEW_UP(0, 0, 1);
 const Vector3f BSDFCanvas::VIEW_RIGHT(1, 0, 0);
 const Matrix4f BSDFCanvas::VIEW(enoki::translate<Matrix4f>(Vector3f(0, 0, -4)));
 const Matrix4f BSDFCanvas::MODEL(
-    -1, 0, 0, 0,
-     0, 0, -1, 0,
+     1, 0, 0, 0,
+     0, 0, 1, 0,
      0, -1, 0, 0,
      0, 0, 0, 1
 );
@@ -73,7 +73,7 @@ bool BSDFCanvas::mouse_motion_event(const Vector2i& p,
     else if (button == translation_mouse_button(true))
     {
         float move_speed = 0.04f / (m_zoom + MAX_ZOOM + 0.1f);
-        Vector3f translation = inverse(Matrix3f(m_arcball.matrix()))* (-rel[0]* move_speed* VIEW_RIGHT + rel[1]* move_speed* VIEW_UP);
+        Vector3f translation = move_speed * inverse(Matrix3f(MODEL * m_arcball.matrix())) * (rel[0] * VIEW_RIGHT + rel[1] * VIEW_UP);
         m_translation += translation;
         return true;
     }
@@ -201,12 +201,12 @@ void BSDFCanvas::draw_gl() {
     // glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
     for (const auto& data_sample: m_data_samples_to_draw)
     {
-        data_sample->draw_gl(VIEW_ORIGIN, model, mvp, m_draw_flags, m_color_map);
+        data_sample->draw_gl(model, mvp, m_draw_flags, m_color_map);
     }
 
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_UP, 1.0f, mvp, Color(1.0f, 0.0f, 0.0f, 1.0f));
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_RIGHT, 1.0f, mvp, Color(0.0f, 1.0f, 0.0f, 1.0f));
-    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_FORWARD, 1.0f, mvp, Color(0.0f, 0.0f, 1.0f, 1.0f));
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_RIGHT, 1.0f, mvp, Color(1.0f, 0.0f, 0.0f, 1.0f));
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_FORWARD, 1.0f, mvp, Color(0.0f, 1.0f, 0.0f, 1.0f));
+    Arrow::instance().draw_gl(Vector3f(0.0f), VIEW_UP, 1.0f, mvp, Color(0.0f, 0.0f, 1.0f, 1.0f));
     m_grid.draw_gl(mvp);
 }
 
@@ -277,7 +277,7 @@ Vector2f BSDFCanvas::get_ortho_dims() const
 
 Matrix4f BSDFCanvas::model_matrix() const
 {
-    return m_arcball.matrix() * enoki::translate<Matrix4f>(-m_translation) * MODEL;
+    return m_arcball.matrix() * enoki::translate<Matrix4f>(m_translation) * MODEL;
 }
 
 
