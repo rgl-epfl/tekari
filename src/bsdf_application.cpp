@@ -12,6 +12,7 @@
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/messagedialog.h>
 #include <nanogui/label.h>
+#include <nanogui/graph.h>
 
 #include <algorithm>
 #include <bitset>
@@ -38,6 +39,7 @@ using nanogui::ColorWheel;
 using nanogui::Slider;
 using nanogui::Alignment;
 using nanogui::Theme;
+using nanogui::Graph;
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -176,7 +178,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         auto point_size_label = new Label{ hidden_options_popup , "Point Size" };
         point_size_label->set_tooltip("Changes the point size based on a arbitrary heuristic (also distance dependent)");
         auto point_size_slider = new Slider{ hidden_options_popup };
-        point_size_slider->set_range(make_pair(0.1f, 10.0f));
+        point_size_slider->set_range(make_pair(0.1f, 20.0f));
         point_size_slider->set_value(m_bsdf_canvas->point_size_scale());
         point_size_slider->set_callback([this](float value) {
             m_bsdf_canvas->set_point_size_scale(value);
@@ -609,6 +611,7 @@ void BSDFApplication::draw_contents() {
                 new_data_sample->data_sample->set_intensity_index(0);
                 add_data_sample(new_data_sample->data_sample);
             }
+            redraw();
         }
     }
     catch (std::runtime_error) {
@@ -767,7 +770,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             update_selection_info_window();
             reprint_footer();
         });
-        m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(90.0f, 180.0f)));
+        m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(80.0f, 180.0f)));
         m_incident_angle_slider->set_fixed_size({ 200, 200 });
         m_incident_angle_slider->set_enabled(m_selected_ds != nullptr);
 
@@ -785,14 +788,14 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             return float_box;
         };
         m_theta_float_box = add_float_box("Theta", curr_i_angle.x(), [this](float value) {
-            Vector2f incident_angle = {value, m_phi_float_box->value()};
+            Vector2f incident_angle = {clamp(value, 0.0f, 80.0f), m_phi_float_box->value()};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle); 
             update_selection_info_window();
             reprint_footer();
         });
         m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), [this](float value) {
-            Vector2f incident_angle = {m_theta_float_box->value(), value};
+            Vector2f incident_angle = {m_theta_float_box->value(), clamp(value, -180.0f, 180.0f)};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle);
             update_selection_info_window();
@@ -813,8 +816,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         };
 
         m_wave_length_int_box = add_int_box("Wavelength", 0, [this](size_t value) {
-            if(value >= m_selected_ds->intensity_count())
-                value = m_selected_ds->intensity_count()-1;
+            value = clamp(value, 0ul, m_selected_ds->intensity_count()-1);
             m_wave_length_slider->set_value(value);
             m_selected_ds->set_intensity_index(value);
             m_wave_length_int_box->set_value(value);
@@ -852,11 +854,14 @@ void BSDFApplication::toggle_selection_info_window()
     toggle_window(m_selection_info_window, [this]() {
 
         auto window = new Window{ this, "Selection Info" };
-        window->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 5, 5 });
+        window->set_layout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
 
-        auto make_selection_info_labels = [window](const string& caption, const string& value) {
-            new Label{ window, caption, "sans-bold" };
-            new Label{ window, value };
+        auto labels_container = new Widget{ window };
+        labels_container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 0, 5});
+
+        auto make_selection_info_labels = [labels_container](const string& caption, const string& value) {
+            new Label{ labels_container, caption, "sans-bold" };
+            new Label{ labels_container, value };
         };
         
         make_selection_info_labels("Points In Selection :", to_string(m_selected_ds->selection_points_count()));
@@ -864,8 +869,13 @@ void BSDFApplication::toggle_selection_info_window()
         make_selection_info_labels("Maximum Intensity :", to_string(m_selected_ds->selection_max_intensity()));
         make_selection_info_labels("Average Intensity :", to_string(m_selected_ds->selection_average_intensity()));
 
-        window->set_position(Vector2i{width() - 200, 20});
+        auto graph = new Graph{ window, "Spectral plot" };
+        graph->set_values(vector<float>{0.0f, 0.5f, 0.3f, 0.8f, 0.4f, 0.8f, 1.0f});
+        graph->set_foreground_color(Color(0.5f, 0.3f, 0.7f, 0.8f));
+        // graph->set_footer("footer");
+        // graph->set_header("header");
 
+        window->set_position(Vector2i{width() - 200, 20});
         return window;
     });
 }
