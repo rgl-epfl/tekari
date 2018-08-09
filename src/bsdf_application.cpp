@@ -764,6 +764,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             m_theta_float_box->set_value(value[1]);
 
             m_selected_ds->set_incident_angle(value);
+            update_selection_info_window();
             reprint_footer();
         });
         m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(90.0f, 180.0f)));
@@ -787,12 +788,14 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             Vector2f incident_angle = {value, m_phi_float_box->value()};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle); 
+            update_selection_info_window();
             reprint_footer();
         });
         m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), [this](float value) {
             Vector2f incident_angle = {m_theta_float_box->value(), value};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle);
+            update_selection_info_window();
             reprint_footer();
         });
 
