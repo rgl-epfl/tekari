@@ -86,10 +86,9 @@ bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool d
             toggle_view();
             return true;
         }
-        else if (m_callback)
+        else
         {
             m_popup->set_visible(!m_popup->visible());
-            return true;
         }
     }
 

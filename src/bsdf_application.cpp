@@ -956,7 +956,7 @@ void BSDFApplication::select_data_sample(int index, bool clamped)
 void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
 {
     // de-select previously selected button
-    if (m_selected_ds)
+    if (data_sample != m_selected_ds && m_selected_ds)
     {
         DataSampleButton* old_button = corresponding_button(m_selected_ds);
         old_button->set_selected(false);
