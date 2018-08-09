@@ -608,7 +608,7 @@ void BSDFApplication::draw_contents() {
             {
                 new_data_sample->data_sample->init_shaders();
                 new_data_sample->data_sample->link_data_to_shaders();
-                new_data_sample->data_sample->set_intensity_index(0);
+                new_data_sample->data_sample->set_intensity_index(new_data_sample->data_sample->n_wave_lengths() / 2);
                 add_data_sample(new_data_sample->data_sample);
             }
             redraw();
@@ -815,7 +815,8 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             return int_box;
         };
 
-        m_wave_length_int_box = add_int_box("Wavelength", 0, [this](size_t value) {
+        size_t wave_length_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
+        m_wave_length_int_box = add_int_box("Wavelength", wave_length_index, [this](size_t value) {
             value = clamp(value, 0ul, m_selected_ds->intensity_count()-1);
             m_wave_length_slider->set_value(value);
             m_selected_ds->set_intensity_index(value);
@@ -833,6 +834,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             reprint_footer();
         });
         m_wave_length_slider->set_enabled(m_selected_ds != nullptr);
+        m_wave_length_slider->set_value(wave_length_index);
 
         return window;
     });
