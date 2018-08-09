@@ -144,11 +144,19 @@ void DataSample::link_data_to_shaders()
     m_shaders[MESH].upload_indices((uint32_t*)m_f.data(), 3, m_f.size());
 
     m_shaders[PATH].bind();
+#if defined(EMSCRIPTEN)
+    m_shaders[PATH].upload_attrib("in_pos2d", (float*)m_v2d.data(), 2, m_v2d.size());
+#else
     m_shaders[PATH].share_attrib(m_shaders[MESH], "in_pos2d");
+#endif
 
     m_shaders[POINTS].bind();
-    m_shaders[POINTS].set_uniform("color_map", 0);
+#if defined(EMSCRIPTEN)
+    m_shaders[POINTS].upload_attrib("in_pos2d", (float*)m_v2d.data(), 2, m_v2d.size());
+#else
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_pos2d");
+#endif
+    m_shaders[POINTS].set_uniform("color_map", 0);
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 }
 
@@ -176,9 +184,18 @@ void DataSample::update_shaders_data()
     m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
 
     m_shaders[PATH].bind();
+#if defined(EMSCRIPTEN)
+    m_shaders[PATH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
+#else
     m_shaders[PATH].share_attrib(m_shaders[MESH], "in_height");
+#endif
+    
     m_shaders[POINTS].bind();
+#if defined(EMSCRIPTEN)
+    m_shaders[POINTS].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
+#else
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
+#endif
 }
 
 void DataSample::select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode)
