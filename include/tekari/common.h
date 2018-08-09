@@ -296,8 +296,9 @@ inline string trim_copy(string s, function<int(int)> pred = [](int c) { return s
     return s;
 }
 
-// ================= Math Utils (from instant-meshes) ================
+// ================= Math Utils ================
 
+// (from instant-meshes)
 inline float fast_acos(float x) {
     float negate = float(x < 0.0f);
     x = std::abs(x);
@@ -308,6 +309,12 @@ inline float fast_acos(float x) {
     ret = ret * std::sqrt(1.0f - x);
     ret = ret - 2.0f * negate * ret;
     return negate * (float) M_PI + ret;
+}
+
+template<typename T>
+inline T clamp(T v, T min, T max)
+{
+    return v < max ? v < min ? min : v : max;
 }
 
 TEKARI_NAMESPACE_END

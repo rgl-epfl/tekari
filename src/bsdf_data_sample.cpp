@@ -25,7 +25,7 @@ BSDFDataSample::BSDFDataSample(const string& file_path)
 
 void BSDFDataSample::set_intensity_index(size_t intensity_index)
 {
-    m_intensity_index = std::min(intensity_index, m_raw_measurement.n_wave_lengths());;
+    m_intensity_index = std::min(intensity_index, m_raw_measurement.n_wavelengths());;
 
     if (!m_cache_mask[m_intensity_index])
     {
@@ -36,7 +36,7 @@ void BSDFDataSample::set_intensity_index(size_t intensity_index)
         compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_lh, m_intensity_index);
 
         update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
-        m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
+        m_selection_stats.reset(m_raw_measurement.n_wavelengths() + 1);
         update_selection_stats( m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
 
         compute_normals(m_f, m_v2d, m_h, m_lh, m_n, m_ln, m_intensity_index);
@@ -51,13 +51,13 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     Timer<> timer;
 
     // clear mask
-    m_cache_mask.assign(m_raw_measurement.n_wave_lengths() + 1, false);
+    m_cache_mask.assign(m_raw_measurement.n_wavelengths() + 1, false);
 
     m_metadata.set_incident_angle(incident_angle);
     compute_samples(m_metadata.incident_angle());
     triangulate_data(m_f, m_v2d);
     compute_path_segments(m_path_segments, m_v2d);
-    m_points_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
+    m_points_stats.reset(m_raw_measurement.n_wavelengths() + 1);
     set_intensity_index(m_intensity_index);
     link_data_to_shaders();
 

@@ -62,7 +62,7 @@ public:
 
     inline size_t intensity_count()            const { return m_points_stats.intensity_count; }
     inline size_t points_count()            const { return m_points_stats.points_count; }
-    inline size_t n_wave_lengths()          const { return m_raw_measurement.n_wave_lengths(); }
+    inline size_t n_wavelengths()          const { return m_raw_measurement.n_wavelengths(); }
     inline float average_intensity()        const { return m_points_stats[m_intensity_index].average_intensity; }
 
     inline float selection_min_intensity()      const { return m_selection_stats[m_intensity_index].min_intensity; }
@@ -98,7 +98,7 @@ public:
     inline void set_dirty(bool dirty)    { m_dirty = dirty; }
 
     inline size_t intensity_index() const { return m_intensity_index; }
-    virtual void set_intensity_index(size_t displayed_wave_length) {}
+    virtual void set_intensity_index(size_t displayed_wavelength) {}
 
     inline Vector2f incident_angle() const { return m_metadata.incident_angle(); }
     virtual void set_incident_angle(const Vector2f& i) {}

@@ -608,7 +608,7 @@ void BSDFApplication::draw_contents() {
             {
                 new_data_sample->data_sample->init_shaders();
                 new_data_sample->data_sample->link_data_to_shaders();
-                new_data_sample->data_sample->set_intensity_index(new_data_sample->data_sample->n_wave_lengths() / 2);
+                new_data_sample->data_sample->set_intensity_index(new_data_sample->data_sample->n_wavelengths() / 2);
                 add_data_sample(new_data_sample->data_sample);
             }
             redraw();
@@ -815,26 +815,26 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             return int_box;
         };
 
-        size_t wave_length_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
-        m_wave_length_int_box = add_int_box("Wavelength", wave_length_index, [this](size_t value) {
+        size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
+        m_wavelength_int_box = add_int_box("Wavelength", wavelength_index, [this](size_t value) {
             value = clamp(value, 0ul, m_selected_ds->intensity_count()-1);
-            m_wave_length_slider->set_value(value);
+            m_wavelength_slider->set_value(value);
             m_selected_ds->set_intensity_index(value);
-            m_wave_length_int_box->set_value(value);
+            m_wavelength_int_box->set_value(value);
             reprint_footer();
         });
 
-        m_wave_length_slider = new Slider{ window };
-        m_wave_length_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->n_wave_lengths() : 1));
-        m_wave_length_slider->set_callback([this](float value) {
+        m_wavelength_slider = new Slider{ window };
+        m_wavelength_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->n_wavelengths() : 1));
+        m_wavelength_slider->set_callback([this](float value) {
             int int_val = static_cast<int>(round(value));
-            m_wave_length_slider->set_value(int_val);
+            m_wavelength_slider->set_value(int_val);
             m_selected_ds->set_intensity_index(int_val);
-            m_wave_length_int_box->set_value(int_val);
+            m_wavelength_int_box->set_value(int_val);
             reprint_footer();
         });
-        m_wave_length_slider->set_enabled(m_selected_ds != nullptr);
-        m_wave_length_slider->set_value(wave_length_index);
+        m_wavelength_slider->set_enabled(m_selected_ds != nullptr);
+        m_wavelength_slider->set_value(wavelength_index);
 
         return window;
     });

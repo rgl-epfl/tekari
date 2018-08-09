@@ -3,7 +3,12 @@
 // #include <tekari/common.h>
 #include <iostream>
 #include <string>
+#include <tekari/common.h>
 #include <tekari/matrix_xx.h>
+#define POWITACQ_IMPLEMENTATION
+#include <tekari/powitacq.h>
+
+using namespace tekari;
 
 #define ASSERT(cond, fmt, ...) \
     if (!(cond)) { \
@@ -73,15 +78,52 @@ void test_iterator()
         }
         x = 0;
     }
-    std::cout << m << std::endl;
+    cout << m << endl;
 }
 
 int main(int argc, char const* argv[])
 {
-    test_constructors(54, 23, 2.4);
-    test_clear<float>();
-    test_resize<uint16_t>(213, 13);
-    test_assign(14, 2, 2.3);
-    test_iterator();
+    // test_constructors(54, 23, 2.4);
+    // test_clear<float>();
+    // test_resize<uint16_t>(213, 13);
+    // test_assign(14, 2, 2.3);
+    // test_iterator();
+
+    // powitacq::Vector3f wi{0.0f, 0.0f, 1.0f};
+
+    // constexpr size_t N_DIVS = 64;
+
+    // powitacq::BRDF brdf("../resources/gold_satin_spec.bsdf");
+    // MatrixXXf spectrum(N_DIVS * N_DIVS, brdf.wavelengths().size());
+
+    // Timer<> t;
+
+    // for (size_t theta = 0; theta < N_DIVS; ++theta)
+    // {
+    //     float v = float(theta + 0.5f) / N_DIVS;
+    //     for (size_t phi = 0; phi < N_DIVS; ++phi)
+    //     {
+    //         float u = float(phi + 0.5f) / N_DIVS;
+    //         powitacq::Vector3f wo;
+    //         float pdf;
+    //         powitacq::Spectrum s = brdf.sample({u, v}, wi, &wo, &pdf);
+    //         memcpy(spectrum[theta * N_DIVS + phi].data(), &s[0], s.size() * sizeof(float));
+    //     }
+    // }
+    // cout << "Valarray version " << time_string(t.reset()) << endl;
+
+    // for (size_t theta = 0; theta < N_DIVS; ++theta)
+    // {
+    //     float v = float(theta + 0.5f) / N_DIVS;
+    //     for (size_t phi = 0; phi < N_DIVS; ++phi)
+    //     {
+    //         float u = float(phi + 0.5f) / N_DIVS;
+    //         powitacq::Vector3f wo;
+    //         float pdf;
+    //         brdf.sample({u, v}, wi, spectrum[theta * N_DIVS + phi].data(), &wo, &pdf);
+    //     }
+    // }
+    // cout << "Float array version " << time_string(t.reset()) << endl;
+
     return 0;
 }

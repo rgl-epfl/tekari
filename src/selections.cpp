@@ -192,7 +192,7 @@ void delete_selected_points(
 
     // resize vectors
     V2D.resize(last_valid);
-    raw_measurement.resize(last_valid, raw_measurement.n_wave_lengths());
+    raw_measurement.resize(last_valid, raw_measurement.n_wavelengths());
     selected_points.resize(last_valid);
     set_all_points(selected_points, NOT_SELECTED_FLAG);
 

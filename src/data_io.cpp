@@ -132,7 +132,7 @@ void load_spectral_data_sample(
     Metadata& metadata
 )
 {
-    int n_wave_lengths = metadata.data_points_per_loop();
+    int n_wavelengths = metadata.data_points_per_loop();
 
     std::unordered_set<Vector2f, Vector2f_hash> read_vertices;
     vector<vector<float>> raw_m;
@@ -163,11 +163,11 @@ void load_spectral_data_sample(
 
             V2D.push_back(hemisphere_to_disk(angles));
             raw_m.push_back(vector<float>{});
-            raw_m[n_points].resize(n_wave_lengths + 3, 0);
+            raw_m[n_points].resize(n_wavelengths + 3, 0);
             raw_m[n_points][0] = angles[0];
             raw_m[n_points][1] = angles[1];
 
-            for (int i = 0; i < n_wave_lengths; ++i)
+            for (int i = 0; i < n_wavelengths; ++i)
             {
                 line_stream >> raw_m[n_points][i+3];
             }
@@ -177,10 +177,10 @@ void load_spectral_data_sample(
     }
     metadata.set_points_in_file(n_points);
 
-    raw_measurement.resize(n_points, n_wave_lengths);
+    raw_measurement.resize(n_points, n_wavelengths);
     for (size_t i = 0; i < n_points; ++i)
     {
-        memcpy(raw_measurement[i].data(), raw_m[i].data(), (n_wave_lengths + 3) * sizeof(float));
+        memcpy(raw_measurement[i].data(), raw_m[i].data(), (n_wavelengths + 3) * sizeof(float));
     }
 }
 
@@ -206,7 +206,7 @@ void save_data_sample(
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
         RawMeasurement::SamplePoint sample_point = raw_measurement[i];
-        for (Index j = 0; j < raw_measurement.n_wave_lengths() + 3; ++j)
+        for (Index j = 0; j < raw_measurement.n_wavelengths() + 3; ++j)
         {
             fprintf(dataset_file, "%lf ", sample_point[j]);
         }

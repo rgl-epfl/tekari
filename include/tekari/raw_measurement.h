@@ -32,7 +32,7 @@ public:
         float *data()               { return m_data.data(); }
         const float *data() const   { return m_data.data(); }
 
-        size_t n_wave_lengths() const      { return m_data.n_cols() - 3; }
+        size_t n_wavelengths() const      { return m_data.n_cols() - 3; }
 
     private:
         SamplePoint(MatrixXX<float>::Row data)
@@ -46,15 +46,15 @@ public:
     RawMeasurement()
     : m_data(0, 0)
     {}
-    RawMeasurement(size_t n_sample_points, size_t n_wave_lengths)
-    : m_data(n_sample_points, n_wave_lengths + 3)
+    RawMeasurement(size_t n_sample_points, size_t n_wavelengths)
+    : m_data(n_sample_points, n_wavelengths + 3)
     {}
-    RawMeasurement(size_t n_sample_points, size_t n_wave_lengths, float v)
-    : m_data(n_sample_points, n_wave_lengths + 3, v)
+    RawMeasurement(size_t n_sample_points, size_t n_wavelengths, float v)
+    : m_data(n_sample_points, n_wavelengths + 3, v)
     {}
 
-    void resize(size_t n_sample_points, size_t n_wave_lengths) { m_data.resize(n_sample_points, n_wave_lengths + 3); }
-    void assign(size_t n_sample_points, size_t n_wave_lengths, float v) { m_data.assign(n_sample_points, n_wave_lengths + 3, v); }
+    void resize(size_t n_sample_points, size_t n_wavelengths) { m_data.resize(n_sample_points, n_wavelengths + 3); }
+    void assign(size_t n_sample_points, size_t n_wavelengths, float v) { m_data.assign(n_sample_points, n_wavelengths + 3, v); }
     void clear() { m_data.clear(); }
 
     // access a particular sample point
@@ -67,7 +67,7 @@ public:
     float* data()               { return m_data.data(); }
     const float* data() const   { return m_data.data(); }
 
-    size_t n_wave_lengths() const      { return m_data.n_cols() - 3; }
+    size_t n_wavelengths() const      { return m_data.n_cols() - 3; }
     size_t n_sample_points() const    { return m_data.n_rows(); }
 
 private:

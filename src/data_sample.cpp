@@ -172,7 +172,7 @@ void DataSample::update_point_selection()
     m_shaders[POINTS].bind();
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 
-    m_selection_stats.reset(m_raw_measurement.n_wave_lengths() + 1);
+    m_selection_stats.reset(m_raw_measurement.n_wavelengths() + 1);
     update_selection_stats( m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
     m_selection_axis.set_origin(selection_center());
 }
@@ -253,7 +253,7 @@ void DataSample::recompute_data()
     triangulate_data(m_f, m_v2d);
     compute_path_segments(m_path_segments, m_v2d);
 
-    Index n_intensities = m_raw_measurement.n_wave_lengths() + 1;     // account for luminance
+    Index n_intensities = m_raw_measurement.n_wavelengths() + 1;     // account for luminance
     Index n_sample_points = m_raw_measurement.n_sample_points();
     m_h.resize (n_intensities, n_sample_points);
     m_lh.resize(n_intensities, n_sample_points);
