@@ -77,7 +77,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     Timer<> timer;
 
     // clear mask
-    std::fill(m_cache_mask.begin(), m_cache_mask.end(), false);
+    m_cache_mask.assign(m_raw_measurement.n_wave_lengths() + 1, false);
 
     m_metadata.set_incident_angle(incident_angle);
     compute_samples(m_metadata.incident_angle());

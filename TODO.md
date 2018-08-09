@@ -4,7 +4,9 @@ TODO SORTED:
 - add progress bar
 
 
-1. Fix bugs
+1. Fix bugs:
+    - weird normalization
+
 2. make a release
 3. luminance height field
 4. rgb visualization

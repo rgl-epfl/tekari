@@ -3,6 +3,7 @@
 #include <tekari/common.h>
 #include <tekari/raw_measurement.h>
 #include <nanogui/opengl.h>
+#include <limits>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -14,8 +15,8 @@ public:
         Vector3f average_point          = Vector3f(0);
         Vector3f average_log_point      = Vector3f(0);
         float average_intensity         = 0.0f;
-        float min_intensity             = 0.0f;
-        float max_intensity             = 0.0f;
+        float min_intensity             = std::numeric_limits<float>::max();
+        float max_intensity             = std::numeric_limits<float>::min();
         uint32_t lowest_point_index     = 0;
         uint32_t highest_point_index    = 0;
     };
