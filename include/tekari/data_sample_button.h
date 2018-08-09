@@ -39,10 +39,10 @@ public:
     void toggle_log_view();
 
 private:
-    bool In_toggle_view_button(const Vector2i& p) const {
+    bool in_toggle_view_button(const Vector2i& p) const {
         return squared_norm(p - m_pos - m_toggle_view_button_pos) <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
-    bool In_delete_button(const Vector2i& p) const {
+    bool in_delete_button(const Vector2i& p) const {
         return squared_norm(p - m_pos - m_delete_button_pos) <= BUTTON_RADIUS*BUTTON_RADIUS;
     }
 

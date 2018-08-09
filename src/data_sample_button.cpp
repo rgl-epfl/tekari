@@ -75,12 +75,13 @@ bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool d
     }
 
     if (button == GLFW_MOUSE_BUTTON_1) {
-        if (In_delete_button(p))
+        m_callback();
+        if (in_delete_button(p))
         {
             m_delete_callback();
             return true;
         }
-        else if (In_toggle_view_button(p))
+        else if (in_toggle_view_button(p))
         {
             toggle_view();
             return true;
@@ -88,7 +89,6 @@ bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool d
         else if (m_callback)
         {
             m_popup->set_visible(!m_popup->visible());
-            m_callback();
             return true;
         }
     }
@@ -110,8 +110,8 @@ bool DataSampleButton::mouse_motion_event(const Vector2i& p, const Vector2i& rel
         return true;
     }
 
-    m_delete_button_hovered = In_delete_button(p);
-    m_toggle_view_button_hovered = In_toggle_view_button(p);
+    m_delete_button_hovered = in_delete_button(p);
+    m_toggle_view_button_hovered = in_toggle_view_button(p);
     return false;
 }
 
