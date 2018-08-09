@@ -96,7 +96,24 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
             samples.push_back(sample);
         }
     }
-    // // add outter ring to complete mesh
+    // add center point
+    powitacq::Vector3f wo;
+    float pdf;
+    float sample = m_intensity_index == 0 ?
+                        m_brdf.sample(powitacq::Vector2f(0, 0), wi, m_intensity_index, &wo, &pdf):
+                        m_brdf.sample(powitacq::Vector2f(0, 0), wi, m_intensity_index-1, &wo, &pdf);
+
+    Vector3f enoki_wo = powitacq_to_enoki_vec3(wo);
+    if (enoki::norm(enoki_wo) != 0.0f)
+    {
+        sample *= pdf;
+
+        wos.push_back(enoki_wo);
+        samples.push_back(sample);
+    }
+
+
+    // add outter ring to complete mesh
     for (int j = 0; j < N_PHI; ++j)
     {
         float theta = 100.0f;
