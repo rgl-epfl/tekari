@@ -108,15 +108,18 @@ enum LogType
         switch(type)                                                        \
         {                                                                   \
             case LogType::Info:                                             \
-                fprintf(stdout, "[Info:%s:%d] : ", __FILE__, __LINE__);     \
+                fprintf(stdout, "[Info:%s:%s:%d] : ",                       \
+                    __FILE__, __func__, __LINE__);                          \
                 fprintf(stdout, fmt, __VA_ARGS__);                          \
                 break;                                                      \
             case LogType::Warning:                                          \
-                fprintf(stderr, "[Warning:%s:%d] : ", __FILE__, __LINE__);  \
+                fprintf(stderr, "[Warning:%s:%s:%d] : ",                    \
+                    __FILE__, __func__, __LINE__);                          \
                 fprintf(stderr, fmt, __VA_ARGS__);                          \
                 break;                                                      \
             case LogType::Error:                                            \
-                fprintf(stderr, "[Error:%s:%d] : ", __FILE__, __LINE__);    \
+                fprintf(stderr, "[Error:%s:%s:%d] : ",                      \
+                    __FILE__, __func__, __LINE__);                          \
                 fprintf(stderr, fmt, __VA_ARGS__);                          \
                 break;                                                      \
         }                                                                   \
