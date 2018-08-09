@@ -14,39 +14,13 @@ inline Vector3f powitacq_to_enoki_vec3(const powitacq::Vector3f& v) { return Vec
 BSDFDataSample::BSDFDataSample(const string& file_path)
 : m_brdf(file_path)
 {
-    m_raw_measurement.resize(N_PHI * N_THETA + N_PHI, N_WAVE_LENGTHS);
-    m_v2d.resize(N_PHI * N_THETA + N_PHI);
-
-    // add outter ring to complete mesh
-    for (int j = 0; j < N_PHI; ++j)
-    {
-        float theta = 91.0f;
-        float phi = 360.0f * j / N_PHI;
-        RawMeasurement::SamplePoint sample_point = m_raw_measurement[N_PHI*N_THETA + j];
-        sample_point.set_theta(theta);
-        sample_point.set_phi(phi);
-        memset(sample_point.data() + 2, 0, (N_WAVE_LENGTHS + 1) * sizeof(float));
-        m_v2d[N_PHI*N_THETA + j] = hemisphere_to_disk({theta, phi});
-    }
     compute_samples({0.0f, 0.0f});
     triangulate_data(m_f, m_v2d);
     compute_path_segments(m_path_segments, m_v2d);
 
-    Index n_intensities = m_raw_measurement.n_wave_lengths() + 1;     // account for luminance
-    Index n_sample_points = m_raw_measurement.n_sample_points();
-    m_h.resize (n_intensities, n_sample_points);
-    m_lh.resize(n_intensities, n_sample_points);
-    m_n.resize (n_intensities, n_sample_points);
-    m_ln.resize(n_intensities, n_sample_points);
-    m_cache_mask.resize(n_intensities);
-    m_points_stats.reset(n_intensities);
-    m_selection_stats.reset(n_intensities);
-
     // artificially assign metadata members
     m_metadata.add_line(m_brdf.description());
     m_metadata.set_sample_name(file_path.substr(file_path.find_last_of("/") + 1, file_path.find_last_of(".")));
-    m_metadata.set_points_in_file(m_raw_measurement.n_sample_points());
-    m_selected_points.assign(m_raw_measurement.n_sample_points(), NOT_SELECTED_FLAG);
 }
 
 void BSDFDataSample::set_intensity_index(size_t intensity_index)
@@ -97,6 +71,9 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
 
     powitacq::Vector3f wi = enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle));
 
+    vector<Vector3f> wos;
+    vector<float> samples;
+
     for (int theta = 0; theta < N_THETA; ++theta)
     {
         float v = float(theta + 0.5f) / N_THETA;
@@ -109,15 +86,51 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
                                 m_brdf.sample(powitacq::Vector2f(u, v), wi, m_intensity_index, &wo, &pdf):
                                 m_brdf.sample(powitacq::Vector2f(u, v), wi, m_intensity_index-1, &wo, &pdf);
 
-            Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wo));
+            Vector3f enoki_wo = powitacq_to_enoki_vec3(wo);
+            if (enoki::norm(enoki_wo) == 0.0f)
+                continue;
 
             sample *= pdf;
-            RawMeasurement::SamplePoint sample_point = m_raw_measurement[theta*N_PHI + phi];
-            sample_point.set_theta(outgoing_angle[0]);
-            sample_point.set_phi(outgoing_angle[1]);
-            sample_point[m_intensity_index+2] = sample;
-            m_v2d[theta*N_PHI + phi] = vec3_to_disk(powitacq_to_enoki_vec3(wo));
+
+            wos.push_back(enoki_wo);
+            samples.push_back(sample);
         }
+    }
+    // // add outter ring to complete mesh
+    for (int j = 0; j < N_PHI; ++j)
+    {
+        float theta = 100.0f;
+        float phi = 360.0f * j / N_PHI;
+        wos.push_back(hemisphere_to_vec3({theta, phi}));
+        samples.push_back(0.0f);
+    }
+
+    Index n_intensities = m_brdf.wavelengths().size() + 1;     // account for luminance
+    Index n_sample_points = wos.size();
+
+    m_raw_measurement.resize(n_sample_points, n_intensities);
+    m_v2d.resize(n_sample_points);
+
+    m_h.resize (n_intensities, n_sample_points);
+    m_lh.resize(n_intensities, n_sample_points);
+    m_n.resize (n_intensities, n_sample_points);
+    m_ln.resize(n_intensities, n_sample_points);
+    m_cache_mask.resize(n_intensities);
+    m_points_stats.reset(n_intensities);
+    m_selection_stats.reset(n_intensities);
+
+    // artificially assign metadata members
+    m_metadata.set_points_in_file(m_raw_measurement.n_sample_points());
+    m_selected_points.assign(m_raw_measurement.n_sample_points(), NOT_SELECTED_FLAG);
+
+    for (size_t i = 0; i < wos.size(); ++i)
+    {
+        RawMeasurement::SamplePoint sample_point = m_raw_measurement[i];
+        Vector2f outgoing_angle = vec3_to_hemisphere(wos[i]);
+        sample_point.set_theta(outgoing_angle.x());
+        sample_point.set_phi(outgoing_angle.y());
+        sample_point[m_intensity_index+2] = samples[i];
+        m_v2d[i] = vec3_to_disk(wos[i]);
     }
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;

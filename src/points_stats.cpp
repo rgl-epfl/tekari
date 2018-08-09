@@ -82,8 +82,6 @@ void compute_min_max_intensities(
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
         points_stats_add_intensity(points_stats[intensity_index], raw_measurement[i][intensity_index+2], i);
 
-    Log(Error, "min = %f, max = %f\n", points_stats[intensity_index].min_intensity, points_stats[intensity_index].max_intensity);
-
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
