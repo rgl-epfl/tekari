@@ -5,6 +5,7 @@
 #include <limits>         // std::numeric_limits
 #include <sstream>        // std::ostringstream
 #include <unordered_map>
+#include "cie1931.h"
 
 #define POWITACQ_SAMPLE_LUMINANCE 1
 
@@ -16,6 +17,7 @@ POWITACQ_NAMESPACE_BEGIN
 
 using Vector2u = Vector<uint32_t, 2>;
 using Vector2i = Vector<int32_t, 2>;
+using Vector4f = Vector<float, 4>;
 
 static constexpr float Pi = 3.1415926535897932384626433832795f;
 static constexpr float OneMinusEpsilon = 0.999999940395355225f;
@@ -1001,8 +1003,24 @@ BRDF::BRDF(const std::string &path_to_file) {
     /* Copy wavelength information */
     size_t size = wavelengths.shape[0];
     m_data->wavelengths.resize(size);
-    for (size_t i = 0; i < size; ++i)
-        m_data->wavelengths[i] = ((const float *) wavelengths.data.get())[i];
+    std::vector<Vector4f> rgby_weights(size);
+
+    for (size_t k = 0; k < size; ++k) {
+        float lambda = ((const float *) wavelengths.data.get())[k];
+        m_data->wavelengths[k] = lambda;
+
+        Vector3f XYZ = Vector3f(cie_interp(cie_x, lambda),
+                                cie_interp(cie_y, lambda),
+                                cie_interp(cie_z, lambda)) *
+                       cie_interp(cie_d65, lambda);
+
+        Vector4f rgby(0.f);
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                rgby[i] += xyz_to_srgb[i][j] * XYZ[j];
+        rgby[3] = XYZ[1];
+        rgby_weights[k] = rgby;
+    }
 
     /* Construct spectral interpolant */
     m_data->spectra = Warp2D3(
