@@ -80,6 +80,7 @@ public:
     void set_color_map(std::shared_ptr<ColorMap> color_map) { m_color_map = color_map; }
     const std::shared_ptr<const ColorMap> color_map() const { return m_color_map; }
 
+    float point_size_scale() const { return m_point_size_scale; }
     void set_point_size_scale(float point_size_scale) { m_point_size_scale = point_size_scale; }
 
     void set_mouse_mode(Mouse_mode mode){ m_mouse_mode = mode; }

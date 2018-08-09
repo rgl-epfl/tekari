@@ -152,10 +152,12 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_SPECULAR, checked);
         }, false);
+#if !defined(EMSCRIPTEN)
         m_use_wireframe_checkbox = add_hidden_option_toggle("Wireframe", "Enable/Disable wireframe",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_WIREFRAME, checked);
         }, false);
+#endif
         m_display_center_axis = add_hidden_option_toggle("Center Axis", "Show/Hide Center Axis (A)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(DISPLAY_AXIS, checked);
@@ -175,7 +177,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         point_size_label->set_tooltip("Changes the point size based on a arbitrary heuristic (also distance dependent)");
         auto point_size_slider = new Slider{ hidden_options_popup };
         point_size_slider->set_range(make_pair(0.1f, 10.0f));
-        point_size_slider->set_value(1.0f);
+        point_size_slider->set_value(m_bsdf_canvas->point_size_scale());
         point_size_slider->set_callback([this](float value) {
             m_bsdf_canvas->set_point_size_scale(value);
         });

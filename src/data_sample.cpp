@@ -26,6 +26,7 @@ void DataSample::draw_gl(
     const Matrix4f& model,
     const Matrix4f& mvp,
     int flags,
+    float point_size,
     shared_ptr<ColorMap> color_map)
 {
     // draw the predicted outgoing angle
@@ -90,6 +91,11 @@ void DataSample::draw_gl(
     draw_functors[POINTS] = [&]() {
         m_shaders[POINTS].bind();
         color_map->bind();
+#if defined(EMSCRIPTEN)
+        m_shaders[POINTS].set_uniform("point_size", point_size);
+#else
+        glPointSize(point_size);
+#endif
         m_shaders[POINTS].set_uniform("model_view_proj", mvp);
         m_shaders[POINTS].set_uniform("show_all_points", m_display_views[POINTS]);
         m_shaders[POINTS].draw_array(GL_POINTS, 0, m_v2d.size());
@@ -135,7 +141,6 @@ void DataSample::link_data_to_shaders()
     m_shaders[MESH].bind();
     m_shaders[MESH].set_uniform("color_map", 0);
     m_shaders[MESH].upload_attrib("in_pos2d", (float*)m_v2d.data(), 2, m_v2d.size());
-    // m_shaders[MESH].upload_attrib("in_normal", (float*)curr_n().data(), 4, curr_n().n_cols());
     m_shaders[MESH].upload_indices((uint32_t*)m_f.data(), 3, m_f.size());
 
     m_shaders[PATH].bind();

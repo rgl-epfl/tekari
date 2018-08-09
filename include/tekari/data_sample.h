@@ -41,6 +41,7 @@ public:
     void draw_gl(const Matrix4f& model,
                 const Matrix4f& mvp,
                 int flags,
+                float point_size,
                 std::shared_ptr<ColorMap> color_map);
 
     void toggle_log_view();

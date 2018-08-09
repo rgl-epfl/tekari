@@ -37,7 +37,7 @@ BSDFCanvas::BSDFCanvas(Widget* parent)
 :   GLCanvas(parent)
 ,   m_translation(0, 0, 0)
 ,   m_zoom(0)
-,   m_point_size_scale(1.0f)
+,   m_point_size_scale(5.0f)
 ,   m_ortho_mode(false)
 ,   m_mouse_mode(ROTATE)
 ,   m_selection_region(make_pair(Vector2i(0,0), Vector2i(0,0)))
@@ -197,10 +197,9 @@ void BSDFCanvas::draw_gl() {
     Matrix4f proj = projection_matrix();
     Matrix4f mvp = proj * VIEW * model;
 
-    // float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-    // glPointSize(point_size_factor* point_size_factor* m_point_size_scale);
+    float point_size_factor = (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
     for (const auto& data_sample: m_data_samples_to_draw)
-        data_sample->draw_gl(model, mvp, m_draw_flags, m_color_map);
+        data_sample->draw_gl(model, mvp, m_draw_flags, point_size_factor * point_size_factor * m_point_size_scale, m_color_map);
 
     m_grid.draw_gl(mvp);
 }
