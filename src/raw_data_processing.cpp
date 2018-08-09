@@ -130,10 +130,19 @@ void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
     memset(&in, 0, sizeof(struct triangulateio));
     memset(&out, 0, sizeof(struct triangulateio));
 
-    in.pointlist = (float*)V2D.data();
-    in.numberofpoints = V2D.size();
+    std::vector<Vector2f> V2D_2;
+    V2D_2.reserve(V2D.size());
+    srand(0);
+    for (size_t i = 0; i<V2D.size(); ++i) {
+        float x = rand() * (1.f / RAND_MAX);
+        float y = rand() * (1.f / RAND_MAX);
+        V2D_2.push_back(V2D[i] + Vector2f(x, y) * 1e-5f);
+    }
 
-    char cmds[4] = {'z', 'Q', 'N', '\0'};
+    in.pointlist = (float*)V2D_2.data();
+    in.numberofpoints = V2D_2.size();
+
+    char cmds[5] = {'z', 'Q', 'N', 'i', '\0'};
     triangulate(cmds, &in, &out, NULL);
 
     F.resize(out.numberoftriangles);
