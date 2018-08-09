@@ -238,17 +238,17 @@ void BSDFCanvas::set_view_angle(ViewAngles view_angle)
     case UP:
         dir = (float)M_PI;
     case DOWN:
-        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 1, 0), -M_PI* 0.5f + dir));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(1, 0, 0), -M_PI* 0.5f + dir));
         break;
     case LEFT:
         dir = (float)M_PI;
     case RIGHT:
-        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 0, 1), M_PI* 0.5f + dir));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 1, 0), M_PI* 0.5f + dir));
         break;
     case BACK:
         dir = (float)M_PI;
     case FRONT:
-        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 0, 1), dir));
+        m_arcball.set_state(enoki::rotate<Quaternion4f>(Vector3f(0, 1, 0), dir));
         break;
     }
 }
