@@ -5,8 +5,6 @@ TODO SORTED:
 
 
 1. Fix bugs:
-    - weird normalization
-
 2. make a release
 3. luminance height field
 4. rgb visualization

@@ -30,10 +30,18 @@ void Arrow::draw_gl(const Vector3f& origin,
                     const Color& color)
 {
     glEnable(GL_DEPTH_TEST);
+    
+    Vector3f left = enoki::normalize(enoki::cross(Vector3f(0.0f, 0.0f, 1.0f), direction));
+    float angle = acos(dot(Vector3f(0.0f, 0.0f, 1.0f), direction));
 
-    Matrix4f mvp =
-        vp * enoki::look_at<Matrix4f>(origin, origin-direction, enoki::normalize(Vector3f(1, 2, 3))) *
-        enoki::scale<Matrix4f>(Vector3f(1.f, 1.f, s));
+    Matrix4f mvp = vp * enoki::transform_compose(
+            Matrix3f(enoki::scale<Matrix4f>(Vector3f(1.0f, 1.0f, s))),
+            angle < 1e-5 ? Quaternion4f() : enoki::rotate<Quaternion4f>(left, angle),
+            origin);
+
+    // Matrix4f mvp =
+    //     vp * enoki::look_at<Matrix4f>(origin, origin-direction, enoki::normalize(Vector3f(1, 2, 3))) *
+    //     enoki::scale<Matrix4f>(Vector3f(1.f, 1.f, s));
 
     m_cone_shader.bind();
     m_cone_shader.set_uniform("model_view_proj", mvp);
