@@ -150,13 +150,13 @@ void move_selection_along_path(bool up, VectorXf& selected_points)
     if (up)
     {
         extremity = selected_points.back();
-        memmove(selected_points.data() + 1, selected_points.data(), selected_points.size() - 1);
+        memmove(selected_points.data() + 1, selected_points.data(), (selected_points.size() - 1) * sizeof(float));
         selected_points.front() = extremity;
     }
     else
     {
         extremity = selected_points.front();
-        memmove(selected_points.data(), selected_points.data() + 1, selected_points.size() - 1);
+        memmove(selected_points.data(), selected_points.data() + 1, (selected_points.size() - 1) * sizeof(float));
         selected_points.back() = extremity;
     }
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
