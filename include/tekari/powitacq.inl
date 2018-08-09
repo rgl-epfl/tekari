@@ -1257,4 +1257,83 @@ Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
     return fr / pdf;
 }
 
+void set_incident_angle(const Vector3f &wi, size_t theta_n, size_t phi_n)
+{
+    m_theta_n = theta_n;
+    m_theta_n = phi_n;
+    size_t n_points = theta_n * phi_n;
+    m_samples.resize(n_points);
+    m_pdfs.resize(n_points);
+    m_scales.resize(n_points);
+
+    m_wi = wi;
+    if (wi.z() <= 0) {
+        m_wo = Vector3f(0.f);
+        m_pdfs.assign(n_points, 0);
+        return;
+    }
+
+    float theta_i = std::acos(wi.z()),
+          phi_i   = std::atan2(wi.y(), wi.x());
+
+    m_params[0] = phi_i;
+    m_params[1] = theta_i;
+    Vector2f u_wi = Vector2f(theta2u(theta_i), phi2u(phi_i));
+
+    for (float theta = 0; theta < theta_n; ++theta)
+    {
+        float v = float(theta + 0.5f) / theta_n;
+        for (float phi = 0; phi < phi_n; ++phi)
+        {
+            float u = float(phi + 0.5f) / phi_n;
+            size_t index = theta * n_phi + phi;
+
+            m_samples[index] = Vector2f(v, u);
+            float lum_pdf = 1.f;
+
+            #if POWITACQ_SAMPLE_LUMINANCE
+                std::tie(m_samples[index], lum_pdf) =
+                    m_data->luminance.sample(m_samples[index], m_params);
+            #endif
+
+            Vector2f u_wm;
+            float ndf_pdf;
+            std::tie(u_wm, ndf_pdf) =
+                m_data->vndf.sample(m_samples[index], m_params);
+
+            float phi_m   = u2phi(u_wm.y()),
+                  theta_m = u2theta(u_wm.x());
+            if (m_data->isotropic)
+                phi_m += phi_i;
+
+            /* Spherical -> Cartesian coordinates */
+            float sin_phi_m = std::sin(phi_m),
+                  cos_phi_m = std::cos(phi_m),
+                  sin_theta_m = std::sin(theta_m),
+                  cos_theta_m = std::cos(theta_m);
+
+            Vector3f wm = Vector3f(
+                cos_phi_m * sin_theta_m,
+                sin_phi_m * sin_theta_m,
+                cos_theta_m
+            );
+
+            m_wo = wm * 2.f * dot(wm, wi) - wi;
+            if (m_wo.z() <= 0) {
+                m_wo = Vector3f(0.f);
+                m_pdfs[index] = 0;
+                continue;
+            }
+
+            float jacobian = std::max(2.f * sqr(Pi) * u_wm.x() *
+                                      sin_theta_m, 1e-6f) * 4.f * dot(wi, wm);
+            
+            m_pdfs[index] = ndf_pdf * lum_pdf / jacobian;
+
+            m_scales[index] = m_data->ndf.eval(u_wm, m_params) /
+                        (4 * m_data->sigma.eval(u_wi, m_params));
+        }
+    }
+}
+
 POWITACQ_NAMESPACE_END
