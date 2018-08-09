@@ -74,12 +74,12 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
     vector<Vector3f> wos;
     vector<float> samples;
 
-    for (int theta = 0; theta < N_THETA; ++theta)
+    for (int theta = 1; theta < N_THETA; ++theta)
     {
-        float v = float(theta + 0.5f) / N_THETA;
-        for (int phi = 0; phi < N_PHI; ++phi)
+        float v = float(theta) / N_THETA;
+        for (int phi = 1; phi < N_PHI; ++phi)
         {
-            float u = float(phi + 0.5f) / N_PHI;
+            float u = float(phi) / N_PHI;
             powitacq::Vector3f wo;
             float pdf;
             float sample = m_intensity_index == 0 ?
