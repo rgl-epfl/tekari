@@ -58,7 +58,7 @@ public:
     void toggle_data_sample_sliders_window();
     void toggle_help_window();
     void toggle_selection_info_window();
-    void update_window(Window* window, function<void(void)> toggle, bool force = true);
+    void update_selection_info_window();
     void toggle_unsaved_data_window(const vector<string>& data_sample_names, function<void(void)> continue_callback);
     void toggle_color_map_selection_window();
     

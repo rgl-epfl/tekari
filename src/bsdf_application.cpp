@@ -80,7 +80,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         {
             m_selected_ds->select_points(mvp, selection_box, canvas_size, mode);
         }
-        update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
+        update_selection_info_window();
     });
     m_bsdf_canvas->set_update_incident_angle_callback([this](const Vector2f& incident_angle) {
         if (!m_selected_ds)
@@ -382,7 +382,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return false;
 
                 m_selected_ds->select_all_points();
-                update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
+                update_selection_info_window();
                 return true;
             case GLFW_KEY_1: if (!alt) return false;
             case GLFW_KEY_KP_1:
@@ -428,7 +428,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                         return false;
                     
                     m_selected_ds->select_extreme_point(key == GLFW_KEY_H);
-                    update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
+                    update_selection_info_window();
                     return true;
                 case GLFW_KEY_1:
                 case GLFW_KEY_2:
@@ -436,7 +436,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                         return false;
 
                     m_selected_ds->move_selection_along_path(key == GLFW_KEY_1);
-                    update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
+                    update_selection_info_window();
                     return true;
                 default:
                     return false;
@@ -472,7 +472,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return false;
                  
                 m_selected_ds->deselect_all_points();
-                update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
+                update_selection_info_window();
                 return true;
 #if !defined(EMSCRIPTEN)
             case GLFW_KEY_Q:
@@ -503,7 +503,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 corresponding_button(m_selected_ds)->set_dirty(true);
 
                 reprint_footer();
-                update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
+                update_selection_info_window();
                 request_layout_update();
                 return true;
             case GLFW_KEY_UP: case GLFW_KEY_W:
@@ -564,8 +564,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::UP);
                 return true;
             case GLFW_KEY_U:
-                if (m_selected_ds)
-                    toggle_data_sample_sliders_window();
+                toggle_data_sample_sliders_window();
                 return true;
             case GLFW_KEY_KP_ADD:
             case GLFW_KEY_KP_SUBTRACT:
@@ -573,7 +572,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return false;
 
                 m_selected_ds->move_selection_along_path(key == GLFW_KEY_KP_ADD);
-                update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
+                update_selection_info_window();
                 return true;
             default:
                 return false;
@@ -644,16 +643,14 @@ void BSDFApplication::update_layout()
 
 void BSDFApplication::open_data_sample_dialog()
 {
-    m_thread_pool.add_task([this]() {
-        vector<string> data_sample_paths = nanogui::file_dialog(
-            {
-                { "txt",  "Data samples" },
-                { "bsdf",  "Data samples" }
-            }, false, true);
-        open_files(data_sample_paths);
-        // Make sure we gain focus after seleting a file to be loaded.
-        glfwFocusWindow(m_glfw_window);
-    });
+    vector<string> data_sample_paths = nanogui::file_dialog(
+        {
+            { "txt",  "Data samples" },
+            { "bsdf",  "Data samples" }
+        }, false, true);
+    open_files(data_sample_paths);
+    // Make sure we gain focus after seleting a file to be loaded.
+    glfwFocusWindow(m_glfw_window);
 }
 
 void BSDFApplication::open_files(const vector<string>& data_sample_paths)
@@ -754,7 +751,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         Window *window = new Window(this, "BRDF Parameters");
         window->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 5, 5));
 
-        Vector2f curr_i_angle = m_selected_ds->incident_angle();
+        Vector2f curr_i_angle = m_selected_ds ? m_selected_ds->incident_angle() : Vector2f(0.0f, 0.0f);
         if (curr_i_angle[1] > 180.0f) curr_i_angle[1] -= 360.0f;
 
         new Label{ window, "Incident angle", "sans-bold"};
@@ -769,14 +766,16 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         });
         m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(90.0f, 180.0f)));
         m_incident_angle_slider->set_fixed_size({ 200, 200 });
+        m_incident_angle_slider->set_enabled(m_selected_ds != nullptr);
 
-        auto add_float_box = [window](const string& label, float value, function<void(float)> callback) {
+        auto add_float_box = [window, this](const string& label, float value, function<void(float)> callback) {
             auto float_box_container = new Widget{window};
             float_box_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
             new Label{float_box_container, label};
             auto float_box = new FloatBox<float>{ float_box_container };
             float_box->set_value(value);
-            float_box->set_editable(true);
+            float_box->set_editable(m_selected_ds != nullptr);
+            float_box->set_enabled(m_selected_ds != nullptr);
             float_box->set_callback(callback);
             float_box->set_units("°");
             float_box->set_spinnable(true);
@@ -795,13 +794,14 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             reprint_footer();
         });
 
-        auto add_int_box = [window](const string& label, size_t value, function<void(size_t)> callback) {
+        auto add_int_box = [window, this](const string& label, size_t value, function<void(size_t)> callback) {
             auto int_box_container = new Widget{window};
             int_box_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
             new Label{int_box_container, label};
             auto int_box = new IntBox<size_t>{ int_box_container };
             int_box->set_value(value);
-            int_box->set_editable(true);
+            int_box->set_editable(m_selected_ds != nullptr);
+            int_box->set_enabled(m_selected_ds != nullptr);
             int_box->set_callback(callback);
             int_box->set_spinnable(true);
             return int_box;
@@ -817,7 +817,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         });
 
         m_wave_length_slider = new Slider{ window };
-        m_wave_length_slider->set_range(make_pair(0, m_selected_ds->n_wave_lengths()-1));
+        m_wave_length_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->n_wave_lengths() : 1));
         m_wave_length_slider->set_callback([this](float value) {
             int int_val = static_cast<int>(round(value));
             m_wave_length_slider->set_value(int_val);
@@ -825,20 +825,16 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             m_wave_length_int_box->set_value(int_val);
             reprint_footer();
         });
+        m_wave_length_slider->set_enabled(m_selected_ds != nullptr);
 
         return window;
     });
 }
 
-void BSDFApplication::update_window(Window* window, function<void(void)> toggle, bool force)
+void BSDFApplication::update_selection_info_window()
 {
-    if (window) // if the window is displayed, update it
-    {
-        toggle();
-        toggle();
-    }
-    else if (force) // otherwise if forcw update, display window
-        toggle();
+    if(m_selection_info_window) toggle_selection_info_window();
+    toggle_selection_info_window();
 }
 
 void BSDFApplication::toggle_selection_info_window()
@@ -944,10 +940,6 @@ void BSDFApplication::select_data_sample(int index, bool clamped)
 
 void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
 {
-    // if we select the same data sample, nothing to do
-    if (data_sample == m_selected_ds)
-        return;
-
     // de-select previously selected button
     if (m_selected_ds)
     {
@@ -960,9 +952,17 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
     m_bsdf_canvas->select_data_sample(data_sample);
 
     reprint_footer();
-    update_window(m_selection_info_window, [this]() { toggle_selection_info_window(); });
-    update_window(m_metadata_window, [this]() { toggle_metadata_window(); }, false);
-    update_window(m_data_sample_sliders_window, [this]() { if (m_selected_ds) toggle_data_sample_sliders_window(); }, false);
+    update_selection_info_window();
+    if (m_metadata_window)
+    {
+        toggle_metadata_window();
+        toggle_metadata_window();
+    }
+    if (m_data_sample_sliders_window)
+    {
+        toggle_data_sample_sliders_window();
+        toggle_data_sample_sliders_window();
+    }
     request_layout_update();
 
     if (!m_selected_ds) // if no data sample is selected, we can stop there
