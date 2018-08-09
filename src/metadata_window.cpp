@@ -27,24 +27,23 @@ MetadataWindow::MetadataWindow(Widget* parent, const Metadata* metadata, functio
     set_layout(new GroupLayout{});
 
     auto scroll_container = new VScrollPanel{ this };
-    scroll_container->set_fixed_height(300);
     auto container = new Widget{ scroll_container };
     container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 15, 2 });
 
     auto raw_meta = metadata->raw_metadata();
-    // Log(Info, "%d\n", raw_meta.size());
     for (const string& line : raw_meta) {
         auto pos = line.find_first_of("\t ");
         if (pos == string::npos)
-            continue;
+            pos = 0;
 
-        string title = line.substr(1, pos);
-        string value = line.substr(pos + 1, line.length());
+        string title = line.substr(line[0] == '#' ? 1 : 0, pos);
+        string value = line.substr(pos, line.length());
         if (value.length() > 100) value = value.substr(0, 100);
 
         new Label(container, title, "sans-bold", 18);
         new Label(container, value);
     }
+    scroll_container->set_fixed_height(raw_meta.size() > 1 ? 300 : 50);
 }
 
 bool MetadataWindow::keyboard_event(int key, int scancode, int action, int modifiers) {

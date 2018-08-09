@@ -96,6 +96,7 @@ using Spectrum = std::valarray<float>;
 class BRDF {
     struct Data;
     std::unique_ptr<Data> m_data;
+    std::string m_description;
 public:
     // ctor / dtor
     BRDF(const std::string &path_to_file);
@@ -122,6 +123,8 @@ public:
 
     /// evaluate the PDF of a sample
     float pdf(const Vector3f &wi, const Vector3f &wo) const;
+
+    const std::string& description() const { return m_description; }
 
 private:
     Spectrum zero() const;

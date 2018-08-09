@@ -1016,6 +1016,8 @@ BRDF::BRDF(const std::string &path_to_file) {
            (const float *) wavelengths.data.get() }},
         false, false
     );
+
+    m_description = std::string((char*)description.data.get(), description.shape[0]);
 }
 
 BRDF::~BRDF() { }

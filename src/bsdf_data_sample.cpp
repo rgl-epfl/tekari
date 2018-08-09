@@ -43,10 +43,10 @@ BSDFDataSample::BSDFDataSample(const string& file_path)
     m_selection_stats.reset(n_intensities);
 
     // artificially assign metadata members
+    m_metadata.add_line(m_brdf.description());
     m_metadata.set_sample_name(file_path.substr(file_path.find_last_of("/") + 1, file_path.find_last_of(".")));
     m_metadata.set_points_in_file(m_raw_measurement.n_sample_points());
     m_selected_points.assign(m_raw_measurement.n_sample_points(), NOT_SELECTED_FLAG);
-
 }
 
 void BSDFDataSample::set_intensity_index(size_t intensity_index)
