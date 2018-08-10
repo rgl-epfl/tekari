@@ -895,7 +895,12 @@ const Spectrum &BRDF::wavelengths() const {
 // Ctor/dtor
 // *****************************************************************************
 
-BRDF::BRDF(const std::string &path_to_file) {
+BRDF::BRDF(const std::string &path_to_file)
+:   m_theta_n(0)
+,   m_phi_n(0)
+,   m_wi(0.0f)
+,   m_params{0, 0}
+{
 
     Tensor tf = Tensor(path_to_file);
     auto& theta_i = tf.field("theta_i");
@@ -1160,81 +1165,6 @@ Spectrum BRDF::eval(const Vector3f &wi, const Vector3f &wo) const {
 // Sample interface
 // *****************************************************************************
 
-
-float BRDF::sample(const Vector2f &u, const Vector3f &wi,
-                        size_t wavelength_index, Vector3f *wo_out, float *pdf_out) const {
-    if (wi.z() <= 0) {
-        if (wo_out)
-            *wo_out = Vector3f(0.f);
-        if (pdf_out)
-            *pdf_out = 0;
-        return 0.0f;
-    }
-
-    float theta_i = std::acos(wi.z()),
-          phi_i   = std::atan2(wi.y(), wi.x());
-
-    float params[2] = { phi_i, theta_i };
-    Vector2f u_wi = Vector2f(theta2u(theta_i), phi2u(phi_i));
-    Vector2f sample = Vector2f(u.y(), u.x());
-    float lum_pdf = 1.f;
-
-    #if POWITACQ_SAMPLE_LUMINANCE
-        std::tie(sample, lum_pdf) =
-            m_data->luminance.sample(sample, params);
-    #endif
-
-    Vector2f u_wm;
-    float ndf_pdf;
-    std::tie(u_wm, ndf_pdf) =
-        m_data->vndf.sample(sample, params);
-
-    float phi_m   = u2phi(u_wm.y()),
-          theta_m = u2theta(u_wm.x());
-
-    if (m_data->isotropic)
-        phi_m += phi_i;
-
-    /* Spherical -> Cartesian coordinates */
-    float sin_phi_m = std::sin(phi_m),
-          cos_phi_m = std::cos(phi_m),
-          sin_theta_m = std::sin(theta_m),
-          cos_theta_m = std::cos(theta_m);
-
-    Vector3f wm = Vector3f(
-        cos_phi_m * sin_theta_m,
-        sin_phi_m * sin_theta_m,
-        cos_theta_m
-    );
-
-    Vector3f wo = wm * 2.f * dot(wm, wi) - wi;
-    if (wo.z() <= 0) {
-        if (wo_out)
-            *wo_out = Vector3f(0.f);
-        if (pdf_out)
-            *pdf_out = 0;
-        return 0.0f;
-    }
-
-    float fr = 0.0f;
-    float params_fr[3] = { phi_i, theta_i, m_data->wavelengths[wavelength_index] };
-
-    fr = m_data->spectra.eval(sample, params_fr);
-
-    fr *= m_data->ndf.eval(u_wm, params) /
-            (4 * m_data->sigma.eval(u_wi, params));
-
-    float jacobian = std::max(2.f * sqr(Pi) * u_wm.x() *
-                              sin_theta_m, 1e-6f) * 4.f * dot(wi, wm);
-
-    float pdf = ndf_pdf * lum_pdf / jacobian;
-
-    if (wo_out)  (*wo_out)  = wo;
-    if (pdf_out) (*pdf_out) = pdf;
-
-    return fr / pdf;
-}
-
 Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
                       Vector3f *wo_out, float *pdf_out) const {
     if (wi.z() <= 0) {
@@ -1311,80 +1241,116 @@ Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
     return fr / pdf;
 }
 
-// void set_incident_angle(const Vector3f &wi, size_t theta_n, size_t phi_n)
-// {
-//     m_theta_n = theta_n;
-//     m_theta_n = phi_n;
-//     size_t n_points = theta_n * phi_n;
-//     m_samples.resize(n_points);
-//     m_pdfs.resize(n_points);
-//     m_scales.resize(n_points);
+void BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n)
+{
+    // if the state doesn't change
+    if (wi[0] == m_wi[0] && wi[1] == m_wi[1] && wi[2] == m_wi[2] &&
+        theta_n == m_theta_n &&
+        phi_n == m_phi_n)
+        return;
 
-//     m_wi = wi;
-//     if (wi.z() <= 0) {
-//         m_wo = Vector3f(0.f);
-//         m_pdfs.assign(n_points, 0);
-//         return;
-//     }
+    m_theta_n = theta_n;
+    m_phi_n = phi_n;
+    m_wi = wi;
 
-//     float theta_i = std::acos(wi.z()),
-//           phi_i   = std::atan2(wi.y(), wi.x());
+    size_t max_points = theta_n * phi_n + phi_n;
+    m_samples.clear();
+    m_scales.clear();
+    m_wos.clear();
+    m_samples.reserve(max_points);
+    m_scales.reserve(max_points);
+    m_wos.reserve(max_points);
 
-//     m_params[0] = phi_i;
-//     m_params[1] = theta_i;
-//     Vector2f u_wi = Vector2f(theta2u(theta_i), phi2u(phi_i));
+    if (wi.z() <= 0)
+        return;
 
-//     for (float theta = 0; theta < theta_n; ++theta)
-//     {
-//         float v = float(theta + 0.5f) / theta_n;
-//         for (float phi = 0; phi < phi_n; ++phi)
-//         {
-//             float u = float(phi + 0.5f) / phi_n;
-//             size_t index = theta * n_phi + phi;
+    float theta_i = std::acos(wi.z()),
+          phi_i   = std::atan2(wi.y(), wi.x());
 
-//             m_samples[index] = Vector2f(v, u);
-//             float lum_pdf = 1.f;
+    m_params[0] = phi_i;
+    m_params[1] = theta_i;
+    Vector2f u_wi = Vector2f(theta2u(theta_i), phi2u(phi_i));
 
-//             #if POWITACQ_SAMPLE_LUMINANCE
-//                 std::tie(m_samples[index], lum_pdf) =
-//                     m_data->luminance.sample(m_samples[index], m_params);
-//             #endif
+    auto compute_state = [&](float u, float v) {
 
-//             Vector2f u_wm;
-//             float ndf_pdf;
-//             std::tie(u_wm, ndf_pdf) =
-//                 m_data->vndf.sample(m_samples[index], m_params);
+        Vector2f sample = Vector2f(v, u);
+        float lum_pdf = 1.f;
 
-//             float phi_m   = u2phi(u_wm.y()),
-//                   theta_m = u2theta(u_wm.x());
-//             if (m_data->isotropic)
-//                 phi_m += phi_i;
+        #if POWITACQ_SAMPLE_LUMINANCE
+            std::tie(sample, lum_pdf) =
+                m_data->luminance.sample(sample, m_params);
+        #endif
 
-//             /* Spherical -> Cartesian coordinates */
-//             float sin_phi_m = std::sin(phi_m),
-//                   cos_phi_m = std::cos(phi_m),
-//                   sin_theta_m = std::sin(theta_m),
-//                   cos_theta_m = std::cos(theta_m);
+        Vector2f u_wm;
+        float ndf_pdf;
+        std::tie(u_wm, ndf_pdf) =
+            m_data->vndf.sample(sample, m_params);
 
-//             Vector3f wm = Vector3f(
-//                 cos_phi_m * sin_theta_m,
-//                 sin_phi_m * sin_theta_m,
-//                 cos_theta_m
-//             );
+        float phi_m   = u2phi(u_wm.y()),
+              theta_m = u2theta(u_wm.x());
+        if (m_data->isotropic)
+            phi_m += phi_i;
 
-//             m_wo = wm * 2.f * dot(wm, wi) - wi;
-//             if (m_wo.z() <= 0) {
-//                 m_wo = Vector3f(0.f);
-//                 m_pdfs[index] = 0;
-//                 continue;
-//             }
+        /* Spherical -> Cartesian coordinates */
+        float sin_phi_m = std::sin(phi_m),
+              cos_phi_m = std::cos(phi_m),
+              sin_theta_m = std::sin(theta_m),
+              cos_theta_m = std::cos(theta_m);
 
-//             float jacobian = std::max(2.f * sqr(Pi) * u_wm.x() *
-//                                       sin_theta_m, 1e-6f) * 4.f * dot(wi, wm);
-//             m_scales[index] = m_data->ndf.eval(u_wm, m_params) /
-//                         (4 * m_data->sigma.eval(u_wi, m_params));
-//         }
-//     }
-// }
+        Vector3f wm = Vector3f(
+            cos_phi_m * sin_theta_m,
+            sin_phi_m * sin_theta_m,
+            cos_theta_m
+        );
+
+        Vector3f wo = wm * 2.f * dot(wm, wi) - wi;
+        if (wo.z() <= 0)
+            return;
+
+        m_samples.push_back(sample);
+        m_wos.push_back(wo);
+        m_scales.push_back(m_data->ndf.eval(u_wm, m_params) /
+                            (4 * m_data->sigma.eval(u_wi, m_params)));
+
+    };
+
+    for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points
+    {
+        float v = float(theta) / theta_n;
+        for (float phi = 0; phi < phi_n; ++phi)
+        {
+            float u = float(phi) / phi_n;
+            compute_state(u, v);
+        }
+    }
+    compute_state(0, 0);
+
+    // add an artificial ring of points
+    for (size_t j = 0; j < phi_n; ++j)
+    {
+        float phi = 2 * Pi * j / phi_n;
+        m_wos.push_back({cos(phi), sin(phi), 0.0f});
+    }
+}
+
+void BRDF::sample_state(size_t wavelength_index, std::vector<float>& frs_out) const
+{
+    frs_out.resize(m_wos.size());
+
+    float min_fr = std::numeric_limits<float>::max();
+
+    for (size_t i = 0; i < m_samples.size(); ++i)
+    {
+        float params_fr[3] = { m_params[0], m_params[1], m_data->wavelengths[wavelength_index] };
+        frs_out[i] = m_data->spectra.eval(m_samples[i], params_fr) * m_scales[i];
+        min_fr = std::min(min_fr, frs_out[i]);
+    }
+    
+    // all the points on the ring have the minimum intensity
+    for (size_t i = m_samples.size(); i < m_wos.size(); ++i)
+    {
+        frs_out[i] = min_fr;
+    }
+}
 
 POWITACQ_NAMESPACE_END

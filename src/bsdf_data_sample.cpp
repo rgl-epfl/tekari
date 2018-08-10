@@ -14,24 +14,26 @@ inline Vector3f powitacq_to_enoki_vec3(const powitacq::Vector3f& v) { return Vec
 BSDFDataSample::BSDFDataSample(const string& file_path)
 : m_brdf(file_path)
 {
-    compute_samples({0.0f, 0.0f});
-    triangulate_data(m_f, m_v2d);
-    compute_path_segments(m_path_segments, m_v2d);
-
     // artificially assign metadata members
     m_metadata.add_line(m_brdf.description());
     m_metadata.set_sample_name(file_path.substr(file_path.find_last_of("/") + 1, file_path.find_last_of(".")));
 }
 
+void BSDFDataSample::init()
+{
+    DataSample::init();
+    m_intensity_index = 128;
+    set_incident_angle({0.0f, 0.0f});
+}
+
 void BSDFDataSample::set_intensity_index(size_t intensity_index)
 {
     m_intensity_index = std::min(intensity_index, m_raw_measurement.n_wavelengths());;
-
     if (!m_cache_mask[m_intensity_index])
     {
         m_cache_mask[m_intensity_index] = true;
 
-        compute_samples(m_metadata.incident_angle());
+        compute_samples();
         compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
         compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_lh, m_intensity_index);
 
@@ -50,77 +52,9 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     cout << std::setw(50) << std::left << "Setting incident angle ..\n";
     Timer<> timer;
 
-    // clear mask
-    m_cache_mask.assign(m_raw_measurement.n_wavelengths() + 1, false);
+    m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), N_THETA, N_PHI);
 
-    m_metadata.set_incident_angle(incident_angle);
-    compute_samples(m_metadata.incident_angle());
-    triangulate_data(m_f, m_v2d);
-    compute_path_segments(m_path_segments, m_v2d);
-    m_points_stats.reset(m_raw_measurement.n_wavelengths() + 1);
-    set_intensity_index(m_intensity_index);
-    link_data_to_shaders();
-
-    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
-}
-
-void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
-{
-    cout << std::setw(50) << std::left << "Sample brdf .. ";
-    Timer<> timer;
-
-    powitacq::Vector3f wi = enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle));
-
-    vector<Vector3f> wos;
-    vector<float> samples;
-
-    for (int theta = 1; theta < N_THETA; ++theta)
-    {
-        float v = float(theta) / N_THETA;
-        for (int phi = 1; phi < N_PHI; ++phi)
-        {
-            float u = float(phi) / N_PHI;
-            powitacq::Vector3f wo;
-            float pdf;
-            float sample = m_intensity_index == 0 ?
-                                m_brdf.sample(powitacq::Vector2f(u, v), wi, m_intensity_index, &wo, &pdf):
-                                m_brdf.sample(powitacq::Vector2f(u, v), wi, m_intensity_index-1, &wo, &pdf);
-
-            Vector3f enoki_wo = powitacq_to_enoki_vec3(wo);
-            if (enoki::norm(enoki_wo) == 0.0f)
-                continue;
-
-            sample *= pdf;
-
-            wos.push_back(enoki_wo);
-            samples.push_back(sample);
-        }
-    }
-    // add center point
-    powitacq::Vector3f wo;
-    float pdf;
-    float sample = m_intensity_index == 0 ?
-                        m_brdf.sample(powitacq::Vector2f(0, 0), wi, m_intensity_index, &wo, &pdf):
-                        m_brdf.sample(powitacq::Vector2f(0, 0), wi, m_intensity_index-1, &wo, &pdf);
-
-    Vector3f enoki_wo = powitacq_to_enoki_vec3(wo);
-    if (enoki::norm(enoki_wo) != 0.0f)
-    {
-        sample *= pdf;
-
-        wos.push_back(enoki_wo);
-        samples.push_back(sample);
-    }
-
-
-    // add outter ring to complete mesh
-    for (int j = 0; j < N_PHI; ++j)
-    {
-        float theta = 90.0f;
-        float phi = 360.0f * j / N_PHI;
-        wos.push_back(hemisphere_to_vec3({theta, phi}));
-        samples.push_back(0.0f);
-    }
+    const vector<powitacq::Vector3f>& wos = m_brdf.wos();
 
     Index n_intensities = m_brdf.wavelengths().size() + 1;     // account for luminance
     Index n_sample_points = wos.size();
@@ -136,18 +70,44 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
     m_points_stats.reset(n_intensities);
     m_selection_stats.reset(n_intensities);
 
+    // clear mask
+    m_cache_mask.assign(n_intensities, false);
+
     // artificially assign metadata members
+    m_metadata.set_incident_angle(incident_angle);
     m_metadata.set_points_in_file(m_raw_measurement.n_sample_points());
     m_selected_points.assign(m_raw_measurement.n_sample_points(), NOT_SELECTED_FLAG);
 
     for (size_t i = 0; i < wos.size(); ++i)
     {
         RawMeasurement::SamplePoint sample_point = m_raw_measurement[i];
-        Vector2f outgoing_angle = vec3_to_hemisphere(wos[i]);
+        Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wos[i]));
         sample_point.set_theta(outgoing_angle.x());
         sample_point.set_phi(outgoing_angle.y());
-        sample_point[m_intensity_index+2] = samples[i];
-        m_v2d[i] = vec3_to_disk(wos[i]);
+        m_v2d[i] = vec3_to_disk(powitacq_to_enoki_vec3(wos[i]));
+    }
+
+    triangulate_data(m_f, m_v2d);
+    compute_path_segments(m_path_segments, m_v2d);
+    m_points_stats.reset(m_raw_measurement.n_wavelengths() + 1);
+    set_intensity_index(m_intensity_index);
+    link_data_to_shaders();
+
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
+}
+
+void BSDFDataSample::compute_samples()
+{
+    cout << std::setw(50) << std::left << "Sample brdf .. ";
+    Timer<> timer;
+
+    vector<float> frs;
+    m_brdf.sample_state(m_intensity_index, frs);
+
+    for (size_t i = 0; i < frs.size(); ++i)
+    {
+        RawMeasurement::SamplePoint sample_point = m_raw_measurement[i];
+        sample_point[m_intensity_index+2] = frs[i];
     }
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;

@@ -126,7 +126,7 @@ void DataSample::draw_gl(
         m_selection_axis.draw_gl(mvp);
 }
 
-void DataSample::init_shaders()
+void DataSample::init()
 {
     m_shaders[MESH].init("height_map", VERTEX_SHADER_STR(height_map), FRAGMENT_SHADER_STR(height_map));
     m_shaders[PATH].init("path", VERTEX_SHADER_STR(path), FRAGMENT_SHADER_STR(path));

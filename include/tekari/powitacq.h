@@ -99,16 +99,14 @@ class BRDF {
     std::string m_description;
 
     // stores information about the currently set incident angle and sampling resolution
-    // size_t m_theta_n;
-    // size_t m_phi_n;
-    // Vector3f m_wi;
-    // Vector3f m_wo;
-    // float m_pdf;
-    // float m_params[2];
+    size_t m_theta_n;
+    size_t m_phi_n;
+    Vector3f m_wi;
+    float m_params[2];
 
-    // std::vector<Vector2f> m_samples;
-    // std::vector<float> m_scales;
-    // std::vector<float> m_pdfs;
+    std::vector<Vector3f> m_wos;
+    std::vector<Vector2f> m_samples;
+    std::vector<float> m_scales;
 
 public:
     // ctor / dtor
@@ -127,16 +125,10 @@ public:
                     Vector3f *wo = nullptr,
                     float *pdf = nullptr) const;
 
-    /// importance sample f_r * cos using two uniform variates
-    float sample(const Vector2f &u,
-                    const Vector3f &wi,
-                    size_t wavelength_index,
-                    Vector3f *wo = nullptr,
-                    float *pdf = nullptr) const;
-
-
     // Sets the incident angle (and sampling resolution) and stores what's necessary to compute the corresponding measurement
-    // void set_incident_angle(const Vector3f &wi, size_t theta_n, size_t phi_n);
+    void set_state(const Vector3f &wi, size_t theta_n, size_t phi_n);
+    void sample_state(size_t wavelength_index, std::vector<float>& frs_out) const;
+    const std::vector<Vector3f>& wos() const { return m_wos; }
 
     /// evaluate the PDF of a sample
     float pdf(const Vector3f &wi, const Vector3f &wo) const;

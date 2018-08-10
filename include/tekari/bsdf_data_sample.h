@@ -10,11 +10,12 @@ class BSDFDataSample : public DataSample
 public:
 
     BSDFDataSample(const string& file_path);
+    virtual void init() override;
     virtual void set_incident_angle(const Vector2f& incident_angle) override;
     virtual void set_intensity_index(size_t displayed_wavelength) override;
 
 private:
-    void compute_samples(const Vector2f& incident_angle);
+    void compute_samples();
 
     powitacq::BRDF m_brdf;
 

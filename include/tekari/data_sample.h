@@ -48,9 +48,9 @@ public:
     inline void toggle_view(Views view, bool toggle) { m_display_views[view] = toggle; }
     inline bool display_view(Views view) const { return m_display_views[view]; }
 
+    virtual void init();
     void link_data_to_shaders();
     void update_shaders_data();
-    void init_shaders();
 
     // info accessors
     inline const string name()              const { return m_metadata.sample_name(); }

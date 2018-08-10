@@ -32,6 +32,13 @@ public:
         update_shaders_data();
         m_selection_axis.set_origin(selection_center());
     }
+
+    virtual void init() override
+    {
+        DataSample::init();
+        link_data_to_shaders();
+        set_intensity_index(n_wavelengths() / 2);
+    }
 };
 
 TEKARI_NAMESPACE_END
