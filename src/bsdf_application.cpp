@@ -46,7 +46,7 @@ TEKARI_NAMESPACE_BEGIN
 BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 :   Screen(Vector2i(1200, 750), "Tekari", true, false, 8, 8, 24, 8, 2)
 ,   m_metadata_window(nullptr)
-,   m_data_sample_sliders_window(nullptr)
+,   m_brdf_options_window(nullptr)
 ,   m_help_window(nullptr)
 ,   m_color_map_selection_window(nullptr)
 ,   m_selection_info_window(nullptr)
@@ -90,7 +90,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         
         m_selected_ds->set_incident_angle(incident_angle);
 
-        if (!m_data_sample_sliders_window)
+        if (!m_brdf_options_window)
             return;
         m_theta_float_box->set_value(incident_angle.x());
         m_phi_float_box->set_value(incident_angle.y());
@@ -405,10 +405,10 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return true;
                 }
                 case GLFW_KEY_P:
-                    toggle_view(DataSample::Views::POINTS, !m_selected_ds->display_view(DataSample::Views::POINTS));
+                    toggle_view(DataSample::Views::POINTS);
                     return true;
                 case GLFW_KEY_I:
-                    toggle_view(DataSample::Views::INCIDENT_ANGLE, !m_selected_ds->display_view(DataSample::Views::INCIDENT_ANGLE));
+                    toggle_view(DataSample::Views::INCIDENT_ANGLE);
                     return true;
                 case GLFW_KEY_H:
                 case GLFW_KEY_L:
@@ -513,7 +513,8 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return false;
 
                 m_selected_ds->toggle_log_view();
-                m_display_as_log->set_checked(m_selected_ds->display_as_log());
+                if (m_brdf_options_window)
+                    m_display_as_log->set_checked(m_selected_ds->display_as_log());
                 return true;
             case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
             {
@@ -526,7 +527,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 return true;
             }
             case GLFW_KEY_P:
-                toggle_view(DataSample::Views::PATH, !m_selected_ds->display_view(DataSample::Views::PATH));
+                toggle_view(DataSample::Views::PATH);
                 return true;
             case GLFW_KEY_G:
                 toggle_tool_checkbox(m_grid_view_checkbox);
@@ -622,8 +623,8 @@ void BSDFApplication::update_layout()
         m_tool_window->height() - m_data_samples_scroll_panel->position().y()
     );
 
-    if (m_data_sample_sliders_window) 
-        m_data_sample_sliders_window->set_position({m_size[0] - 250, m_size[1] - 400});
+    if (m_brdf_options_window)
+        m_brdf_options_window->set_position({m_size[0] - 250, m_size[1] - 400});
 
     perform_layout();
 
@@ -741,7 +742,7 @@ void BSDFApplication::toggle_metadata_window()
 
 void BSDFApplication::toggle_data_sample_sliders_window()
 {
-    toggle_window(m_data_sample_sliders_window, [this]() -> Window* {
+    toggle_window(m_brdf_options_window, [this]() -> Window* {
         Window *window = new Window(this, "BRDF Parameters");
         window->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 5, 5));
 
@@ -768,7 +769,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
                 button->set_tooltip(tooltip);
                 button->set_pushed(m_selected_ds && m_selected_ds->display_view(view));
                 button->set_enabled(m_selected_ds != nullptr);
-                button->set_change_callback([this, view](bool) { toggle_view(view, m_view_toggles[view]->pushed()); });
+                button->set_change_callback([this, view](bool) { toggle_view(view); });
                 return button;
             };
             m_view_toggles[DataSample::Views::MESH]   = make_view_button("Mesh", "Show/Hide mesh for this data sample (M)", DataSample::Views::MESH);
@@ -998,7 +999,7 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
         toggle_metadata_window();
         toggle_metadata_window();
     }
-    if (m_data_sample_sliders_window)
+    if (m_brdf_options_window)
         toggle_data_sample_sliders_window();
     if (m_selected_ds)
         toggle_data_sample_sliders_window();
@@ -1105,12 +1106,15 @@ void BSDFApplication::toggle_tool_checkbox(CheckBox* checkbox)
     checkbox->callback()(checkbox->checked());
 }
 
-void BSDFApplication::toggle_view(DataSample::Views view, bool toggle)
+void BSDFApplication::toggle_view(DataSample::Views view)
 {
     if (!m_selected_ds)
         return;
-
+    bool toggle = !m_selected_ds->display_view(view);
     m_selected_ds->toggle_view(view, toggle);
+
+    if (!m_brdf_options_window)
+        return;
     m_view_toggles[view]->set_pushed(toggle);
 }
 

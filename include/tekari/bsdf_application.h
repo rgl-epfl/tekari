@@ -78,7 +78,7 @@ public:
 
     void open_files(const vector<string>& data_sample_paths);
 private:
-    void toggle_view(DataSample::Views view, bool toggle);
+    void toggle_view(DataSample::Views view);
 
     void update_layout();
     void add_data_sample(std::shared_ptr<DataSample> data_sample);
@@ -132,7 +132,7 @@ private:
 
     // dialog windows
     Window* m_metadata_window;
-    Window* m_data_sample_sliders_window;
+    Window* m_brdf_options_window;
     Window* m_help_window;
     Window* m_color_map_selection_window;
     Window* m_selection_info_window;
