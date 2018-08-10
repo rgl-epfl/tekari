@@ -157,16 +157,21 @@ inline Matrix3Xf get_3d_points(const Matrix2Xf& V2D, const MatrixXXf& H, size_t 
 
 inline Vector2f hemisphere_to_disk(const Vector2f& i)
 {
-    return Vector2f(i[0] * cos(TO_RAD(i[1])) / 90.0f,
-                    i[0] * sin(TO_RAD(i[1])) / 90.0f );
+    float rad_v = TO_RAD(i[1]);
+    return Vector2f(i[0] * cos(rad_v) / 90.0f,
+                    i[0] * sin(rad_v) / 90.0f );
 }
 
 inline Vector3f hemisphere_to_vec3(const Vector2f& i)
 {
+
+    float   rad_u = TO_RAD(i[0]),
+            rad_v = TO_RAD(i[1]),
+            sin_u = sin(rad_u);
     return Vector3f(
-            sin(TO_RAD(i[0])) * sin(TO_RAD(i[1])),
-            sin(TO_RAD(i[0])) * cos(TO_RAD(i[1])),
-            cos(TO_RAD(i[0]))
+            sin_u * sin(rad_v),
+            sin_u * cos(rad_v),
+            cos(rad_u)
         );
 }
 
@@ -181,10 +186,10 @@ inline Vector2f vec3_to_hemisphere(const Vector3f& wi)
 inline Vector2f vec3_to_disk(const Vector3f& wi)
 {
     float   norm_v = enoki::norm(wi),
-            acos_v = acos(wi[2] / norm_v),
+            acos_v = TO_DEG(acos(wi[2] / norm_v)),
             atan_v = atan2(wi[0], wi[1]);
-    return Vector2f(TO_DEG(acos_v) * cos(atan_v) / 90.0f,
-                    TO_DEG(acos_v) * sin(atan_v) / 90.0f );
+    return Vector2f(acos_v * cos(atan_v) / 90.0f,
+                    acos_v * sin(atan_v) / 90.0f );
 }
 
 // ================= Timer Utils ================
