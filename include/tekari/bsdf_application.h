@@ -83,11 +83,9 @@ private:
     void update_layout();
     void add_data_sample(std::shared_ptr<DataSample> data_sample);
 
-    void toggle_tool_button(Button* button);
+    void toggle_tool_checkbox(CheckBox* checkbox);
 
     void try_load_data_sample(const string& file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
-
-    void toggle_canvas_draw_flags(int flag, CheckBox* checkbox);
 
     void reprint_footer();
 
@@ -100,6 +98,8 @@ private:
 
     // Hidden options widgets
     PopupButton* m_hidden_options_button;
+    CheckBox* m_grid_view_checkbox;
+    CheckBox* m_ortho_view_checkbox;
     CheckBox* m_use_shadows_checkbox;
     CheckBox* m_use_specular_checkbox;
     CheckBox* m_use_wireframe_checkbox;
@@ -120,8 +120,6 @@ private:
 
     // tool buttons
     Button* m_help_button;
-    Button* m_grid_view_toggle;
-    Button* m_ortho_view_toggle;
 
     // bsdf settings
     CheckBox* m_display_as_log;

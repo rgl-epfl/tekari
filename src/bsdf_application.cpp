@@ -145,6 +145,15 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         };
 
         new Label{ hidden_options_popup, "Advanced View Options", "sans-bold" };
+
+        m_grid_view_checkbox = add_hidden_option_toggle("Grid", "Show/Hide radial grid (G)",
+            [this](bool checked) {
+                m_bsdf_canvas->grid().set_visible(checked);
+        }, true);
+        m_ortho_view_checkbox = add_hidden_option_toggle("Orthonormal", "Enable/Disable orthogonal view (O)",
+            [this](bool checked) {
+                m_bsdf_canvas->set_ortho_mode(checked);
+        }, false);
         m_use_shadows_checkbox = add_hidden_option_toggle("Shadows", "Enable/Disable shadows (Shift+S)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_SHADOWS, checked);
@@ -210,13 +219,12 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 
         m_display_degrees_checkbox = add_hidden_option_toggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
             [this](bool checked) { m_bsdf_canvas->grid().set_show_degrees(checked); }, true);
-    }
 
-    // mouse mode
-    {
-        auto mouse_mode_label = new Label{ m_tool_window, "Mouse Mode", "sans-bold"};
+
+        // mouse mode
+        auto mouse_mode_label = new Label{ hidden_options_popup, "Mouse Mode", "sans-bold"};
         mouse_mode_label->set_tooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
-        m_mouse_mode_selector = new ComboBox{ m_tool_window, {"Rotation", "Translation", "Box Selection"} };
+        m_mouse_mode_selector = new ComboBox{ hidden_options_popup, {"Rotation", "Translation", "Box Selection"} };
         m_mouse_mode_selector->set_callback([this](int index) {
             m_bsdf_canvas->set_mouse_mode(static_cast<BSDFCanvas::Mouse_mode>(index));
             glfwSetCursor(m_glfw_window, m_cursors[index]);
@@ -226,46 +234,23 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         m_cursors[BSDFCanvas::Mouse_mode::TRANSLATE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
         m_cursors[BSDFCanvas::Mouse_mode::SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
         glfwSetCursor(m_glfw_window, m_cursors[m_bsdf_canvas->mouse_mode()]);
-    }
 
-    // grid view otpions
-    {
-        auto label = new Label(m_tool_window, "View Options", "sans-bold");
-        label->set_tooltip(
-            "Various view modes. Hover on them to learn what they do."
-        );
+        // auto background_color_popup_button = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
 
-        auto panel = new Widget(m_tool_window);
-        panel->set_layout(new GridLayout(Orientation::Horizontal, 3, Alignment::Fill));
+        // background_color_popup_button->set_font_size(15);
+        // background_color_popup_button->set_chevron_icon(0);
+        // background_color_popup_button->set_tooltip("Background Color");
 
-        m_grid_view_toggle = new Button(panel, "Grid");
-        m_grid_view_toggle->set_flags(Button::Flags::ToggleButton);
-        m_grid_view_toggle->set_tooltip("Display/Hide grid (G)");
-        m_grid_view_toggle->set_change_callback( [this] (bool checked) { m_bsdf_canvas->grid().set_visible(checked); });
-        m_grid_view_toggle->set_pushed(true);
+        // // Background color popup
+        // {
+        //     auto popup = background_color_popup_button->popup();
+        //     popup->set_layout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 10});
 
-        m_ortho_view_toggle = new Button(panel, "Ortho");
-        m_ortho_view_toggle->set_flags(Button::Flags::ToggleButton);
-        m_ortho_view_toggle->set_tooltip("Enable/Disable orthogonal projection (O)");
-        m_ortho_view_toggle->set_change_callback([this](bool checked) { m_bsdf_canvas->set_ortho_mode(checked); });
-        m_ortho_view_toggle->set_pushed(false);
+        //     new Label{popup, "Background Color"};
+        //     auto colorwheel = new ColorWheel{popup, m_bsdf_canvas->background_color()};
 
-        auto background_color_popup_button = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
-
-        background_color_popup_button->set_font_size(15);
-        background_color_popup_button->set_chevron_icon(0);
-        background_color_popup_button->set_tooltip("Background Color");
-
-        // Background color popup
-        {
-            auto popup = background_color_popup_button->popup();
-            popup->set_layout(new BoxLayout{Orientation::Vertical, Alignment::Fill, 10});
-
-            new Label{popup, "Background Color"};
-            auto colorwheel = new ColorWheel{popup, m_bsdf_canvas->background_color()};
-
-            colorwheel->set_callback([this](const Color& value) { m_bsdf_canvas->set_background_color(value); });
-        }
+        //     colorwheel->set_callback([this](const Color& value) { m_bsdf_canvas->set_background_color(value); });
+        // }
     }
 
     // Open, save screenshot, save data
@@ -278,7 +263,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             auto button = new Button{tools, "", icon};
             button->set_callback(callback);
             button->set_tooltip(tooltip);
-            button->set_font_size(15);
+            button->set_font_size(20);
             button->set_enabled(enabled);
             return button;
         };
@@ -401,7 +386,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::DOWN);
                 return true;
             case GLFW_KEY_I:
-                toggle_canvas_draw_flags(DISPLAY_PREDICTED_OUTGOING_ANGLE, m_display_predicted_outgoing_angle_checkbox);
+                toggle_tool_checkbox(m_display_predicted_outgoing_angle_checkbox);
                 return true;
             }
         }
@@ -410,8 +395,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
             switch (key)
             {
                 case GLFW_KEY_S:
-                    toggle_canvas_draw_flags(USE_SHADOWS, m_use_shadows_checkbox);
-                    m_use_specular_checkbox->set_enabled(m_use_shadows_checkbox->checked());
+                    toggle_tool_checkbox(m_use_specular_checkbox);
                     return true;
                 case GLFW_KEY_G:
                 {
@@ -458,9 +442,6 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 return true;
             case GLFW_KEY_7:
                 m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::UP);
-                return true;
-            case GLFW_KEY_5:
-                toggle_tool_button(m_ortho_view_toggle);
                 return true;
             }
         }
@@ -510,10 +491,16 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 update_selection_info_window();
                 request_layout_update();
                 return true;
-            case GLFW_KEY_UP: case GLFW_KEY_W:
+            case GLFW_KEY_W:
+                toggle_tool_checkbox(m_use_wireframe_checkbox);
+                return true;
+            case GLFW_KEY_S:
+                toggle_tool_checkbox(m_use_shadows_checkbox);
+                return true;
+            case GLFW_KEY_UP:
                 select_data_sample(selected_data_sample_index() - 1, false);
                 return true;
-            case GLFW_KEY_DOWN: case GLFW_KEY_S:
+            case GLFW_KEY_DOWN:
                 select_data_sample(selected_data_sample_index() + 1, false);
                 return true;
             case GLFW_KEY_ENTER:
@@ -542,10 +529,10 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 toggle_view(DataSample::Views::PATH, !m_selected_ds->display_view(DataSample::Views::PATH));
                 return true;
             case GLFW_KEY_G:
-                toggle_tool_button(m_grid_view_toggle);
+                toggle_tool_checkbox(m_grid_view_checkbox);
                 return true;
             case GLFW_KEY_O: case GLFW_KEY_KP_5:
-                toggle_tool_button(m_ortho_view_toggle);
+                toggle_tool_checkbox(m_ortho_view_checkbox);
                 return true;
             case GLFW_KEY_I:
                 toggle_metadata_window();
@@ -557,7 +544,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 toggle_color_map_selection_window();
                 return true;
             case GLFW_KEY_A:
-                toggle_canvas_draw_flags(DISPLAY_AXIS, m_display_center_axis);
+                toggle_tool_checkbox(m_display_center_axis);
                 return true;
             case GLFW_KEY_H:
                 toggle_help_window();
@@ -1112,10 +1099,10 @@ void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
     m_bsdf_canvas->add_data_sample(m_selected_ds);
 }
 
-void BSDFApplication::toggle_tool_button(Button* button)
+void BSDFApplication::toggle_tool_checkbox(CheckBox* checkbox)
 {
-    button->set_pushed(!button->pushed());
-    button->change_callback()(button->pushed());
+    checkbox->set_checked(!checkbox->checked());
+    checkbox->callback()(checkbox->checked());
 }
 
 void BSDFApplication::toggle_view(DataSample::Views view, bool toggle)
@@ -1141,13 +1128,6 @@ const DataSampleButton* BSDFApplication::corresponding_button(const shared_ptr<c
     if (index == -1)
         return nullptr;
     return dynamic_cast<DataSampleButton*>(m_data_sample_button_container->child_at(index));
-}
-
-void BSDFApplication::toggle_canvas_draw_flags(int flag, CheckBox* checkbox)
-{
-    int flags = m_bsdf_canvas->draw_flags() ^ flag;
-    checkbox->set_checked(static_cast<bool>(flags & flag));
-    m_bsdf_canvas->set_draw_flags(flags);
 }
 
 void BSDFApplication::reprint_footer()
