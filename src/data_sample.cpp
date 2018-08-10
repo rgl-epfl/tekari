@@ -37,7 +37,7 @@ void DataSample::draw_gl(
         Arrow::instance().draw_gl(
             -origin3D,
             Vector3f(0, 0, 1),
-            1.0f,
+            1.2f,
             mvp,
             Color(0.0f, 1.0f, 1.0f, 1.0f));
     }
@@ -110,7 +110,7 @@ void DataSample::draw_gl(
             Arrow::instance().draw_gl(
                 origin3D,
                 Vector3f(0, 0, 1),
-                1.0f,
+                1.2f,
                 mvp,
                 Color(1.0f, 0.0f, 1.0f, 1.0f));
             glDisable(GL_DEPTH_TEST);
