@@ -164,8 +164,8 @@ inline Vector2f hemisphere_to_disk(const Vector2f& i)
 inline Vector3f hemisphere_to_vec3(const Vector2f& i)
 {
     return Vector3f(
-            sin(TO_RAD(i[0])) * cos(TO_RAD(i[1])),
             sin(TO_RAD(i[0])) * sin(TO_RAD(i[1])),
+            sin(TO_RAD(i[0])) * cos(TO_RAD(i[1])),
             cos(TO_RAD(i[0]))
         );
 }

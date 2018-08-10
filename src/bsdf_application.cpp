@@ -818,7 +818,7 @@ void BSDFApplication::toggle_data_sample_sliders_window()
 
         size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
         m_wavelength_int_box = add_int_box("Wavelength", wavelength_index, [this](size_t value) {
-            value = clamp(value, 0ul, m_selected_ds->intensity_count()-1);
+            value = enoki::clamp(value, 0ul, m_selected_ds->intensity_count()-1);
             m_wavelength_int_box->set_value(value);
             m_wavelength_slider->set_value(value);
             m_selected_ds->set_intensity_index(value);
