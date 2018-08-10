@@ -116,7 +116,7 @@ void BSDFDataSample::compute_samples(const Vector2f& incident_angle)
     // add outter ring to complete mesh
     for (int j = 0; j < N_PHI; ++j)
     {
-        float theta = 100.0f;
+        float theta = 90.0f;
         float phi = 360.0f * j / N_PHI;
         wos.push_back(hemisphere_to_vec3({theta, phi}));
         samples.push_back(0.0f);

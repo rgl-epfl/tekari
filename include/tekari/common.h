@@ -311,10 +311,4 @@ inline float fast_acos(float x) {
     return negate * (float) M_PI + ret;
 }
 
-template<typename T>
-inline T clamp(T v, T min, T max)
-{
-    return v < max ? v < min ? min : v : max;
-}
-
 TEKARI_NAMESPACE_END

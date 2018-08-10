@@ -763,14 +763,14 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         m_incident_angle_slider = new Slider2D{ window };
         m_incident_angle_slider->set_value(curr_i_angle);
         m_incident_angle_slider->set_callback([this](Vector2f value) {
-            m_phi_float_box->set_value(value[0]);
-            m_theta_float_box->set_value(value[1]);
+            m_theta_float_box->set_value(value[0]);
+            m_phi_float_box->set_value(value[1]);
 
             m_selected_ds->set_incident_angle(value);
             update_selection_info_window();
             reprint_footer();
         });
-        m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(80.0f, 180.0f)));
+        m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
         m_incident_angle_slider->set_fixed_size({ 200, 200 });
         m_incident_angle_slider->set_enabled(m_selected_ds != nullptr);
 
@@ -787,20 +787,21 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             float_box->set_spinnable(true);
             return float_box;
         };
-        m_theta_float_box = add_float_box("Theta", curr_i_angle.x(), [this](float value) {
-            Vector2f incident_angle = {enoki::clamp(value, 0.0f, 80.0f), m_phi_float_box->value()};
+
+        auto angle_slider_callback = [this](float) {
+            float theta = enoki::clamp(m_theta_float_box->value(), 0.0f, 85.0f);
+            float phi = enoki::clamp(m_phi_float_box->value(), -180.0f, 180.0f);
+            m_theta_float_box->set_value(theta);
+            m_phi_float_box->set_value(phi);
+            Vector2f incident_angle = {theta, phi};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle); 
             update_selection_info_window();
             reprint_footer();
-        });
-        m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), [this](float value) {
-            Vector2f incident_angle = {m_theta_float_box->value(),enoki:: clamp(value, -180.0f, 180.0f)};
-            m_incident_angle_slider->set_value(incident_angle);
-            m_selected_ds->set_incident_angle(incident_angle);
-            update_selection_info_window();
-            reprint_footer();
-        });
+        };
+
+        m_theta_float_box = add_float_box("Theta", curr_i_angle.x(), angle_slider_callback);
+        m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), angle_slider_callback);
 
         auto add_int_box = [window, this](const string& label, size_t value, function<void(size_t)> callback) {
             auto int_box_container = new Widget{window};
@@ -818,9 +819,9 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
         m_wavelength_int_box = add_int_box("Wavelength", wavelength_index, [this](size_t value) {
             value = clamp(value, 0ul, m_selected_ds->intensity_count()-1);
+            m_wavelength_int_box->set_value(value);
             m_wavelength_slider->set_value(value);
             m_selected_ds->set_intensity_index(value);
-            m_wavelength_int_box->set_value(value);
             reprint_footer();
         });
 
