@@ -421,10 +421,10 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return true;
                 }
                 case GLFW_KEY_P:
-                    toggle_view(DataSample::Views::POINTS, m_selected_ds, !m_selected_ds->display_view(DataSample::Views::POINTS));
+                    toggle_view(DataSample::Views::POINTS, !m_selected_ds->display_view(DataSample::Views::POINTS));
                     return true;
                 case GLFW_KEY_I:
-                    toggle_view(DataSample::Views::INCIDENT_ANGLE, m_selected_ds, !m_selected_ds->display_view(DataSample::Views::INCIDENT_ANGLE));
+                    toggle_view(DataSample::Views::INCIDENT_ANGLE, !m_selected_ds->display_view(DataSample::Views::INCIDENT_ANGLE));
                     return true;
                 case GLFW_KEY_H:
                 case GLFW_KEY_L:
@@ -522,7 +522,11 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 corresponding_button(m_selected_ds)->toggle_view();
                 return true;
             case GLFW_KEY_L:
-                toggle_log_view(m_selected_ds);
+                if (!m_selected_ds)
+                    return false;
+
+                m_selected_ds->toggle_log_view();
+                m_display_as_log->set_checked(m_selected_ds->display_as_log());
                 return true;
             case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
             {
@@ -535,7 +539,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 return true;
             }
             case GLFW_KEY_P:
-                toggle_view(DataSample::Views::PATH, m_selected_ds, !m_selected_ds->display_view(DataSample::Views::PATH));
+                toggle_view(DataSample::Views::PATH, !m_selected_ds->display_view(DataSample::Views::PATH));
                 return true;
             case GLFW_KEY_G:
                 toggle_tool_button(m_grid_view_toggle);
@@ -757,6 +761,37 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         auto close_button = new Button{ window->button_panel(), "", ENTYPO_ICON_CROSS };
         close_button->set_callback([this]() { toggle_data_sample_sliders_window(); });
 
+
+        // view modes
+        {
+            new Label{ window, "View Modes" , "sans-bold", 18};
+            m_display_as_log = new CheckBox{ window, "Display as log" };
+            m_display_as_log->set_checked(m_selected_ds ? false : m_selected_ds->display_as_log());
+            m_display_as_log->set_enabled(m_selected_ds != nullptr);
+            m_display_as_log->set_callback([this](bool /* unused*/) {
+                m_selected_ds->toggle_log_view();
+            });
+
+            auto button_container = new Widget{ window };
+            button_container->set_layout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
+
+            auto make_view_button = [this, button_container](const string& label, const string& tooltip, DataSample::Views view) {
+                auto button = new Button(button_container, label);
+                button->set_flags(Button::Flags::ToggleButton);
+                button->set_tooltip(tooltip);
+                button->set_pushed(m_selected_ds && m_selected_ds->display_view(view));
+                button->set_enabled(m_selected_ds != nullptr);
+                button->set_change_callback([this, view](bool) { toggle_view(view, m_view_toggles[view]->pushed()); });
+                return button;
+            };
+            m_view_toggles[DataSample::Views::MESH]   = make_view_button("Mesh", "Show/Hide mesh for this data sample (M)", DataSample::Views::MESH);
+            m_view_toggles[DataSample::Views::PATH]   = make_view_button("Path", "Show/Hide path for this data sample (P)", DataSample::Views::PATH);
+            m_view_toggles[DataSample::Views::POINTS] = make_view_button("Points", "Toggle points view for this data sample (Shift + P)", DataSample::Views::POINTS);
+            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", DataSample::Views::INCIDENT_ANGLE);
+
+        }
+
+
         Vector2f curr_i_angle = m_selected_ds ? m_selected_ds->incident_angle() : Vector2f(0.0f, 0.0f);
         if (curr_i_angle[1] > 180.0f) curr_i_angle[1] -= 360.0f;
 
@@ -964,7 +999,6 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
     {
         DataSampleButton* old_button = corresponding_button(m_selected_ds);
         old_button->set_selected(false);
-        old_button->show_popup(false);
     }
     
     m_selected_ds = data_sample;
@@ -1015,8 +1049,6 @@ void BSDFApplication::delete_data_sample(shared_ptr<DataSample> data_sample)
         return;
 
     // erase data sample and corresponding button
-    auto button = corresponding_button(data_sample);
-    button->remove_popup_from_parent();
     m_data_sample_button_container->remove_child(index);
 
     m_bsdf_canvas->remove_data_sample(data_sample);
@@ -1073,18 +1105,6 @@ void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
         else            m_bsdf_canvas->remove_data_sample(m_data_samples[index]);
     });
 
-    data_sample_button->set_view_toggles_callback([this, data_sample, data_sample_button](bool) {
-        for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
-        {
-            DataSample::Views view = static_cast<DataSample::Views>(i);
-            toggle_view(view, data_sample, data_sample_button->is_view_toggled(view));
-        }
-    });
-
-    data_sample_button->set_display_as_log_callback([data_sample](bool /* unused*/) {
-        data_sample->toggle_log_view();
-    });
-
     m_data_samples.push_back(data_sample);
     select_data_sample(data_sample);
 
@@ -1098,22 +1118,13 @@ void BSDFApplication::toggle_tool_button(Button* button)
     button->change_callback()(button->pushed());
 }
 
-void BSDFApplication::toggle_view(DataSample::Views view, shared_ptr<DataSample> data_sample, bool toggle)
+void BSDFApplication::toggle_view(DataSample::Views view, bool toggle)
 {
-    if (data_sample)
-    {
-        data_sample->toggle_view(view, toggle);
-        corresponding_button(data_sample)->toggle_view(view, data_sample->display_view(view));
-    }
-}
+    if (!m_selected_ds)
+        return;
 
-void BSDFApplication::toggle_log_view(shared_ptr<DataSample> data_sample)
-{
-    if (data_sample)
-    {
-        data_sample->toggle_log_view();
-        corresponding_button(data_sample)->toggle_log_view();
-    }
+    m_selected_ds->toggle_view(view, toggle);
+    m_view_toggles[view]->set_pushed(toggle);
 }
 
 DataSampleButton* BSDFApplication::corresponding_button(const shared_ptr<const DataSample> data_sample)

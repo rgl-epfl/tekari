@@ -15,7 +15,6 @@ public:
     virtual bool mouse_enter_event(const Vector2i& p, bool enter) override;
     virtual bool mouse_motion_event(const Vector2i& p, const Vector2i& rel, int button, int modifiers) override;
     virtual void draw(NVGcontext* ctx) override;
-    virtual void perform_layout(NVGcontext* ctx) override;
 
     void toggle_view();
 
@@ -30,14 +29,6 @@ public:
     void set_display_as_log_callback(function<void(bool)> callback);
     void set_view_toggles_callback(function<void(bool)> callback);
   
-    void show_popup(bool visible) { m_popup->set_visible(visible); }
-    void remove_popup_from_parent() { m_popup->parent()->remove_child(m_popup); }
-
-    void toggle_view(DataSample::Views view, bool check);
-    bool is_view_toggled(DataSample::Views view);
-
-    void toggle_log_view();
-
 private:
     bool in_toggle_view_button(const Vector2i& p) const {
         return squared_norm(p - m_pos - m_toggle_view_button_pos) <= BUTTON_RADIUS*BUTTON_RADIUS;
@@ -62,11 +53,6 @@ private:
     function<void(void)> m_callback;
     function<void(bool)> m_toggle_view_callback;
     function<void(void)> m_delete_callback;
-
-    //std::shared_ptr<DataSample> m_data_sample;
-    nanogui::Popup* m_popup;
-    nanogui::CheckBox* m_display_as_log;
-    nanogui::Button* m_view_toggles[DataSample::Views::VIEW_COUNT];
 };
 
 TEKARI_NAMESPACE_END

@@ -45,6 +45,7 @@ public:
                 std::shared_ptr<ColorMap> color_map);
 
     void toggle_log_view();
+    bool display_as_log() const { return m_display_as_log; }
     inline void toggle_view(Views view, bool toggle) { m_display_views[view] = toggle; }
     inline bool display_view(Views view) const { return m_display_views[view]; }
 

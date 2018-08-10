@@ -29,39 +29,15 @@ DataSampleButton::DataSampleButton(Widget* parent, const string & label, bool is
 :   Widget{ parent }
 ,   m_label{ label }
 ,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + ". .. " : label }
-,    m_selected(false)
+,   m_selected(false)
 ,   m_visible(true)
-,    m_dirty(false)
+,   m_dirty(false)
 ,   m_toggle_view_button_pos{ 155, 15 }
 ,   m_delete_button_pos{ 155 + 2*BUTTON_RADIUS + 2, 15 }
 ,   m_toggle_view_button_hovered(false)
 ,   m_delete_button_hovered(false)
 {
     set_tooltip(m_label);
-
-    Window* parent_window = window();
-
-    m_popup = new Popup{ parent_window->parent(), window() };
-    m_popup->set_visible(false);
-    m_popup->set_layout(new BoxLayout{ Orientation::Vertical, Alignment::Fill, 5, 5 });
-
-    new Label{ m_popup, "View Modes" , "sans-bold", 18};
-    m_display_as_log = new CheckBox{ m_popup, "Display as log" };
-
-    auto button_container = new Widget{ m_popup };
-    button_container->set_layout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
-
-    auto make_view_button = [button_container](const string& label, const string& tooltip, bool pushed) {
-        auto button = new Button(button_container, label);
-        button->set_flags(Button::Flags::ToggleButton);
-        button->set_tooltip(tooltip);
-        button->set_pushed(pushed);
-        return button;
-    };
-    m_view_toggles[DataSample::Views::MESH]   = make_view_button("Mesh", "Show/Hide mesh for this data sample (M)", true);
-    m_view_toggles[DataSample::Views::PATH]   = make_view_button("Path", "Show/Hide path for this data sample (P)", false);
-    m_view_toggles[DataSample::Views::POINTS] = make_view_button("Points", "Toggle points view for this data sample (Shift + P)", false);
-    m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", true);
 }
 
 bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool down, int modifiers)
@@ -85,10 +61,6 @@ bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool d
         {
             toggle_view();
             return true;
-        }
-        else
-        {
-            m_popup->set_visible(!m_popup->visible());
         }
     }
 
@@ -171,51 +143,10 @@ void DataSampleButton::draw(NVGcontext* ctx)
     nvgRestore(ctx);
 }
 
-void DataSampleButton::perform_layout(NVGcontext* ctx)
-{
-    Widget::perform_layout(ctx);
-
-    const Window* parent_window = window();
-
-    int pos_y = absolute_position().y() - parent_window->position().y() + m_size.y() / 2;
-    if (m_popup->side() == Popup::Right)
-        m_popup->set_anchor_pos(Vector2i(parent_window->width() + 15, pos_y));
-    else
-        m_popup->set_anchor_pos(Vector2i(0 - 15, pos_y));
-}
-
 void DataSampleButton::toggle_view()
 {
     m_visible = !m_visible;
     m_toggle_view_callback(m_visible);
-}
-
-void DataSampleButton::toggle_view(DataSample::Views view, bool check)
-{
-    m_view_toggles[static_cast<int>(view)]->set_pushed(check);
-}
-
-bool DataSampleButton::is_view_toggled(DataSample::Views view)
-{
-    return m_view_toggles[static_cast<int>(view)]->pushed();
-}
-
-void DataSampleButton::toggle_log_view()
-{
-    m_display_as_log->set_checked(!m_display_as_log->checked());
-}
-
-void DataSampleButton::set_view_toggles_callback(function<void(bool)> callback) {
-    for (int i = 0; i != DataSample::Views::VIEW_COUNT; ++i)
-    {
-        DataSample::Views view = static_cast<DataSample::Views>(i);
-        m_view_toggles[view]->set_change_callback(callback);
-    }
-}
-
-void DataSampleButton::set_display_as_log_callback(function<void(bool)> callback)
-{
-    m_display_as_log->set_callback(callback);
 }
 
 TEKARI_NAMESPACE_END

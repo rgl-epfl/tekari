@@ -4,15 +4,13 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-#define N_PHI 64
-#define N_THETA 32
-#define N_WAVE_LENGTHS 256
-
 inline powitacq::Vector3f enoki_to_powitacq_vec3(const Vector3f& v) { return powitacq::Vector3f(v[0], v[1], v[2]); }
 inline Vector3f powitacq_to_enoki_vec3(const powitacq::Vector3f& v) { return Vector3f(v[0], v[1], v[2]); }
 
 BSDFDataSample::BSDFDataSample(const string& file_path)
 : m_brdf(file_path)
+, m_n_theta(64)
+, m_n_phi(64)
 {
     // artificially assign metadata members
     m_metadata.add_line(m_brdf.description());
@@ -52,7 +50,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     cout << std::setw(50) << std::left << "Setting incident angle ..\n";
     Timer<> timer;
 
-    m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), N_THETA, N_PHI);
+    m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), m_n_theta, m_n_phi);
 
     const vector<powitacq::Vector3f>& wos = m_brdf.wos();
 

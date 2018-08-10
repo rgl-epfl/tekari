@@ -18,7 +18,8 @@ private:
     void compute_samples();
 
     powitacq::BRDF m_brdf;
-
+    size_t m_n_theta;
+    size_t m_n_phi;
 };
 
 TEKARI_NAMESPACE_END

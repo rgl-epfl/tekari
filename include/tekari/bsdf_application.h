@@ -78,8 +78,7 @@ public:
 
     void open_files(const vector<string>& data_sample_paths);
 private:
-    void toggle_view(DataSample::Views view, std::shared_ptr<DataSample> data_sample, bool toggle);
-    void toggle_log_view(std::shared_ptr<DataSample> data_sample);
+    void toggle_view(DataSample::Views view, bool toggle);
 
     void update_layout();
     void add_data_sample(std::shared_ptr<DataSample> data_sample);
@@ -124,7 +123,9 @@ private:
     Button* m_grid_view_toggle;
     Button* m_ortho_view_toggle;
 
-    // Data sample sliders
+    // bsdf settings
+    CheckBox* m_display_as_log;
+    Button* m_view_toggles[DataSample::Views::VIEW_COUNT];
     Slider* m_wavelength_slider;
     FloatBox<float>* m_phi_float_box;
     FloatBox<float>* m_theta_float_box;
