@@ -856,7 +856,7 @@ struct BRDF::Data {
     Warp2D0 ndf;
     Warp2D0 sigma;
     Warp2D2 vndf;
-    Warp2D2 luminance;
+    Warp2D2 luminance, rgb[3];
     Warp2D3 spectra;
     Spectrum wavelengths;
     bool isotropic;
@@ -1003,23 +1003,59 @@ BRDF::BRDF(const std::string &path_to_file) {
     /* Copy wavelength information */
     size_t size = wavelengths.shape[0];
     m_data->wavelengths.resize(size);
-    std::vector<Vector4f> rgby_weights(size);
+    std::vector<Vector3f> rgb_weights(size);
 
     for (size_t k = 0; k < size; ++k) {
         float lambda = ((const float *) wavelengths.data.get())[k];
         m_data->wavelengths[k] = lambda;
 
-        Vector3f XYZ = Vector3f(cie_interp(cie_x, lambda),
-                                cie_interp(cie_y, lambda),
-                                cie_interp(cie_z, lambda)) *
-                       cie_interp(cie_d65, lambda);
+        Vector3f XYZ =
+            Vector3f(cie_interp(cie_x, lambda), cie_interp(cie_y, lambda),
+                     cie_interp(cie_z, lambda))
+        * cie_interp(cie_d65, lambda) *
+            (1.f / (CIE_LAMBDA_MAX - CIE_LAMBDA_MIN));
 
-        Vector4f rgby(0.f);
+        Vector3f rgb(0.f);
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
-                rgby[i] += xyz_to_srgb[i][j] * XYZ[j];
-        rgby[3] = XYZ[1];
-        rgby_weights[k] = rgby;
+                rgb[i] += xyz_to_srgb[i][j] * XYZ[j];
+        rgb_weights[k] = rgb;
+    }
+
+
+    size_t n_slices = spectra.shape[0] * spectra.shape[1];
+    size_t slice_size = spectra.shape[3] * spectra.shape[4];
+
+    std::vector<float> rgb[3];
+    float* out_ptr[3];
+    for (int i = 0; i < 3; ++i) {
+        rgb[i].resize(n_slices * slice_size, 0.f);
+        out_ptr[i] = rgb[i].data();
+    }
+
+    const float *in_ptr = (const float *) spectra.data.get();
+
+    for (uint32_t i = 0; i < n_slices ; ++i) {
+        for (uint32_t k = 0; k < spectra.shape[2]; ++k) {
+            Vector3f weight = rgb_weights[k];
+            for (uint32_t j = 0; j < slice_size; ++j) {
+                float in_value = *in_ptr++;
+                for (int l = 0; l < 3; ++l)
+                    out_ptr[l][j] += weight[l] * in_value;
+            }
+        }
+        for (int l = 0; l < 3; ++l)
+            out_ptr[l] += slice_size;
+    }
+
+    for (int i = 0; i < 3; ++i) {
+        m_data->rgb[i] = Warp2D2(
+            Vector2u(luminance.shape[3], luminance.shape[2]),
+            (float *) rgb[i].data(),
+            { { (uint32_t) phi_i.shape[0], (uint32_t) theta_i.shape[0] } },
+            { { (const float *) phi_i.data.get(),
+                (const float *) theta_i.data.get() } },
+            false, false);
     }
 
     /* Construct spectral interpolant */
@@ -1345,9 +1381,6 @@ Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
 
 //             float jacobian = std::max(2.f * sqr(Pi) * u_wm.x() *
 //                                       sin_theta_m, 1e-6f) * 4.f * dot(wi, wm);
-            
-//             m_pdfs[index] = ndf_pdf * lum_pdf / jacobian;
-
 //             m_scales[index] = m_data->ndf.eval(u_wm, m_params) /
 //                         (4 * m_data->sigma.eval(u_wi, m_params));
 //         }

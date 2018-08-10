@@ -788,14 +788,14 @@ void BSDFApplication::toggle_data_sample_sliders_window()
             return float_box;
         };
         m_theta_float_box = add_float_box("Theta", curr_i_angle.x(), [this](float value) {
-            Vector2f incident_angle = {clamp(value, 0.0f, 80.0f), m_phi_float_box->value()};
+            Vector2f incident_angle = {enoki::clamp(value, 0.0f, 80.0f), m_phi_float_box->value()};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle); 
             update_selection_info_window();
             reprint_footer();
         });
         m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), [this](float value) {
-            Vector2f incident_angle = {m_theta_float_box->value(), clamp(value, -180.0f, 180.0f)};
+            Vector2f incident_angle = {m_theta_float_box->value(),enoki:: clamp(value, -180.0f, 180.0f)};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle);
             update_selection_info_window();

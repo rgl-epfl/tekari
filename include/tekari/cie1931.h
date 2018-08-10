@@ -12,8 +12,8 @@
  *    data at arbitrary wavelengths (with linear interpolation)
 }
  */
-#define CIE_LAMBDA_MIN 360.0
-#define CIE_LAMBDA_MAX 830.0
+#define CIE_LAMBDA_MIN 360.0f
+#define CIE_LAMBDA_MAX 830.0f
 #define CIE_SAMPLES    95
 
 const float cie_x[CIE_SAMPLES] = {
@@ -132,5 +132,5 @@ float cie_interp(const float *data, float x) {
     x *= (CIE_SAMPLES - 1) / (CIE_LAMBDA_MAX - CIE_LAMBDA_MIN);
     int offset = std::min(std::max(0, (int) x), CIE_SAMPLES - 2);
     float weight = x - offset;
-    return (1.0 - weight) * data[offset] + weight * data[offset + 1];
+    return (1.0f - weight) * data[offset] + weight * data[offset + 1];
 }
