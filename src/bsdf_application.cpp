@@ -2,6 +2,7 @@
 
 #include <nanogui/layout.h>
 #include <nanogui/button.h>
+#include <nanogui/toolbutton.h>
 #include <nanogui/entypo.h>
 #include <nanogui/popupbutton.h>
 #include <nanogui/colorwheel.h>
@@ -27,16 +28,12 @@
 
 #define FOOTER_HEIGHT 25
 
-using nanogui::Window;
-using nanogui::Widget;
 using nanogui::MessageDialog;
 using nanogui::BoxLayout;
 using nanogui::GridLayout;
 using nanogui::GroupLayout;
 using nanogui::Orientation;
-using nanogui::Label;
 using nanogui::ColorWheel;
-using nanogui::Slider;
 using nanogui::Alignment;
 using nanogui::Theme;
 using nanogui::Graph;
@@ -146,10 +143,6 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 
         new Label{ hidden_options_popup, "Advanced View Options", "sans-bold" };
 
-        m_grid_view_checkbox = add_hidden_option_toggle("Grid", "Show/Hide radial grid (G)",
-            [this](bool checked) {
-                m_bsdf_canvas->grid().set_visible(checked);
-        }, true);
         m_ortho_view_checkbox = add_hidden_option_toggle("Orthonormal", "Enable/Disable orthogonal view (O)",
             [this](bool checked) {
                 m_bsdf_canvas->set_ortho_mode(checked);
@@ -200,6 +193,15 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         });
 
         new Label{ hidden_options_popup, "Grid Options", "sans-bold" };
+
+        m_grid_view_checkbox = add_hidden_option_toggle("Grid", "Show/Hide radial grid (G)",
+            [this](bool checked) {
+            m_bsdf_canvas->grid().set_visible(checked);
+            m_display_degrees_checkbox->set_enabled(checked);
+        }, true);
+        m_display_degrees_checkbox = add_hidden_option_toggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
+            [this](bool checked) { m_bsdf_canvas->grid().set_show_degrees(checked); }, true);
+
         auto grid_color_label = new Label{ hidden_options_popup, "Color" };
         grid_color_label->set_tooltip("Chose in witch color the grid should be displayed");
         auto colorwheel = new ColorWheel{ hidden_options_popup, m_bsdf_canvas->grid().color() };
@@ -216,10 +218,6 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             m_bsdf_canvas->grid().set_color(value);
             m_bsdf_canvas->grid().set_alpha(grid_alpha_slider->value());
         });
-
-        m_display_degrees_checkbox = add_hidden_option_toggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
-            [this](bool checked) { m_bsdf_canvas->grid().set_show_degrees(checked); }, true);
-
 
         // mouse mode
         auto mouse_mode_label = new Label{ hidden_options_popup, "Mouse Mode", "sans-bold"};
@@ -514,7 +512,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
 
                 m_selected_ds->toggle_log_view();
                 if (m_brdf_options_window)
-                    m_display_as_log->set_checked(m_selected_ds->display_as_log());
+                    m_display_as_log->set_pushed(m_selected_ds->display_as_log());
                 return true;
             case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
             {
@@ -624,7 +622,7 @@ void BSDFApplication::update_layout()
     );
 
     if (m_brdf_options_window)
-        m_brdf_options_window->set_position({m_size[0] - 350, m_size[1] - 500});
+        m_brdf_options_window->set_position({m_size[0] - 230, m_size[1] - 460});
 
     perform_layout();
 
@@ -753,18 +751,21 @@ void BSDFApplication::toggle_brdf_options_window()
         // view modes
         {
             new Label{ window, "View Modes" , "sans-bold", 18};
-            m_display_as_log = new CheckBox{ window, "Display as log" };
-            m_display_as_log->set_checked(m_selected_ds ? false : m_selected_ds->display_as_log());
+
+            auto button_container = new Widget{ window };
+            button_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill, 0, 5 });
+
+            m_display_as_log = new ToolButton{ button_container, nvg_image_icon(m_nvg_context, log) };
+            m_display_as_log->set_flags(Button::Flags::ToggleButton);
+            m_display_as_log->set_tooltip("Logarithmic scale");
+            m_display_as_log->set_pushed(m_selected_ds ? false : m_selected_ds->display_as_log());
             m_display_as_log->set_enabled(m_selected_ds != nullptr);
-            m_display_as_log->set_callback([this](bool /* unused*/) {
+            m_display_as_log->set_change_callback([this](bool /* unused*/) {
                 m_selected_ds->toggle_log_view();
             });
 
-            auto button_container = new Widget{ window };
-            button_container->set_layout(new GridLayout{ Orientation::Horizontal, 4, Alignment::Fill });
-
-            auto make_view_button = [this, button_container](const string& label, const string& tooltip, DataSample::Views view) {
-                auto button = new Button(button_container, label);
+            auto make_view_button = [this, button_container](int icon, const string& tooltip, DataSample::Views view) {
+                auto button = new ToolButton(button_container, icon);
                 button->set_flags(Button::Flags::ToggleButton);
                 button->set_tooltip(tooltip);
                 button->set_pushed(m_selected_ds && m_selected_ds->display_view(view));
@@ -772,11 +773,12 @@ void BSDFApplication::toggle_brdf_options_window()
                 button->set_change_callback([this, view](bool) { toggle_view(view); });
                 return button;
             };
-            m_view_toggles[DataSample::Views::MESH]   = make_view_button("Mesh", "Show/Hide mesh for this data sample (M)", DataSample::Views::MESH);
-            m_view_toggles[DataSample::Views::PATH]   = make_view_button("Path", "Show/Hide path for this data sample (P)", DataSample::Views::PATH);
-            m_view_toggles[DataSample::Views::POINTS] = make_view_button("Points", "Toggle points view for this data sample (Shift + P)", DataSample::Views::POINTS);
-            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button("Incident Angle", "Show/Hide incident angle for this data sample (Shift + I)", DataSample::Views::INCIDENT_ANGLE);
+            m_view_toggles[DataSample::Views::MESH]   = make_view_button(nvg_image_icon(m_nvg_context, mesh), "Show/Hide mesh for this data sample (M)", DataSample::Views::MESH);
+            m_view_toggles[DataSample::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Toggle points view for this data sample (Shift + P)", DataSample::Views::POINTS);
+            m_view_toggles[DataSample::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/Hide path for this data sample (P)", DataSample::Views::PATH);
+            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/Hide incident angle for this data sample (Shift + I)", DataSample::Views::INCIDENT_ANGLE);
 
+            // m_view_toggles[DataSample::Views::MESH]->set_chevron_icon;
         }
 
 

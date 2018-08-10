@@ -23,6 +23,7 @@ using nanogui::Widget;
 using nanogui::Screen;
 using nanogui::Window;
 using nanogui::Button;
+using nanogui::ToolButton;
 using nanogui::CheckBox;
 using nanogui::PopupButton;
 using nanogui::Label;
@@ -122,8 +123,8 @@ private:
     Button* m_help_button;
 
     // bsdf settings
-    CheckBox* m_display_as_log;
-    Button* m_view_toggles[DataSample::Views::VIEW_COUNT];
+    ToolButton* m_display_as_log;
+    ToolButton* m_view_toggles[DataSample::Views::VIEW_COUNT];
     Slider* m_wavelength_slider;
     FloatBox<float>* m_phi_float_box;
     FloatBox<float>* m_theta_float_box;
