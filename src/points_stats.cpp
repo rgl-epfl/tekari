@@ -54,7 +54,7 @@ void update_selection_stats(
             ++selection_stats.points_count;
 
             points_stats_add_intensity(slice, raw_measurement[i][intensity_index+2], i);
-            slice.average_intensity  += raw_measurement[i][intensity_index];
+            slice.average_intensity  += raw_measurement[i][intensity_index+2];
             slice.average_point      += get_3d_point(V2D, H[intensity_index], i);
             slice.average_log_point  += get_3d_point(V2D, LH[intensity_index], i);
         }
@@ -102,10 +102,11 @@ void update_points_stats(
     points_stats.points_count = raw_measurement.n_sample_points();
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
-        slice.average_intensity += raw_measurement[i][intensity_index];
+        slice.average_intensity += raw_measurement[i][intensity_index+2];
         slice.average_point += get_3d_point(V2D, H[intensity_index], i);
         slice.average_log_point += get_3d_point(V2D, LH[intensity_index], i);
     }
+    
     if (points_stats.points_count != 0)
     {
         float scale = 1.0f / points_stats.points_count;
