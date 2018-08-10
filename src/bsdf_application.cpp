@@ -756,6 +756,9 @@ void BSDFApplication::toggle_data_sample_sliders_window()
         Window *window = new Window(this, "BRDF Parameters");
         window->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 5, 5));
 
+        auto close_button = new Button{ window->button_panel(), "", ENTYPO_ICON_CROSS };
+        close_button->set_callback([this]() { toggle_data_sample_sliders_window(); });
+
         Vector2f curr_i_angle = m_selected_ds ? m_selected_ds->incident_angle() : Vector2f(0.0f, 0.0f);
         if (curr_i_angle[1] > 180.0f) curr_i_angle[1] -= 360.0f;
 
@@ -977,10 +980,10 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
         toggle_metadata_window();
     }
     if (m_data_sample_sliders_window)
-    {
         toggle_data_sample_sliders_window();
+    if (m_selected_ds)
         toggle_data_sample_sliders_window();
-    }
+
     request_layout_update();
 
     if (!m_selected_ds) // if no data sample is selected, we can stop there
