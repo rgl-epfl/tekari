@@ -55,7 +55,7 @@ public:
 
     void toggle_window(Window*& window, function<Window*(void)> create_window);
     void toggle_metadata_window();
-    void toggle_data_sample_sliders_window();
+    void toggle_brdf_options_window();
     void toggle_help_window();
     void toggle_selection_info_window();
     void update_selection_info_window();

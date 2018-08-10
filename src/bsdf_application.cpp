@@ -560,7 +560,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 m_bsdf_canvas->set_view_angle(BSDFCanvas::ViewAngles::UP);
                 return true;
             case GLFW_KEY_U:
-                toggle_data_sample_sliders_window();
+                toggle_brdf_options_window();
                 return true;
             case GLFW_KEY_KP_ADD:
             case GLFW_KEY_KP_SUBTRACT:
@@ -624,7 +624,7 @@ void BSDFApplication::update_layout()
     );
 
     if (m_brdf_options_window)
-        m_brdf_options_window->set_position({m_size[0] - 250, m_size[1] - 400});
+        m_brdf_options_window->set_position({m_size[0] - 350, m_size[1] - 500});
 
     perform_layout();
 
@@ -740,14 +740,14 @@ void BSDFApplication::toggle_metadata_window()
     });
 }
 
-void BSDFApplication::toggle_data_sample_sliders_window()
+void BSDFApplication::toggle_brdf_options_window()
 {
     toggle_window(m_brdf_options_window, [this]() -> Window* {
         Window *window = new Window(this, "BRDF Parameters");
         window->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 5, 5));
 
         auto close_button = new Button{ window->button_panel(), "", ENTYPO_ICON_CROSS };
-        close_button->set_callback([this]() { toggle_data_sample_sliders_window(); });
+        close_button->set_callback([this]() { toggle_brdf_options_window(); });
 
 
         // view modes
@@ -1000,9 +1000,9 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
         toggle_metadata_window();
     }
     if (m_brdf_options_window)
-        toggle_data_sample_sliders_window();
+        toggle_brdf_options_window();
     if (m_selected_ds)
-        toggle_data_sample_sliders_window();
+        toggle_brdf_options_window();
 
     request_layout_update();
 
