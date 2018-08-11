@@ -9,7 +9,7 @@
 TEKARI_NAMESPACE_BEGIN
 
 DataSample::DataSample()
-:   m_intensity_index(-1)
+:   m_intensity_index(0)
 ,   m_display_as_log(false)
 ,   m_display_views{ true, false, false, true }
 ,   m_selection_axis{Vector3f{0.0f, 0.0f, 0.0f}}

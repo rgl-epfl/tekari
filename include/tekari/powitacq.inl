@@ -898,6 +898,7 @@ const Spectrum &BRDF::wavelengths() const {
 BRDF::BRDF(const std::string &path_to_file)
 :   m_theta_n(0)
 ,   m_phi_n(0)
+,   m_n_points(0)
 ,   m_wi(0.0f)
 ,   m_params{0, 0}
 {
@@ -1241,13 +1242,13 @@ Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
     return fr / pdf;
 }
 
-void BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n)
+bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vector<float>& luminance_out, std::vector<Vector3f>& wos_out)
 {
     // if the state doesn't change
     if (wi[0] == m_wi[0] && wi[1] == m_wi[1] && wi[2] == m_wi[2] &&
         theta_n == m_theta_n &&
         phi_n == m_phi_n)
-        return;
+        return false;
 
     m_theta_n = theta_n;
     m_phi_n = phi_n;
@@ -1256,13 +1257,15 @@ void BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n)
     size_t max_points = theta_n * phi_n + phi_n;
     m_samples.clear();
     m_scales.clear();
-    m_wos.clear();
+    wos_out.clear();
+    luminance_out.clear();
     m_samples.reserve(max_points);
     m_scales.reserve(max_points);
-    m_wos.reserve(max_points);
+    wos_out.reserve(max_points);
+    luminance_out.reserve(max_points);
 
     if (wi.z() <= 0)
-        return;
+        return false;
 
     float theta_i = std::acos(wi.z()),
           phi_i   = std::atan2(wi.y(), wi.x());
@@ -1307,11 +1310,14 @@ void BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n)
         if (wo.z() <= 0)
             return;
 
-        m_samples.push_back(sample);
-        m_wos.push_back(wo);
-        m_scales.push_back(m_data->ndf.eval(u_wm, m_params) /
-                            (4 * m_data->sigma.eval(u_wi, m_params)));
+        float scale = m_data->ndf.eval(u_wm, m_params) /
+                            (4 * m_data->sigma.eval(u_wi, m_params));
 
+        m_samples.push_back(sample);
+        wos_out.push_back(wo);
+        m_scales.push_back(scale);
+
+        luminance_out.push_back(m_data->luminance.eval(sample, m_params) * scale);
     };
 
     for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points
@@ -1329,13 +1335,16 @@ void BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n)
     for (size_t j = 0; j < phi_n; ++j)
     {
         float phi = 2 * Pi * j / phi_n;
-        m_wos.push_back({cos(phi), sin(phi), 0.0f});
+        wos_out.push_back({cos(phi), sin(phi), 0.0f});
+        luminance_out.push_back(0.0f);
     }
+    m_n_points = wos_out.size();
+    return true;
 }
 
 void BRDF::sample_state(size_t wavelength_index, std::vector<float>& frs_out) const
 {
-    frs_out.resize(m_wos.size());
+    frs_out.resize(m_n_points);
 
     float min_fr = std::numeric_limits<float>::max();
 
@@ -1347,7 +1356,7 @@ void BRDF::sample_state(size_t wavelength_index, std::vector<float>& frs_out) co
     }
     
     // all the points on the ring have the minimum intensity
-    for (size_t i = m_samples.size(); i < m_wos.size(); ++i)
+    for (size_t i = m_samples.size(); i < m_n_points; ++i)
     {
         frs_out[i] = min_fr;
     }

@@ -20,13 +20,12 @@ BSDFDataSample::BSDFDataSample(const string& file_path)
 void BSDFDataSample::init()
 {
     DataSample::init();
-    m_intensity_index = 128;
     set_incident_angle({0.0f, 0.0f});
 }
 
 void BSDFDataSample::set_intensity_index(size_t intensity_index)
 {
-    m_intensity_index = std::min(intensity_index, m_raw_measurement.n_wavelengths());;
+    m_intensity_index = std::min(intensity_index, m_raw_measurement.n_wavelengths() + 1);;
     if (!m_cache_mask[m_intensity_index])
     {
         m_cache_mask[m_intensity_index] = true;
@@ -49,9 +48,14 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     cout << std::setw(50) << std::left << "Setting incident angle ..\n";
     Timer<> timer;
 
-    m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), m_n_theta, m_n_phi);
 
-    const vector<powitacq::Vector3f>& wos = m_brdf.wos();
+    vector<float> luminance;
+    vector<powitacq::Vector3f> wos;
+    if (!m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), m_n_theta, m_n_phi, luminance, wos))
+    {
+        cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
+        return;
+    }
 
     Index n_intensities = m_brdf.wavelengths().size() + 1;     // account for luminance
     Index n_sample_points = wos.size();
@@ -69,6 +73,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
     // clear mask
     m_cache_mask.assign(n_intensities, false);
+    m_cache_mask[0] = true;                     // luminance is always computed
 
     // artificially assign metadata members
     m_metadata.set_incident_angle(incident_angle);
@@ -81,11 +86,20 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
         Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wos[i]));
         sample_point.set_theta(outgoing_angle.x());
         sample_point.set_phi(outgoing_angle.y());
+        sample_point.set_luminance(luminance[i]);
         m_v2d[i] = vec3_to_disk(powitacq_to_enoki_vec3(wos[i]));
     }
 
     triangulate_data(m_f, m_v2d);
     compute_path_segments(m_path_segments, m_v2d);
+
+    // compute data for luminance
+    compute_min_max_intensities(m_points_stats, m_raw_measurement, 0);
+    compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_lh, 0);
+    update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, m_lh, 0);
+    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_lh, 0);
+    compute_normals(m_f, m_v2d, m_h, m_lh, m_n, m_ln, 0);
+
     set_intensity_index(m_intensity_index);
     link_data_to_shaders();
 
@@ -102,8 +116,7 @@ void BSDFDataSample::compute_samples()
 
     for (size_t i = 0; i < frs.size(); ++i)
     {
-        RawMeasurement::SamplePoint sample_point = m_raw_measurement[i];
-        sample_point[m_intensity_index+2] = frs[i];
+        m_raw_measurement[i][m_intensity_index+2] = frs[i];
     }
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;

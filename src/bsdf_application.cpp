@@ -852,7 +852,7 @@ void BSDFApplication::toggle_brdf_options_window()
         });
 
         m_wavelength_slider = new Slider{ window };
-        m_wavelength_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->n_wavelengths()-1 : 1));
+        m_wavelength_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->intensity_count()-1 : 1));
         m_wavelength_slider->set_callback([this](float value) {
             int int_val = static_cast<int>(round(value));
             m_wavelength_slider->set_value(int_val);

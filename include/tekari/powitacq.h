@@ -101,10 +101,10 @@ class BRDF {
     // stores information about the currently set incident angle and sampling resolution
     size_t m_theta_n;
     size_t m_phi_n;
+    size_t m_n_points;
     Vector3f m_wi;
     float m_params[2];
 
-    std::vector<Vector3f> m_wos;
     std::vector<Vector2f> m_samples;
     std::vector<float> m_scales;
 
@@ -126,9 +126,9 @@ public:
                     float *pdf = nullptr) const;
 
     // Sets the incident angle (and sampling resolution) and stores what's necessary to compute the corresponding measurement
-    void set_state(const Vector3f &wi, size_t theta_n, size_t phi_n);
+    // Returns false if the state didn't change with the given parameters
+    bool set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vector<float>& luminance_out, std::vector<Vector3f>& wos_out);
     void sample_state(size_t wavelength_index, std::vector<float>& frs_out) const;
-    const std::vector<Vector3f>& wos() const { return m_wos; }
 
     /// evaluate the PDF of a sample
     float pdf(const Vector3f &wi, const Vector3f &wo) const;
