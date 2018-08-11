@@ -3,7 +3,7 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-#define MAX_SELECTION_DISTANCE 30.0f
+#define MAX_SELECT_DISTANCE 30.0f
 
 void set_all_points(
     VectorXf& selected_points,
@@ -60,7 +60,7 @@ void select_closest_point(
     Timer<> timer;
 
     size_t n_threads = V2D.size() / GRAIN_SIZE + ((V2D.size() % GRAIN_SIZE) > 0);
-    vector<float> smallest_distances(n_threads, MAX_SELECTION_DISTANCE* MAX_SELECTION_DISTANCE);
+    vector<float> smallest_distances(n_threads, MAX_SELECT_DISTANCE* MAX_SELECT_DISTANCE);
     vector<int> closest_point_indices(n_threads, -1);
 
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)V2D.size(), GRAIN_SIZE),
@@ -83,7 +83,7 @@ void select_closest_point(
         }
     });
 
-    float smallest_distance = MAX_SELECTION_DISTANCE* MAX_SELECTION_DISTANCE;
+    float smallest_distance = MAX_SELECT_DISTANCE* MAX_SELECT_DISTANCE;
     int closest_point_index = -1;
 
     for (size_t i = 0; i < smallest_distances.size(); i++)

@@ -21,11 +21,11 @@ public:
     {
         FRONT, BACK, UP, DOWN, LEFT, RIGHT
     };
-    enum Mouse_mode
+    enum MouseMode
     {
         ROTATE,
         TRANSLATE,
-        SELECTION,
+        SELECT,
         MOUSE_MODE_COUNT
     };
 
@@ -83,8 +83,8 @@ public:
     float point_size_scale() const { return m_point_size_scale; }
     void set_point_size_scale(float point_size_scale) { m_point_size_scale = point_size_scale; }
 
-    void set_mouse_mode(Mouse_mode mode){ m_mouse_mode = mode; }
-    Mouse_mode mouse_mode() const       { return m_mouse_mode; }
+    void set_mouse_mode(MouseMode mode){ m_mouse_mode = mode; }
+    MouseMode mouse_mode() const       { return m_mouse_mode; }
 
 private:
     SelectionBox get_selection_box() const;
@@ -112,7 +112,7 @@ private:
     float m_zoom;
     float m_point_size_scale;
     bool m_ortho_mode;
-    Mouse_mode m_mouse_mode;
+    MouseMode m_mouse_mode;
 
     // selection
     std::pair<Vector2i, Vector2i> m_selection_region;

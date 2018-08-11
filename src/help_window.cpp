@@ -72,7 +72,7 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
             return desc_widget;
         };
 
-        auto mouse_modes = add_shortcut_section("Mouse_modes", "Changes the mouse buttons mapping, hover on each mode to see what it does.");
+        auto mouse_modes = add_shortcut_section("MouseModes", "Changes the mouse buttons mapping, hover on each mode to see what it does.");
         add_row(mouse_modes, "R", "Rotation Mode")->set_tooltip("(Left -> Rotate, Middle -> Translate, Right -> Select)");
         add_row(mouse_modes, "T", "Translation Mode")->set_tooltip("(Left -> Translate, Middle -> Select, Right -> Rotate)");
         add_row(mouse_modes, "B", "Box Selection Mode")->set_tooltip("(Left -> Select, Middle -> Rotate, Right -> Translate)");

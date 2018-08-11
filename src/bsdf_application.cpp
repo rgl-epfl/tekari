@@ -219,20 +219,6 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             m_bsdf_canvas->grid().set_alpha(grid_alpha_slider->value());
         });
 
-        // mouse mode
-        auto mouse_mode_label = new Label{ hidden_options_popup, "Mouse Mode", "sans-bold"};
-        mouse_mode_label->set_tooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
-        m_mouse_mode_selector = new ComboBox{ hidden_options_popup, {"Rotation", "Translation", "Box Selection"} };
-        m_mouse_mode_selector->set_callback([this](int index) {
-            m_bsdf_canvas->set_mouse_mode(static_cast<BSDFCanvas::Mouse_mode>(index));
-            glfwSetCursor(m_glfw_window, m_cursors[index]);
-        });
-
-        m_cursors[BSDFCanvas::Mouse_mode::ROTATE] = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-        m_cursors[BSDFCanvas::Mouse_mode::TRANSLATE] = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-        m_cursors[BSDFCanvas::Mouse_mode::SELECTION] = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-        glfwSetCursor(m_glfw_window, m_cursors[m_bsdf_canvas->mouse_mode()]);
-
         // auto background_color_popup_button = new PopupButton(panel, "", ENTYPO_ICON_BUCKET);
 
         // background_color_popup_button->set_font_size(15);
@@ -249,6 +235,38 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 
         //     colorwheel->set_callback([this](const Color& value) { m_bsdf_canvas->set_background_color(value); });
         // }
+    }
+
+
+    // mouse mode
+    {
+        using MouseMode = BSDFCanvas::MouseMode;
+
+        auto mouse_mode_container = new Widget{ m_tool_window };
+        mouse_mode_container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 0, 5 });
+
+        auto mouse_mode_label = new Label{ mouse_mode_container, "Mouse Mode: ", "sans-bold"};
+        mouse_mode_label->set_tooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
+
+        auto mouse_mode_buttons_container = new Widget{ mouse_mode_container };
+        mouse_mode_buttons_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
+
+        int mouse_mode_icons[MouseMode::MOUSE_MODE_COUNT] = { ENTYPO_ICON_CW, ENTYPO_ICON_DOCUMENT_LANDSCAPE, nvg_image_icon(m_nvg_context, translate_cross) };
+        int cursors_ids[MouseMode::MOUSE_MODE_COUNT] = { GLFW_ARROW_CURSOR, GLFW_HAND_CURSOR, GLFW_CROSSHAIR_CURSOR };
+
+        for (int i = 0; i != static_cast<int>(MouseMode::MOUSE_MODE_COUNT); ++i)
+        {
+            MouseMode mode = static_cast<MouseMode>(i);
+            m_cursors[mode] = glfwCreateStandardCursor(cursors_ids[mode]);
+            m_mouse_mode_buttons[mode] = new ToolButton{ mouse_mode_buttons_container, mouse_mode_icons[mode] };
+            m_mouse_mode_buttons[mode]->set_pushed(mode == m_bsdf_canvas->mouse_mode());
+            m_mouse_mode_buttons[mode]->set_callback([this, mode]() {
+                m_bsdf_canvas->set_mouse_mode(mode);
+                glfwSetCursor(m_glfw_window, m_cursors[mode]);          
+            });
+        }
+
+        glfwSetCursor(m_glfw_window, m_cursors[m_bsdf_canvas->mouse_mode()]);
     }
 
     // Open, save screenshot, save data
@@ -516,10 +534,16 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 return true;
             case GLFW_KEY_T: case GLFW_KEY_R: case GLFW_KEY_B:
             {
-                BSDFCanvas::Mouse_mode mode = BSDFCanvas::Mouse_mode::ROTATE;
-                if (key == GLFW_KEY_T) mode = BSDFCanvas::Mouse_mode::TRANSLATE;
-                if (key == GLFW_KEY_B) mode = BSDFCanvas::Mouse_mode::SELECTION;
-                m_mouse_mode_selector->set_selected_index(mode);
+                using MouseMode = BSDFCanvas::MouseMode;
+                MouseMode mode = MouseMode::ROTATE;
+                if (key == GLFW_KEY_T) mode = MouseMode::TRANSLATE;
+                if (key == GLFW_KEY_B) mode = MouseMode::SELECT;
+
+                for (int i = 0; i != static_cast<int>(MouseMode::MOUSE_MODE_COUNT); ++i)
+                {
+                    MouseMode m = static_cast<MouseMode>(i);
+                    m_mouse_mode_buttons[m]->set_pushed(mode == m);
+                }
                 m_bsdf_canvas->set_mouse_mode(mode);
                 glfwSetCursor(m_glfw_window, m_cursors[mode]);
                 return true;
@@ -753,11 +777,12 @@ void BSDFApplication::toggle_brdf_options_window()
             new Label{ window, "View Modes" , "sans-bold", 18};
 
             auto button_container = new Widget{ window };
-            button_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill, 0, 5 });
+            button_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill, 0, 1 });
 
-            m_display_as_log = new ToolButton{ button_container, nvg_image_icon(m_nvg_context, log) };
+            m_display_as_log = new Button{ button_container, "", nvg_image_icon(m_nvg_context, log) };
             m_display_as_log->set_flags(Button::Flags::ToggleButton);
             m_display_as_log->set_tooltip("Logarithmic scale");
+            m_display_as_log->set_font_size(20);
             m_display_as_log->set_pushed(m_selected_ds ? false : m_selected_ds->display_as_log());
             m_display_as_log->set_enabled(m_selected_ds != nullptr);
             m_display_as_log->set_change_callback([this](bool /* unused*/) {
@@ -765,9 +790,10 @@ void BSDFApplication::toggle_brdf_options_window()
             });
 
             auto make_view_button = [this, button_container](int icon, const string& tooltip, DataSample::Views view) {
-                auto button = new ToolButton(button_container, icon);
+                auto button = new Button(button_container, "", icon);
                 button->set_flags(Button::Flags::ToggleButton);
                 button->set_tooltip(tooltip);
+                button->set_font_size(20);
                 button->set_pushed(m_selected_ds && m_selected_ds->display_view(view));
                 button->set_enabled(m_selected_ds != nullptr);
                 button->set_change_callback([this, view](bool) { toggle_view(view); });

@@ -123,8 +123,8 @@ private:
     Button* m_help_button;
 
     // bsdf settings
-    ToolButton* m_display_as_log;
-    ToolButton* m_view_toggles[DataSample::Views::VIEW_COUNT];
+    Button* m_display_as_log;
+    Button* m_view_toggles[DataSample::Views::VIEW_COUNT];
     Slider* m_wavelength_slider;
     FloatBox<float>* m_phi_float_box;
     FloatBox<float>* m_theta_float_box;
@@ -143,7 +143,7 @@ private:
     BSDFCanvas* m_bsdf_canvas;
 
     // cursors and mouse mode
-    ComboBox* m_mouse_mode_selector;
+    ToolButton* m_mouse_mode_buttons[BSDFCanvas::MOUSE_MODE_COUNT];
     GLFWcursor* m_cursors[BSDFCanvas::MOUSE_MODE_COUNT];
 
     vector<std::shared_ptr<DataSample>> m_data_samples;

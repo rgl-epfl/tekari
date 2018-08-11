@@ -4,7 +4,7 @@
 #include <tekari/arrow.h>
 #include <tekari_resources.h>
 
-#define MAX_SELECTION_DISTANCE 30.0f
+#define MAX_SELECT_DISTANCE 30.0f
 
 TEKARI_NAMESPACE_BEGIN
 
