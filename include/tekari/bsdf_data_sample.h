@@ -29,24 +29,19 @@ public:
         vector<float> result;
         result.reserve(s.size());
 
-        float min = std::numeric_limits<float>::max();
         float max = -std::numeric_limits<float>::max();
         for(size_t i = 0; i < s.size(); ++i)
         {
             if (m_brdf.wavelengths()[i] > 360.0f && m_brdf.wavelengths()[i] < 1000.0f)
             {
                 result.push_back(s[i]);
-                min = std::min(min, s[i]);
                 max = std::max(max, s[i]);
             }
         }
         // normalize result
-        if (std::abs(min - max) > 1e-10)
+        for(size_t i = 0; i < result.size(); ++i)
         {
-            for(size_t i = 0; i < result.size(); ++i)
-            {
-                result[i] = (result[i] - min) / (max - min);
-            }
+            result[i] /= max;
         }
         return result;
     }
