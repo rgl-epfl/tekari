@@ -112,7 +112,7 @@ void BSDFDataSample::compute_samples()
     Timer<> timer;
 
     vector<float> frs;
-    m_brdf.sample_state(m_intensity_index, frs);
+    m_brdf.sample_state(m_intensity_index-1, frs);
 
     for (size_t i = 0; i < frs.size(); ++i)
     {

@@ -829,27 +829,17 @@ void BSDFApplication::toggle_brdf_options_window()
         m_theta_float_box = add_float_box("Theta", curr_i_angle.x(), angle_slider_callback);
         m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), angle_slider_callback);
 
-        auto add_int_box = [window, this](const string& label, size_t value, function<void(size_t)> callback) {
-            auto int_box_container = new Widget{window};
-            int_box_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
-            new Label{int_box_container, label};
-            auto int_box = new IntBox<size_t>{ int_box_container };
-            int_box->set_value(value);
-            int_box->set_editable(m_selected_ds != nullptr);
-            int_box->set_enabled(m_selected_ds != nullptr);
-            int_box->set_callback(callback);
-            int_box->set_spinnable(true);
-            return int_box;
+        auto add_text = [window](const string& label, const string& value) {
+            auto labels_container = new Widget{window};
+            labels_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
+            new Label{labels_container, label};
+            auto text = new Label{ labels_container, value };
+            return text;
         };
 
         size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
-        m_wavelength_int_box = add_int_box("Wavelength", wavelength_index, [this](size_t value) {
-            value = enoki::clamp(value, 0ul, m_selected_ds->intensity_count()-1);
-            m_wavelength_int_box->set_value(value);
-            m_wavelength_slider->set_value(value);
-            m_selected_ds->set_intensity_index(value);
-            reprint_footer();
-        });
+        string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
+        m_wavelength_label = add_text("Wavelength", wavelength_str);
 
         m_wavelength_slider = new Slider{ window };
         m_wavelength_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->intensity_count()-1 : 1));
@@ -857,7 +847,7 @@ void BSDFApplication::toggle_brdf_options_window()
             int int_val = static_cast<int>(round(value));
             m_wavelength_slider->set_value(int_val);
             m_selected_ds->set_intensity_index(int_val);
-            m_wavelength_int_box->set_value(int_val);
+            m_wavelength_label->set_caption(m_selected_ds->wavelength_str());
             reprint_footer();
         });
         m_wavelength_slider->set_enabled(m_selected_ds != nullptr);

@@ -104,6 +104,8 @@ public:
     inline Vector2f incident_angle() const { return m_metadata.incident_angle(); }
     virtual void set_incident_angle(const Vector2f& i) {}
 
+    virtual inline string wavelength_str() { return string("0 nm"); }
+
 private:
     inline const MatrixXXf::Row     curr_h() const  { return m_display_as_log ? m_lh[m_intensity_index] : m_h[m_intensity_index]; }
     inline const Matrix4XXf::Row    curr_n() const  { return m_display_as_log ? m_ln[m_intensity_index] : m_n[m_intensity_index]; }
@@ -114,10 +116,10 @@ protected:
     // Raw sample data
     Matrix3Xu   m_f;                // face indices
     Matrix2Xf   m_v2d;              // 2d coordinates (x,z)
-    MatrixXXf   m_h;                // heights per point (one for each wavelenght)
-    MatrixXXf   m_lh;               // logarithmic heights per point (one for each wavelenght)
-    Matrix4XXf  m_n;                // normals per point (one for each wavelenght)
-    Matrix4XXf  m_ln;               // logarithmic normals per point (one for each wavelenght)
+    MatrixXXf   m_h;                // heights per point (one for each wavelength)
+    MatrixXXf   m_lh;               // logarithmic heights per point (one for each wavelength)
+    Matrix4XXf  m_n;                // normals per point (one for each wavelength)
+    Matrix4XXf  m_ln;               // logarithmic normals per point (one for each wavelength)
     Mask        m_cache_mask;       // bit map indicating whether some intensity data is valid
     VectorXu    m_path_segments;
     size_t      m_intensity_index;
