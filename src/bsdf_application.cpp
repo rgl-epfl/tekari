@@ -918,7 +918,8 @@ void BSDFApplication::toggle_selection_info_window()
         new Label{ window, "Spectral plot", "sans-bold" };
         auto graph = new Graph{ window, "" };
         graph->set_values(m_selected_ds->get_selection_spectrum());
-        graph->set_foreground_color(Color(0.7f, 0.4f, 0.1f, 0.8f));
+        graph->set_stroke_color(Color(.8f, 1.f));
+        graph->set_fill_color(Color(0.f, 0.f));
 
         auto wavelength_range_labels_container = new Widget{ window };
         wavelength_range_labels_container->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 0, 110});
