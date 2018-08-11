@@ -920,6 +920,13 @@ void BSDFApplication::toggle_selection_info_window()
         graph->set_values(m_selected_ds->get_selection_spectrum());
         graph->set_foreground_color(Color(0.7f, 0.4f, 0.1f, 0.8f));
 
+        auto wavelength_range_labels_container = new Widget{ window };
+        wavelength_range_labels_container->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 0, 110});
+        auto wavelength_360 = new Label{ wavelength_range_labels_container, "360nm"  };
+        auto wavelength_1000 = new Label{ wavelength_range_labels_container, "1000nm" };
+        wavelength_360->set_font_size(13);
+        wavelength_1000->set_font_size(13);
+
         window->set_position(Vector2i{width() - 200, 20});
         return window;
     });
