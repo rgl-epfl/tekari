@@ -86,13 +86,14 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             return;
         
         m_selected_ds->set_incident_angle(incident_angle);
+        if (m_selection_info_window) toggle_selection_info_window();
+        reprint_footer();
 
         if (!m_brdf_options_window)
             return;
         m_theta_float_box->set_value(incident_angle.x());
         m_phi_float_box->set_value(incident_angle.y());
         m_incident_angle_slider->set_value(incident_angle);
-        reprint_footer();
     });
 
     // Footer
@@ -819,7 +820,8 @@ void BSDFApplication::toggle_brdf_options_window()
             m_phi_float_box->set_value(value[1]);
 
             m_selected_ds->set_incident_angle(value);
-            update_selection_info_window();
+            if (m_selection_info_window) toggle_selection_info_window();
+
             reprint_footer();
         });
         m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
@@ -848,7 +850,7 @@ void BSDFApplication::toggle_brdf_options_window()
             Vector2f incident_angle = {theta, phi};
             m_incident_angle_slider->set_value(incident_angle);
             m_selected_ds->set_incident_angle(incident_angle); 
-            update_selection_info_window();
+            if (m_selection_info_window) toggle_selection_info_window();
             reprint_footer();
         };
 
