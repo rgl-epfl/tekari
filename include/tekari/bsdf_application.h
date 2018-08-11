@@ -143,7 +143,7 @@ private:
     BSDFCanvas* m_bsdf_canvas;
 
     // cursors and mouse mode
-    ToolButton* m_mouse_mode_buttons[BSDFCanvas::MOUSE_MODE_COUNT];
+    Button* m_mouse_mode_buttons[BSDFCanvas::MOUSE_MODE_COUNT];
     GLFWcursor* m_cursors[BSDFCanvas::MOUSE_MODE_COUNT];
 
     vector<std::shared_ptr<DataSample>> m_data_samples;

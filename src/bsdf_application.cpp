@@ -252,16 +252,23 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         auto mouse_mode_buttons_container = new Widget{ mouse_mode_container };
         mouse_mode_buttons_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
 
-        int mouse_mode_icons[MouseMode::MOUSE_MODE_COUNT] = { ENTYPO_ICON_CW, ENTYPO_ICON_DOCUMENT_LANDSCAPE, nvg_image_icon(m_nvg_context, translate_cross) };
+        int mouse_mode_icons[MouseMode::MOUSE_MODE_COUNT] = { ENTYPO_ICON_CW, nvg_image_icon(m_nvg_context, translate_cross), ENTYPO_ICON_DOCUMENT_LANDSCAPE };
         int cursors_ids[MouseMode::MOUSE_MODE_COUNT] = { GLFW_ARROW_CURSOR, GLFW_HAND_CURSOR, GLFW_CROSSHAIR_CURSOR };
 
         for (int i = 0; i != static_cast<int>(MouseMode::MOUSE_MODE_COUNT); ++i)
         {
             MouseMode mode = static_cast<MouseMode>(i);
             m_cursors[mode] = glfwCreateStandardCursor(cursors_ids[mode]);
-            m_mouse_mode_buttons[mode] = new ToolButton{ mouse_mode_buttons_container, mouse_mode_icons[mode] };
+            m_mouse_mode_buttons[mode] = new Button{ mouse_mode_buttons_container, "", mouse_mode_icons[mode] };
+            m_mouse_mode_buttons[mode]->set_flags(Button::Flags::ToggleButton);
+            m_mouse_mode_buttons[mode]->set_font_size(20);
             m_mouse_mode_buttons[mode]->set_pushed(mode == m_bsdf_canvas->mouse_mode());
             m_mouse_mode_buttons[mode]->set_callback([this, mode]() {
+                for (int i = 0; i != static_cast<int>(MouseMode::MOUSE_MODE_COUNT); ++i)
+                {
+                    MouseMode m = static_cast<MouseMode>(i);
+                    m_mouse_mode_buttons[m]->set_pushed(mode == m);
+                }
                 m_bsdf_canvas->set_mouse_mode(mode);
                 glfwSetCursor(m_glfw_window, m_cursors[mode]);          
             });
@@ -539,14 +546,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 MouseMode mode = MouseMode::ROTATE;
                 if (key == GLFW_KEY_T) mode = MouseMode::TRANSLATE;
                 if (key == GLFW_KEY_B) mode = MouseMode::SELECT;
-
-                for (int i = 0; i != static_cast<int>(MouseMode::MOUSE_MODE_COUNT); ++i)
-                {
-                    MouseMode m = static_cast<MouseMode>(i);
-                    m_mouse_mode_buttons[m]->set_pushed(mode == m);
-                }
-                m_bsdf_canvas->set_mouse_mode(mode);
-                glfwSetCursor(m_glfw_window, m_cursors[mode]);
+                m_mouse_mode_buttons[mode]->callback()();
                 return true;
             }
             case GLFW_KEY_P:
@@ -821,7 +821,6 @@ void BSDFApplication::toggle_brdf_options_window()
 
             m_selected_ds->set_incident_angle(value);
             if (m_selection_info_window) toggle_selection_info_window();
-
             reprint_footer();
         });
         m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
