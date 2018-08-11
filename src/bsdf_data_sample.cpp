@@ -9,8 +9,8 @@ inline Vector3f powitacq_to_enoki_vec3(const powitacq::Vector3f& v) { return Vec
 
 BSDFDataSample::BSDFDataSample(const string& file_path)
 : m_brdf(file_path)
-, m_n_theta(64)
-, m_n_phi(64)
+, m_n_theta(32)
+, m_n_phi(32)
 {
     // artificially assign metadata members
     m_metadata.add_line(m_brdf.description());
