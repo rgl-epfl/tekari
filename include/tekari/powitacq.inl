@@ -1257,10 +1257,12 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
     size_t max_points = theta_n * phi_n + phi_n;
     m_samples.clear();
     m_scales.clear();
+    m_uvs.clear();
     wos_out.clear();
     luminance_out.clear();
     m_samples.reserve(max_points);
     m_scales.reserve(max_points);
+    m_uvs.reserve(max_points);
     wos_out.reserve(max_points);
     luminance_out.reserve(max_points);
 
@@ -1314,6 +1316,7 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
                             (4 * m_data->sigma.eval(u_wi, m_params));
 
         m_samples.push_back(sample);
+        m_uvs.push_back({u, v});
         wos_out.push_back(wo);
         m_scales.push_back(scale);
 
@@ -1360,6 +1363,22 @@ void BRDF::sample_state(size_t wavelength_index, std::vector<float>& frs_out) co
     {
         frs_out[i] = min_fr;
     }
+}
+
+Spectrum BRDF::sample_state(size_t point_index) const
+{
+    if (point_index >= m_uvs.size())
+        return zero();
+
+    Spectrum s = zero();
+
+    for (size_t wavelength_index = 0; wavelength_index < s.size(); ++wavelength_index)
+    {
+        float params_fr[3] = { m_params[0], m_params[1], m_data->wavelengths[wavelength_index] };
+        s[wavelength_index] = m_data->spectra.eval(m_samples[point_index], params_fr) * m_scales[point_index];
+    }
+
+    return s;
 }
 
 POWITACQ_NAMESPACE_END

@@ -16,7 +16,7 @@ public:
         Vector3f average_log_point      = Vector3f(0);
         float average_intensity         = 0.0f;
         float min_intensity             = std::numeric_limits<float>::max();
-        float max_intensity             = std::numeric_limits<float>::min();
+        float max_intensity             = -std::numeric_limits<float>::max();
         uint32_t lowest_point_index     = 0;
         uint32_t highest_point_index    = 0;
     };

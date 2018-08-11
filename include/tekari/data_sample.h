@@ -105,6 +105,7 @@ public:
     virtual void set_incident_angle(const Vector2f& i) {}
 
     virtual inline string wavelength_str() { return string("0 nm"); }
+    virtual vector<float> get_selection_spectrum() { return vector<float>(); }
 
 private:
     inline const MatrixXXf::Row     curr_h() const  { return m_display_as_log ? m_lh[m_intensity_index] : m_h[m_intensity_index]; }

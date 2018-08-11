@@ -914,11 +914,10 @@ void BSDFApplication::toggle_selection_info_window()
         make_selection_info_labels("Maximum Intensity :", to_string(m_selected_ds->selection_max_intensity()));
         make_selection_info_labels("Average Intensity :", to_string(m_selected_ds->selection_average_intensity()));
 
-        auto graph = new Graph{ window, "Spectral plot" };
-        graph->set_values(vector<float>{0.0f, 0.5f, 0.3f, 0.8f, 0.4f, 0.8f, 1.0f});
-        graph->set_foreground_color(Color(0.5f, 0.3f, 0.7f, 0.8f));
-        // graph->set_footer("footer");
-        // graph->set_header("header");
+        new Label{ window, "Spectral plot", "sans-bold" };
+        auto graph = new Graph{ window, "" };
+        graph->set_values(m_selected_ds->get_selection_spectrum());
+        graph->set_foreground_color(Color(0.7f, 0.4f, 0.1f, 0.8f));
 
         window->set_position(Vector2i{width() - 200, 20});
         return window;

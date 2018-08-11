@@ -105,6 +105,7 @@ class BRDF {
     Vector3f m_wi;
     float m_params[2];
 
+    std::vector<Vector2f> m_uvs;
     std::vector<Vector2f> m_samples;
     std::vector<float> m_scales;
 
@@ -129,6 +130,7 @@ public:
     // Returns false if the state didn't change with the given parameters
     bool set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vector<float>& luminance_out, std::vector<Vector3f>& wos_out);
     void sample_state(size_t wavelength_index, std::vector<float>& frs_out) const;
+    Spectrum sample_state(size_t point_index) const;
 
     /// evaluate the PDF of a sample
     float pdf(const Vector3f &wi, const Vector3f &wo) const;

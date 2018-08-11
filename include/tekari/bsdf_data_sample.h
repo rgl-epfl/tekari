@@ -21,6 +21,36 @@ public:
         return to_string(m_brdf.wavelengths()[m_intensity_index-1]) + string(" nm");
     }
 
+    virtual vector<float> get_selection_spectrum() override
+    {
+        size_t point_index = m_selection_stats[m_intensity_index].highest_point_index;
+        powitacq::Spectrum s = m_brdf.sample_state(point_index);
+
+        vector<float> result;
+        result.reserve(s.size());
+
+        float min = std::numeric_limits<float>::max();
+        float max = -std::numeric_limits<float>::max();
+        for(size_t i = 0; i < s.size(); ++i)
+        {
+            if (m_brdf.wavelengths()[i] > 360.0f && m_brdf.wavelengths()[i] < 1000.0f)
+            {
+                result.push_back(s[i]);
+                min = std::min(min, s[i]);
+                max = std::max(max, s[i]);
+            }
+        }
+        // normalize result
+        if (std::abs(min - max) > 1e-10)
+        {
+            for(size_t i = 0; i < result.size(); ++i)
+            {
+                result[i] = (result[i] - min) / (max - min);
+            }
+        }
+        return result;
+    }
+
 
 private:
     void compute_samples();
