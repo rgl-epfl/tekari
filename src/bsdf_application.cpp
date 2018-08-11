@@ -110,9 +110,9 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             return info;
         };
 
-        m_data_sample_name = make_footer_info("Data Sample Name : ");
-        m_data_sample_points_count = make_footer_info("Points Count : ");
-        m_data_sample_average_height = make_footer_info("Average_intensity : ");
+        m_data_sample_name = make_footer_info("Material name : ");
+        m_data_sample_points_count = make_footer_info("Point count : ");
+        m_data_sample_average_height = make_footer_info("Average value : ");
     }
 
     m_tool_window = new Window(this, "Tools");
@@ -123,14 +123,14 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
     m_help_button = new Button(m_tool_window->button_panel(), "", ENTYPO_ICON_HELP);
     m_help_button->set_callback([this]() { toggle_help_window(); });
     m_help_button->set_font_size(15);
-    m_help_button->set_tooltip("Information about using BSDF Vidualizer (H)");
+    m_help_button->set_tooltip("Information about using Tekari (H)");
     m_help_button->set_position({20, 0});
 
     // Hidden options
     {
         m_hidden_options_button = new PopupButton(m_tool_window->button_panel(), "", ENTYPO_ICON_TOOLS);
         m_hidden_options_button->set_background_color(Color{0.4f, 0.1f, 0.1f, 1.0f});
-        m_hidden_options_button->set_tooltip("More view options");
+        m_hidden_options_button->set_tooltip("Additional view options");
         auto hidden_options_popup = m_hidden_options_button->popup();
         hidden_options_popup->set_layout(new GroupLayout{});
 
@@ -163,23 +163,23 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             m_bsdf_canvas->set_draw_flag(USE_WIREFRAME, checked);
         }, false);
 #endif
-        m_display_center_axis = add_hidden_option_toggle("Center Axis", "Show/Hide Center Axis (A)",
+        m_display_center_axis = add_hidden_option_toggle("Center axis", "Show/hide center axis (A)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(DISPLAY_AXIS, checked);
         }, true);
-        m_display_predicted_outgoing_angle_checkbox = add_hidden_option_toggle("Predicted Outgoing Angle", "Show/Hide Predicted Outgoing Angle (Ctrl+I)",
+        m_display_predicted_outgoing_angle_checkbox = add_hidden_option_toggle("Predicted outgoing angle", "Show/hide predicted outgoing angle (Ctrl+I)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(DISPLAY_PREDICTED_OUTGOING_ANGLE, checked);
         });
-        add_hidden_option_toggle("Use Light Theme", "Switch from dark to light theme",
+        add_hidden_option_toggle("Use light theme", "Switch between dark and light themes",
             [this](bool checked) {
             set_theme(checked ? new LightTheme{ nvg_context() } : new Theme{ nvg_context() });
             set_background(m_theme->m_window_fill_focused);
             m_hidden_options_button->set_background_color(checked ? Color{ 0.7f, 0.3f, 0.3f, 1.0f } : Color{ 0.4f, 0.1f, 0.1f, 1.0f });
         });
 
-        auto point_size_label = new Label{ hidden_options_popup , "Point Size" };
-        point_size_label->set_tooltip("Changes the point size based on a arbitrary heuristic (also distance dependent)");
+        auto point_size_label = new Label{ hidden_options_popup , "Point size" };
+        point_size_label->set_tooltip("Changes the size used to render the point mode visualization");
         auto point_size_slider = new Slider{ hidden_options_popup };
         point_size_slider->set_range(make_pair(0.1f, 20.0f));
         point_size_slider->set_value(m_bsdf_canvas->point_size_scale());
@@ -187,28 +187,28 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             m_bsdf_canvas->set_point_size_scale(value);
         });
 
-        auto chose_color_map_button = new Button{ hidden_options_popup, "Chose Color Map" };
-        chose_color_map_button->set_tooltip("Chose with which color map the data should be displayed (M)");
+        auto chose_color_map_button = new Button{ hidden_options_popup, "Choose color map" };
+        chose_color_map_button->set_tooltip("Choose with which color map the data should be displayed (M)");
         chose_color_map_button->set_callback([this]() {
             toggle_color_map_selection_window();
         });
 
         new Label{ hidden_options_popup, "Grid Options", "sans-bold" };
 
-        m_grid_view_checkbox = add_hidden_option_toggle("Grid", "Show/Hide radial grid (G)",
+        m_grid_view_checkbox = add_hidden_option_toggle("Grid", "Show/hide radial grid (G)",
             [this](bool checked) {
             m_bsdf_canvas->grid().set_visible(checked);
             m_display_degrees_checkbox->set_enabled(checked);
         }, true);
-        m_display_degrees_checkbox = add_hidden_option_toggle("Grid Degrees", "Show/Hide grid degrees (Shift+G)",
+        m_display_degrees_checkbox = add_hidden_option_toggle("Grid angles", "Show/hide degree values on grid (Shift+G)",
             [this](bool checked) { m_bsdf_canvas->grid().set_show_degrees(checked); }, true);
 
         auto grid_color_label = new Label{ hidden_options_popup, "Color" };
-        grid_color_label->set_tooltip("Chose in witch color the grid should be displayed");
+        grid_color_label->set_tooltip("Choose the color of the angular grid");
         auto colorwheel = new ColorWheel{ hidden_options_popup, m_bsdf_canvas->grid().color() };
 
-        auto grid_alpha_label = new Label{ hidden_options_popup, "Alpha" };
-        grid_alpha_label->set_tooltip("Chose the grid transparency (left = fully transparent, right = fully opaque)");
+        auto grid_alpha_label = new Label{ hidden_options_popup, "Opacity" };
+        grid_alpha_label->set_tooltip("Set the angular grid opacity (left = invisible, right = opaque)");
         auto grid_alpha_slider = new Slider{ hidden_options_popup };
         grid_alpha_slider->set_range({ 0.0f, 1.0f });
         grid_alpha_slider->set_callback([this](float value) { m_bsdf_canvas->grid().set_alpha(value); });
@@ -244,13 +244,13 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         using MouseMode = BSDFCanvas::MouseMode;
 
         auto mouse_mode_container = new Widget{ m_tool_window };
-        mouse_mode_container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 0, 5 });
+        mouse_mode_container->set_layout(new GridLayout{ Orientation::Horizontal, 2, Alignment::Fill, 0, 10 });
 
-        auto mouse_mode_label = new Label{ mouse_mode_container, "Mouse Mode: ", "sans-bold"};
+        auto mouse_mode_label = new Label{ mouse_mode_container, "Mouse mode: ", "sans-bold"};
         mouse_mode_label->set_tooltip("Change mouse mode to rotation (R), translation (T) or box selection (B)");
 
         auto mouse_mode_buttons_container = new Widget{ mouse_mode_container };
-        mouse_mode_buttons_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill });
+        mouse_mode_buttons_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill, 0, 6 });
 
         int mouse_mode_icons[MouseMode::MOUSE_MODE_COUNT] = { ENTYPO_ICON_CW, nvg_image_icon(m_nvg_context, translate_cross), ENTYPO_ICON_DOCUMENT_LANDSCAPE };
         int cursors_ids[MouseMode::MOUSE_MODE_COUNT] = { GLFW_ARROW_CURSOR, GLFW_HAND_CURSOR, GLFW_CROSSHAIR_CURSOR };
@@ -262,6 +262,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             m_mouse_mode_buttons[mode] = new Button{ mouse_mode_buttons_container, "", mouse_mode_icons[mode] };
             m_mouse_mode_buttons[mode]->set_flags(Button::Flags::ToggleButton);
             m_mouse_mode_buttons[mode]->set_font_size(20);
+            m_mouse_mode_buttons[mode]->set_fixed_size(Vector2i(32, 26));
             m_mouse_mode_buttons[mode]->set_pushed(mode == m_bsdf_canvas->mouse_mode());
             m_mouse_mode_buttons[mode]->set_callback([this, mode]() {
                 for (int i = 0; i != static_cast<int>(MouseMode::MOUSE_MODE_COUNT); ++i)
@@ -775,7 +776,7 @@ void BSDFApplication::toggle_brdf_options_window()
 
         // view modes
         {
-            new Label{ window, "View Modes" , "sans-bold", 18};
+            new Label{ window, "View options" , "sans-bold", 18};
 
             auto button_container = new Widget{ window };
             button_container->set_layout(new BoxLayout{ Orientation::Horizontal, Alignment::Fill, 0, 1 });
@@ -800,10 +801,10 @@ void BSDFApplication::toggle_brdf_options_window()
                 button->set_change_callback([this, view](bool) { toggle_view(view); });
                 return button;
             };
-            m_view_toggles[DataSample::Views::MESH]   = make_view_button(nvg_image_icon(m_nvg_context, mesh), "Show/Hide mesh for this data sample (M)", DataSample::Views::MESH);
-            m_view_toggles[DataSample::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Toggle points view for this data sample (Shift + P)", DataSample::Views::POINTS);
-            m_view_toggles[DataSample::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/Hide path for this data sample (P)", DataSample::Views::PATH);
-            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/Hide incident angle for this data sample (Shift + I)", DataSample::Views::INCIDENT_ANGLE);
+            m_view_toggles[DataSample::Views::MESH]   = make_view_button(nvg_image_icon(m_nvg_context, mesh), "Show/hide mesh for this material (M)", DataSample::Views::MESH);
+            m_view_toggles[DataSample::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Show/hide sample points for this material (Shift + P)", DataSample::Views::POINTS);
+            m_view_toggles[DataSample::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/hide measurement path for this material (P)", DataSample::Views::PATH);
+            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/hide incident angle for this material (Shift + I)", DataSample::Views::INCIDENT_ANGLE);
 
             // m_view_toggles[DataSample::Views::MESH]->set_chevron_icon;
         }
@@ -853,8 +854,8 @@ void BSDFApplication::toggle_brdf_options_window()
             reprint_footer();
         };
 
-        m_theta_float_box = add_float_box("Theta", curr_i_angle.x(), angle_slider_callback);
-        m_phi_float_box = add_float_box("Phi", curr_i_angle.y(), angle_slider_callback);
+        m_theta_float_box = add_float_box("Elevation:", curr_i_angle.x(), angle_slider_callback);
+        m_phi_float_box = add_float_box("Azimuth:", curr_i_angle.y(), angle_slider_callback);
 
         auto add_text = [window](const string& label, const string& value) {
             auto labels_container = new Widget{window};
@@ -866,7 +867,7 @@ void BSDFApplication::toggle_brdf_options_window()
 
         size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
         string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
-        m_wavelength_label = add_text("Wavelength", wavelength_str);
+        m_wavelength_label = add_text("Wavelength:", wavelength_str);
 
         m_wavelength_slider = new Slider{ window };
         m_wavelength_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->intensity_count()-1 : 1));
@@ -910,10 +911,10 @@ void BSDFApplication::toggle_selection_info_window()
             new Label{ labels_container, value };
         };
         
-        make_selection_info_labels("Points In Selection :", to_string(m_selected_ds->selection_points_count()));
-        make_selection_info_labels("Minimum Intensity :", to_string(m_selected_ds->selection_min_intensity()));
-        make_selection_info_labels("Maximum Intensity :", to_string(m_selected_ds->selection_max_intensity()));
-        make_selection_info_labels("Average Intensity :", to_string(m_selected_ds->selection_average_intensity()));
+        make_selection_info_labels("Points in selection :", to_string(m_selected_ds->selection_points_count()));
+        make_selection_info_labels("Minimum intensity :", to_string(m_selected_ds->selection_min_intensity()));
+        make_selection_info_labels("Maximum intensity :", to_string(m_selected_ds->selection_max_intensity()));
+        make_selection_info_labels("Average intensity :", to_string(m_selected_ds->selection_average_intensity()));
 
         new Label{ window, "Spectral plot", "sans-bold" };
         auto graph = new Graph{ window, "" };
@@ -923,12 +924,12 @@ void BSDFApplication::toggle_selection_info_window()
 
         auto wavelength_range_labels_container = new Widget{ window };
         wavelength_range_labels_container->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 0, 110});
-        auto wavelength_360 = new Label{ wavelength_range_labels_container, "360nm"  };
-        auto wavelength_1000 = new Label{ wavelength_range_labels_container, "1000nm" };
+        auto wavelength_360 = new Label{ wavelength_range_labels_container, "360 nm"  };
+        auto wavelength_1000 = new Label{ wavelength_range_labels_container, "1000 nm" };
         wavelength_360->set_font_size(13);
         wavelength_1000->set_font_size(13);
 
-        window->set_position(Vector2i{width() - 200, 20});
+        window->set_position(Vector2i{width() - 210, 20});
         return window;
     });
 }
