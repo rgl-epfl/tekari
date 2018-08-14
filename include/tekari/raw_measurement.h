@@ -33,6 +33,10 @@ public:
     inline const Row phi() const          { return m_data[1]; }
     inline const Row luminance() const    { return m_data[2]; }
 
+    inline void set_theta(size_t index, float value)        { m_data[0][index] = value; }
+    inline void set_phi(size_t index, float value)          { m_data[1][index] = value; }
+    inline void set_luminance(size_t index, float value)    { m_data[2][index] = value; }
+
     inline Row intensity(size_t i)                { return m_data[i+3]; }
     inline const Row intensity(size_t i) const    { return m_data[i+3]; }
 

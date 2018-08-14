@@ -117,9 +117,9 @@ void load_standard_data_sample(
             }
             read_vertices.insert(p2d);
             Vector2f transformed_point = hemisphere_to_disk(p2d);
-            raw_measurement.theta()[n_points] = theta;
-            raw_measurement.phi()[n_points] = phi;
-            raw_measurement.luminance()[n_points] = luminance;
+            raw_measurement.set_theta(n_points, theta);
+            raw_measurement.set_phi(n_points, phi);
+            raw_measurement.set_luminance(n_points, luminance);
             V2D[n_points] = transformed_point;
             ++n_points;
         }
@@ -132,10 +132,10 @@ void load_spectral_data_sample(
     Metadata& metadata
 )
 {
-    int n_wavelengths = metadata.data_points_per_loop();
+    size_t n_wavelengths = static_cast<size_t>(metadata.data_points_per_loop());
 
     std::unordered_set<Vector2f, Vector2f_hash> read_vertices;
-    vector<vector<float>> raw_m;
+    vector<vector<float>> raw_m(n_wavelengths + 3);
 
 
     size_t line_number = 0;
@@ -162,28 +162,27 @@ void load_spectral_data_sample(
             read_vertices.insert(angles);
 
             V2D.push_back(hemisphere_to_disk(angles));
-            raw_m.push_back(vector<float>{});
-            raw_m[n_points].resize(n_wavelengths + 3, 0);
-            raw_m[n_points][0] = angles[0];
-            raw_m[n_points][1] = angles[1];
 
-            for (int i = 0; i < n_wavelengths; ++i)
+            raw_m[n_points].resize(n_wavelengths + 3, 0);
+
+            raw_m[0].push_back(angles[0]);
+            raw_m[1].push_back(angles[1]);
+            for (size_t i = 0; i < n_wavelengths; ++i)
             {
-                line_stream >> raw_m[n_points][i+3];
+                float intensity;
+                line_stream >> intensity;
+                raw_m[i+3].push_back(intensity);
             }
-            raw_m[n_points][2] = raw_m[n_points][3];
+            raw_m[2].push_back(raw_m[3][n_points]);     // TODO: compute luminance
             ++n_points;
         }
     }
     metadata.set_points_in_file(n_points);
 
     raw_measurement.resize(n_wavelengths, n_points);
-    for (size_t i = 0; i < size_t(n_wavelengths+3); ++i)
+    for (size_t i = 0; i < n_wavelengths+3; ++i)
     {
-        for (size_t j = 0; j < n_points; ++j)
-        {
-            raw_measurement[i][j] = raw_m[j][i];
-        }
+        memcpy(raw_measurement[i].data(), raw_m[i].data(), n_points);
     }
 }
 
