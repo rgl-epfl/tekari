@@ -72,64 +72,64 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
             return desc_widget;
         };
 
-        auto mouse_modes = add_shortcut_section("MouseModes", "Changes the mouse buttons mapping, hover on each mode to see what it does.");
-        add_row(mouse_modes, "R", "Rotation Mode")->set_tooltip("(Left -> Rotate, Middle -> Translate, Right -> Select)");
-        add_row(mouse_modes, "T", "Translation Mode")->set_tooltip("(Left -> Translate, Middle -> Select, Right -> Rotate)");
-        add_row(mouse_modes, "B", "Box Selection Mode")->set_tooltip("(Left -> Select, Middle -> Rotate, Right -> Translate)");
+        auto mouse_modes = add_shortcut_section("Mouse modes", "Changes the mouse button mapping, hover on each mode to see what it does.");
+        add_row(mouse_modes, "R", "Rotation mode")->set_tooltip("(Left -> Rotate, Middle -> Translate, Right -> Select)");
+        add_row(mouse_modes, "T", "Translation mode")->set_tooltip("(Left -> Translate, Middle -> Select, Right -> Rotate)");
+        add_row(mouse_modes, "B", "Box Selection mode")->set_tooltip("(Left -> Select, Middle -> Rotate, Right -> Translate)");
 
-        auto move_controls = add_shortcut_section("Move Controls");
-        add_row(move_controls, "Rotate Button Drag", "Rotate Data Sample");
-        add_row(move_controls, "Translate Button Drag", "Translate Data Sample");
-        add_row(move_controls, "Scroll In / Out", "Zoom In / Out");
-        add_row(move_controls, "C", "Snap To Selection Center");
+        auto move_controls = add_shortcut_section("Move controls");
+        add_row(move_controls, "Rotate button drag", "Rotate BSDF visualization");
+        add_row(move_controls, "Translate button drag", "Translate BSDF visualization");
+        add_row(move_controls, "Mouse wheel", "Zoom in / out");
+        add_row(move_controls, "C", "Snap to selection center");
 
-        auto file_loading = add_shortcut_section("File Loading");
+        auto file_loading = add_shortcut_section("File loading");
 #if !defined(EMSCRIPTEN)
-        add_row(file_loading, COMMAND + "+O", "Open Data Samples");
-        add_row(file_loading, COMMAND + "+S", "Save Data in the same format");
-        add_row(file_loading, COMMAND + "+P", "Save Screenshot of Data");
+        add_row(file_loading, COMMAND + "+O", "Open material file");
+        add_row(file_loading, COMMAND + "+S", "Save data in the same format");
+        add_row(file_loading, COMMAND + "+P", "Save a screenshot");
 #endif
-        add_row(file_loading, "Delete", "Close Selected Data Sample");
+        add_row(file_loading, "Delete", "Remove the loaded material");
 
-        auto data_sample_view_options = add_shortcut_section("Data Sample View Options", "For the currently selected datasample");
-        add_row(data_sample_view_options, "L", "Toggle Logarithmic View");
-        add_row(data_sample_view_options, "P", "Show/Hide Path");
-        add_row(data_sample_view_options, "Shift+P", "Show/Hide All Points");
-        add_row(data_sample_view_options, "Shift+I", "Show/Hide Incident Angle");
+        auto data_sample_view_options = add_shortcut_section("Data Sample View Options", "For the currently selected material");
+        add_row(data_sample_view_options, "L", "Toggle logarithmic view");
+        add_row(data_sample_view_options, "P", "Show/hide measurement path");
+        add_row(data_sample_view_options, "Shift+P", "Show/hide sample points");
+        add_row(data_sample_view_options, "Shift+I", "Show/hide incident angle");
 
 
         auto view_options = add_shortcut_section("View Options");
-        add_row(view_options, "G", "Show/Hide Grid");
-        add_row(view_options, "A", "Show/Hide Center Axis");
-        add_row(view_options, "Shift+G", "Show/Hide Grid Degrees");
-        add_row(view_options, "Shift+S", "Use/Un-use Shadows");
-        add_row(view_options, "O or KP_5 or Alt+5", "Enable/Disable Orthographic View");
-        add_row(view_options, "KP_1 or Alt+1", "Front View");
-        add_row(view_options, "KP_3 or Alt+3", "Left View");
-        add_row(view_options, "KP_7 or Alt+7", "Top View");
-        add_row(view_options, COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Back View");
-        add_row(view_options, COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Right View");
-        add_row(view_options, COMMAND + "+KP_7 or " + COMMAND + "+Alt+7", "Bottom View");
-        add_row(view_options, "F1", "Show/Hide all the windows (to make screenshots cleaner)");
+        add_row(view_options, "G", "Show/hide crid");
+        add_row(view_options, "A", "Show/hide center axis");
+        add_row(view_options, "Shift+G", "Show/hide grid angles");
+        add_row(view_options, "Shift+S", "Use/Un-use shadows");
+        add_row(view_options, "O or KP_5 or Alt+5", "Enable/Disable orthographic view");
+        add_row(view_options, "KP_1 or Alt+1", "Front view");
+        add_row(view_options, "KP_3 or Alt+3", "Left view");
+        add_row(view_options, "KP_7 or Alt+7", "Top view");
+        add_row(view_options, COMMAND + "+KP_1 or " + COMMAND + "+Alt+1", "Back view");
+        add_row(view_options, COMMAND + "+KP_3 or " + COMMAND + "+Alt+3", "Right view");
+        add_row(view_options, COMMAND + "+KP_7 or " + COMMAND + "+Alt+7", "Bottom view");
+        add_row(view_options, "F1", "Show/hide windows (for screenshots)");
 
-        auto data_selection = add_shortcut_section("Data Sample Selection");
-        add_row(data_selection, "1...9", "Select N-th Data Sample");
-        add_row(data_selection, "Down or S / Up or W", "Select Next / Previous Data Sample");
-        add_row(data_selection, "Left Click", "Select Hovered Data Sample");
+        auto data_selection = add_shortcut_section("Loaded material panel");
+        add_row(data_selection, "1...9", "Select N-th material");
+        add_row(data_selection, "Down or S / Up or W", "Select next / previous material");
+        add_row(data_selection, "Left Click", "Select material below mouse cursor");
 
-        auto data_edition = add_shortcut_section("Data Selection/Editing");
-        add_row(data_edition, "Select Button Drag", "Select Data Points In Region");
-        add_row(data_edition, "Shift + Select Button Drag", "Add Points To Current Selection");
-        add_row(data_edition, "Alt + Select Button Drag", "Remove Points To Current Selection");
-        add_row(data_edition, "Select Button Click", "Select Closest Point (In Range)");
-        add_row(data_edition, "KP_+ / KP_-", "Move Selected Points Up/Down Allong Path");
+        auto data_edition = add_shortcut_section("Data selection/editing");
+        add_row(data_edition, "Select Button Drag", "Select data points in region");
+        add_row(data_edition, "Shift + Select Button Drag", "Add points to current selection");
+        add_row(data_edition, "Alt + Select Button Drag", "Remove points from current selection");
+        add_row(data_edition, "Select Button Click", "Select closest point (in range)");
+        add_row(data_edition, "KP_+ / KP_-", "Move selected points up/down along path");
         add_row(data_edition, "Shift+H / Shift+L", "Select highest/lowest point of selection");
-        add_row(data_edition, "Escape", "Deselect All Points");
+        add_row(data_edition, "Escape", "Deselect all points");
 
         auto ui = add_shortcut_section("Interface");
-        add_row(ui, "H", "Show Help (this Window)");
-        add_row(ui, "I", "Show Metadata");
-        add_row(ui, "M", "Chose Color Map");
+        add_row(ui, "H", "Show help (this Window)");
+        add_row(ui, "I", "Show metadata");
+        add_row(ui, "M", "Chose color map");
 #if !defined(EMSCRIPTEN)
         add_row(ui, "Q", "Quit");
 #endif

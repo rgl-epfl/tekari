@@ -45,7 +45,7 @@ void BSDFDataSample::set_intensity_index(size_t intensity_index)
 
 void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 {
-    cout << std::setw(50) << std::left << "Setting incident angle ..\n";
+    cout << std::setw(50) << std::left << "Setting incident angle ..";
     Timer<> timer;
 
     vector<float> luminance;
@@ -55,6 +55,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
         cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
         return;
     }
+    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 
     Index n_intensities = m_brdf.wavelengths().size() + 1;     // account for luminance
     Index n_sample_points = wos.size();
@@ -100,8 +101,6 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
     set_intensity_index(m_intensity_index);
     link_data_to_shaders();
-
-    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
 TEKARI_NAMESPACE_END

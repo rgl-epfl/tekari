@@ -38,10 +38,11 @@ public:
                 max = std::max(max, s[i]);
             }
         }
+        float normalization = 0.9f / max;
         // normalize result
         for(size_t i = 0; i < result.size(); ++i)
         {
-            result[i] /= max;
+            result[i] *= normalization;
         }
         return result;
     }
