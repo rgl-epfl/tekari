@@ -90,7 +90,7 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
     if (down)
         request_focus();
 
-    if (modifiers & SYSTEM_COMMAND_MOD && button == GLFW_MOUSE_BUTTON_1)
+    if (modifiers & SYSTEM_COMMAND_MOD && button == GLFW_MOUSE_BUTTON_1 && down)
     {
         m_update_incident_angle_callback(get_incident_angle(p));
         return true;
