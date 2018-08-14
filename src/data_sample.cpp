@@ -228,10 +228,12 @@ void DataSample::delete_selected_points()
     std::fill(m_cache_mask.begin(), m_cache_mask.end(), false);
     set_intensity_index(m_intensity_index);
 }
+
 size_t DataSample::count_selected_points() const
 {
     return tekari::count_selected_points(m_selected_points);
 }
+
 void DataSample::recompute_data()
 {
     triangulate_data(m_f, m_v2d);

@@ -125,9 +125,7 @@ void select_all_points(VectorXf& selected_points)
 {
     cout << std::setw(50) << std::left << "Selecting all points .. ";
     Timer<> timer;
-
     set_all_points(selected_points, SELECTED_FLAG);
-
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
@@ -135,9 +133,7 @@ void deselect_all_points(VectorXf& selected_points)
 {
     cout << std::setw(50) << std::left << "Deselecting all points .. ";
     Timer<> timer;
-    
     set_all_points(selected_points, NOT_SELECTED_FLAG);
-    
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
@@ -175,6 +171,9 @@ void delete_selected_points(
 
     selection_info = PointsStats();
 
+    size_t remaining_points = selected_points.size() - count_selected_points(selected_points);
+    RawMeasurement raw_temp(raw_measurement.n_wavelengths(), remaining_points);
+
     Index last_valid = 0;
     for (Index i = 0; i < selected_points.size(); ++i)
     {
@@ -184,7 +183,8 @@ void delete_selected_points(
             {
                 // move undeleted point to last valid position
                 V2D[last_valid] = V2D[i];
-                raw_measurement[last_valid] = raw_measurement[i];
+                for (size_t j = 0; j < raw_measurement.n_wavelengths() + 3; ++j)
+                    raw_temp[j][last_valid] = raw_measurement[j][i];
             }
             ++last_valid;
         }
@@ -192,7 +192,9 @@ void delete_selected_points(
 
     // resize vectors
     V2D.resize(last_valid);
-    raw_measurement.resize(last_valid, raw_measurement.n_wavelengths());
+    raw_measurement.resize(raw_measurement.n_wavelengths(), last_valid);
+    memcpy(raw_measurement.data(), raw_temp.data(), raw_temp.size() * sizeof(float));
+
     selected_points.resize(last_valid);
     set_all_points(selected_points, NOT_SELECTED_FLAG);
 

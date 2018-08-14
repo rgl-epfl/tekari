@@ -1266,6 +1266,8 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
     wos_out.reserve(max_points);
     luminance_out.reserve(max_points);
 
+    float min_luminance = std::numeric_limits<float>::max();
+
     if (wi.z() <= 0)
         return false;
 
@@ -1320,7 +1322,9 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
         wos_out.push_back(wo);
         m_scales.push_back(scale);
 
-        luminance_out.push_back(m_data->luminance.eval(sample, m_params) * scale);
+        float luminance = m_data->luminance.eval(sample, m_params) * scale;
+        min_luminance = std::min(min_luminance, luminance);
+        luminance_out.push_back(luminance);
     };
 
     for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points
@@ -1339,16 +1343,14 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
     {
         float phi = 2 * Pi * j / phi_n;
         wos_out.push_back({cos(phi), sin(phi), 0.0f});
-        luminance_out.push_back(0.0f);
+        luminance_out.push_back(min_luminance);
     }
     m_n_points = wos_out.size();
     return true;
 }
 
-void BRDF::sample_state(size_t wavelength_index, std::vector<float>& frs_out) const
+void BRDF::sample_state(size_t wavelength_index, float* frs_out) const
 {
-    frs_out.resize(m_n_points);
-
     float min_fr = std::numeric_limits<float>::max();
 
     for (size_t i = 0; i < m_samples.size(); ++i)

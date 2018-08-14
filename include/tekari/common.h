@@ -155,40 +155,44 @@ inline Matrix3Xf get_3d_points(const Matrix2Xf& V2D, const MatrixXXf& H, size_t 
     return result;
 }
 
-inline Vector2f hemisphere_to_disk(const Vector2f& i)
+template<typename Vector2>
+inline Vector2 hemisphere_to_disk(const Vector2& i)
 {
     float rad_v = TO_RAD(i[1]);
-    return Vector2f(i[0] * cos(rad_v) / 90.0f,
+    return Vector2( i[0] * cos(rad_v) / 90.0f,
                     i[0] * sin(rad_v) / 90.0f );
 }
 
-inline Vector3f hemisphere_to_vec3(const Vector2f& i)
+template<typename Vector3, typename Vector2>
+inline Vector3 hemisphere_to_vec3(const Vector2& i)
 {
 
     float   rad_u = TO_RAD(i[0]),
             rad_v = TO_RAD(i[1]),
             sin_u = sin(rad_u);
-    return Vector3f(
+    return Vector3(
             sin_u * sin(rad_v),
             sin_u * cos(rad_v),
             cos(rad_u)
         );
 }
 
-inline Vector2f vec3_to_hemisphere(const Vector3f& wi)
+template<typename Vector2, typename Vector3>
+inline Vector2 vec3_to_hemisphere(const Vector3& wi)
 {
-    return Vector2f(
+    return Vector2(
             TO_DEG(acos(wi[2])),
             TO_DEG(atan2(wi[1], wi[0]))
         );
 }
 
-inline Vector2f vec3_to_disk(const Vector3f& wi)
+template<typename Vector2, typename Vector3>
+inline Vector2 vec3_to_disk(const Vector3& wi)
 {
-    float   norm_v = enoki::norm(wi),
+    float   norm_v = sqrt(wi[0]*wi[0] + wi[1]*wi[1] + wi[2]*wi[2]),
             acos_v = TO_DEG(acos(wi[2] / norm_v)),
             atan_v = atan2(wi[0], wi[1]);
-    return Vector2f(acos_v * cos(atan_v) / 90.0f,
+    return Vector2( acos_v * cos(atan_v) / 90.0f,
                     acos_v * sin(atan_v) / 90.0f );
 }
 

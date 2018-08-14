@@ -46,6 +46,7 @@ void update_selection_stats(
     Timer<> timer;
 
     PointsStats::Slice& slice = selection_stats[intensity_index];
+    RawMeasurement::Row row = raw_measurement[intensity_index+2];
 
     for (Index i = 0; i < selected_points.size(); ++i)
     {
@@ -53,8 +54,8 @@ void update_selection_stats(
         {
             ++selection_stats.points_count;
 
-            points_stats_add_intensity(slice, raw_measurement[i][intensity_index+2], i);
-            slice.average_intensity  += raw_measurement[i][intensity_index+2];
+            points_stats_add_intensity(slice, row[i], i);
+            slice.average_intensity  += row[i];
             slice.average_point      += get_3d_point(V2D, H[intensity_index], i);
             slice.average_log_point  += get_3d_point(V2D, LH[intensity_index], i);
         }
@@ -79,8 +80,11 @@ void compute_min_max_intensities(
     cout << std::setw(50) << std::left << "Computing minimum/maximum intensities .. ";
     Timer<> timer;
 
+    PointsStats::Slice& slice = points_stats[intensity_index];
+    RawMeasurement::Row row = raw_measurement[intensity_index+2];
+
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
-        points_stats_add_intensity(points_stats[intensity_index], raw_measurement[i][intensity_index+2], i);
+        points_stats_add_intensity(slice, row[i], i);
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
@@ -98,11 +102,12 @@ void update_points_stats(
     Timer<> timer;
 
     PointsStats::Slice& slice = points_stats[intensity_index];
+    RawMeasurement::Row row = raw_measurement[intensity_index+2];
 
     points_stats.points_count = raw_measurement.n_sample_points();
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
-        slice.average_intensity += raw_measurement[i][intensity_index+2];
+        slice.average_intensity += row[i];
         slice.average_point += get_3d_point(V2D, H[intensity_index], i);
         slice.average_log_point += get_3d_point(V2D, LH[intensity_index], i);
     }

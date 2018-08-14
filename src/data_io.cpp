@@ -88,7 +88,7 @@ void load_standard_data_sample(
     std::unordered_set<Vector2f, Vector2f_hash> read_vertices;
 
     V2D.resize(metadata.points_in_file());
-    raw_measurement.resize(metadata.points_in_file(), 0);
+    raw_measurement.resize(0, metadata.points_in_file());
 
     size_t line_number = 0;
     size_t n_points = 0;
@@ -117,9 +117,9 @@ void load_standard_data_sample(
             }
             read_vertices.insert(p2d);
             Vector2f transformed_point = hemisphere_to_disk(p2d);
-            raw_measurement[n_points].set_theta(theta);
-            raw_measurement[n_points].set_phi(phi);
-            raw_measurement[n_points].set_luminance(luminance);
+            raw_measurement.theta()[n_points] = theta;
+            raw_measurement.phi()[n_points] = phi;
+            raw_measurement.luminance()[n_points] = luminance;
             V2D[n_points] = transformed_point;
             ++n_points;
         }
@@ -177,10 +177,13 @@ void load_spectral_data_sample(
     }
     metadata.set_points_in_file(n_points);
 
-    raw_measurement.resize(n_points, n_wavelengths);
-    for (size_t i = 0; i < n_points; ++i)
+    raw_measurement.resize(n_wavelengths, n_points);
+    for (size_t i = 0; i < size_t(n_wavelengths+3); ++i)
     {
-        memcpy(raw_measurement[i].data(), raw_m[i].data(), (n_wavelengths + 3) * sizeof(float));
+        for (size_t j = 0; j < n_points; ++j)
+        {
+            raw_measurement[i][j] = raw_m[j][i];
+        }
     }
 }
 
@@ -205,10 +208,9 @@ void save_data_sample(
     //!feof(dataset_file) && !ferror(dataset_file))
     for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
-        RawMeasurement::SamplePoint sample_point = raw_measurement[i];
         for (Index j = 0; j < raw_measurement.n_wavelengths() + 3; ++j)
         {
-            fprintf(dataset_file, "%lf ", sample_point[j]);
+            fprintf(dataset_file, "%lf ", raw_measurement[j][i]);
         }
         fprintf(dataset_file, "\n");
     }

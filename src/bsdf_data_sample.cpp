@@ -30,7 +30,7 @@ void BSDFDataSample::set_intensity_index(size_t intensity_index)
     {
         m_cache_mask[m_intensity_index] = true;
 
-        compute_samples();
+        m_brdf.sample_state(m_intensity_index-1, m_raw_measurement[m_intensity_index+2].data());
         compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
         compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_lh, m_intensity_index);
 
@@ -48,10 +48,9 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     cout << std::setw(50) << std::left << "Setting incident angle ..\n";
     Timer<> timer;
 
-
     vector<float> luminance;
     vector<powitacq::Vector3f> wos;
-    if (!m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3(incident_angle)), m_n_theta, m_n_phi, luminance, wos))
+    if (!m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3<Vector3f>(incident_angle)), m_n_theta, m_n_phi, luminance, wos))
     {
         cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
         return;
@@ -60,7 +59,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     Index n_intensities = m_brdf.wavelengths().size() + 1;     // account for luminance
     Index n_sample_points = wos.size();
 
-    m_raw_measurement.resize(n_sample_points, n_intensities);
+    m_raw_measurement.resize(n_intensities, n_sample_points);
     m_v2d.resize(n_sample_points);
 
     m_h.resize (n_intensities, n_sample_points);
@@ -82,12 +81,11 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
     for (size_t i = 0; i < wos.size(); ++i)
     {
-        RawMeasurement::SamplePoint sample_point = m_raw_measurement[i];
-        Vector2f outgoing_angle = vec3_to_hemisphere(powitacq_to_enoki_vec3(wos[i]));
-        sample_point.set_theta(outgoing_angle.x());
-        sample_point.set_phi(outgoing_angle.y());
-        sample_point.set_luminance(luminance[i]);
-        m_v2d[i] = vec3_to_disk(powitacq_to_enoki_vec3(wos[i]));
+        Vector2f outgoing_angle = vec3_to_hemisphere<Vector2f>(wos[i]);
+        m_raw_measurement.theta()[i] = outgoing_angle.x();
+        m_raw_measurement.phi()[i] = outgoing_angle.y();
+        m_raw_measurement.luminance()[i] = luminance[i];
+        m_v2d[i] = vec3_to_disk<Vector2f>(wos[i]);
     }
 
     triangulate_data(m_f, m_v2d);
@@ -102,22 +100,6 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
     set_intensity_index(m_intensity_index);
     link_data_to_shaders();
-
-    cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
-}
-
-void BSDFDataSample::compute_samples()
-{
-    cout << std::setw(50) << std::left << "Sample brdf .. ";
-    Timer<> timer;
-
-    vector<float> frs;
-    m_brdf.sample_state(m_intensity_index-1, frs);
-
-    for (size_t i = 0; i < frs.size(); ++i)
-    {
-        m_raw_measurement[i][m_intensity_index+2] = frs[i];
-    }
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }

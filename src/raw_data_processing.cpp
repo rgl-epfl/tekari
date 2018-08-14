@@ -106,14 +106,16 @@ void compute_normalized_heights(
 
     float min_log_intensity = log(min_intensity + correction_factor);
     float max_log_intensity = log(max_intensity + correction_factor);
+
+    RawMeasurement::Row row = raw_measurement[intensity_index+2];
     // normalize intensities
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)H.n_cols(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t>& range)
         {
             for (uint32_t i = range.begin(); i < range.end(); ++i)
             {
-                h_row[i]     = (raw_measurement[i][intensity_index+2] - min_intensity) / (max_intensity - min_intensity);
-                lh_row[i]    = (log(raw_measurement[i][intensity_index+2] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
+                h_row[i]     = (row[i] - min_intensity) / (max_intensity - min_intensity);
+                lh_row[i]    = (log(row[i] + correction_factor) - min_log_intensity) / (max_log_intensity - min_log_intensity);
             }
         }
     );
