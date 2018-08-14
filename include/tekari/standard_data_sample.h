@@ -10,7 +10,7 @@ class StandardDataSample : public DataSample
 public:
     StandardDataSample(const string &file_path)
     {
-        load_data_sample(file_path, m_raw_measurement, m_v2d, m_selected_points, m_metadata);
+        load_data_sample(file_path, m_raw_measurement, m_v2d, m_metadata);
         recompute_data();
     }
 
@@ -23,21 +23,35 @@ public:
             m_cache_mask[m_intensity_index] = true;
 
             compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
-            compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_lh, m_intensity_index);
-            update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
-            m_selection_stats.reset(m_raw_measurement.n_wavelengths() + 1);
-            update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
-            compute_normals(m_f, m_v2d, m_h, m_lh, m_n, m_ln, m_intensity_index);
+            compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_intensity_index);
+            update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, m_intensity_index);
+            update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_intensity_index);
+            compute_normals(m_f, m_v2d, m_h, m_n, m_intensity_index);
         }
         update_shaders_data();
-        m_selection_axis.set_origin(selection_center());
+    }
+
+    virtual void delete_selected_points() override
+    {
+        tekari::delete_selected_points(m_selected_points, m_raw_measurement, m_v2d, m_selection_stats, m_metadata);
+        recompute_data();
+        link_data_to_shaders();
+
+        // clear mask
+        std::fill(m_cache_mask.begin(), m_cache_mask.end(), false);
+        set_intensity_index(m_intensity_index);
+    }
+
+    virtual void save(const string& path) override
+    {
+        save_data_sample(path, m_raw_measurement, m_metadata);
     }
 
     virtual void init() override
     {
         DataSample::init();
         link_data_to_shaders();
-        set_intensity_index(n_wavelengths() / 2);
+        set_intensity_index(0);
     }
 };
 

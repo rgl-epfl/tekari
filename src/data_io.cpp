@@ -32,7 +32,6 @@ void load_data_sample(
     const string& file_name,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
-    VectorXf& selected_points,
     Metadata& metadata
 )
 {
@@ -70,8 +69,6 @@ void load_data_sample(
             {
                 load_standard_data_sample(file, raw_measurement, V2D, metadata);
             }
-
-            selected_points.assign(metadata.points_in_file(), NOT_SELECTED_FLAG);
             break;
         }
     }
@@ -163,8 +160,6 @@ void load_spectral_data_sample(
 
             V2D.push_back(hemisphere_to_disk(angles));
 
-            raw_m[n_points].resize(n_wavelengths + 3, 0);
-
             raw_m[0].push_back(angles[0]);
             raw_m[1].push_back(angles[1]);
             for (size_t i = 0; i < n_wavelengths; ++i)
@@ -182,7 +177,7 @@ void load_spectral_data_sample(
     raw_measurement.resize(n_wavelengths, n_points);
     for (size_t i = 0; i < n_wavelengths+3; ++i)
     {
-        memcpy(raw_measurement[i].data(), raw_m[i].data(), n_points);
+        memcpy(raw_measurement[i].data(), raw_m[i].data(), n_points * sizeof(float));
     }
 }
 
@@ -205,9 +200,9 @@ void save_data_sample(
         fprintf(dataset_file, "%s\n", line.c_str());
 
     //!feof(dataset_file) && !ferror(dataset_file))
-    for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
+    for (size_t i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
-        for (Index j = 0; j < raw_measurement.n_wavelengths() + 3; ++j)
+        for (size_t j = 0; j < raw_measurement.n_wavelengths() + 3; ++j)
         {
             fprintf(dataset_file, "%lf ", raw_measurement[j][i]);
         }

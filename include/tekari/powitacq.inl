@@ -1327,7 +1327,7 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
         luminance_out.push_back(luminance);
     };
 
-    for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points
+    for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points at (0, 0)
     {
         float v = float(theta) / theta_n;
         for (float phi = 0; phi < phi_n; ++phi)

@@ -61,10 +61,10 @@ public:
     inline bool has_selection()             const { return m_selection_stats.points_count > 0; }
     inline size_t selection_points_count()  const { return m_selection_stats.points_count; }
 
-    inline size_t intensity_count()            const { return m_points_stats.intensity_count; }
-    inline size_t points_count()            const { return m_points_stats.points_count; }
-    inline size_t n_wavelengths()          const { return m_raw_measurement.n_wavelengths(); }
-    inline float average_intensity()        const { return m_points_stats[m_intensity_index].average_intensity; }
+    inline size_t intensity_count()  const { return m_points_stats.intensity_count; }
+    inline size_t points_count()     const { return m_points_stats.points_count; }
+    inline size_t n_wavelengths()    const { return m_raw_measurement.n_wavelengths(); }
+    inline float average_intensity() const { return m_points_stats[m_intensity_index].average_intensity; }
 
     inline float selection_min_intensity()      const { return m_selection_stats[m_intensity_index].min_intensity; }
     inline float selection_max_intensity()      const { return m_selection_stats[m_intensity_index].max_intensity; }
@@ -77,20 +77,18 @@ public:
     void select_all_points();
     void deselect_all_points();
     void move_selection_along_path(bool up);
-    void delete_selected_points();
     size_t count_selected_points() const;
     void recompute_data();
 
-    void save(const string& file_path);
+    virtual void delete_selected_points() {}
+    virtual void save(const string& file_path) {}
 
     // Selection
     inline Vector3f selection_center() const
     {
-        return  has_selection() ?
-                    m_display_as_log?
-                        m_selection_stats[m_intensity_index].average_log_point :
-                        m_selection_stats[m_intensity_index].average_point :
-                    Vector3f{ 0,0,0 };
+        if (!has_selection())
+            return Vector3f{0,0,0};
+        return m_selection_stats[m_intensity_index].average_points[m_display_as_log];
     }
     void update_point_selection();
 
@@ -99,35 +97,34 @@ public:
     inline void set_dirty(bool dirty)    { m_dirty = dirty; }
 
     inline size_t intensity_index() const { return m_intensity_index; }
-    virtual void set_intensity_index(size_t displayed_wavelength) {}
-
     inline Vector2f incident_angle() const { return m_metadata.incident_angle(); }
+
+    virtual void set_intensity_index(size_t displayed_wavelength) {}
     virtual void set_incident_angle(const Vector2f& i) {}
 
     virtual inline string wavelength_str() { return string("0 nm"); }
     virtual vector<float> get_selection_spectrum() { return vector<float>(); }
 
 private:
-    inline const MatrixXXf::Row     curr_h() const  { return m_display_as_log ? m_lh[m_intensity_index] : m_h[m_intensity_index]; }
-    inline const Matrix4XXf::Row    curr_n() const  { return m_display_as_log ? m_ln[m_intensity_index] : m_n[m_intensity_index]; }
-    inline MatrixXXf::Row           curr_h()        { return m_display_as_log ? m_lh[m_intensity_index] : m_h[m_intensity_index]; }
-    inline Matrix4XXf::Row          curr_n()        { return m_display_as_log ? m_ln[m_intensity_index] : m_n[m_intensity_index]; }
+    inline const MatrixXXf::Row     curr_h() const  { return m_h[m_display_as_log][m_intensity_index]; }
+    inline const Matrix4XXf::Row    curr_n() const  { return m_n[m_display_as_log][m_intensity_index]; }
+    inline MatrixXXf::Row           curr_h()        { return m_h[m_display_as_log][m_intensity_index]; }
+    inline Matrix4XXf::Row          curr_n()        { return m_n[m_display_as_log][m_intensity_index]; }
 
 protected:
-    // Raw sample data
-    Matrix3Xu   m_f;                // face indices
+    Matrix3Xi   m_f;                // face indices
     Matrix2Xf   m_v2d;              // 2d coordinates (x,z)
-    MatrixXXf   m_h;                // heights per point (one for each wavelength)
-    MatrixXXf   m_lh;               // logarithmic heights per point (one for each wavelength)
-    Matrix4XXf  m_n;                // normals per point (one for each wavelength)
-    Matrix4XXf  m_ln;               // logarithmic normals per point (one for each wavelength)
-    Mask        m_cache_mask;       // bit map indicating whether some intensity data is valid
+    MatrixXXf   m_h[2];             // heights (standard and log) per point (one for luminance and one for each wavelength)
+    Matrix4XXf  m_n[2];             // normals (standard and log) per point (one for luminance and one for each wavelength)
     VectorXu    m_path_segments;
-    size_t      m_intensity_index;
+    Mask        m_cache_mask;       // bit map indicating whether some intensity data is valid
+    size_t      m_intensity_index;  // 0 correspond to luminance, otherwise to a given wavelength
     // Untransformed data
-    RawMeasurement    m_raw_measurement;    // point0 : theta, phi, intensity0, intensity1, ...
-                                            // point1 : theta, phi, intensity0, intensity1, ...
-                                            // point2 : theta, phi, intensity0, intensity1, ...
+    RawMeasurement    m_raw_measurement;    
+                                            // theta0,      theta1,     theta2, ...
+                                            // phi0,        phi1,       phi2, ...
+                                            // luminance0,  luminance1, luminance2, ...
+                                            // intensity0,  intensity1, intensity2, ...
                                             // ...
     PointsStats m_points_stats;
 

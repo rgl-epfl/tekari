@@ -37,8 +37,7 @@ void update_selection_stats(
     const VectorXf& selected_points,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H,
-    const MatrixXXf& LH,
+    const MatrixXXf H[],
     size_t intensity_index
 )
 {
@@ -48,7 +47,7 @@ void update_selection_stats(
     PointsStats::Slice& slice = selection_stats[intensity_index];
     RawMeasurement::Row row = raw_measurement[intensity_index+2];
 
-    for (Index i = 0; i < selected_points.size(); ++i)
+    for (size_t i = 0; i < selected_points.size(); ++i)
     {
         if (SELECTED(selected_points[i]))
         {
@@ -56,16 +55,16 @@ void update_selection_stats(
 
             points_stats_add_intensity(slice, row[i], i);
             slice.average_intensity  += row[i];
-            slice.average_point      += get_3d_point(V2D, H[intensity_index], i);
-            slice.average_log_point  += get_3d_point(V2D, LH[intensity_index], i);
+            slice.average_points[0]  += get_3d_point(V2D, H[0][intensity_index], i);
+            slice.average_points[1]  += get_3d_point(V2D, H[1][intensity_index], i);
         }
     }
     if (selection_stats.points_count > 1)
     {
         float scale = 1.0f / selection_stats.points_count;
         slice.average_intensity *= scale;
-        slice.average_point *= scale;
-        slice.average_log_point *= scale;
+        slice.average_points[0] *= scale;
+        slice.average_points[1] *= scale;
     }
     
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
@@ -83,7 +82,7 @@ void compute_min_max_intensities(
     PointsStats::Slice& slice = points_stats[intensity_index];
     RawMeasurement::Row row = raw_measurement[intensity_index+2];
 
-    for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
+    for (size_t i = 0; i < raw_measurement.n_sample_points(); ++i)
         points_stats_add_intensity(slice, row[i], i);
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
@@ -93,8 +92,7 @@ void update_points_stats(
     PointsStats& points_stats,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H,
-    const MatrixXXf& LH,
+    const MatrixXXf H[],
     size_t intensity_index
 )
 {
@@ -105,19 +103,19 @@ void update_points_stats(
     RawMeasurement::Row row = raw_measurement[intensity_index+2];
 
     points_stats.points_count = raw_measurement.n_sample_points();
-    for (Index i = 0; i < raw_measurement.n_sample_points(); ++i)
+    for (size_t i = 0; i < raw_measurement.n_sample_points(); ++i)
     {
         slice.average_intensity += row[i];
-        slice.average_point += get_3d_point(V2D, H[intensity_index], i);
-        slice.average_log_point += get_3d_point(V2D, LH[intensity_index], i);
+        slice.average_points[0] += get_3d_point(V2D, H[0][intensity_index], i);
+        slice.average_points[1] += get_3d_point(V2D, H[1][intensity_index], i);
     }
     
     if (points_stats.points_count != 0)
     {
         float scale = 1.0f / points_stats.points_count;
         slice.average_intensity *= scale;
-        slice.average_point *= scale;
-        slice.average_log_point *= scale;
+        slice.average_points[0] *= scale;
+        slice.average_points[1] *= scale;
     }
 
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;

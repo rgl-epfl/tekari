@@ -82,19 +82,16 @@ using nanogui::Matrix4f;
 using nanogui::Quaternion4f;
 
 // custom types
-using Vector3u = std::array<uint32_t, 3>; // cannot use enoki arrays because it messes up opengl indices
 using Matrix3f = enoki::Matrix<float, 3>;
 using Matrix2Xf = vector<Vector2f>;
 using Matrix3Xf = vector<Vector3f>;
 using Matrix4XXf = MatrixXX<Vector4f>;
 using MatrixXXf = MatrixXX<float>;
-using Matrix3Xu = vector<Vector3u>;
+using Matrix3Xi = MatrixXX<int>;
 using VectorXu  = vector<uint32_t>;
 using VectorXi8 = vector<int8_t>;
 using VectorXf  = vector<float>;
 using Mask = vector<bool>;
-
-using Index = size_t;
 
 // ============= Log Utils =============
 

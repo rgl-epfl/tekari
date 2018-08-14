@@ -32,15 +32,14 @@ void BSDFDataSample::set_intensity_index(size_t intensity_index)
 
         m_brdf.sample_state(m_intensity_index-1, m_raw_measurement[m_intensity_index+2].data());
         compute_min_max_intensities(m_points_stats, m_raw_measurement, m_intensity_index);
-        compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_lh, m_intensity_index);
+        compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_intensity_index);
 
-        update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
-        update_selection_stats( m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_lh, m_intensity_index);
+        update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, m_intensity_index);
+        update_selection_stats( m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_intensity_index);
 
-        compute_normals(m_f, m_v2d, m_h, m_lh, m_n, m_ln, m_intensity_index);
+        compute_normals(m_f, m_v2d, m_h, m_n, m_intensity_index);
     }
     update_shaders_data();
-    m_selection_axis.set_origin(selection_center());
 }
 
 void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
@@ -57,16 +56,16 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     }
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 
-    Index n_intensities = m_brdf.wavelengths().size() + 1;     // account for luminance
-    Index n_sample_points = wos.size();
+    size_t n_intensities = m_brdf.wavelengths().size() + 1;     // account for luminance
+    size_t n_sample_points = wos.size();
 
     m_raw_measurement.resize(n_intensities, n_sample_points);
     m_v2d.resize(n_sample_points);
 
-    m_h.resize (n_intensities, n_sample_points);
-    m_lh.resize(n_intensities, n_sample_points);
-    m_n.resize (n_intensities, n_sample_points);
-    m_ln.resize(n_intensities, n_sample_points);
+    m_h[0].resize (n_intensities, n_sample_points);
+    m_h[1].resize(n_intensities, n_sample_points);
+    m_n[0].resize (n_intensities, n_sample_points);
+    m_n[1].resize(n_intensities, n_sample_points);
     m_cache_mask.resize(n_intensities);
     m_points_stats.reset(n_intensities);
     m_selection_stats.reset(n_intensities);
@@ -94,10 +93,10 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
     // compute data for luminance
     compute_min_max_intensities(m_points_stats, m_raw_measurement, 0);
-    compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, m_lh, 0);
-    update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, m_lh, 0);
-    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, m_lh, 0);
-    compute_normals(m_f, m_v2d, m_h, m_lh, m_n, m_ln, 0);
+    compute_normalized_heights(m_raw_measurement, m_points_stats, m_h, 0);
+    update_points_stats(m_points_stats, m_raw_measurement, m_v2d, m_h, 0);
+    update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, 0);
+    compute_normals(m_f, m_v2d, m_h, m_n, 0);
 
     set_intensity_index(m_intensity_index);
     link_data_to_shaders();

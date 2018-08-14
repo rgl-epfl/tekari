@@ -787,9 +787,7 @@ void BSDFApplication::toggle_brdf_options_window()
             m_display_as_log->set_font_size(20);
             m_display_as_log->set_pushed(m_selected_ds ? false : m_selected_ds->display_as_log());
             m_display_as_log->set_enabled(m_selected_ds != nullptr);
-            m_display_as_log->set_change_callback([this](bool /* unused*/) {
-                m_selected_ds->toggle_log_view();
-            });
+            m_display_as_log->set_change_callback([this](bool /* unused*/) { m_selected_ds->toggle_log_view(); });
 
             auto make_view_button = [this, button_container](int icon, const string& tooltip, DataSample::Views view) {
                 auto button = new Button(button_container, "", icon);

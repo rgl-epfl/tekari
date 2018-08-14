@@ -7,7 +7,7 @@
 TEKARI_NAMESPACE_BEGIN
 
 extern void triangulate_data(
-    Matrix3Xu& F,
+    Matrix3Xi& F,
     Matrix2Xf& V2D
 );
 
@@ -17,20 +17,17 @@ extern void compute_path_segments(
 );
 
 extern void compute_normals(
-    const Matrix3Xu& F,
+    const Matrix3Xi& F,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H,
-    const MatrixXXf& LH,
-    Matrix4XXf& N,
-    Matrix4XXf& LN,
+    const MatrixXXf H[],
+    Matrix4XXf N[],
     size_t intensity_index
 );
 
 extern void compute_normalized_heights(
     const RawMeasurement& raw_measurement,
     const PointsStats& point_stats,
-    MatrixXXf& H,
-    MatrixXXf& LH,
+    MatrixXXf H[],
     size_t intensity_index
 );
 

@@ -174,8 +174,8 @@ void delete_selected_points(
     size_t remaining_points = selected_points.size() - count_selected_points(selected_points);
     RawMeasurement raw_temp(raw_measurement.n_wavelengths(), remaining_points);
 
-    Index last_valid = 0;
-    for (Index i = 0; i < selected_points.size(); ++i)
+    size_t last_valid = 0;
+    for (size_t i = 0; i < selected_points.size(); ++i)
     {
         if (!SELECTED(selected_points[i]))
         {
@@ -209,7 +209,7 @@ size_t count_selected_points(const VectorXf& selected_points)
     Timer<> timer;
 
     size_t count = 0;
-    for (Index i = 0; i < selected_points.size(); ++i) {
+    for (size_t i = 0; i < selected_points.size(); ++i) {
         count += SELECTED(selected_points[i]);
     }
     

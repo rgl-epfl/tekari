@@ -13,59 +13,46 @@ TEKARI_NAMESPACE_BEGIN
 #define CORRECTION_FACTOR 1e-5
 
 void compute_normals(
-    const Matrix3Xu& F,
+    const Matrix3Xi& F,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H,
-    const MatrixXXf& LH,
-    Matrix4XXf& N,
-    Matrix4XXf& LN,
+    const MatrixXXf H[],
+    Matrix4XXf N[],
     size_t intensity_index
 )
 {
     cout << std::setw(50) << std::left << "Computing normals .. ";
     Timer<> timer;
 
-    const MatrixXXf::Row h_row  = H[intensity_index];
-    const MatrixXXf::Row lh_row = LH[intensity_index];
-    Matrix4XXf::Row n_row    = N[intensity_index];
-    Matrix4XXf::Row ln_row   = LN[intensity_index];
+    const MatrixXXf::Row h_row  = H[0][intensity_index];
+    const MatrixXXf::Row lh_row = H[1][intensity_index];
+    Matrix4XXf::Row n_row    = N[0][intensity_index];
+    Matrix4XXf::Row ln_row   = N[1][intensity_index];
 
     n_row.fill (Vector4f(0));
     ln_row.fill(Vector4f(0));
 
-    for (Index f = 0; f < F.size(); ++f)
+    auto compute_normal_for_triangle = [V2D](Matrix3Xi::Row triangle, const MatrixXXf::Row h_row, Matrix4XXf::Row n_row, int index, Vector3f& fn) {
+        Vector3f v0 = get_3d_point(V2D, h_row, triangle[index]),
+                 v1 = get_3d_point(V2D, h_row, triangle[(index+1)%3]),
+                 v2 = get_3d_point(V2D, h_row, triangle[(index+2)%3]),
+                 d0 = v1-v0,
+                 d1 = v2-v0;
+
+        if (index == 0) {
+            fn = enoki::normalize(enoki::cross(d0, d1));
+        }
+        float angle = fast_acos(enoki::dot(d0, d1) / std::sqrt(enoki::squared_norm(d0) * enoki::squared_norm(d1)));
+        n_row[triangle[index]] += enoki::concat(fn*angle, 0.0f);
+    };
+
+    for (size_t f = 0; f < F.n_rows(); ++f)
     {
         Vector3f fn = Vector3f(0.0f);
         Vector3f lfn = Vector3f(0.0f);
-        const Vector3u &face = F[f];
         for (int i = 0; i < 3; ++i) {
-            Vector3f v0 = get_3d_point(V2D, h_row, face[i]),
-                     v1 = get_3d_point(V2D, h_row, face[(i+1)%3]),
-                     v2 = get_3d_point(V2D, h_row, face[(i+2)%3]),
-                     d0 = v1-v0,
-                     d1 = v2-v0;
-
-            if (i == 0) {
-                fn = enoki::normalize(enoki::cross(d0, d1));
-            }
-            float angle = fast_acos(enoki::dot(d0, d1) / std::sqrt(enoki::squared_norm(d0) * enoki::squared_norm(d1)));
-            n_row[face[i]] += enoki::concat(fn*angle, 0.0f);
-
-            // same for log mesh
-
-            v0 = get_3d_point(V2D, lh_row, face[i]);
-            v1 = get_3d_point(V2D, lh_row, face[(i+1)%3]);
-            v2 = get_3d_point(V2D, lh_row, face[(i+2)%3]);
-            d0 = v1-v0;
-            d1 = v2-v0;
-
-            if (i == 0) {
-                lfn = enoki::normalize(enoki::cross(d0, d1));
-            }
-            angle = fast_acos(enoki::dot(d0, d1) / std::sqrt(enoki::squared_norm(d0) * enoki::squared_norm(d1)));
-            ln_row[face[i]] += enoki::concat(lfn*angle, 0.0f);
+            compute_normal_for_triangle(F[f], h_row, n_row, i, fn);
+            compute_normal_for_triangle(F[f], lh_row, ln_row, i, lfn);
         }
-
     }
 
     tbb::parallel_for(tbb::blocked_range<uint32_t>(0u, (uint32_t)n_row.n_cols(), GRAIN_SIZE),
@@ -82,16 +69,15 @@ void compute_normals(
 void compute_normalized_heights(
     const RawMeasurement& raw_measurement,
     const PointsStats& points_stats,
-    MatrixXXf& H,
-    MatrixXXf& LH,
+    MatrixXXf H[],
     size_t intensity_index
 )
 {
     cout << std::setw(50) << std::left << "Computing normalized heights .. ";
     Timer<> timer;
 
-    MatrixXXf::Row h_row  = H[intensity_index];
-    MatrixXXf::Row lh_row = LH[intensity_index];
+    MatrixXXf::Row h_row  = H[0][intensity_index];
+    MatrixXXf::Row lh_row = H[1][intensity_index];
 
     float min_intensity = points_stats[intensity_index].min_intensity;
     float max_intensity = points_stats[intensity_index].max_intensity;
@@ -109,7 +95,7 @@ void compute_normalized_heights(
 
     RawMeasurement::Row row = raw_measurement[intensity_index+2];
     // normalize intensities
-    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)H.n_cols(), GRAIN_SIZE),
+    tbb::parallel_for(tbb::blocked_range<uint32_t>(0, (uint32_t)h_row.n_cols(), GRAIN_SIZE),
         [&](const tbb::blocked_range<uint32_t>& range)
         {
             for (uint32_t i = range.begin(); i < range.end(); ++i)
@@ -123,7 +109,7 @@ void compute_normalized_heights(
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
-void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
+void triangulate_data(Matrix3Xi& F, Matrix2Xf& V2D)
 {
     cout << std::setw(50) << std::left << "Triangulating data .. ";
     Timer<> timer;
@@ -138,7 +124,7 @@ void triangulate_data(Matrix3Xu& F, Matrix2Xf& V2D)
     char cmds[] = {'z', 'Q', 'N', '\0'};
     triangulate(cmds, &in, &out, NULL);
 
-    F.resize(out.numberoftriangles);
+    F.resize(out.numberoftriangles, 3);
     memcpy(F.data(), out.trianglelist, out.numberoftriangles * 3 * sizeof(int));
 
     free(out.trianglelist);
@@ -154,7 +140,7 @@ void compute_path_segments(VectorXu& path_segments, const Matrix2Xf& V2D)
     path_segments.clear();
     // path segments must always contain the first point
     path_segments.push_back(0);
-    for (Index i = 1; i < V2D.size(); ++i)
+    for (size_t i = 1; i < V2D.size(); ++i)
     {
         // if two last points are too far appart, a new path segments begins
         const Vector2f& current = V2D[i];

@@ -12,8 +12,7 @@ class PointsStats
 public:
     struct Slice
     {
-        Vector3f average_point          = Vector3f(0);
-        Vector3f average_log_point      = Vector3f(0);
+        Vector3f average_points[2]      = { Vector3f(0), Vector3f(0) };
         float average_intensity         = 0.0f;
         float min_intensity             = std::numeric_limits<float>::max();
         float max_intensity             = -std::numeric_limits<float>::max();
@@ -38,8 +37,7 @@ extern void update_selection_stats(
     const VectorXf& selected_points,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H,
-    const MatrixXXf& LH,
+    const MatrixXXf H[],
     size_t intensity_index
 );
 
@@ -53,8 +51,7 @@ extern void update_points_stats(
     PointsStats& point_stats,
     const RawMeasurement& raw_measurement,
     const Matrix2Xf& V2D,
-    const MatrixXXf& H,
-    const MatrixXXf& LH,
+    const MatrixXXf H[],
     size_t intensity_index
 );
 
