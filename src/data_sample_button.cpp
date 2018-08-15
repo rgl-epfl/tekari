@@ -25,7 +25,7 @@ using nanogui::Label;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget* parent, const string & label, bool is_spectral)
+DataSampleButton::DataSampleButton(Widget* parent, const string & label)
 :   Widget{ parent }
 ,   m_label{ label }
 ,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + ". .. " : label }

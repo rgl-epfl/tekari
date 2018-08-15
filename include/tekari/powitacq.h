@@ -128,7 +128,9 @@ public:
 
     // Sets the incident angle (and sampling resolution) and stores what's necessary to compute the corresponding measurement
     // Returns false if the state didn't change with the given parameters
-    bool set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vector<float>& luminance_out, std::vector<Vector3f>& wos_out);
+    bool set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
+                  std::vector<float>& luminance_out, std::vector<Vector3f>& wos_out,
+                  std::vector<Vector3f>& color_out);
     void sample_state(size_t wavelength_index, float* frs_out) const;
     Spectrum sample_state(size_t point_index) const;
 

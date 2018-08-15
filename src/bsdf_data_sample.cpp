@@ -49,7 +49,8 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
     vector<float> luminance;
     vector<powitacq::Vector3f> wos;
-    if (!m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3<Vector3f>(incident_angle)), m_n_theta, m_n_phi, luminance, wos))
+    vector<powitacq::Vector3f> colors;
+    if (!m_brdf.set_state(enoki_to_powitacq_vec3(hemisphere_to_vec3<Vector3f>(incident_angle)), m_n_theta, m_n_phi, luminance, wos, colors))
     {
         cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
         return;
@@ -61,6 +62,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
 
     m_raw_measurement.resize(n_intensities, n_sample_points);
     m_v2d.resize(n_sample_points);
+    m_colors.resize(n_sample_points, 3);
 
     m_h[0].resize (n_intensities, n_sample_points);
     m_h[1].resize(n_intensities, n_sample_points);
@@ -82,10 +84,14 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     for (size_t i = 0; i < wos.size(); ++i)
     {
         Vector2f outgoing_angle = vec3_to_hemisphere<Vector2f>(wos[i]);
-        m_raw_measurement.theta()[i] = outgoing_angle.x();
-        m_raw_measurement.phi()[i] = outgoing_angle.y();
-        m_raw_measurement.luminance()[i] = luminance[i];
+        m_raw_measurement.set_theta(i, outgoing_angle.x());
+        m_raw_measurement.set_phi(i, outgoing_angle.y());
+        m_raw_measurement.set_luminance(i, luminance[i]);
         m_v2d[i] = vec3_to_disk<Vector2f>(wos[i]);
+
+        m_colors[i][0] = colors[i][0];
+        m_colors[i][1] = colors[i][1];
+        m_colors[i][2] = colors[i][2];
     }
 
     triangulate_data(m_f, m_v2d);
@@ -98,8 +104,8 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     update_selection_stats(m_selection_stats, m_selected_points, m_raw_measurement, m_v2d, m_h, 0);
     compute_normals(m_f, m_v2d, m_h, m_n, 0);
 
-    set_intensity_index(m_intensity_index);
     link_data_to_shaders();
+    set_intensity_index(m_intensity_index);
 }
 
 TEKARI_NAMESPACE_END

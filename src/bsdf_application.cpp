@@ -73,11 +73,17 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         
         if (selection_box.empty())
         {
-            m_selected_ds->select_closest_point(mvp, selection_box.top_left, canvas_size);
+            select_closest_point(   m_selected_ds->v2d(),
+                                    m_selected_ds->curr_h(),
+                                    m_selected_ds->selected_points(),
+                                    mvp, selection_box.top_left, canvas_size);
         }
         else
         {
-            m_selected_ds->select_points(mvp, selection_box, canvas_size, mode);
+            select_points(  m_selected_ds->v2d(),
+                            m_selected_ds->curr_h(),
+                            m_selected_ds->selected_points(),
+                            mvp, selection_box, canvas_size, mode);
         }
         update_selection_info_window();
     });
@@ -394,8 +400,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
             case GLFW_KEY_A:
                 if (!m_selected_ds)
                     return false;
-
-                m_selected_ds->select_all_points();
+                select_all_points(m_selected_ds->selected_points());
                 update_selection_info_window();
                 return true;
             case GLFW_KEY_1: if (!alt) return false;
@@ -440,7 +445,12 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     if (!m_selected_ds)
                         return false;
                     
-                    m_selected_ds->select_extreme_point(key == GLFW_KEY_H);
+                    select_extreme_point(   m_selected_ds->points_stats(),
+                                            m_selected_ds->selection_stats(),
+                                            m_selected_ds->selected_points(), 
+                                            m_selected_ds->intensity_index(),
+                                            key == GLFW_KEY_H);
+
                     update_selection_info_window();
                     return true;
                 case GLFW_KEY_1:
@@ -448,7 +458,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     if (!m_selected_ds || !m_selected_ds->has_selection())
                         return false;
 
-                    m_selected_ds->move_selection_along_path(key == GLFW_KEY_1);
+                    move_selection_along_path(key == GLFW_KEY_1, m_selected_ds->selected_points());
                     update_selection_info_window();
                     return true;
                 default:
@@ -481,7 +491,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 if (!m_selected_ds || !m_selected_ds->has_selection())
                     return false;
                  
-                m_selected_ds->deselect_all_points();
+                deselect_all_points(m_selected_ds->selected_points());
                 update_selection_info_window();
                 return true;
 #if !defined(EMSCRIPTEN)
@@ -591,7 +601,8 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 if (!m_selected_ds || !m_selected_ds->has_selection())
                     return false;
 
-                m_selected_ds->move_selection_along_path(key == GLFW_KEY_KP_ADD);
+
+                move_selection_along_path(key == GLFW_KEY_KP_ADD, m_selected_ds->selected_points());
                 update_selection_info_window();
                 return true;
             default:
@@ -885,6 +896,7 @@ void BSDFApplication::toggle_brdf_options_window()
 
 void BSDFApplication::update_selection_info_window()
 {
+    m_selected_ds->update_point_selection();
     if(m_selection_info_window) toggle_selection_info_window();
     toggle_selection_info_window();
 }
@@ -908,11 +920,13 @@ void BSDFApplication::toggle_selection_info_window()
             new Label{ labels_container, caption, "sans-bold" };
             new Label{ labels_container, value };
         };
-        
-        make_selection_info_labels("Points in selection :", to_string(m_selected_ds->selection_points_count()));
-        make_selection_info_labels("Minimum intensity :", to_string(m_selected_ds->selection_min_intensity()));
-        make_selection_info_labels("Maximum intensity :", to_string(m_selected_ds->selection_max_intensity()));
-        make_selection_info_labels("Average intensity :", to_string(m_selected_ds->selection_average_intensity()));
+
+        size_t points_count = m_selected_ds->selection_stats().points_count;
+        const PointsStats::Slice& selection_stats_slice = m_selected_ds->curr_selection_stats();
+        make_selection_info_labels("Points in selection :", to_string(points_count));
+        make_selection_info_labels("Minimum intensity :", to_string(selection_stats_slice.min_intensity));
+        make_selection_info_labels("Maximum intensity :", to_string(selection_stats_slice.max_intensity));
+        make_selection_info_labels("Average intensity :", to_string(selection_stats_slice.average_intensity));
 
         new Label{ window, "Spectral plot", "sans-bold" };
         auto graph = new Graph{ window, "" };
@@ -1096,8 +1110,7 @@ void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
 
     string clean_name = data_sample->name();
     replace(clean_name.begin(), clean_name.end(), '_', ' ');
-    auto data_sample_button = new DataSampleButton{ m_data_sample_button_container, clean_name,
-        data_sample->is_spectral()};
+    auto data_sample_button = new DataSampleButton{ m_data_sample_button_container, clean_name};
     data_sample_button->set_fixed_height(30);
 
     data_sample_button->set_callback([this, data_sample]() { select_data_sample(data_sample); });

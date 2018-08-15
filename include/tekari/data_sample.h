@@ -55,29 +55,14 @@ public:
 
     // info accessors
     inline const string name()              const { return m_metadata.sample_name(); }
-    inline bool is_spectral()               const { return m_metadata.is_spectral(); }
     inline const Metadata& metadata()       const { return m_metadata; }
 
-    inline bool has_selection()             const { return m_selection_stats.points_count > 0; }
-    inline size_t selection_points_count()  const { return m_selection_stats.points_count; }
+    inline bool has_selection()                 const { return m_selection_stats.points_count > 0; }
 
     inline size_t intensity_count()  const { return m_points_stats.intensity_count; }
     inline size_t points_count()     const { return m_points_stats.points_count; }
-    inline size_t n_wavelengths()    const { return m_raw_measurement.n_wavelengths(); }
     inline float average_intensity() const { return m_points_stats[m_intensity_index].average_intensity; }
 
-    inline float selection_min_intensity()      const { return m_selection_stats[m_intensity_index].min_intensity; }
-    inline float selection_max_intensity()      const { return m_selection_stats[m_intensity_index].max_intensity; }
-    inline float selection_average_intensity()  const { return m_selection_stats[m_intensity_index].average_intensity; }
-
-    // Data selection/computation methods (wrapers for corresponding routines, easier to call)
-    void select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode);
-    void select_closest_point(const Matrix4f& mvp, const Vector2i& mouse_pos, const Vector2i& canvas_size);
-    void select_extreme_point(bool highest);
-    void select_all_points();
-    void deselect_all_points();
-    void move_selection_along_path(bool up);
-    size_t count_selected_points() const;
     void recompute_data();
 
     virtual void delete_selected_points() {}
@@ -105,7 +90,12 @@ public:
     virtual inline string wavelength_str() { return string("0 nm"); }
     virtual vector<float> get_selection_spectrum() { return vector<float>(); }
 
-private:
+    VectorXf& selected_points() { return m_selected_points; }
+    PointsStats& points_stats() { return m_points_stats; }
+    PointsStats& selection_stats() { return m_selection_stats; }
+    PointsStats::Slice& curr_selection_stats() { return m_selection_stats[m_intensity_index]; }
+    Matrix2Xf& v2d() { return m_v2d; }
+
     inline const MatrixXXf::Row     curr_h() const  { return m_h[m_display_as_log][m_intensity_index]; }
     inline const Matrix4XXf::Row    curr_n() const  { return m_n[m_display_as_log][m_intensity_index]; }
     inline MatrixXXf::Row           curr_h()        { return m_h[m_display_as_log][m_intensity_index]; }
@@ -114,6 +104,7 @@ private:
 protected:
     Matrix3Xi   m_f;                // face indices
     Matrix2Xf   m_v2d;              // 2d coordinates (x,z)
+    MatrixXXf   m_colors;
     MatrixXXf   m_h[2];             // heights (standard and log) per point (one for luminance and one for each wavelength)
     Matrix4XXf  m_n[2];             // normals (standard and log) per point (one for luminance and one for each wavelength)
     VectorXu    m_path_segments;

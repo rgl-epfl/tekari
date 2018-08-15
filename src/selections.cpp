@@ -104,7 +104,8 @@ void select_closest_point(
 }
 
 void select_extreme_point(
-    const PointsStats& stats,
+    const PointsStats& points_stats,
+    const PointsStats& selection_stats,
     VectorXf& selected_points,
     size_t intensity_index,
     bool highest
@@ -112,6 +113,8 @@ void select_extreme_point(
 {
     cout << std::setw(50) << std::left << "Selecting extreme point .. ";
     Timer<> timer;
+
+    const PointsStats& stats = (selection_stats.points_count <= 1 ? points_stats : selection_stats);
 
     int point_index = highest ? stats[intensity_index].highest_point_index:
                                 stats[intensity_index].lowest_point_index;

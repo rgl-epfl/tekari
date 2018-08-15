@@ -9,7 +9,7 @@ TEKARI_NAMESPACE_BEGIN
 class DataSampleButton : public nanogui::Widget
 {
 public:
-    DataSampleButton(nanogui::Widget* parent, const string& label, bool is_spectral);
+    DataSampleButton(nanogui::Widget* parent, const string& label);
 
     virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
     virtual bool mouse_enter_event(const Vector2i& p, bool enter) override;

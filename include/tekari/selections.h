@@ -52,7 +52,8 @@ extern void select_closest_point(
 );
 
 extern void select_extreme_point(
-    const PointsStats& stats,
+    const PointsStats& points_stats,
+    const PointsStats& selection_stats,
     VectorXf& selected_points,
     size_t intensity_index,
     bool highest

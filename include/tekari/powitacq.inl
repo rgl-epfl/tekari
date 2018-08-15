@@ -1242,7 +1242,9 @@ Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
     return fr / pdf;
 }
 
-bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vector<float>& luminance_out, std::vector<Vector3f>& wos_out)
+bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
+                    std::vector<float>& luminance_out, std::vector<Vector3f>& wos_out,
+                    std::vector<Vector3f>& colors_out)
 {
     // if the state doesn't change
     if (wi[0] == m_wi[0] && wi[1] == m_wi[1] && wi[2] == m_wi[2] &&
@@ -1260,13 +1262,17 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
     m_uvs.clear();
     wos_out.clear();
     luminance_out.clear();
+    colors_out.clear();
     m_samples.reserve(max_points);
     m_scales.reserve(max_points);
     m_uvs.reserve(max_points);
     wos_out.reserve(max_points);
     luminance_out.reserve(max_points);
+    colors_out.reserve(max_points);
 
     float min_luminance = std::numeric_limits<float>::max();
+    Vector3f min_rgb_color = Vector3f(std::numeric_limits<float>::max());
+    Vector3f max_rgb_color = Vector3f(-std::numeric_limits<float>::max());
 
     if (wi.z() <= 0)
         return false;
@@ -1325,6 +1331,15 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
         float luminance = m_data->luminance.eval(sample, m_params) * scale;
         min_luminance = std::min(min_luminance, luminance);
         luminance_out.push_back(luminance);
+
+        Vector3f rgb_color = Vector3f(
+            m_data->rgb[0].eval(sample, m_params),
+            m_data->rgb[1].eval(sample, m_params),
+            m_data->rgb[2].eval(sample, m_params)
+        );
+        min_rgb_color = min(min_rgb_color, rgb_color);
+        max_rgb_color = max(max_rgb_color, rgb_color);
+        colors_out.push_back(rgb_color);
     };
 
     for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points at (0, 0)
@@ -1344,7 +1359,17 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n, std::vect
         float phi = 2 * Pi * j / phi_n;
         wos_out.push_back({cos(phi), sin(phi), 0.0f});
         luminance_out.push_back(min_luminance);
+        colors_out.push_back(min_rgb_color);
     }
+
+    // normalize rgb colors
+    float max_rgb_value = std::max(max_rgb_color[0], std::max(max_rgb_color[1], max_rgb_color[2]));
+    float min_rgb_value = std::min(min_rgb_color[0], std::min(min_rgb_color[1], min_rgb_color[2]));
+    for (size_t i = 0; i < colors_out.size(); ++i)
+    {
+        colors_out[i] = (colors_out[i] - min_rgb_value) / (max_rgb_value - min_rgb_value);
+    }
+
     m_n_points = wos_out.size();
     return true;
 }

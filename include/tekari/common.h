@@ -84,7 +84,6 @@ using nanogui::Quaternion4f;
 // custom types
 using Matrix3f = enoki::Matrix<float, 3>;
 using Matrix2Xf = vector<Vector2f>;
-using Matrix3Xf = vector<Vector3f>;
 using Matrix4XXf = MatrixXX<Vector4f>;
 using MatrixXXf = MatrixXX<float>;
 using Matrix3Xi = MatrixXX<int>;
@@ -139,17 +138,6 @@ inline Vector4f project_on_screen(const Vector3f& point,
 inline Vector3f get_3d_point(const Matrix2Xf& V2D, const MatrixXXf::Row& H, size_t index)
 {
     return concat(V2D[index], H[index]);
-}
-
-inline Matrix3Xf get_3d_points(const Matrix2Xf& V2D, const MatrixXXf& H, size_t index)
-{
-    Matrix3Xf result;
-    result.resize(H.n_rows()) ;
-    for (size_t i = 0; i < H.n_rows(); i++)
-    {
-        result[i] = get_3d_point(V2D, H[i], index);
-    }
-    return result;
 }
 
 template<typename Vector2>

@@ -141,6 +141,7 @@ void DataSample::link_data_to_shaders()
     m_shaders[MESH].bind();
     m_shaders[MESH].set_uniform("color_map", 0);
     m_shaders[MESH].upload_attrib("in_pos2d", (float*)m_v2d.data(), 2, m_v2d.size());
+    m_shaders[MESH].upload_attrib("in_color", (float*)m_colors.data(), 3, m_colors.n_rows());
     m_shaders[MESH].upload_indices((int*)m_f.data(), 3, m_f.n_rows());
 
     m_shaders[PATH].bind();
@@ -178,45 +179,6 @@ void DataSample::update_shaders_data()
     m_shaders[POINTS].bind();
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
     m_selection_axis.set_origin(selection_center());
-}
-
-void DataSample::select_points(const Matrix4f& mvp, const SelectionBox& selection_box, const Vector2i& canvas_size, SelectionMode mode)
-{
-    tekari::select_points(m_v2d, curr_h(), m_selected_points, mvp, selection_box, canvas_size, mode);
-    update_point_selection();
-}
-void DataSample::select_closest_point(const Matrix4f& mvp, const Vector2i& mouse_pos, const Vector2i& canvas_size)
-{
-    tekari::select_closest_point(m_v2d, curr_h(), m_selected_points, mvp, mouse_pos, canvas_size);
-    update_point_selection();
-}
-void DataSample::select_extreme_point(bool highest)
-{
-    if (m_selection_stats.points_count <= 1)
-        tekari::select_extreme_point( m_points_stats, m_selected_points, m_intensity_index, highest);
-    else
-        tekari::select_extreme_point( m_selection_stats, m_selected_points, m_intensity_index, highest);
-
-    update_point_selection();
-}
-void DataSample::select_all_points()
-{
-    tekari::select_all_points(m_selected_points);
-    update_point_selection();
-}
-void DataSample::deselect_all_points()
-{
-    tekari::deselect_all_points(m_selected_points);
-    update_point_selection();
-}
-void DataSample::move_selection_along_path(bool up)
-{
-    tekari::move_selection_along_path(up, m_selected_points);
-    update_point_selection();
-}
-size_t DataSample::count_selected_points() const
-{
-    return tekari::count_selected_points(m_selected_points);
 }
 
 void DataSample::recompute_data()
