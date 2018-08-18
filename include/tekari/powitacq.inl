@@ -108,6 +108,11 @@ template <typename T, size_t Dim> T dot(const Vector<T, Dim> &v1, const Vector<T
     return result;
 }
 
+
+template <typename T, size_t Dim> T norm(const Vector<T, Dim> &v) {
+    return std::sqrt(dot(v, v));
+}
+
 template <typename T, size_t Dim> Vector<T, Dim> normalize(const Vector<T, Dim> &v) {
     return v / std::sqrt(dot(v, v));
 }
@@ -1271,8 +1276,8 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
     colors_out.reserve(max_points);
 
     float min_luminance = std::numeric_limits<float>::max();
+
     Vector3f min_rgb_color = Vector3f(std::numeric_limits<float>::max());
-    Vector3f max_rgb_color = Vector3f(-std::numeric_limits<float>::max());
 
     if (wi.z() <= 0)
         return false;
@@ -1332,13 +1337,12 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
         min_luminance = std::min(min_luminance, luminance);
         luminance_out.push_back(luminance);
 
-        Vector3f rgb_color = Vector3f(
-            m_data->rgb[0].eval(sample, m_params),
-            m_data->rgb[1].eval(sample, m_params),
-            m_data->rgb[2].eval(sample, m_params)
-        );
+        Vector3f rgb_color = normalize(Vector3f(
+            to_srgb(m_data->rgb[0].eval(sample, m_params)),
+            to_srgb(m_data->rgb[1].eval(sample, m_params)),
+            to_srgb(m_data->rgb[2].eval(sample, m_params))
+        ));
         min_rgb_color = min(min_rgb_color, rgb_color);
-        max_rgb_color = max(max_rgb_color, rgb_color);
         colors_out.push_back(rgb_color);
     };
 
@@ -1360,14 +1364,6 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
         wos_out.push_back({cos(phi), sin(phi), 0.0f});
         luminance_out.push_back(min_luminance);
         colors_out.push_back(min_rgb_color);
-    }
-
-    // normalize rgb colors
-    float max_rgb_value = std::max(max_rgb_color[0], std::max(max_rgb_color[1], max_rgb_color[2]));
-    float min_rgb_value = std::min(min_rgb_color[0], std::min(min_rgb_color[1], min_rgb_color[2]));
-    for (size_t i = 0; i < colors_out.size(); ++i)
-    {
-        colors_out[i] = (colors_out[i] - min_rgb_value) / (max_rgb_value - min_rgb_value);
     }
 
     m_n_points = wos_out.size();
