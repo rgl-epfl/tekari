@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * This file contains:
  *
@@ -127,10 +129,16 @@ const float srgb_to_xyz[3][3] = {
     { 0.019334, 0.119193, 0.950227 }
 };
 
-float cie_interp(const float *data, float x) {
+inline float cie_interp(const float *data, float x) {
     x -= CIE_LAMBDA_MIN;
     x *= (CIE_SAMPLES - 1) / (CIE_LAMBDA_MAX - CIE_LAMBDA_MIN);
     int offset = std::min(std::max(0, (int) x), CIE_SAMPLES - 2);
     float weight = x - offset;
     return (1.0f - weight) * data[offset] + weight * data[offset + 1];
+}
+
+inline float to_srgb(float value) {
+    if (value <= 0.0031308f)
+        return 12.92f * value;
+    return 1.055f * std::pow(value, 1.f/2.4f) - 0.055f;
 }
