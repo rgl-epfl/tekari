@@ -24,6 +24,7 @@
 #include <tekari/arrow.h>
 #include <tekari/bsdf_data_sample.h>
 #include <tekari/standard_data_sample.h>
+#include <tekari/wavelength_slider.h>
 #include <tekari_resources.h>
 
 #define FOOTER_HEIGHT 25
@@ -876,19 +877,17 @@ void BSDFApplication::toggle_brdf_options_window()
 
         size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
         string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
-        m_wavelength_label = add_text("Wavelength:", wavelength_str);
+        auto wavelength_label = add_text("Wavelength:", wavelength_str);
 
-        m_wavelength_slider = new Slider{ window };
-        m_wavelength_slider->set_range(make_pair(0, m_selected_ds ? m_selected_ds->intensity_count()-1 : 1));
-        m_wavelength_slider->set_callback([this](float value) {
-            int int_val = static_cast<int>(round(value));
-            m_wavelength_slider->set_value(int_val);
-            m_selected_ds->set_intensity_index(int_val);
-            m_wavelength_label->set_caption(m_selected_ds->wavelength_str());
+        auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths(), m_selected_ds->intensity_count()-1 };
+        wavelength_slider->set_callback([this, wavelength_label, wavelength_slider](float /*unused*/) {
+            int wavelength_index = wavelength_slider->wavelength_index();
+            m_selected_ds->set_intensity_index(wavelength_index);
+            wavelength_label->set_caption(m_selected_ds->wavelength_str());
             reprint_footer();
         });
-        m_wavelength_slider->set_enabled(m_selected_ds != nullptr);
-        m_wavelength_slider->set_value(wavelength_index);
+        wavelength_slider->set_enabled(m_selected_ds != nullptr);
+        wavelength_slider->set_value(wavelength_index);
 
         return window;
     });
@@ -896,7 +895,7 @@ void BSDFApplication::toggle_brdf_options_window()
 
 void BSDFApplication::update_selection_info_window()
 {
-    m_selected_ds->update_point_selection();
+    if (m_selected_ds) m_selected_ds->update_point_selection();
     if(m_selection_info_window) toggle_selection_info_window();
     toggle_selection_info_window();
 }
@@ -1032,7 +1031,6 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
     m_bsdf_canvas->select_data_sample(data_sample);
 
     reprint_footer();
-    update_selection_info_window();
     if (m_metadata_window)
     {
         toggle_metadata_window();
@@ -1041,7 +1039,10 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
     if (m_brdf_options_window)
         toggle_brdf_options_window();
     if (m_selected_ds)
+    {
+        update_selection_info_window();
         toggle_brdf_options_window();
+    }
 
     request_layout_update();
 

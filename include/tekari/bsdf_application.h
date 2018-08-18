@@ -125,10 +125,8 @@ private:
     // bsdf settings
     Button* m_display_as_log;
     Button* m_view_toggles[DataSample::Views::VIEW_COUNT];
-    Slider* m_wavelength_slider;
     FloatBox<float>* m_phi_float_box;
     FloatBox<float>* m_theta_float_box;
-    Label* m_wavelength_label;
     Slider2D* m_incident_angle_slider;
 
     // dialog windows

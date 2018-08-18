@@ -7,6 +7,7 @@
 #include <tekari/matrix_xx.h>
 #define POWITACQ_IMPLEMENTATION
 #include <tekari/powitacq.h>
+#include <tekari/cie1931.h>
 
 using namespace tekari;
 
@@ -124,6 +125,33 @@ int main(int argc, char const* argv[])
     //     }
     // }
     // cout << "Float array version " << time_string(t.reset()) << endl;
+
+    const size_t n_wavelengths = 20;
+
+    for(size_t w = 0; w < n_wavelengths; ++w)
+    {
+        float lambda = CIE_LAMBDA_MIN + (CIE_LAMBDA_MAX - CIE_LAMBDA_MIN) * w / (n_wavelengths-1);
+
+        Vector3f XYZ = Vector3f{ cie_interp(cie_x, lambda), cie_interp(cie_y, lambda), cie_interp(cie_z, lambda) }
+            * cie_interp(cie_d65, lambda) * (1.f / (CIE_LAMBDA_MAX - CIE_LAMBDA_MIN));
+
+        Vector3f rgb{ 0.0f };
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                rgb[i] += xyz_to_srgb[i][j] * XYZ[j];
+
+        rgb[0] = to_srgb(rgb[0] * lambda);
+        rgb[1] = to_srgb(rgb[1] * lambda);
+        rgb[2] = to_srgb(rgb[2] * lambda);
+        
+        rgb = enoki::max(enoki::normalize(rgb), Vector3f{ 0.0f });
+
+        Log(Error, "%fnm -> xyz[%f, %f, %f] -> rgb[%f, %f, %f]\n",
+            lambda,
+            XYZ[0], XYZ[1], XYZ[2],
+            rgb[0], rgb[1], rgb[2]);
+    }
+
 
     return 0;
 }

@@ -202,6 +202,7 @@ add_executable(tekari
   include/tekari/slider_2d.h                    src/slider_2d.cpp
   include/tekari/powitacq.h                     include/tekari/powitacq.inl
   include/tekari/bsdf_data_sample.h             src/bsdf_data_sample.cpp
+  include/tekari/wavelength_slider.h            src/wavelength_slider.cpp
   include/tekari/standard_data_sample.h
   include/tekari/matrix_xx.h
   include/tekari/raw_measurement.h
@@ -215,7 +216,8 @@ add_executable(tekari
 )
 
 add_executable(tests
-  "src/tests.cpp"
+  include/tekari/powitacq.h                     include/tekari/powitacq.inl
+  src/tests.cpp
 )
 
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Emscripten")
