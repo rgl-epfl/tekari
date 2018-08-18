@@ -16,6 +16,7 @@ TEKARI_NAMESPACE_BEGIN
 #define DISPLAY_AXIS                        (1 << 2)
 #define DISPLAY_PREDICTED_OUTGOING_ANGLE    (1 << 3)
 #define USE_WIREFRAME                       (1 << 4)
+#define USE_INTEGRATED_COLORS                (1 << 5)
 
 class DataSample
 {
@@ -87,6 +88,7 @@ public:
     virtual void set_intensity_index(size_t displayed_wavelength) {}
     virtual void set_incident_angle(const Vector2f& i) {}
 
+    virtual inline const float* wavelengths() const { return nullptr; }
     virtual inline string wavelength_str() { return string("0 nm"); }
     virtual vector<float> get_selection_spectrum() { return vector<float>(); }
 

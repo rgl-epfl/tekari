@@ -7,10 +7,12 @@ uniform mat4 inverse_transpose_model;
 in vec4 in_normal;
 in vec2 in_pos2d;
 in float in_height;
+in vec3 in_color;
 
 out float height;
 out vec3 position;
 out vec3 normal;
+out vec3 integrated_color;
 
 void main() {
     vec4 pos = vec4(in_pos2d, in_height, 1.0);
@@ -18,4 +20,5 @@ void main() {
     height = in_height;
     position = (model * pos).xyz;
     normal = (inverse_transpose_model * in_normal).xyz;
+    integrated_color = in_color;
 }
