@@ -93,16 +93,20 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
 
         auto data_sample_view_options = add_shortcut_section("Data Sample View Options", "For the currently selected material");
         add_row(data_sample_view_options, "L", "Toggle logarithmic view");
-        add_row(data_sample_view_options, "P", "Show/hide measurement path");
-        add_row(data_sample_view_options, "Shift+P", "Show/hide sample points");
+        add_row(data_sample_view_options, "M", "Show/hide mesh");
+        add_row(data_sample_view_options, "P", "Show/hide sample points");
+        add_row(data_sample_view_options, "Shift+P", "Show/hide measurement path");
         add_row(data_sample_view_options, "Shift+I", "Show/hide incident angle");
 
-
         auto view_options = add_shortcut_section("View Options");
-        add_row(view_options, "G", "Show/hide crid");
+#if !defined(EMSCRIPTEN)
+        add_row(data_sample_view_options, "W", "Display mesh in wireframe mode");
+#endif
         add_row(view_options, "A", "Show/hide center axis");
+        add_row(view_options, "G", "Show/hide grid");
         add_row(view_options, "Shift+G", "Show/hide grid angles");
-        add_row(view_options, "Shift+S", "Use/Un-use shadows");
+        add_row(view_options, "S", "Enable/Disable shadows");
+        add_row(view_options, "Shift+S", "Enable/Disable specular highlights");
         add_row(view_options, "O or KP_5 or Alt+5", "Enable/Disable orthographic view");
         add_row(view_options, "KP_1 or Alt+1", "Front view");
         add_row(view_options, "KP_3 or Alt+3", "Left view");
@@ -129,7 +133,7 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
         auto ui = add_shortcut_section("Interface");
         add_row(ui, "H", "Show help (this Window)");
         add_row(ui, "I", "Show metadata");
-        add_row(ui, "M", "Chose color map");
+        add_row(ui, "Shift+M", "Chose color map");
 #if !defined(EMSCRIPTEN)
         add_row(ui, "Q", "Quit");
 #endif

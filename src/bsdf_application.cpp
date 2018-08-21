@@ -156,17 +156,17 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             [this](bool checked) {
                 m_bsdf_canvas->set_ortho_mode(checked);
         }, false);
-        m_use_shadows_checkbox = add_hidden_option_toggle("Shadows", "Enable/Disable shadows (Shift+S)",
+        m_use_shadows_checkbox = add_hidden_option_toggle("Shadows", "Enable/Disable shadows (S)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_SHADOWS, checked);
             m_use_specular_checkbox->set_enabled(checked);
         }, true);
-        m_use_specular_checkbox = add_hidden_option_toggle("Specular", "Enable/Disable specular lighting",
+        m_use_specular_checkbox = add_hidden_option_toggle("Specular", "Enable/Disable specular lighting (Shift+S)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_SPECULAR, checked);
         }, false);
 #if !defined(EMSCRIPTEN)
-        m_use_wireframe_checkbox = add_hidden_option_toggle("Wireframe", "Enable/Disable wireframe",
+        m_use_wireframe_checkbox = add_hidden_option_toggle("Wireframe", "Enable/Disable wireframe (W)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_WIREFRAME, checked);
         }, false);
@@ -196,7 +196,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         });
 
         auto chose_color_map_button = new Button{ hidden_options_popup, "Choose color map" };
-        chose_color_map_button->set_tooltip("Choose with which color map the data should be displayed (M)");
+        chose_color_map_button->set_tooltip("Choose with which color map the data should be displayed (Shift+M)");
         chose_color_map_button->set_callback([this]() {
             toggle_color_map_selection_window();
         });
@@ -429,6 +429,9 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 case GLFW_KEY_S:
                     toggle_tool_checkbox(m_use_specular_checkbox);
                     return true;
+                case GLFW_KEY_M:
+                    toggle_color_map_selection_window();
+                    return true;
                 case GLFW_KEY_G:
                 {
                     int show_degrees = !m_bsdf_canvas->grid().show_degrees();
@@ -437,7 +440,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return true;
                 }
                 case GLFW_KEY_P:
-                    toggle_view(DataSample::Views::POINTS);
+                    toggle_view(DataSample::Views::PATH);
                     return true;
                 case GLFW_KEY_I:
                     toggle_view(DataSample::Views::INCIDENT_ANGLE);
@@ -563,7 +566,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 return true;
             }
             case GLFW_KEY_P:
-                toggle_view(DataSample::Views::PATH);
+                toggle_view(DataSample::Views::POINTS);
                 return true;
             case GLFW_KEY_G:
                 toggle_tool_checkbox(m_grid_view_checkbox);
@@ -578,7 +581,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 m_bsdf_canvas->snap_to_selection_center();
                 return true;
             case GLFW_KEY_M:
-                toggle_color_map_selection_window();
+                toggle_view(DataSample::Views::MESH);
                 return true;
             case GLFW_KEY_A:
                 toggle_tool_checkbox(m_display_center_axis);
@@ -602,7 +605,6 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
             case GLFW_KEY_KP_SUBTRACT:
                 if (!m_selected_ds || !m_selected_ds->has_selection())
                     return false;
-
 
                 move_selection_along_path(key == GLFW_KEY_KP_ADD, m_selected_ds->selected_points());
                 update_selection_info_window();
@@ -808,7 +810,7 @@ void BSDFApplication::toggle_brdf_options_window()
 
             m_display_as_log = new Button{ button_container, "", nvg_image_icon(m_nvg_context, log) };
             m_display_as_log->set_flags(Button::Flags::ToggleButton);
-            m_display_as_log->set_tooltip("Logarithmic scale");
+            m_display_as_log->set_tooltip("Logarithmic scale (L)");
             m_display_as_log->set_font_size(20);
             m_display_as_log->set_pushed(m_selected_ds ? false : m_selected_ds->display_as_log());
             m_display_as_log->set_enabled(m_selected_ds != nullptr);
@@ -825,9 +827,9 @@ void BSDFApplication::toggle_brdf_options_window()
                 return button;
             };
             m_view_toggles[DataSample::Views::MESH]   = make_view_button(nvg_image_icon(m_nvg_context, mesh), "Show/hide mesh for this material (M)", DataSample::Views::MESH);
-            m_view_toggles[DataSample::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Show/hide sample points for this material (Shift + P)", DataSample::Views::POINTS);
-            m_view_toggles[DataSample::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/hide measurement path for this material (P)", DataSample::Views::PATH);
-            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/hide incident angle for this material (Shift + I)", DataSample::Views::INCIDENT_ANGLE);
+            m_view_toggles[DataSample::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Show/hide sample points for this material (P)", DataSample::Views::POINTS);
+            m_view_toggles[DataSample::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/hide measurement path for this material (Shift+P)", DataSample::Views::PATH);
+            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/hide incident angle for this material (Shift+I)", DataSample::Views::INCIDENT_ANGLE);
         }
 
         // resolution
@@ -843,11 +845,12 @@ void BSDFApplication::toggle_brdf_options_window()
             resolution_combobox->set_items({ "16x16", "16x32", "32x32", "32x64", "64x64", "64x128", "128x128" });
             resolution_combobox->set_selected_index(current_resolution_index);
             resolution_combobox->set_side(nanogui::Popup::Side::Left);
-            resolution_combobox->set_callback([this, bsdf_data_sample](int index) {
+            resolution_combobox->set_callback([bsdf_data_sample](int index) {
                 int n_theta = 16 * pow(2, index / 2);
                 int n_phi = 16 * pow(2, (index+1) / 2);
                 bsdf_data_sample->set_sampling_resolution(n_theta, n_phi);
             });
+            resolution_combobox->set_tooltip("Change sampling resolution of BSDF material");
         }
 
         // incident angle
@@ -869,6 +872,7 @@ void BSDFApplication::toggle_brdf_options_window()
             m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
             m_incident_angle_slider->set_fixed_size({ 200, 200 });
             m_incident_angle_slider->set_enabled(bsdf_data_sample != nullptr);
+            m_incident_angle_slider->set_tooltip("Incident angle of material (editable if bsdf file)");
 
             auto add_float_box = [window, bsdf_data_sample](const string& label, float value, function<void(float)> callback) {
                 auto float_box_container = new Widget{window};
@@ -926,6 +930,7 @@ void BSDFApplication::toggle_brdf_options_window()
             });
             wavelength_slider->set_enabled(m_selected_ds != nullptr);
             wavelength_slider->set_value(slider_value);
+            wavelength_slider->set_tooltip("Current displayed wavelength");
         }
 
         return window;
@@ -971,6 +976,8 @@ void BSDFApplication::toggle_selection_info_window()
         m_selected_ds->get_selection_spectrum(graph->values());
         graph->set_stroke_color(Color(.8f, 1.f));
         graph->set_fill_color(Color(0.f, 0.f));
+        graph->set_background_color(Color(0.0f, 0.0f));
+        graph->set_tooltip("Spectrum of the highest selected point");
 
         auto wavelength_range_labels_container = new Widget{ window };
         wavelength_range_labels_container->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 0, 110});
@@ -1231,6 +1238,7 @@ void BSDFApplication::hide_windows()
     toggle_visibility(m_color_map_selection_window);
     toggle_visibility(m_selection_info_window);
     toggle_visibility(m_unsaved_data_window);
+    toggle_visibility(m_brdf_options_window);
 }
 
 void BSDFApplication::try_load_data_sample(const string& file_path, shared_ptr<DataSample_to_add> data_sample_to_add)
