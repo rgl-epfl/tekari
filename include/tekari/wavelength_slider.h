@@ -17,7 +17,6 @@ public:
 
     // disable set range
     void set_range(std::pair<float, float> range) = delete;
-
 private:
 
     Color current_color() const;

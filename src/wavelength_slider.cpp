@@ -104,6 +104,9 @@ int WavelengthSlider::wavelength_index() const
 
 void WavelengthSlider::draw(NVGcontext* ctx)
 {
+    // constrain the value to zero if below luminance
+    if (m_value < LUMINANCE_WIDTH) m_value = 0.0f;
+
     Widget::draw(ctx);
     nvgEndFrame(ctx); // Flush the Nano_v_g draw stack, not necessary to call nvg_begin_frame afterwards.
 
