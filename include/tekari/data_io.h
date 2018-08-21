@@ -12,6 +12,7 @@ extern void load_data_sample(
     const string& file_name,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
+    VectorXf& wavelengths,
     Metadata& metadata
 );
 

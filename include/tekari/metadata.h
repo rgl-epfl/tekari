@@ -10,7 +10,7 @@ public:
     Metadata();
 
     void add_line(const string& line);
-    void init_infos();
+    void init_infos(VectorXf& wavelengths);
 
     bool is_spectral() const { return m_is_spectral; }
     const Vector2f& incident_angle() const { return m_incident_angle; }

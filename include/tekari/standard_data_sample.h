@@ -10,9 +10,24 @@ class StandardDataSample : public DataSample
 public:
     StandardDataSample(const string &file_path)
     {
-        load_data_sample(file_path, m_raw_measurement, m_v2d, m_metadata);
+        load_data_sample(file_path, m_raw_measurement, m_v2d, m_wavelengths, m_metadata);
         recompute_data();
     }
+
+    virtual void get_selection_spectrum(vector<float> &spectrum) override
+    {
+        if (m_wavelengths.empty())
+            return;
+
+        spectrum.clear();
+        spectrum.reserve(m_wavelengths.size());
+
+        for (size_t i = 0; i < m_wavelengths.size(); ++i)
+        {
+            spectrum.push_back(m_raw_measurement(i + 3, m_intensity_index));
+        }
+    }
+
 
     virtual void set_intensity_index(size_t intensity_index) override
     {

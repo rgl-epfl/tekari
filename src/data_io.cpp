@@ -32,6 +32,7 @@ void load_data_sample(
     const string& file_name,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
+    VectorXf& wavelengths,
     Metadata& metadata
 )
 {
@@ -60,15 +61,11 @@ void load_data_sample(
         {
             file.seekg(0);
 
-            metadata.init_infos();
+            metadata.init_infos(wavelengths);
             if (metadata.is_spectral())
-            {
                 load_spectral_data_sample(file, raw_measurement, V2D, metadata);
-            }
             else
-            {
                 load_standard_data_sample(file, raw_measurement, V2D, metadata);
-            }
             break;
         }
     }

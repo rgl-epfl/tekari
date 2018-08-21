@@ -11,6 +11,7 @@ public:
 
 public:
     ColorMap(const string& name, const uint8_t* color_map_str, uint32_t color_map_str_size);
+    ~ColorMap() { glDeleteTextures(1, &m_render_id); }
 
     void bind(size_t target = 0);
     void unbind(size_t target = 0);

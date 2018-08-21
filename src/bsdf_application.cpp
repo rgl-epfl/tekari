@@ -879,7 +879,7 @@ void BSDFApplication::toggle_brdf_options_window()
         string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
         auto wavelength_label = add_text("Wavelength:", wavelength_str);
 
-        auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths(), m_selected_ds->intensity_count()-1 };
+        auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths() };
         wavelength_slider->set_callback([this, wavelength_label, wavelength_slider](float /*unused*/) {
             int wavelength_index = wavelength_slider->wavelength_index();
             m_selected_ds->set_intensity_index(wavelength_index);
@@ -929,7 +929,7 @@ void BSDFApplication::toggle_selection_info_window()
 
         new Label{ window, "Spectral plot", "sans-bold" };
         auto graph = new Graph{ window, "" };
-        graph->set_values(m_selected_ds->get_selection_spectrum());
+        m_selected_ds->get_selection_spectrum(graph->values());
         graph->set_stroke_color(Color(.8f, 1.f));
         graph->set_fill_color(Color(0.f, 0.f));
 

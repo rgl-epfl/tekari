@@ -88,9 +88,15 @@ public:
     virtual void set_intensity_index(size_t displayed_wavelength) {}
     virtual void set_incident_angle(const Vector2f& i) {}
 
-    virtual inline const float* wavelengths() const { return nullptr; }
-    virtual inline string wavelength_str() { return string("0 nm"); }
-    virtual vector<float> get_selection_spectrum() { return vector<float>(); }
+    inline const VectorXf& wavelengths() const { return m_wavelengths; }
+    inline string wavelength_str()
+    {
+        if (m_intensity_index == 0)
+            return string("luminance");
+
+        return to_string(m_wavelengths[m_intensity_index-1]) + string(" nm");
+    }
+    virtual void get_selection_spectrum(vector<float> &spectrum) = 0;
 
     VectorXf& selected_points() { return m_selected_points; }
     PointsStats& points_stats() { return m_points_stats; }
@@ -110,6 +116,7 @@ protected:
     MatrixXXf   m_h[2];             // heights (standard and log) per point (one for luminance and one for each wavelength)
     Matrix4XXf  m_n[2];             // normals (standard and log) per point (one for luminance and one for each wavelength)
     VectorXu    m_path_segments;
+    VectorXf    m_wavelengths;
     Mask        m_cache_mask;       // bit map indicating whether some intensity data is valid
     size_t      m_intensity_index;  // 0 correspond to luminance, otherwise to a given wavelength
     // Untransformed data

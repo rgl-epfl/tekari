@@ -138,22 +138,22 @@ Vector2f BSDFCanvas::get_incident_angle(const Vector2i &p)
 
     if (m_ortho_mode)
     {
-        oray = Vector4f(relP.x() + VIEW_ORIGIN.x(), VIEW_ORIGIN.y(), relP.y() + VIEW_ORIGIN.z(), 1.0f);
+        oray = Vector4f(relP.x(), relP.y(), 0.0f, 1.0f);
         dray = Vector4f(0.0f, 0.0f, 1.0f, 0.0f);
     } else {
-        oray = enoki::concat(VIEW_ORIGIN, 1.0f);
+        oray = Vector4f(0.0f, 0.0f, 0.0f, 1.0f);
         dray = Vector4f(relP.x(), relP.y(), -NEAR, 0.0f);
     }
 
-    Matrix4f inv_model = enoki::inverse(model_matrix());
+    Matrix4f inv_model = enoki::inverse(VIEW * model_matrix());
 
     oray = inv_model * oray;
-    dray = enoki::normalize(inv_model * dray);
+    dray = inv_model * dray;
 
-    float t = oray.z() / dray.z();
+    float t = -oray.z() / dray.z();
     Vector4f incident_pos = oray + dray * t;
 
-    Vector2f i = Vector2f(incident_pos.x(), incident_pos.y());
+    Vector2f i = Vector2f(incident_pos.x(), -incident_pos.y());
     float theta = enoki::norm(i) * 90.0f;
     theta = std::min(theta, 80.0f);
     float phi = TO_DEG(atan2(i.y(), i.x()));

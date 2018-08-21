@@ -19,7 +19,7 @@ void Metadata::add_line(const string& line)
     m_raw_metadata.push_back(line);
 }
 
-void Metadata::init_infos()
+void Metadata::init_infos(VectorXf& wavelengths)
 {
     const string* line;
 
@@ -52,6 +52,20 @@ void Metadata::init_infos()
     if (m_is_spectral) {
         if (m_data_points_per_loop == -1)
             throw std::runtime_error("Invalid spectral data format (points per loop not found)");
+
+        wavelengths.resize(m_data_points_per_loop);
+        string* lambdas = find_line_starting_with("#lambda=");
+        if (lambdas == nullptr)
+            throw std::runtime_error("Invalid spectral data format (lambdas not found)");
+
+        std::istringstream lambas_ss(*lambdas);
+        lambas_ss.ignore(std::numeric_limits<std::streamsize>::max(), '=');
+        float lambda;
+        for (int i = 0; i < m_data_points_per_loop; ++i)
+        {
+            lambas_ss >> lambda;
+            wavelengths[i] = lambda;
+        }
     } else {
         if (m_data_points_per_loop != -1)
             throw std::runtime_error("Invalid standard data format (points per loop found)");
