@@ -13,7 +13,6 @@
 TEKARI_NAMESPACE_BEGIN
 
 const Vector3f BSDFCanvas::VIEW_ORIGIN(0, 0, 4);
-const Vector3f BSDFCanvas::VIEW_FORWARD(0, -1, 0);
 const Vector3f BSDFCanvas::VIEW_UP(0, 0, 1);
 const Vector3f BSDFCanvas::VIEW_RIGHT(1, 0, 0);
 const Matrix4f BSDFCanvas::VIEW(enoki::translate<Matrix4f>(Vector3f(0, 0, -4)));
@@ -226,8 +225,9 @@ void BSDFCanvas::remove_data_sample(shared_ptr<DataSample> data_sample)
 
 void BSDFCanvas::snap_to_selection_center()
 {
-    m_translation = !m_selected_data_sample ? Vector3f{ 0.0f, 0.0f, 0.0f } :
-                                            m_selected_data_sample->selection_center();
+    m_translation = m_selected_data_sample ?
+                        Matrix3f(inverse(MODEL)) * m_selected_data_sample->selection_center() * Vector3f{-1.0f, 1.0f, 1.0f} :
+                        Vector3f{ 0.0f };
 }
 
 void BSDFCanvas::set_view_angle(ViewAngles view_angle)
