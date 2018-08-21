@@ -11,6 +11,7 @@ public:
     StandardDataSample(const string &file_path)
     {
         load_data_sample(file_path, m_raw_measurement, m_v2d, m_wavelengths, m_metadata);
+        compute_wavelengths_colors();
         recompute_data();
     }
 

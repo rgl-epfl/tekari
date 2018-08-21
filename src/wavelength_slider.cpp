@@ -2,7 +2,6 @@
 
 #include <nanogui/screen.h>
 #include <nanogui/window.h>
-#include <tekari/cie1931.h>
 #include <tekari_resources.h>
 
 TEKARI_NAMESPACE_BEGIN
@@ -11,34 +10,12 @@ TEKARI_NAMESPACE_BEGIN
 #define LUMINANCE_WIDTH 0.05f
 #define SPECTRUM_WIDTH (1.0f - LUMINANCE_WIDTH)
 
-WavelengthSlider::WavelengthSlider(Widget* parent, const VectorXf& wavelengths)
+WavelengthSlider::WavelengthSlider(Widget* parent, const VectorXf& wavelengths, const vector<Color>& wavelengths_colors)
 :   Slider(parent)
 ,   m_wavelengths(wavelengths)
-,   m_colors(wavelengths.size())
+,   m_wavelengths_colors(wavelengths_colors)
 {
     m_wavelength_slider_shader.init("wavelength_slider", VERTEX_SHADER_STR(wavelength_slider), FRAGMENT_SHADER_STR(wavelength_slider));
-
-    // compute rgb colors
-    for(size_t w = 0; w < m_wavelengths.size(); ++w)
-    {
-        float lambda = m_wavelengths[w];
-
-        Vector3f XYZ = Vector3f{ cie_interp(cie_x, lambda), cie_interp(cie_y, lambda), cie_interp(cie_z, lambda) };
-            // * cie_interp(cie_d65, lambda) * (1.f / (CIE_LAMBDA_MAX - CIE_LAMBDA_MIN));
-
-        Color rgb{ 0.0f, 1.0f };
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
-                rgb[i] += xyz_to_srgb[i][j] * XYZ[j];
-
-        rgb[0] = to_srgb(rgb[0]);// * lambda);
-        rgb[1] = to_srgb(rgb[1]);// * lambda);
-        rgb[2] = to_srgb(rgb[2]);// * lambda);
-        
-        rgb = enoki::max(enoki::min(rgb, Color{ 1.0f }), Color{ 0.0f });
-
-        m_colors[w] = rgb;
-    }
 
     // Construct colored mesh
     size_t center_vertex_count = 4 * (m_wavelengths.size() + 3);
@@ -54,7 +31,7 @@ WavelengthSlider::WavelengthSlider(Widget* parent, const VectorXf& wavelengths)
         vertices[2 * col + i_offset]        = Vector2f{ x, 0.5f };
         vertices[2 * col + i_offset + 1]    = Vector2f{ x, 1.0f };
 
-        colors[2 * col]      = colors[2 * col + i_offset + 1] = c * Color(0.5f, 1.0f);
+        colors[2 * col]      = colors[2 * col + i_offset + 1] = c * Color(0.8f, 1.0f);
         colors[2 * col + 1]  = colors[2 * col + i_offset] = c;
     };
     // luminance part (white)
@@ -65,7 +42,7 @@ WavelengthSlider::WavelengthSlider(Widget* parent, const VectorXf& wavelengths)
     // spectral part (spectrum gradient)
     for (size_t i = 0; i < m_wavelengths.size(); ++i) {
         float x = LUMINANCE_WIDTH + ( SPECTRUM_WIDTH * i / (m_wavelengths.size()-1));
-        add_central_point(i + 3, x, m_colors[i]);
+        add_central_point(i + 3, x, m_wavelengths_colors[i]);
     }
 
     // construct end caps
@@ -80,14 +57,14 @@ WavelengthSlider::WavelengthSlider(Widget* parent, const VectorXf& wavelengths)
     add_point(Vector2f{ 0.0f, 0.5f }, Color{ 1.0f });
     for (size_t i = 0; i < VERTEX_PER_SEMI_CIRCLE; ++i) {
         float angle = static_cast<float>(i * M_PI / (VERTEX_PER_SEMI_CIRCLE - 1) + M_PI*0.5f);
-        add_point(Vector2f{ cos(angle), sin(angle) + 1.0f } * 0.5f, Color{ 1.0f } * Color(0.5f, 1.0f));
+        add_point(Vector2f{ cos(angle), sin(angle) + 1.0f } * 0.5f, Color{ 1.0f } * Color(0.8f, 1.0f));
     }
     // right end cap
-    Color right_cap_color = m_wavelengths.empty() ? Color{ 1.0f } : m_colors[m_wavelengths.size()-1];
+    Color right_cap_color = m_wavelengths.empty() ? Color{ 1.0f } : m_wavelengths_colors[m_wavelengths.size()-1];
     add_point(Vector2f{ 0.0f, 0.5f }, right_cap_color);
     for (size_t i = 0; i < VERTEX_PER_SEMI_CIRCLE; ++i) {
         float angle = static_cast<float>(i * M_PI / (VERTEX_PER_SEMI_CIRCLE - 1) - M_PI*0.5f);
-        add_point(Vector2f{ cos(angle), sin(angle) + 1.0f } * 0.5f, right_cap_color * Color(0.5f, 1.0f));
+        add_point(Vector2f{ cos(angle), sin(angle) + 1.0f } * 0.5f, right_cap_color * Color(0.8f, 1.0f));
     }
 
     // upload shader attibutes
@@ -107,13 +84,13 @@ Color WavelengthSlider::current_color() const
         return Color{ 1.0f };
 
     float value = (m_value - LUMINANCE_WIDTH) / SPECTRUM_WIDTH;
-    float step = 1.0f / (m_colors.size() - 1);
+    float step = 1.0f / (m_wavelengths_colors.size() - 1);
 
     size_t first_index = static_cast<size_t>(value / step);
-    size_t second_index = first_index == m_colors.size()-1 ? first_index : first_index + 1;
+    size_t second_index = first_index == m_wavelengths_colors.size()-1 ? first_index : first_index + 1;
     float t = (value - first_index * step) / step;
 
-    return m_colors[first_index] * (1-t) + m_colors[second_index] * t;
+    return m_wavelengths_colors[first_index] * (1-t) + m_wavelengths_colors[second_index] * t;
 }
 
 

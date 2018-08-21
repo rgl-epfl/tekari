@@ -12,8 +12,12 @@ BSDFDataSample::BSDFDataSample(const string& file_path)
 , m_n_theta(32)
 , m_n_phi(32)
 {
+    // copy the wavelengths
     m_wavelengths.resize(m_brdf.wavelengths().size());
     std::copy(begin(m_brdf.wavelengths()), end(m_brdf.wavelengths()), begin(m_wavelengths));
+
+    compute_wavelengths_colors();
+
     // artificially assign metadata members
     m_metadata.add_line(m_brdf.description());
     m_metadata.set_sample_name(file_path.substr(file_path.find_last_of("/") + 1, file_path.find_last_of(".")));

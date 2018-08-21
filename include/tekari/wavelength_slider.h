@@ -8,7 +8,7 @@ TEKARI_NAMESPACE_BEGIN
 class WavelengthSlider : public nanogui::Slider
 {
 public: 
-    WavelengthSlider(Widget *parent, const VectorXf& wavelengths);
+    WavelengthSlider(Widget *parent, const VectorXf& wavelengths, const vector<Color>& wavelengths_colors);
     ~WavelengthSlider();
 
     int wavelength_index() const;
@@ -24,7 +24,7 @@ private:
 
     nanogui::GLShader m_wavelength_slider_shader;
     VectorXf m_wavelengths;
-    vector<Color> m_colors;
+    vector<Color> m_wavelengths_colors;
 };
 
 TEKARI_NAMESPACE_END

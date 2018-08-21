@@ -56,7 +56,6 @@ public:
         const nanogui::Screen* screen = dynamic_cast<const nanogui::Screen*>(this->window()->parent());
         assert(screen);
         Vector2f screen_size = Vector2f(screen->size());
-        float screen_ratio = screen_size.x() / screen_size.y();
         Vector2f scale_factor = Vector2f(m_size) / screen_size;
         Vector2f image_position = Vector2f(absolute_position()) / screen_size;
 

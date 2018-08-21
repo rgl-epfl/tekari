@@ -2,6 +2,7 @@
 
 #include <tekari/raw_data_processing.h>
 #include <tekari/arrow.h>
+#include <tekari/cie1931.h>
 #include <tekari_resources.h>
 
 #define MAX_SELECT_DISTANCE 30.0f
@@ -180,6 +181,30 @@ void DataSample::update_shaders_data()
     m_shaders[POINTS].bind();
     m_shaders[POINTS].share_attrib(m_shaders[MESH], "in_height");
     m_selection_axis.set_origin(selection_center());
+}
+
+void DataSample::compute_wavelengths_colors()
+{
+    // compute the rgb colors for each wavelength
+    m_wavelengths_colors.resize(m_wavelengths.size());
+    for(size_t w = 0; w < m_wavelengths.size(); ++w)
+    {
+        float lambda = m_wavelengths[w];
+
+        Vector3f XYZ = Vector3f{ cie_interp(cie_x, lambda), cie_interp(cie_y, lambda), cie_interp(cie_z, lambda) }
+            * cie_interp(cie_d65, lambda) * 45;
+
+        Color rgb{ 0.0f, 1.0f };
+        for (int i = 0; i < 3; ++i) {
+            for (int j = 0; j < 3; ++j)
+                rgb[i] += xyz_to_srgb[i][j] * XYZ[j];
+            rgb[i] = to_srgb(rgb[i]);
+            if (rgb[i] > 1.0f) Log(Error, "%s %f\n", "HEy!", rgb[i]);
+        }
+        rgb = enoki::max(enoki::min(rgb, Color{ 1.0f }), Color{ 0.0f });
+
+        m_wavelengths_colors[w] = rgb;
+    }
 }
 
 void DataSample::recompute_data()
