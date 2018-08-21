@@ -86,7 +86,6 @@ public:
     inline Vector2f incident_angle() const { return m_metadata.incident_angle(); }
 
     virtual void set_intensity_index(size_t displayed_wavelength) {}
-    virtual void set_incident_angle(const Vector2f& i) {}
 
     void compute_wavelengths_colors();
     inline const vector<Color>& wavelengths_colors() const { return m_wavelengths_colors; }

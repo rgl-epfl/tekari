@@ -89,10 +89,11 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         update_selection_info_window();
     });
     m_bsdf_canvas->set_update_incident_angle_callback([this](const Vector2f& incident_angle) {
-        if (!m_selected_ds)
+        BSDFDataSample* bsdf_data_sample = dynamic_cast<BSDFDataSample*>(m_selected_ds.get());
+        if (!bsdf_data_sample)
             return;
         
-        m_selected_ds->set_incident_angle(incident_angle);
+        bsdf_data_sample->set_incident_angle(incident_angle);
         if (m_selection_info_window) toggle_selection_info_window();
         reprint_footer();
 
@@ -671,10 +672,10 @@ void BSDFApplication::update_layout()
         m_tool_window->height() - m_data_samples_scroll_panel->position().y()
     );
 
-    if (m_brdf_options_window)
-        m_brdf_options_window->set_position({m_size[0] - 230, m_size[1] - 460});
-
     perform_layout();
+
+    if (m_brdf_options_window)
+        m_brdf_options_window->set_position(m_size - m_brdf_options_window->size() - Vector2i{ 10, 40 });
 
     // With a changed layout the relative position of the mouse
     // within children changes and therefore should get updated.
@@ -827,79 +828,105 @@ void BSDFApplication::toggle_brdf_options_window()
             m_view_toggles[DataSample::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Show/hide sample points for this material (Shift + P)", DataSample::Views::POINTS);
             m_view_toggles[DataSample::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/hide measurement path for this material (P)", DataSample::Views::PATH);
             m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/hide incident angle for this material (Shift + I)", DataSample::Views::INCIDENT_ANGLE);
-
-            // m_view_toggles[DataSample::Views::MESH]->set_chevron_icon;
         }
 
+        // resolution
+        BSDFDataSample* bsdf_data_sample = dynamic_cast<BSDFDataSample*>(m_selected_ds.get());
+        if (bsdf_data_sample)
+        {
+            new Label{ window, "Sampling Resolution:", "sans-bold", 18 };
+            auto resolution_combobox = new ComboBox{ window };
 
-        Vector2f curr_i_angle = m_selected_ds ? m_selected_ds->incident_angle() : Vector2f(0.0f, 0.0f);
-        if (curr_i_angle[1] > 180.0f) curr_i_angle[1] -= 360.0f;
+            pair<size_t, size_t> sampling_resolution = bsdf_data_sample->sampling_resolution();
+            int current_resolution_index = log2(sampling_resolution.first / 16) * 2 + (sampling_resolution.first != sampling_resolution.second);
 
-        new Label{ window, "Incident angle", "sans-bold"};
-        m_incident_angle_slider = new Slider2D{ window };
-        m_incident_angle_slider->set_value(curr_i_angle);
-        m_incident_angle_slider->set_callback([this](Vector2f value) {
-            m_theta_float_box->set_value(value[0]);
-            m_phi_float_box->set_value(value[1]);
+            resolution_combobox->set_items({ "16x16", "16x32", "32x32", "32x64", "64x64", "64x128", "128x128" });
+            resolution_combobox->set_selected_index(current_resolution_index);
+            resolution_combobox->set_side(nanogui::Popup::Side::Left);
+            resolution_combobox->set_callback([this, bsdf_data_sample](int index) {
+                int n_theta = 16 * pow(2, index / 2);
+                int n_phi = 16 * pow(2, (index+1) / 2);
+                bsdf_data_sample->set_sampling_resolution(n_theta, n_phi);
+            });
+        }
 
-            m_selected_ds->set_incident_angle(value);
-            if (m_selection_info_window) toggle_selection_info_window();
-            reprint_footer();
-        });
-        m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
-        m_incident_angle_slider->set_fixed_size({ 200, 200 });
-        m_incident_angle_slider->set_enabled(m_selected_ds != nullptr);
+        // incident angle
+        {
+            Vector2f curr_i_angle = m_selected_ds->incident_angle();
+            if (curr_i_angle[1] > 180.0f) curr_i_angle[1] -= 360.0f;
 
-        auto add_float_box = [window, this](const string& label, float value, function<void(float)> callback) {
-            auto float_box_container = new Widget{window};
-            float_box_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
-            new Label{float_box_container, label};
-            auto float_box = new FloatBox<float>{ float_box_container };
-            float_box->set_value(value);
-            float_box->set_editable(m_selected_ds != nullptr);
-            float_box->set_enabled(m_selected_ds != nullptr);
-            float_box->set_callback(callback);
-            float_box->set_units("°");
-            float_box->set_spinnable(true);
-            return float_box;
-        };
+            new Label{ window, "Incident angle", "sans-bold", 18 };
+            m_incident_angle_slider = new Slider2D{ window };
+            m_incident_angle_slider->set_value(curr_i_angle);
+            m_incident_angle_slider->set_callback([this, bsdf_data_sample](Vector2f value) {
+                m_theta_float_box->set_value(value[0]);
+                m_phi_float_box->set_value(value[1]);
 
-        auto angle_slider_callback = [this](float) {
-            float theta = enoki::clamp(m_theta_float_box->value(), 0.0f, 85.0f);
-            float phi = enoki::clamp(m_phi_float_box->value(), -180.0f, 180.0f);
-            m_theta_float_box->set_value(theta);
-            m_phi_float_box->set_value(phi);
-            Vector2f incident_angle = {theta, phi};
-            m_incident_angle_slider->set_value(incident_angle);
-            m_selected_ds->set_incident_angle(incident_angle); 
-            if (m_selection_info_window) toggle_selection_info_window();
-            reprint_footer();
-        };
+                bsdf_data_sample->set_incident_angle(value);
+                if (m_selection_info_window) toggle_selection_info_window();
+                reprint_footer();
+            });
+            m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
+            m_incident_angle_slider->set_fixed_size({ 200, 200 });
+            m_incident_angle_slider->set_enabled(bsdf_data_sample != nullptr);
 
-        m_theta_float_box = add_float_box("Elevation:", curr_i_angle.x(), angle_slider_callback);
-        m_phi_float_box = add_float_box("Azimuth:", curr_i_angle.y(), angle_slider_callback);
+            auto add_float_box = [window, bsdf_data_sample](const string& label, float value, function<void(float)> callback) {
+                auto float_box_container = new Widget{window};
+                float_box_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
+                new Label{float_box_container, label};
+                auto float_box = new FloatBox<float>{ float_box_container };
+                float_box->set_value(value);
+                float_box->set_editable(bsdf_data_sample != nullptr);
+                float_box->set_enabled(bsdf_data_sample != nullptr);
+                float_box->set_callback(callback);
+                float_box->set_units("°");
+                float_box->set_spinnable(true);
+                return float_box;
+            };
 
-        auto add_text = [window](const string& label, const string& value) {
-            auto labels_container = new Widget{window};
-            labels_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
-            new Label{labels_container, label};
-            auto text = new Label{ labels_container, value };
-            return text;
-        };
+            auto angle_slider_callback = [this, bsdf_data_sample](float) {
+                if (!bsdf_data_sample)
+                    return;
+                float theta = enoki::clamp(m_theta_float_box->value(), 0.0f, 85.0f);
+                float phi = enoki::clamp(m_phi_float_box->value(), -180.0f, 180.0f);
+                m_theta_float_box->set_value(theta);
+                m_phi_float_box->set_value(phi);
+                Vector2f incident_angle = {theta, phi};
+                m_incident_angle_slider->set_value(incident_angle);
+                bsdf_data_sample->set_incident_angle(incident_angle); 
+                if (m_selection_info_window) toggle_selection_info_window();
+                reprint_footer();
+            };
 
-        size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
-        string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
-        auto wavelength_label = add_text("Wavelength:", wavelength_str);
+            m_theta_float_box = add_float_box("Elevation:", curr_i_angle.x(), angle_slider_callback);
+            m_phi_float_box = add_float_box("Azimuth:", curr_i_angle.y(), angle_slider_callback);
+        }
 
-        auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths(), m_selected_ds->wavelengths_colors() };
-        wavelength_slider->set_callback([this, wavelength_label, wavelength_slider](float /*unused*/) {
-            int wavelength_index = wavelength_slider->wavelength_index();
-            m_selected_ds->set_intensity_index(wavelength_index);
-            wavelength_label->set_caption(m_selected_ds->wavelength_str());
-            reprint_footer();
-        });
-        wavelength_slider->set_enabled(m_selected_ds != nullptr);
-        wavelength_slider->set_value(wavelength_index);
+        // wavelength slider
+        {
+            auto add_text = [window](const string& label, const string& value) {
+                auto labels_container = new Widget{window};
+                labels_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
+                new Label{ labels_container, label, "sans-bold", 18 };
+                auto text = new Label{ labels_container, value };
+                return text;
+            };
+
+            size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
+            float slider_value = m_selected_ds ? float(wavelength_index) / m_selected_ds->intensity_count() : 0;
+            string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
+            auto wavelength_label = add_text("Wavelength:", wavelength_str);
+
+            auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths(), m_selected_ds->wavelengths_colors() };
+            wavelength_slider->set_callback([this, wavelength_label, wavelength_slider](float /*unused*/) {
+                int wavelength_index = wavelength_slider->wavelength_index();
+                m_selected_ds->set_intensity_index(wavelength_index);
+                wavelength_label->set_caption(m_selected_ds->wavelength_str());
+                reprint_footer();
+            });
+            wavelength_slider->set_enabled(m_selected_ds != nullptr);
+            wavelength_slider->set_value(slider_value);
+        }
 
         return window;
     });

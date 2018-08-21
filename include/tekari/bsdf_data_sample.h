@@ -11,8 +11,16 @@ public:
 
     BSDFDataSample(const string& file_path);
     virtual bool init() override;
-    virtual void set_incident_angle(const Vector2f& incident_angle) override;
+    void set_incident_angle(const Vector2f& incident_angle);
     virtual void set_intensity_index(size_t displayed_wavelength) override;
+    void set_sampling_resolution(size_t n_theta, size_t n_phi)
+    {
+        m_n_theta = n_theta;
+        m_n_phi = n_phi;
+        set_incident_angle(incident_angle());
+    }
+
+    pair<size_t, size_t> sampling_resolution() const { return make_pair(m_n_theta, m_n_phi); }
 
     virtual void get_selection_spectrum(vector<float> &spectrum) override
     {
