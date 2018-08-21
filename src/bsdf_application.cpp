@@ -13,7 +13,6 @@
 #include <nanogui/vscrollpanel.h>
 #include <nanogui/messagedialog.h>
 #include <nanogui/label.h>
-#include <nanogui/graph.h>
 
 #include <algorithm>
 #include <bitset>
@@ -25,6 +24,7 @@
 #include <tekari/bsdf_data_sample.h>
 #include <tekari/standard_data_sample.h>
 #include <tekari/wavelength_slider.h>
+#include <tekari/graph_spectrum.h>
 #include <tekari_resources.h>
 
 #define FOOTER_HEIGHT 25
@@ -879,7 +879,7 @@ void BSDFApplication::toggle_brdf_options_window()
         string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
         auto wavelength_label = add_text("Wavelength:", wavelength_str);
 
-        auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths() };
+        auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths(), m_selected_ds->wavelengths_colors() };
         wavelength_slider->set_callback([this, wavelength_label, wavelength_slider](float /*unused*/) {
             int wavelength_index = wavelength_slider->wavelength_index();
             m_selected_ds->set_intensity_index(wavelength_index);
@@ -928,7 +928,7 @@ void BSDFApplication::toggle_selection_info_window()
         make_selection_info_labels("Average intensity :", to_string(selection_stats_slice.average_intensity));
 
         new Label{ window, "Spectral plot", "sans-bold" };
-        auto graph = new Graph{ window, "" };
+        auto graph = new GraphSpectrum{ window, m_selected_ds->wavelengths_colors(), "" };
         m_selected_ds->get_selection_spectrum(graph->values());
         graph->set_stroke_color(Color(.8f, 1.f));
         graph->set_fill_color(Color(0.f, 0.f));

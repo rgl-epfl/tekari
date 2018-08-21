@@ -203,6 +203,7 @@ add_executable(tekari
   include/tekari/powitacq.h                     include/tekari/powitacq.inl
   include/tekari/bsdf_data_sample.h             src/bsdf_data_sample.cpp
   include/tekari/wavelength_slider.h            src/wavelength_slider.cpp
+  include/tekari/graph_spectrum.h
   include/tekari/standard_data_sample.h
   include/tekari/matrix_xx.h
   include/tekari/raw_measurement.h
