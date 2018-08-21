@@ -43,6 +43,11 @@ ColorMapButton::~ColorMapButton()
     m_color_map_shader.free();
 }
 
+bool ColorMapButton::mouse_enter_event(const Vector2i &p, bool enter) {
+    Widget::mouse_enter_event(p, enter);
+    return true;
+}
+
 bool ColorMapButton::mouse_button_event(const Vector2i & p, int button, bool down, int modifiers)
 {
     if (Widget::mouse_button_event(p, button, down, modifiers)) {

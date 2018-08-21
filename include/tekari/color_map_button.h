@@ -17,6 +17,8 @@ public:
     virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
     void draw(NVGcontext* ctx) override;
 
+    virtual bool mouse_enter_event(const Vector2i &p, bool enter) override;
+    
     void set_callback(function<void(ColorMapButton*)> callback) { m_callback = callback; }
 
     bool selected() const { return m_selected; }
