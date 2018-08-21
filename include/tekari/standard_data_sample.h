@@ -63,11 +63,13 @@ public:
         save_data_sample(path, m_raw_measurement, m_metadata);
     }
 
-    virtual void init() override
+    virtual bool init() override
     {
-        DataSample::init();
+        if (!DataSample::init())
+            return false;
         link_data_to_shaders();
         set_intensity_index(0);
+        return true;
     }
 };
 

@@ -128,11 +128,11 @@ void DataSample::draw_gl(
         m_selection_axis.draw_gl(mvp);
 }
 
-void DataSample::init()
+bool DataSample::init()
 {
-    m_shaders[MESH].init("height_map", VERTEX_SHADER_STR(height_map), FRAGMENT_SHADER_STR(height_map));
-    m_shaders[PATH].init("path", VERTEX_SHADER_STR(path), FRAGMENT_SHADER_STR(path));
-    m_shaders[POINTS].init("points", VERTEX_SHADER_STR(points), FRAGMENT_SHADER_STR(points));
+    return  m_shaders[MESH].init("height_map", VERTEX_SHADER_STR(height_map), FRAGMENT_SHADER_STR(height_map)) &&
+            m_shaders[PATH].init("path", VERTEX_SHADER_STR(path), FRAGMENT_SHADER_STR(path)) &&
+            m_shaders[POINTS].init("points", VERTEX_SHADER_STR(points), FRAGMENT_SHADER_STR(points));
 }
 
 void DataSample::link_data_to_shaders()

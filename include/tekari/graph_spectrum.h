@@ -51,8 +51,6 @@ public:
         Widget::draw(ctx);
         nvgEndFrame(ctx); // Flush the Nano_v_g draw stack, not necessary to call nvg_begin_frame afterwards.
 
-        Vector2f center = Vector2f(m_pos) + Vector2f(m_size) * 0.5f;
-
         const nanogui::Screen* screen = dynamic_cast<const nanogui::Screen*>(this->window()->parent());
         assert(screen);
         Vector2f screen_size = Vector2f(screen->size());

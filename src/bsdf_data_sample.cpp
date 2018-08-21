@@ -23,10 +23,12 @@ BSDFDataSample::BSDFDataSample(const string& file_path)
     m_metadata.set_sample_name(file_path.substr(file_path.find_last_of("/") + 1, file_path.find_last_of(".")));
 }
 
-void BSDFDataSample::init()
+bool BSDFDataSample::init()
 {
-    DataSample::init();
+    if (!DataSample::init())
+        return false;
     set_incident_angle({0.0f, 0.0f});
+    return true;
 }
 
 void BSDFDataSample::set_intensity_index(size_t intensity_index)

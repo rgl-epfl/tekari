@@ -14,7 +14,7 @@ varying vec3 integrated_color;
 const vec3 light_color = vec3(0.8, 0.8, 0.7);
 
 void main() {
-    vec3 color = use_integrated_colors ? integrated_color : texture(color_map, vec2(height, 0)).rgb;
+    vec3 color = use_integrated_colors ? integrated_color : texture2D(color_map, vec2(height, 0)).rgb;
 
 	vec3 pos_to_light = normalize(vec3(0,0,4) - position);
 	float specular = clamp(dot(reflect(-pos_to_light, normal), pos_to_light), 0.0, 1.0);

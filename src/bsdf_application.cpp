@@ -621,21 +621,33 @@ void BSDFApplication::draw_contents() {
         m_requires_layout_update = false;
     }
 
+    auto open_error_winow = [this](const string& error_msg) {
+        auto error_msg_dialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error",
+            error_msg, "Retry", "Cancel", true);
+        error_msg_dialog->set_callback([this](int index) {
+            if (index == 0) { open_data_sample_dialog(); }
+        });
+    };
+
     try {
         while (true) {
             auto new_data_sample = m_data_samples_to_add.try_pop();
             if (!new_data_sample->data_sample)
             {
-                auto error_msg_dialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error",
-                    new_data_sample->error_msg, "Retry", "Cancel", true);
-                error_msg_dialog->set_callback([this](int index) {
-                    if (index == 0) { open_data_sample_dialog(); }
-                });
+               open_error_winow(new_data_sample->error_msg);
             }
             else
             {
-                new_data_sample->data_sample->init();
-                add_data_sample(new_data_sample->data_sample);
+                bool init_completed = false;
+                try {
+                    init_completed = new_data_sample->data_sample->init();
+                } catch (std::runtime_error) {
+                    init_completed = false;
+                }
+                if (!init_completed)
+                    open_error_winow("Error while initializing the data sample");
+                else
+                    add_data_sample(new_data_sample->data_sample);
             }
             redraw();
         }

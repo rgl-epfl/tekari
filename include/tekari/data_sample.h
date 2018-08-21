@@ -50,7 +50,7 @@ public:
     inline void toggle_view(Views view, bool toggle) { m_display_views[view] = toggle; }
     inline bool display_view(Views view) const { return m_display_views[view]; }
 
-    virtual void init();
+    virtual bool init();
     void link_data_to_shaders();
     void update_shaders_data();
 

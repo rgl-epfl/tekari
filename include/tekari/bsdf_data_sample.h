@@ -10,7 +10,7 @@ class BSDFDataSample : public DataSample
 public:
 
     BSDFDataSample(const string& file_path);
-    virtual void init() override;
+    virtual bool init() override;
     virtual void set_incident_angle(const Vector2f& incident_angle) override;
     virtual void set_intensity_index(size_t displayed_wavelength) override;
 
