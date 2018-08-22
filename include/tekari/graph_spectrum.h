@@ -26,7 +26,7 @@ public:
             vertices[2 * col]       = Vector2f{ x, 0.0f };
             vertices[2 * col + 1]   = Vector2f{ x, 1.0f };
 
-            colors[2 * col]      = c * Color(0.8f, 0.5f);
+            colors[2 * col]      = c * Color(1.0f, 0.5f);
             colors[2 * col + 1]  = c * Color(1.0f, 0.5f);
         };
         // spectral part (spectrum gradient)
@@ -39,8 +39,6 @@ public:
         m_graph_shader.bind();
         m_graph_shader.upload_attrib("in_pos", (float*)vertices.data(), 2, vertices.size());
         m_graph_shader.upload_attrib("in_color", (float*)colors.data(), 4, colors.size());
-
-        m_background_color = Color(0.0f);
     }
 
     // disable set values

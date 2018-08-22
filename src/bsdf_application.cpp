@@ -668,7 +668,7 @@ void BSDFApplication::update_layout()
         footer_infos->set_fixed_width(width() / m_footer->children().size());
 
     m_bsdf_canvas->set_fixed_size(Vector2i{ m_size.x(), m_size.y() - FOOTER_HEIGHT });
-    m_tool_window->set_fixed_size({ 210, 600 });
+    m_tool_window->set_fixed_size({ 210, 400 });
 
     m_data_samples_scroll_panel->set_fixed_height(
         m_tool_window->height() - m_data_samples_scroll_panel->position().y()
