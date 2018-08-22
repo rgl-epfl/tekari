@@ -116,4 +116,27 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     set_intensity_index(m_intensity_index);
 }
 
+void BSDFDataSample::get_selection_spectrum(vector<float> &spectrum)
+{
+    size_t point_index = m_selection_stats[m_intensity_index].highest_point_index;
+    powitacq::Spectrum s = m_brdf.sample_state(point_index);
+
+    spectrum.clear();
+    spectrum.reserve(s.size());
+
+    float max = -std::numeric_limits<float>::max();
+    for(size_t i = 0; i < s.size(); ++i)
+    {
+        if (m_wavelengths[i] > 360.0f && m_wavelengths[i] < 1000.0f)
+        {
+            spectrum.push_back(s[i]);
+            max = std::max(max, s[i]);
+        }
+    }
+    float normalization = 0.9f / max;
+    // normalize spectrum
+    for(size_t i = 0; i < spectrum.size(); ++i)
+        spectrum[i] *= normalization;
+}
+
 TEKARI_NAMESPACE_END

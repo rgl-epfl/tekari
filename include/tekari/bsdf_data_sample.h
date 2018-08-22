@@ -22,29 +22,7 @@ public:
 
     pair<size_t, size_t> sampling_resolution() const { return make_pair(m_n_theta, m_n_phi); }
 
-    virtual void get_selection_spectrum(vector<float> &spectrum) override
-    {
-        size_t point_index = m_selection_stats[m_intensity_index].highest_point_index;
-        powitacq::Spectrum s = m_brdf.sample_state(point_index);
-
-        spectrum.clear();
-        spectrum.reserve(s.size());
-
-        float max = -std::numeric_limits<float>::max();
-        for(size_t i = 0; i < s.size(); ++i)
-        {
-            if (m_wavelengths[i] > 360.0f && m_wavelengths[i] < 1000.0f)
-            {
-                spectrum.push_back(s[i]);
-                max = std::max(max, s[i]);
-            }
-        }
-        float normalization = 0.9f / max;
-        // normalize spectrum
-        for(size_t i = 0; i < spectrum.size(); ++i)
-            spectrum[i] *= normalization;
-    }
-
+    virtual void get_selection_spectrum(vector<float> &spectrum) override;
 
 private:
     void compute_samples();

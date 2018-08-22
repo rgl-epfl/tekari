@@ -845,10 +845,11 @@ void BSDFApplication::toggle_brdf_options_window()
             resolution_combobox->set_items({ "16x16", "16x32", "32x32", "32x64", "64x64", "64x128", "128x128" });
             resolution_combobox->set_selected_index(current_resolution_index);
             resolution_combobox->set_side(nanogui::Popup::Side::Left);
-            resolution_combobox->set_callback([bsdf_data_sample](int index) {
+            resolution_combobox->set_callback([bsdf_data_sample, this](int index) {
                 int n_theta = 16 * pow(2, index / 2);
                 int n_phi = 16 * pow(2, (index+1) / 2);
                 bsdf_data_sample->set_sampling_resolution(n_theta, n_phi);
+                reprint_footer();
             });
             resolution_combobox->set_tooltip("Change sampling resolution of BSDF material");
         }

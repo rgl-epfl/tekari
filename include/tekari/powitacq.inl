@@ -1276,8 +1276,7 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
     colors_out.reserve(max_points);
 
     float min_luminance = std::numeric_limits<float>::max();
-
-    Vector3f min_rgb_color = Vector3f(std::numeric_limits<float>::max());
+    Vector3f min_rgb_color = Vector3f(0.0f);
 
     if (wi.z() <= 0)
         return false;
@@ -1334,16 +1333,19 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
         m_scales.push_back(scale);
 
         float luminance = m_data->luminance.eval(sample, m_params) * scale;
-        min_luminance = std::min(min_luminance, luminance);
-        luminance_out.push_back(luminance);
-
         Vector3f rgb_color = normalize(Vector3f(
             to_srgb(m_data->rgb[0].eval(sample, m_params)),
             to_srgb(m_data->rgb[1].eval(sample, m_params)),
             to_srgb(m_data->rgb[2].eval(sample, m_params))
         ));
-        min_rgb_color = min(min_rgb_color, rgb_color);
+        luminance_out.push_back(luminance);
         colors_out.push_back(rgb_color);
+
+        if (min_luminance > luminance)
+        {
+            min_luminance = luminance;
+            min_rgb_color = rgb_color;
+        }
     };
 
     for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points at (0, 0)
