@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
     } catch (const std::runtime_error& e) {
         string error_msg = std::string("Caught a fatal error: ") + std::string(e.what());
         #if defined(_WIN32)
-            Message_box_a(nullptr, error_msg.c_str(), NULL, MB_ICONERROR | MB_OK);
+            MessageBoxA(nullptr, error_msg.c_str(), NULL, MB_ICONERROR | MB_OK);
         #else
             cerr << error_msg << endl;
         #endif

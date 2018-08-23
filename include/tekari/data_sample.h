@@ -67,7 +67,7 @@ public:
     void recompute_data();
 
     virtual void delete_selected_points() {}
-    virtual void save(const string& file_path) {}
+    virtual void save(const string& ) {}
 
     // Selection
     inline Vector3f selection_center() const
@@ -85,7 +85,7 @@ public:
     inline size_t intensity_index() const { return m_intensity_index; }
     inline Vector2f incident_angle() const { return m_metadata.incident_angle(); }
 
-    virtual void set_intensity_index(size_t displayed_wavelength) {}
+    virtual void set_intensity_index(size_t /* displayed_wavelength */) {}
 
     void compute_wavelengths_colors();
     inline const vector<Color>& wavelengths_colors() const { return m_wavelengths_colors; }

@@ -60,7 +60,7 @@ public:
         m_graph_shader.bind();
         m_graph_shader.set_uniform("scale", scale_factor);
         m_graph_shader.set_uniform("offset", image_position);
-        m_graph_shader.draw_array(GL_TRIANGLE_STRIP, 0, m_n_wavelengths*2);
+        m_graph_shader.draw_array(GL_TRIANGLE_STRIP, 0, (uint32_t) (m_n_wavelengths*2));
         glDisable(GL_BLEND);
 
         Graph::draw(ctx);

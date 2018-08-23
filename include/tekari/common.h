@@ -1,11 +1,13 @@
 #pragma once
 
+#include <enoki/matrix.h>
+
 #if defined(_WIN32)
 #    if defined(APIENTRY)
 #        undef APIENTRY
 #    endif
 #    define NOMINMAX  // Remove min/max macros when building on windows
-#    include <Windows.h>
+#    include <windows.h>
 #    undef NOMINMAX
 #    undef near      // also cleanup some macros conflicting with variable names
 #    undef far
@@ -26,8 +28,6 @@
 #include <cstdarg>
 #include <nanogui/glutil.h>
 #include <array>
-#include <enoki/array.h>
-#include <enoki/matrix.h>
 #include <tekari/matrix_xx.h>
 
 // (re)define M_PI locally since it's not necessarily defined on some platforms

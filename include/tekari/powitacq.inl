@@ -140,6 +140,7 @@ template <typename T, size_t Dim> Vector<T, Dim> normalize(const Vector<T, Dim> 
  */
 template <typename Predicate>
 size_t find_interval(size_t size_, const Predicate &pred) {
+    using ssize_t = std::make_signed_t<size_t>; // Not all platforms have ssize_t
     ssize_t size  = (ssize_t) size_ - 2,
             first = 1;
 

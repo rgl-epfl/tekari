@@ -1,9 +1,9 @@
+#include <tekari/common.h>
 #include <iostream>
 
 // #include <tekari/common.h>
 #include <iostream>
 #include <string>
-#include <tekari/common.h>
 #include <tekari/matrix_xx.h>
 #define POWITACQ_IMPLEMENTATION
 #include <tekari/powitacq.h>
@@ -82,7 +82,7 @@ void test_iterator()
     cout << m << endl;
 }
 
-int main(int argc, char const* argv[])
+int main(int, char const* [])
 {
     // test_constructors(54, 23, 2.4);
     // test_clear<float>();

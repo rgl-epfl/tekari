@@ -59,8 +59,8 @@ template <typename Type, size_t Dim> struct Vector {
     }
 
     /// Initialization with individual components
-    template <typename... Args, std::enable_if_t<(sizeof...(Args) >= 2), int> = 0>
-    Vector(Args... args) : values { (Type) args... } { }
+    template <typename Arg, typename... Args, std::enable_if_t<(sizeof...(Args) >= 1), int> = 0>
+    Vector(Arg arg, Args... args) : values { (Type) arg, (Type) args... } { }
 
     /// Converting copy-constructor
     template <typename Type2> Vector(const Vector<Type2, Dim> &v) {

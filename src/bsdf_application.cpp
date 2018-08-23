@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <bitset>
 #include <string>
+#include <array>
 
 #include <stb_image.h>
 #include <tekari/light_theme.h>
@@ -310,7 +311,12 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         open_button->set_enabled(false);
         save_image_button->set_enabled(false);
         save_data_button->set_enabled(false);
+#else
+        (void)open_button;
+        (void)save_image_button;
+        (void)save_data_button;
 #endif
+        (void)show_infos_button;
     }
 
     // Data sample selection
@@ -327,7 +333,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 #if !defined(EMSCRIPTEN)
     // load application icon
     {
-        const vector<pair<const uint8_t*, uint32_t>> icon_paths =
+        const std::vector<pair<const uint8_t*, uint32_t>> icon_paths =
         {
             { tekari_icon_16x16_png, tekari_icon_16x16_png_size },
             { tekari_icon_32x32_png, tekari_icon_32x32_png_size },
@@ -336,7 +342,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             { tekari_icon_256x256_png, tekari_icon_256x256_png_size }
         };
 
-        GLFWimage icons[icon_paths.size()];
+        GLFWimage icons[10];
         size_t i;
         for (i = 0; i < icon_paths.size(); i++)
         {
@@ -350,7 +356,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             }
         }
         if (i == icon_paths.size())
-            glfwSetWindowIcon(m_glfw_window, icon_paths.size(), icons);
+            glfwSetWindowIcon(m_glfw_window, (int) icon_paths.size(), icons);
 
         for (size_t j = 0; j < i; j++)
         {
@@ -665,7 +671,7 @@ void BSDFApplication::update_layout()
 
     m_footer->set_fixed_size(Vector2i( m_size.x(), FOOTER_HEIGHT ));
     for(auto& footer_infos: m_footer->children())
-        footer_infos->set_fixed_width(width() / m_footer->children().size());
+        footer_infos->set_fixed_width(width() / (int) m_footer->children().size());
 
     m_bsdf_canvas->set_fixed_size(Vector2i{ m_size.x(), m_size.y() - FOOTER_HEIGHT });
     m_tool_window->set_fixed_size({ 210, 400 });
