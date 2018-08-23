@@ -1,7 +1,7 @@
 #version 330
 
-uniform bool use_shadows;
-uniform bool use_specular;
+uniform bool use_diffuse_shading;
+uniform bool use_specular_shading;
 uniform bool use_integrated_colors;
 
 uniform sampler2D color_map;
@@ -21,9 +21,9 @@ void main() {
 	vec3 pos_to_light = normalize(vec3(0, 0, 4) - position);
 	float specular = clamp(dot(reflect(-pos_to_light, normal), pos_to_light), 0.0f, 1.0f);
 	vec3 out_color3 = vec3(0.0f);
-	out_color3 += float(use_shadows) * (0.2f + abs(dot(pos_to_light, normal))) * color * light_color;
-	out_color3 += float(use_shadows && use_specular) * pow(specular, 20.0f) * light_color;
-	out_color3 += float(!use_shadows) * color;
+	out_color3 += float(use_diffuse_shading) * (0.2f + abs(dot(pos_to_light, normal))) * color * light_color;
+	out_color3 += float(use_diffuse_shading && use_specular_shading) * pow(specular, 20.0f) * light_color;
+	out_color3 += float(!use_diffuse_shading) * color;
 
     out_color = vec4(out_color3, 1.0f);
 }

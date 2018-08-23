@@ -63,8 +63,8 @@ void DataSample::draw_gl(
             m_shaders[MESH].set_uniform("model_view_proj", mvp);
             m_shaders[MESH].set_uniform("model", model);
             m_shaders[MESH].set_uniform("inverse_transpose_model", enoki::inverse_transpose(model));
-            m_shaders[MESH].set_uniform("use_shadows", (bool)(flags & USE_SHADOWS));
-            m_shaders[MESH].set_uniform("use_specular", (bool)(flags & USE_SPECULAR));
+            m_shaders[MESH].set_uniform("use_diffuse_shading", (bool)(flags & USE_SHADOWS));
+            m_shaders[MESH].set_uniform("use_specular_shading", (bool)(flags & USE_SPECULAR));
             m_shaders[MESH].set_uniform("use_integrated_colors", (m_intensity_index == 0 && !m_wavelengths.empty()) || bool(flags & USE_INTEGRATED_COLORS));
             m_shaders[MESH].draw_indexed(GL_TRIANGLES, 0, m_f.n_rows());
 #if !defined(EMSCRIPTEN)

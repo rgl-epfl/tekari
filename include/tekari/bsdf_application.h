@@ -101,8 +101,8 @@ private:
     PopupButton* m_hidden_options_button;
     CheckBox* m_grid_view_checkbox;
     CheckBox* m_ortho_view_checkbox;
-    CheckBox* m_use_shadows_checkbox;
-    CheckBox* m_use_specular_checkbox;
+    CheckBox* m_use_diffuse_shading_checkbox;
+    CheckBox* m_use_specular_shading_checkbox;
     CheckBox* m_use_wireframe_checkbox;
     CheckBox* m_display_center_axis;
     CheckBox* m_display_degrees_checkbox;

@@ -152,16 +152,16 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
 
         new Label{ hidden_options_popup, "Advanced View Options", "sans-bold" };
 
-        m_ortho_view_checkbox = add_hidden_option_toggle("Orthonormal", "Enable/Disable orthogonal view (O)",
+        m_ortho_view_checkbox = add_hidden_option_toggle("Orthographic", "Enable/Disable orthographic view (O)",
             [this](bool checked) {
                 m_bsdf_canvas->set_ortho_mode(checked);
         }, false);
-        m_use_shadows_checkbox = add_hidden_option_toggle("Shadows", "Enable/Disable shadows (S)",
+        m_use_diffuse_shading_checkbox = add_hidden_option_toggle("Diffuse shading", "Enable/Disable diffuse shading (S)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_SHADOWS, checked);
-            m_use_specular_checkbox->set_enabled(checked);
+            m_use_specular_shading_checkbox->set_enabled(checked);
         }, true);
-        m_use_specular_checkbox = add_hidden_option_toggle("Specular", "Enable/Disable specular lighting (Shift+S)",
+        m_use_specular_shading_checkbox = add_hidden_option_toggle("Specular shading", "Enable/Disable specular shading (Shift+S)",
             [this](bool checked) {
             m_bsdf_canvas->set_draw_flag(USE_SPECULAR, checked);
         }, false);
@@ -427,7 +427,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
             switch (key)
             {
                 case GLFW_KEY_S:
-                    toggle_tool_checkbox(m_use_specular_checkbox);
+                    toggle_tool_checkbox(m_use_specular_shading_checkbox);
                     return true;
                 case GLFW_KEY_M:
                     toggle_color_map_selection_window();
@@ -535,7 +535,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 toggle_tool_checkbox(m_use_wireframe_checkbox);
                 return true;
             case GLFW_KEY_S:
-                toggle_tool_checkbox(m_use_shadows_checkbox);
+                toggle_tool_checkbox(m_use_diffuse_shading_checkbox);
                 return true;
             case GLFW_KEY_UP:
                 select_data_sample(selected_data_sample_index() - 1, false);
@@ -836,19 +836,18 @@ void BSDFApplication::toggle_brdf_options_window()
         BSDFDataSample* bsdf_data_sample = dynamic_cast<BSDFDataSample*>(m_selected_ds.get());
         if (bsdf_data_sample)
         {
-            new Label{ window, "Sampling Resolution:", "sans-bold", 18 };
+            new Label{ window, "Sampling resolution", "sans-bold", 18 };
             auto resolution_combobox = new ComboBox{ window };
 
             pair<size_t, size_t> sampling_resolution = bsdf_data_sample->sampling_resolution();
             int current_resolution_index = log2(sampling_resolution.first / 16) * 2 + (sampling_resolution.first != sampling_resolution.second);
 
-            resolution_combobox->set_items({ "16x16", "16x32", "32x32", "32x64", "64x64", "64x128", "128x128" });
+            resolution_combobox->set_items({ "16x16", "32x32", "64x64", "128x128", "256x256" });
             resolution_combobox->set_selected_index(current_resolution_index);
             resolution_combobox->set_side(nanogui::Popup::Side::Left);
             resolution_combobox->set_callback([bsdf_data_sample, this](int index) {
-                int n_theta = 16 * pow(2, index / 2);
-                int n_phi = 16 * pow(2, (index+1) / 2);
-                bsdf_data_sample->set_sampling_resolution(n_theta, n_phi);
+                int n = 16 * pow(2, index);
+                bsdf_data_sample->set_sampling_resolution(n, n);
                 reprint_footer();
             });
             resolution_combobox->set_tooltip("Change sampling resolution of BSDF material");
