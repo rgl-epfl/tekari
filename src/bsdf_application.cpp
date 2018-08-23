@@ -850,7 +850,7 @@ void BSDFApplication::toggle_brdf_options_window()
                 bsdf_data_sample->set_sampling_resolution(n, n);
                 reprint_footer();
             });
-            resolution_combobox->set_tooltip("Change sampling resolution of BSDF material");
+            resolution_combobox->set_tooltip("Change sampling resolution used to render the BSDF data");
         }
 
         // incident angle
@@ -919,18 +919,20 @@ void BSDFApplication::toggle_brdf_options_window()
             size_t wavelength_index = m_selected_ds ? m_selected_ds->intensity_index() : 0;
             float slider_value = m_selected_ds ? float(wavelength_index) / m_selected_ds->intensity_count() : 0;
             string wavelength_str = m_selected_ds ? m_selected_ds->wavelength_str() : "0 nm";
-            auto wavelength_label = add_text("Wavelength:", wavelength_str);
+            if (m_selected_ds->wavelengths().size() > 1) {
+                auto wavelength_label = add_text("Wavelength:", wavelength_str);
 
-            auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths(), m_selected_ds->wavelengths_colors() };
-            wavelength_slider->set_callback([this, wavelength_label, wavelength_slider](float /*unused*/) {
-                int wavelength_index = wavelength_slider->wavelength_index();
-                m_selected_ds->set_intensity_index(wavelength_index);
-                wavelength_label->set_caption(m_selected_ds->wavelength_str());
-                reprint_footer();
-            });
-            wavelength_slider->set_enabled(m_selected_ds != nullptr);
-            wavelength_slider->set_value(slider_value);
-            wavelength_slider->set_tooltip("Current displayed wavelength");
+                auto wavelength_slider = new WavelengthSlider{ window, m_selected_ds->wavelengths(), m_selected_ds->wavelengths_colors() };
+                wavelength_slider->set_callback([this, wavelength_label, wavelength_slider](float /*unused*/) {
+                    int wavelength_index = wavelength_slider->wavelength_index();
+                    m_selected_ds->set_intensity_index(wavelength_index);
+                    wavelength_label->set_caption(m_selected_ds->wavelength_str());
+                    reprint_footer();
+                });
+                wavelength_slider->set_enabled(m_selected_ds != nullptr);
+                wavelength_slider->set_value(slider_value);
+                wavelength_slider->set_tooltip("Current displayed wavelength");
+            }
         }
 
         return window;
@@ -971,20 +973,22 @@ void BSDFApplication::toggle_selection_info_window()
         make_selection_info_labels("Maximum intensity :", to_string(selection_stats_slice.max_intensity));
         make_selection_info_labels("Average intensity :", to_string(selection_stats_slice.average_intensity));
 
-        new Label{ window, "Spectral plot", "sans-bold" };
-        auto graph = new GraphSpectrum{ window, m_selected_ds->wavelengths_colors(), "" };
-        m_selected_ds->get_selection_spectrum(graph->values());
-        graph->set_stroke_color(Color(.8f, 1.f));
-        graph->set_fill_color(Color(0.f, 0.f));
-        graph->set_background_color(Color(0.0f, 0.0f));
-        graph->set_tooltip("Spectrum of the highest selected point");
+        if (m_selected_ds->wavelengths().size() > 1) {
+            new Label{ window, "Spectral plot", "sans-bold" };
+            auto graph = new GraphSpectrum{ window, m_selected_ds->wavelengths_colors(), "" };
+            m_selected_ds->get_selection_spectrum(graph->values());
+            graph->set_stroke_color(Color(.8f, 1.f));
+            graph->set_fill_color(Color(0.f, 0.f));
+            graph->set_background_color(Color(0.0f, 0.0f));
+            graph->set_tooltip("Spectrum of the highest selected point");
 
-        auto wavelength_range_labels_container = new Widget{ window };
-        wavelength_range_labels_container->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 0, 110});
-        auto wavelength_360 = new Label{ wavelength_range_labels_container, "360 nm"  };
-        auto wavelength_1000 = new Label{ wavelength_range_labels_container, "1000 nm" };
-        wavelength_360->set_font_size(13);
-        wavelength_1000->set_font_size(13);
+            auto wavelength_range_labels_container = new Widget{ window };
+            wavelength_range_labels_container->set_layout(new BoxLayout{Orientation::Horizontal, Alignment::Fill, 0, 110});
+            auto wavelength_360 = new Label{ wavelength_range_labels_container, "360 nm"  };
+            auto wavelength_1000 = new Label{ wavelength_range_labels_container, "1000 nm" };
+            wavelength_360->set_font_size(13);
+            wavelength_1000->set_font_size(13);
+        }
 
         window->set_position(Vector2i{width() - 210, 20});
         return window;
