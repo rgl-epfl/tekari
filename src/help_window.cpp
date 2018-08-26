@@ -91,16 +91,16 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
 #endif
         add_row(file_loading, "Delete", "Remove the loaded material");
 
-        auto data_sample_view_options = add_shortcut_section("Data Sample View Options", "For the currently selected material");
-        add_row(data_sample_view_options, "L", "Toggle logarithmic view");
-        add_row(data_sample_view_options, "M", "Show/hide mesh");
-        add_row(data_sample_view_options, "P", "Show/hide sample points");
-        add_row(data_sample_view_options, "Shift+P", "Show/hide measurement path");
-        add_row(data_sample_view_options, "Shift+I", "Show/hide incident angle");
+        auto dataset_view_options = add_shortcut_section("Data Sample View Options", "For the currently selected material");
+        add_row(dataset_view_options, "L", "Toggle logarithmic view");
+        add_row(dataset_view_options, "M", "Show/hide mesh");
+        add_row(dataset_view_options, "P", "Show/hide sample points");
+        add_row(dataset_view_options, "Shift+P", "Show/hide measurement path");
+        add_row(dataset_view_options, "Shift+I", "Show/hide incident angle");
 
         auto view_options = add_shortcut_section("View Options");
 #if !defined(EMSCRIPTEN)
-        add_row(data_sample_view_options, "W", "Display mesh in wireframe mode");
+        add_row(dataset_view_options, "W", "Display mesh in wireframe mode");
 #endif
         add_row(view_options, "A", "Show/hide center axis");
         add_row(view_options, "G", "Show/hide grid");

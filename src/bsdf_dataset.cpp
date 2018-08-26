@@ -1,5 +1,5 @@
 #define POWITACQ_IMPLEMENTATION
-#include <tekari/bsdf_data_sample.h>
+#include <tekari/bsdf_dataset.h>
 #include <tekari/raw_data_processing.h>
 
 TEKARI_NAMESPACE_BEGIN
@@ -7,7 +7,7 @@ TEKARI_NAMESPACE_BEGIN
 inline powitacq::Vector3f enoki_to_powitacq_vec3(const Vector3f& v) { return powitacq::Vector3f(v[0], v[1], v[2]); }
 inline Vector3f powitacq_to_enoki_vec3(const powitacq::Vector3f& v) { return Vector3f(v[0], v[1], v[2]); }
 
-BSDFDataSample::BSDFDataSample(const string& file_path)
+BSDFDataset::BSDFDataset(const string& file_path)
 : m_brdf(file_path)
 , m_n_theta(32)
 , m_n_phi(32)
@@ -23,15 +23,15 @@ BSDFDataSample::BSDFDataSample(const string& file_path)
     m_metadata.set_sample_name(file_path.substr(file_path.find_last_of("/") + 1, file_path.find_last_of(".")));
 }
 
-bool BSDFDataSample::init()
+bool BSDFDataset::init()
 {
-    if (!DataSample::init())
+    if (!Dataset::init())
         return false;
     set_incident_angle({0.0f, 0.0f});
     return true;
 }
 
-void BSDFDataSample::set_intensity_index(size_t intensity_index)
+void BSDFDataset::set_intensity_index(size_t intensity_index)
 {
     m_intensity_index = std::min(intensity_index, m_raw_measurement.n_wavelengths() + 1);;
     if (!m_cache_mask[m_intensity_index])
@@ -50,7 +50,7 @@ void BSDFDataSample::set_intensity_index(size_t intensity_index)
     update_shaders_data();
 }
 
-void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
+void BSDFDataset::set_incident_angle(const Vector2f& incident_angle)
 {
     cout << std::setw(50) << std::left << "Setting incident angle ..";
     Timer<> timer;
@@ -116,7 +116,7 @@ void BSDFDataSample::set_incident_angle(const Vector2f& incident_angle)
     set_intensity_index(m_intensity_index);
 }
 
-void BSDFDataSample::get_selection_spectrum(vector<float> &spectrum)
+void BSDFDataset::get_selection_spectrum(vector<float> &spectrum)
 {
     size_t point_index = m_selection_stats[m_intensity_index].highest_point_index;
     powitacq::Spectrum s = m_brdf.sample_state(point_index);

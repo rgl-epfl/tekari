@@ -1,15 +1,15 @@
 #pragma once
 
-#include <tekari/data_sample.h>
+#include <tekari/dataset.h>
 #include <tekari/powitacq.h>
 
 TEKARI_NAMESPACE_BEGIN
 
-class BSDFDataSample : public DataSample
+class BSDFDataset : public Dataset
 {
 public:
 
-    BSDFDataSample(const string& file_path);
+    BSDFDataset(const string& file_path);
     virtual bool init() override;
     void set_incident_angle(const Vector2f& incident_angle);
     virtual void set_intensity_index(size_t displayed_wavelength) override;

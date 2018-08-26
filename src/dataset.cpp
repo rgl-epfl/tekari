@@ -1,4 +1,4 @@
-#include <tekari/data_sample.h>
+#include <tekari/dataset.h>
 
 #include <tekari/raw_data_processing.h>
 #include <tekari/arrow.h>
@@ -9,7 +9,7 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSample::DataSample()
+Dataset::Dataset()
 :   m_intensity_index(0)
 ,   m_display_as_log(false)
 ,   m_display_views{ true, false, false, true }
@@ -17,13 +17,13 @@ DataSample::DataSample()
 ,   m_dirty(false)
 {}
 
-DataSample::~DataSample()
+Dataset::~Dataset()
 {
     for (int i = 0; i != VIEW_COUNT; ++i)
         m_shaders[i].free();
 }
 
-void DataSample::draw_gl(
+void Dataset::draw_gl(
     const Matrix4f& model,
     const Matrix4f& mvp,
     int flags,
@@ -128,14 +128,14 @@ void DataSample::draw_gl(
         m_selection_axis.draw_gl(mvp);
 }
 
-bool DataSample::init()
+bool Dataset::init()
 {
     return  m_shaders[MESH].init("height_map", VERTEX_SHADER_STR(height_map), FRAGMENT_SHADER_STR(height_map)) &&
             m_shaders[PATH].init("path", VERTEX_SHADER_STR(path), FRAGMENT_SHADER_STR(path)) &&
             m_shaders[POINTS].init("points", VERTEX_SHADER_STR(points), FRAGMENT_SHADER_STR(points));
 }
 
-void DataSample::link_data_to_shaders()
+void Dataset::link_data_to_shaders()
 {
     if (m_f.n_rows() == 0)
         throw std::runtime_error("ERROR: cannot link data to shader before loading data.");
@@ -155,13 +155,13 @@ void DataSample::link_data_to_shaders()
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
 }
 
-void DataSample::toggle_log_view()
+void Dataset::toggle_log_view()
 {
     m_display_as_log = !m_display_as_log;
     update_shaders_data();
 }
 
-void DataSample::update_point_selection()
+void Dataset::update_point_selection()
 {
     m_shaders[POINTS].bind();
     m_shaders[POINTS].upload_attrib("in_selected", m_selected_points.data(), 1, m_selected_points.size());
@@ -171,7 +171,7 @@ void DataSample::update_point_selection()
     m_selection_axis.set_origin(selection_center());
 }
 
-void DataSample::update_shaders_data()
+void Dataset::update_shaders_data()
 {
     m_shaders[MESH].bind();
     m_shaders[MESH].upload_attrib("in_height", curr_h().data(), 1, curr_h().n_cols());
@@ -183,7 +183,7 @@ void DataSample::update_shaders_data()
     m_selection_axis.set_origin(selection_center());
 }
 
-void DataSample::compute_wavelengths_colors()
+void Dataset::compute_wavelengths_colors()
 {
     // compute the rgb colors for each wavelength
     m_wavelengths_colors.resize(m_wavelengths.size());
@@ -207,7 +207,7 @@ void DataSample::compute_wavelengths_colors()
     }
 }
 
-void DataSample::recompute_data()
+void Dataset::recompute_data()
 {
     triangulate_data(m_f, m_v2d);
     compute_path_segments(m_path_segments, m_v2d);

@@ -1,16 +1,16 @@
 #pragma once
 
-#include <tekari/data_sample.h>
+#include <tekari/dataset.h>
 #include <tekari/raw_data_processing.h>
 
 TEKARI_NAMESPACE_BEGIN
 
-class StandardDataSample : public DataSample
+class StandardDataset : public Dataset
 {
 public:
-    StandardDataSample(const string &file_path)
+    StandardDataset(const string &file_path)
     {
-        load_data_sample(file_path, m_raw_measurement, m_v2d, m_selected_points, m_metadata);
+        load_dataset(file_path, m_raw_measurement, m_v2d, m_selected_points, m_metadata);
         recompute_data();
     }
 
@@ -35,7 +35,7 @@ public:
 
     virtual void init() override
     {
-        DataSample::init();
+        Dataset::init();
         link_data_to_shaders();
         set_intensity_index(n_wavelengths() / 2);
     }

@@ -22,8 +22,8 @@
 #include <stb_image.h>
 #include <tekari/light_theme.h>
 #include <tekari/arrow.h>
-#include <tekari/bsdf_data_sample.h>
-#include <tekari/standard_data_sample.h>
+#include <tekari/bsdf_dataset.h>
+#include <tekari/standard_dataset.h>
 #include <tekari/wavelength_slider.h>
 #include <tekari/graph_spectrum.h>
 #include <tekari_resources.h>
@@ -42,8 +42,9 @@ using nanogui::Graph;
 
 TEKARI_NAMESPACE_BEGIN
 
-BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
+BSDFApplication::BSDFApplication(const vector<string>& dataset_paths, bool log_mode)
 :   Screen(Vector2i(1200, 750), "Tekari", true, false, 8, 8, 24, 8, 2)
+,   m_log_mode(log_mode)
 ,   m_metadata_window(nullptr)
 ,   m_brdf_options_window(nullptr)
 ,   m_help_window(nullptr)
@@ -90,11 +91,11 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         update_selection_info_window();
     });
     m_bsdf_canvas->set_update_incident_angle_callback([this](const Vector2f& incident_angle) {
-        BSDFDataSample* bsdf_data_sample = dynamic_cast<BSDFDataSample*>(m_selected_ds.get());
-        if (!bsdf_data_sample)
+        BSDFDataset* bsdf_dataset = dynamic_cast<BSDFDataset*>(m_selected_ds.get());
+        if (!bsdf_dataset)
             return;
         
-        bsdf_data_sample->set_incident_angle(incident_angle);
+        bsdf_dataset->set_incident_angle(incident_angle);
         if (m_selection_info_window) toggle_selection_info_window();
         reprint_footer();
 
@@ -119,9 +120,9 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             return info;
         };
 
-        m_data_sample_name = make_footer_info("Material name : ");
-        m_data_sample_points_count = make_footer_info("Point count : ");
-        m_data_sample_average_height = make_footer_info("Average value : ");
+        m_dataset_name = make_footer_info("Material name : ");
+        m_dataset_points_count = make_footer_info("Point count : ");
+        m_dataset_average_height = make_footer_info("Average value : ");
     }
 
     m_tool_window = new Window(this, "Tools");
@@ -302,9 +303,9 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
             return button;
         };
 
-        auto open_button        = make_tool_button(true, [this] { open_data_sample_dialog(); }, ENTYPO_ICON_FOLDER, "Open data sample (CTRL+O)");
+        auto open_button        = make_tool_button(true, [this] { open_dataset_dialog(); }, ENTYPO_ICON_FOLDER, "Open dataset (CTRL+O)");
         auto save_image_button  = make_tool_button(true, [this] { save_screen_shot(); }, ENTYPO_ICON_IMAGE, "Save image (CTRL+P)");
-        auto save_data_button   = make_tool_button(true, [this] { save_selected_data_sample(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
+        auto save_data_button   = make_tool_button(true, [this] { save_selected_dataset(); }, ENTYPO_ICON_SAVE, "Save data (CTRL+S)");
         auto show_infos_button  = make_tool_button(true, [this]() { toggle_metadata_window(); }, ENTYPO_ICON_INFO, "Show selected dataset infos (I)");
 
 #if defined(EMSCRIPTEN)
@@ -319,15 +320,15 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
         (void)show_infos_button;
     }
 
-    // Data sample selection
+    // Dataset selection
     {
-        m_data_samples_scroll_panel = new VScrollPanel{ m_tool_window };
+        m_datasets_scroll_panel = new VScrollPanel{ m_tool_window };
 
-        m_scroll_content = new Widget{ m_data_samples_scroll_panel };
+        m_scroll_content = new Widget{ m_datasets_scroll_panel };
         m_scroll_content->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill));
 
-        m_data_sample_button_container = new Widget{ m_scroll_content };
-        m_data_sample_button_container->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
+        m_dataset_button_container = new Widget{ m_scroll_content };
+        m_dataset_button_container->set_layout(new BoxLayout(Orientation::Vertical, Alignment::Fill, 0, 0));
     }
 
 #if !defined(EMSCRIPTEN)
@@ -369,7 +370,7 @@ BSDFApplication::BSDFApplication(const vector<string>& data_sample_paths)
     set_background(m_theme->m_window_fill_focused);
 
     request_layout_update();
-    open_files(data_sample_paths);
+    open_files(dataset_paths);
 }
 
 BSDFApplication::~BSDFApplication()
@@ -396,10 +397,10 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
             {
 #if !defined(EMSCRIPTEN)
             case GLFW_KEY_O:
-                open_data_sample_dialog();
+                open_dataset_dialog();
                 return true;
             case GLFW_KEY_S:
-                save_selected_data_sample();
+                save_selected_dataset();
                 return true;
             case GLFW_KEY_P:
                 save_screen_shot();
@@ -446,10 +447,10 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                     return true;
                 }
                 case GLFW_KEY_P:
-                    toggle_view(DataSample::Views::PATH);
+                    toggle_view(Dataset::Views::PATH);
                     return true;
                 case GLFW_KEY_I:
-                    toggle_view(DataSample::Views::INCIDENT_ANGLE);
+                    toggle_view(Dataset::Views::INCIDENT_ANGLE);
                     return true;
                 case GLFW_KEY_H:
                 case GLFW_KEY_L:
@@ -509,7 +510,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
             case GLFW_KEY_Q:
             {
                 vector<string> ds_names;
-                for (const auto& ds : m_data_samples)
+                for (const auto& ds : m_datasets)
                     if (ds->dirty())
                         ds_names.push_back(ds->name());
                 
@@ -520,10 +521,10 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
 #endif
             case GLFW_KEY_1: case GLFW_KEY_2: case GLFW_KEY_3: case GLFW_KEY_4: case GLFW_KEY_5:
             case GLFW_KEY_6: case GLFW_KEY_7: case GLFW_KEY_8: case GLFW_KEY_9:
-                select_data_sample(key - GLFW_KEY_1);
+                select_dataset(key - GLFW_KEY_1);
                 return true;
             case GLFW_KEY_DELETE:
-                delete_data_sample(m_selected_ds);
+                delete_dataset(m_selected_ds);
                 return true;
             case GLFW_KEY_D:
                 if (!m_selected_ds || !m_selected_ds->has_selection())
@@ -544,10 +545,10 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 toggle_tool_checkbox(m_use_diffuse_shading_checkbox);
                 return true;
             case GLFW_KEY_UP:
-                select_data_sample(selected_data_sample_index() - 1, false);
+                select_dataset(selected_dataset_index() - 1, false);
                 return true;
             case GLFW_KEY_DOWN:
-                select_data_sample(selected_data_sample_index() + 1, false);
+                select_dataset(selected_dataset_index() + 1, false);
                 return true;
             case GLFW_KEY_ENTER:
                 if (!m_selected_ds)
@@ -572,7 +573,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 return true;
             }
             case GLFW_KEY_P:
-                toggle_view(DataSample::Views::POINTS);
+                toggle_view(Dataset::Views::POINTS);
                 return true;
             case GLFW_KEY_G:
                 toggle_tool_checkbox(m_grid_view_checkbox);
@@ -587,7 +588,7 @@ bool BSDFApplication::keyboard_event(int key, int scancode, int action, int modi
                 m_bsdf_canvas->snap_to_selection_center();
                 return true;
             case GLFW_KEY_M:
-                toggle_view(DataSample::Views::MESH);
+                toggle_view(Dataset::Views::MESH);
                 return true;
             case GLFW_KEY_A:
                 toggle_tool_checkbox(m_display_center_axis);
@@ -630,33 +631,39 @@ void BSDFApplication::draw_contents() {
         m_requires_layout_update = false;
     }
 
-    auto open_error_winow = [this](const string& error_msg) {
+    auto open_error_window = [this](const string& error_msg) {
         auto error_msg_dialog = new MessageDialog(this, MessageDialog::Type::Warning, "Error",
             error_msg, "Retry", "Cancel", true);
         error_msg_dialog->set_callback([this](int index) {
-            if (index == 0) { open_data_sample_dialog(); }
+            if (index == 0) { open_dataset_dialog(); }
         });
     };
 
     try {
         while (true) {
-            auto new_data_sample = m_data_samples_to_add.try_pop();
-            if (!new_data_sample->data_sample)
+            auto new_dataset = m_datasets_to_add.try_pop();
+            if (!new_dataset->dataset)
             {
-               open_error_winow(new_data_sample->error_msg);
+               open_error_window(new_dataset->error_msg);
             }
             else
             {
                 bool init_completed = false;
                 try {
-                    init_completed = new_data_sample->data_sample->init();
+                    init_completed = new_dataset->dataset->init();
                 } catch (std::runtime_error) {
                     init_completed = false;
                 }
                 if (!init_completed)
-                    open_error_winow("Error while initializing the data sample");
-                else
-                    add_data_sample(new_data_sample->data_sample);
+                    open_error_window("Error while initializing the dataset");
+                else {
+                    add_dataset(new_dataset->dataset);
+                    if (m_log_mode) {
+                        new_dataset->dataset->toggle_log_view();
+                        if (m_brdf_options_window)
+                            m_display_as_log->set_pushed(m_selected_ds->display_as_log());
+                    }
+                }
             }
             redraw();
         }
@@ -676,8 +683,8 @@ void BSDFApplication::update_layout()
     m_bsdf_canvas->set_fixed_size(Vector2i{ m_size.x(), m_size.y() - FOOTER_HEIGHT });
     m_tool_window->set_fixed_size({ 210, 400 });
 
-    m_data_samples_scroll_panel->set_fixed_height(
-        m_tool_window->height() - m_data_samples_scroll_panel->position().y()
+    m_datasets_scroll_panel->set_fixed_height(
+        m_tool_window->height() - m_datasets_scroll_panel->position().y()
     );
 
     perform_layout();
@@ -693,39 +700,39 @@ void BSDFApplication::update_layout()
     cursor_pos_callback_event(x, y);
 }
 
-void BSDFApplication::open_data_sample_dialog()
+void BSDFApplication::open_dataset_dialog()
 {
-    vector<string> data_sample_paths = nanogui::file_dialog(
+    vector<string> dataset_paths = nanogui::file_dialog(
         {
-            { "txt",  "Data samples" },
-            { "bsdf",  "Data samples" }
+            { "txt",  "Datasets" },
+            { "bsdf",  "Datasets" }
         }, false, true);
-    open_files(data_sample_paths);
+    open_files(dataset_paths);
     // Make sure we gain focus after seleting a file to be loaded.
     glfwFocusWindow(m_glfw_window);
 }
 
-void BSDFApplication::open_files(const vector<string>& data_sample_paths)
+void BSDFApplication::open_files(const vector<string>& dataset_paths)
 {
-    for (const auto& data_sample_path : data_sample_paths)
+    for (const auto& dataset_path : dataset_paths)
     {
-        m_thread_pool.add_task([this, data_sample_path]() {
-            auto new_data_sample = make_shared<DataSample_to_add>();
-            try_load_data_sample(data_sample_path, new_data_sample);
-            m_data_samples_to_add.push(new_data_sample);
+        m_thread_pool.add_task([this, dataset_path]() {
+            auto new_dataset = make_shared<Dataset_to_add>();
+            try_load_dataset(dataset_path, new_dataset);
+            m_datasets_to_add.push(new_dataset);
             redraw();
         });
     }
 }
 
-void BSDFApplication::save_selected_data_sample()
+void BSDFApplication::save_selected_dataset()
 {
     if (!m_selected_ds)
         return;
     
     string path = nanogui::file_dialog(
     {
-        { "txt",  "Data samples" },
+        { "txt",  "Datasets" },
     }, true);
 
     if (path.empty())
@@ -788,7 +795,7 @@ void BSDFApplication::toggle_metadata_window()
         else
         {
             auto error_window = new MessageDialog{ this, MessageDialog::Type::Warning, "Metadata",
-                "No data sample selected.", "close" };
+                "No dataset selected.", "close" };
             error_window->set_callback([this](int) { m_metadata_window = nullptr; });
             window = error_window;
         }
@@ -822,7 +829,7 @@ void BSDFApplication::toggle_brdf_options_window()
             m_display_as_log->set_enabled(m_selected_ds != nullptr);
             m_display_as_log->set_change_callback([this](bool /* unused*/) { m_selected_ds->toggle_log_view(); });
 
-            auto make_view_button = [this, button_container](int icon, const string& tooltip, DataSample::Views view) {
+            auto make_view_button = [this, button_container](int icon, const string& tooltip, Dataset::Views view) {
                 auto button = new Button(button_container, "", icon);
                 button->set_flags(Button::Flags::ToggleButton);
                 button->set_tooltip(tooltip);
@@ -832,28 +839,28 @@ void BSDFApplication::toggle_brdf_options_window()
                 button->set_change_callback([this, view](bool) { toggle_view(view); });
                 return button;
             };
-            m_view_toggles[DataSample::Views::MESH]   = make_view_button(nvg_image_icon(m_nvg_context, mesh), "Show/hide mesh for this material (M)", DataSample::Views::MESH);
-            m_view_toggles[DataSample::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Show/hide sample points for this material (P)", DataSample::Views::POINTS);
-            m_view_toggles[DataSample::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/hide measurement path for this material (Shift+P)", DataSample::Views::PATH);
-            m_view_toggles[DataSample::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/hide incident angle for this material (Shift+I)", DataSample::Views::INCIDENT_ANGLE);
+            m_view_toggles[Dataset::Views::MESH]   = make_view_button(nvg_image_icon(m_nvg_context, mesh), "Show/hide mesh for this material (M)", Dataset::Views::MESH);
+            m_view_toggles[Dataset::Views::POINTS] = make_view_button(nvg_image_icon(m_nvg_context, points), "Show/hide sample points for this material (P)", Dataset::Views::POINTS);
+            m_view_toggles[Dataset::Views::PATH]   = make_view_button(nvg_image_icon(m_nvg_context, path), "Show/hide measurement path for this material (Shift+P)", Dataset::Views::PATH);
+            m_view_toggles[Dataset::Views::INCIDENT_ANGLE] = make_view_button(nvg_image_icon(m_nvg_context, incident_angle), "Show/hide incident angle for this material (Shift+I)", Dataset::Views::INCIDENT_ANGLE);
         }
 
         // resolution
-        BSDFDataSample* bsdf_data_sample = dynamic_cast<BSDFDataSample*>(m_selected_ds.get());
-        if (bsdf_data_sample)
+        BSDFDataset* bsdf_dataset = dynamic_cast<BSDFDataset*>(m_selected_ds.get());
+        if (bsdf_dataset)
         {
             new Label{ window, "Sampling resolution", "sans-bold", 18 };
             auto resolution_combobox = new ComboBox{ window };
 
-            pair<size_t, size_t> sampling_resolution = bsdf_data_sample->sampling_resolution();
+            pair<size_t, size_t> sampling_resolution = bsdf_dataset->sampling_resolution();
             int current_resolution_index = log2(sampling_resolution.first / 16) * 2 + (sampling_resolution.first != sampling_resolution.second);
 
             resolution_combobox->set_items({ "16x16", "32x32", "64x64", "128x128", "256x256" });
             resolution_combobox->set_selected_index(current_resolution_index);
             resolution_combobox->set_side(nanogui::Popup::Side::Left);
-            resolution_combobox->set_callback([bsdf_data_sample, this](int index) {
+            resolution_combobox->set_callback([bsdf_dataset, this](int index) {
                 int n = 16 * pow(2, index);
-                bsdf_data_sample->set_sampling_resolution(n, n);
+                bsdf_dataset->set_sampling_resolution(n, n);
                 reprint_footer();
             });
             resolution_combobox->set_tooltip("Change sampling resolution used to render the BSDF data");
@@ -867,35 +874,35 @@ void BSDFApplication::toggle_brdf_options_window()
             new Label{ window, "Incident angle", "sans-bold", 18 };
             m_incident_angle_slider = new Slider2D{ window };
             m_incident_angle_slider->set_value(curr_i_angle);
-            m_incident_angle_slider->set_callback([this, bsdf_data_sample](Vector2f value) {
+            m_incident_angle_slider->set_callback([this, bsdf_dataset](Vector2f value) {
                 m_theta_float_box->set_value(value[0]);
                 m_phi_float_box->set_value(value[1]);
 
-                bsdf_data_sample->set_incident_angle(value);
+                bsdf_dataset->set_incident_angle(value);
                 if (m_selection_info_window) toggle_selection_info_window();
                 reprint_footer();
             });
             m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
             m_incident_angle_slider->set_fixed_size({ 200, 200 });
-            m_incident_angle_slider->set_enabled(bsdf_data_sample != nullptr);
+            m_incident_angle_slider->set_enabled(bsdf_dataset != nullptr);
             m_incident_angle_slider->set_tooltip("Incident angle of material (editable if bsdf file)");
 
-            auto add_float_box = [window, bsdf_data_sample](const string& label, float value, function<void(float)> callback) {
+            auto add_float_box = [window, bsdf_dataset](const string& label, float value, function<void(float)> callback) {
                 auto float_box_container = new Widget{window};
                 float_box_container->set_layout(new GridLayout{Orientation::Horizontal, 2, Alignment::Fill});
                 new Label{float_box_container, label};
                 auto float_box = new FloatBox<float>{ float_box_container };
                 float_box->set_value(value);
-                float_box->set_editable(bsdf_data_sample != nullptr);
-                float_box->set_enabled(bsdf_data_sample != nullptr);
+                float_box->set_editable(bsdf_dataset != nullptr);
+                float_box->set_enabled(bsdf_dataset != nullptr);
                 float_box->set_callback(callback);
                 float_box->set_units("°");
                 float_box->set_spinnable(true);
                 return float_box;
             };
 
-            auto angle_slider_callback = [this, bsdf_data_sample](float) {
-                if (!bsdf_data_sample)
+            auto angle_slider_callback = [this, bsdf_dataset](float) {
+                if (!bsdf_dataset)
                     return;
                 float theta = enoki::clamp(m_theta_float_box->value(), 0.0f, 85.0f);
                 float phi = enoki::clamp(m_phi_float_box->value(), -180.0f, 180.0f);
@@ -903,7 +910,7 @@ void BSDFApplication::toggle_brdf_options_window()
                 m_phi_float_box->set_value(phi);
                 Vector2f incident_angle = {theta, phi};
                 m_incident_angle_slider->set_value(incident_angle);
-                bsdf_data_sample->set_incident_angle(incident_angle); 
+                bsdf_dataset->set_incident_angle(incident_angle); 
                 if (m_selection_info_window) toggle_selection_info_window();
                 reprint_footer();
             };
@@ -1001,18 +1008,18 @@ void BSDFApplication::toggle_selection_info_window()
     });
 }
 
-void BSDFApplication::toggle_unsaved_data_window(const vector<string>& data_sample_names, function<void(void)> continue_callback)
+void BSDFApplication::toggle_unsaved_data_window(const vector<string>& dataset_names, function<void(void)> continue_callback)
 {
-    if (data_sample_names.empty())
+    if (dataset_names.empty())
         return;
 
-    toggle_window(m_unsaved_data_window, [this,& data_sample_names, continue_callback]() {
+    toggle_window(m_unsaved_data_window, [this,& dataset_names, continue_callback]() {
         std::ostringstream error_msg;
-        error_msg << data_sample_names[0];
-        for (size_t i = 1; i < data_sample_names.size(); ++i)
-            error_msg << " and " << data_sample_names[i];
+        error_msg << dataset_names[0];
+        for (size_t i = 1; i < dataset_names.size(); ++i)
+            error_msg << " and " << dataset_names[i];
 
-        error_msg << (data_sample_names.size() == 1 ? " has " : " have ");
+        error_msg << (dataset_names.size() == 1 ? " has " : " have ");
         error_msg << "some unsaved changed. Are you sure you want to continue ?";
 
         auto window = new MessageDialog{ this, MessageDialog::Type::Warning, "Unsaved Changes",
@@ -1055,36 +1062,36 @@ void BSDFApplication::select_color_map(shared_ptr<ColorMap> color_map)
     m_bsdf_canvas->set_color_map(color_map);
 }
 
-int BSDFApplication::data_sample_index(const shared_ptr<const DataSample> data_sample) const
+int BSDFApplication::dataset_index(const shared_ptr<const Dataset> dataset) const
 {
-    auto pos = static_cast<size_t>(distance(m_data_samples.begin(), find(m_data_samples.begin(), m_data_samples.end(), data_sample)));
-    return pos >= m_data_samples.size() ? -1 : static_cast<int>(pos);
+    auto pos = static_cast<size_t>(distance(m_datasets.begin(), find(m_datasets.begin(), m_datasets.end(), dataset)));
+    return pos >= m_datasets.size() ? -1 : static_cast<int>(pos);
 }
 
-void BSDFApplication::select_data_sample(int index, bool clamped)
+void BSDFApplication::select_dataset(int index, bool clamped)
 {
-    if (m_data_samples.empty())
+    if (m_datasets.empty())
         return;
 
     if (clamped)
-        index = std::max(0, std::min(static_cast<int>(m_data_samples.size()-1), index));
-    else if (index < 0 || index >= static_cast<int>(m_data_samples.size()))
+        index = std::max(0, std::min(static_cast<int>(m_datasets.size()-1), index));
+    else if (index < 0 || index >= static_cast<int>(m_datasets.size()))
         return;
 
-    select_data_sample(m_data_samples[index]);
+    select_dataset(m_datasets[index]);
 }
 
-void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
+void BSDFApplication::select_dataset(shared_ptr<Dataset> dataset)
 {
     // de-select previously selected button
-    if (data_sample != m_selected_ds && m_selected_ds)
+    if (dataset != m_selected_ds && m_selected_ds)
     {
-        DataSampleButton* old_button = corresponding_button(m_selected_ds);
+        DatasetButton* old_button = corresponding_button(m_selected_ds);
         old_button->set_selected(false);
     }
     
-    m_selected_ds = data_sample;
-    m_bsdf_canvas->select_data_sample(data_sample);
+    m_selected_ds = dataset;
+    m_bsdf_canvas->select_dataset(dataset);
 
     reprint_footer();
     if (m_metadata_window)
@@ -1102,7 +1109,7 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
 
     request_layout_update();
 
-    if (!m_selected_ds) // if no data sample is selected, we can stop there
+    if (!m_selected_ds) // if no dataset is selected, we can stop there
         return;
  
     auto button = corresponding_button(m_selected_ds);
@@ -1110,89 +1117,90 @@ void BSDFApplication::select_data_sample(shared_ptr<DataSample> data_sample)
 
     // move scroll panel if needed
     int button_abs_y = button->absolute_position()[1];
-    int scroll_abs_y = m_data_samples_scroll_panel->absolute_position()[1];
+    int scroll_abs_y = m_datasets_scroll_panel->absolute_position()[1];
     int button_h = button->height();
-    int scroll_h = m_data_samples_scroll_panel->height();
+    int scroll_h = m_datasets_scroll_panel->height();
 
-    float scroll = m_data_samples_scroll_panel->scroll();
+    float scroll = m_datasets_scroll_panel->scroll();
     if (button_abs_y < scroll_abs_y)
     {
-        scroll = static_cast<float>(button->position()[1]) / m_data_sample_button_container->height();
+        scroll = static_cast<float>(button->position()[1]) / m_dataset_button_container->height();
     }
     else if (button_abs_y + button_h > scroll_abs_y + scroll_h)
     {
-        scroll = static_cast<float>(button->position()[1]) / (m_data_sample_button_container->height() - button_h);
+        scroll = static_cast<float>(button->position()[1]) / (m_dataset_button_container->height() - button_h);
     }
-    m_data_samples_scroll_panel->set_scroll(scroll);
+    m_datasets_scroll_panel->set_scroll(scroll);
 }
 
-void BSDFApplication::delete_data_sample(shared_ptr<DataSample> data_sample)
+void BSDFApplication::delete_dataset(shared_ptr<Dataset> dataset)
 {
-    int index = data_sample_index(data_sample);
+    int index = dataset_index(dataset);
     if (index == -1)
         return;
 
-    // erase data sample and corresponding button
-    m_data_sample_button_container->remove_child(index);
+    // erase dataset and corresponding button
+    m_dataset_button_container->remove_child(index);
 
-    m_bsdf_canvas->remove_data_sample(data_sample);
-    m_data_samples.erase(find(m_data_samples.begin(), m_data_samples.end(), data_sample));
+    m_bsdf_canvas->remove_dataset(dataset);
+    m_datasets.erase(find(m_datasets.begin(), m_datasets.end(), dataset));
 
     // clear focus path and drag widget pointer, since it may refer to deleted button
     m_drag_widget = nullptr;
     m_drag_active = false;
     m_focus_path.clear();
 
-    // update selected datasample, if we just deleted the selected data sample
-    if (data_sample == m_selected_ds)
+    // update selected dataset, if we just deleted the selected dataset
+
+    if (dataset == m_selected_ds)
     {
-        shared_ptr<DataSample> data_sample_to_select = nullptr;
-        if (index >= static_cast<int>(m_data_samples.size())) --index;
+        shared_ptr<Dataset> dataset_to_select = nullptr;
+        if (index >= static_cast<int>(m_datasets.size())) --index;
         if (index >= 0)
         {
-            data_sample_to_select = m_data_samples[index];
+            dataset_to_select = m_datasets[index];
         }
         // Make sure no button is selected
         m_selected_ds = nullptr;
-        select_data_sample(data_sample_to_select);
+        select_dataset(dataset_to_select);
     }
     request_layout_update();
 }
 
-void BSDFApplication::add_data_sample(shared_ptr<DataSample> data_sample)
+void BSDFApplication::add_dataset(shared_ptr<Dataset> dataset)
 {
-    if (!data_sample) {
-        throw std::invalid_argument{ "Data sample may not be null." };
+    if (!dataset) {
+        throw std::invalid_argument{ "Dataset may not be null." };
     }
 
-    string clean_name = data_sample->name();
+    string clean_name = dataset->name();
     replace(clean_name.begin(), clean_name.end(), '_', ' ');
-    auto data_sample_button = new DataSampleButton{ m_data_sample_button_container, clean_name};
-    data_sample_button->set_fixed_height(30);
+    auto dataset_button = new DatasetButton{ m_dataset_button_container, clean_name};
+    dataset_button->set_fixed_height(30);
 
-    data_sample_button->set_callback([this, data_sample]() { select_data_sample(data_sample); });
+    dataset_button->set_callback([this, dataset]() { select_dataset(dataset); });
 
-    data_sample_button->set_delete_callback([this, data_sample]() {
-        if (data_sample->dirty())
+    dataset_button->set_delete_callback([this, dataset]() {
+        if (dataset->dirty())
         {
-            toggle_unsaved_data_window({ data_sample->name() }, [this, data_sample]() { delete_data_sample(data_sample); });
+            toggle_unsaved_data_window({ dataset->name() }, [this, dataset]() { delete_dataset(dataset); });
         }
         else {
-            delete_data_sample(data_sample);
+            delete_dataset(dataset);
         }
     });
 
-    data_sample_button->set_toggle_view_callback([this, data_sample](bool checked) {
-        int index = data_sample_index(data_sample);
-        if (checked)    m_bsdf_canvas->add_data_sample(m_data_samples[index]);
-        else            m_bsdf_canvas->remove_data_sample(m_data_samples[index]);
+    dataset_button->set_toggle_view_callback([this, dataset](bool checked) {
+        int index = dataset_index(dataset);
+        if (checked)    m_bsdf_canvas->add_dataset(m_datasets[index]);
+        else            m_bsdf_canvas->remove_dataset(m_datasets[index]);
     });
 
-    m_data_samples.push_back(data_sample);
-    select_data_sample(data_sample);
+    m_datasets.push_back(dataset);
+    select_dataset(dataset);
 
-    // by default toggle view for the new data samples
-    m_bsdf_canvas->add_data_sample(m_selected_ds);
+    // by default toggle view for the new datasets
+    m_bsdf_canvas->add_dataset(m_selected_ds);
 }
 
 void BSDFApplication::toggle_tool_checkbox(CheckBox* checkbox)
@@ -1201,7 +1209,7 @@ void BSDFApplication::toggle_tool_checkbox(CheckBox* checkbox)
     checkbox->callback()(checkbox->checked());
 }
 
-void BSDFApplication::toggle_view(DataSample::Views view)
+void BSDFApplication::toggle_view(Dataset::Views view)
 {
     if (!m_selected_ds)
         return;
@@ -1213,27 +1221,27 @@ void BSDFApplication::toggle_view(DataSample::Views view)
     m_view_toggles[view]->set_pushed(toggle);
 }
 
-DataSampleButton* BSDFApplication::corresponding_button(const shared_ptr<const DataSample> data_sample)
+DatasetButton* BSDFApplication::corresponding_button(const shared_ptr<const Dataset> dataset)
 {
-    int index = data_sample_index(data_sample);
+    int index = dataset_index(dataset);
     if (index == -1)
         return nullptr;
-    return dynamic_cast<DataSampleButton*>(m_data_sample_button_container->child_at(index));
+    return dynamic_cast<DatasetButton*>(m_dataset_button_container->child_at(index));
 }
 
-const DataSampleButton* BSDFApplication::corresponding_button(const shared_ptr<const DataSample> data_sample) const
+const DatasetButton* BSDFApplication::corresponding_button(const shared_ptr<const Dataset> dataset) const
 {
-    int index = data_sample_index(data_sample);
+    int index = dataset_index(dataset);
     if (index == -1)
         return nullptr;
-    return dynamic_cast<DataSampleButton*>(m_data_sample_button_container->child_at(index));
+    return dynamic_cast<DatasetButton*>(m_dataset_button_container->child_at(index));
 }
 
 void BSDFApplication::reprint_footer()
 {
-    m_data_sample_name->set_caption             (!m_selected_ds ? "-" : m_selected_ds->name());
-    m_data_sample_points_count->set_caption     (!m_selected_ds ? "-" : to_string(m_selected_ds->points_count()));
-    m_data_sample_average_height->set_caption   (!m_selected_ds ? "-" : to_string(m_selected_ds->average_intensity()));
+    m_dataset_name->set_caption             (!m_selected_ds ? "-" : m_selected_ds->name());
+    m_dataset_points_count->set_caption     (!m_selected_ds ? "-" : to_string(m_selected_ds->points_count()));
+    m_dataset_average_height->set_caption   (!m_selected_ds ? "-" : to_string(m_selected_ds->average_intensity()));
 }
 
 void BSDFApplication::hide_windows()
@@ -1251,27 +1259,27 @@ void BSDFApplication::hide_windows()
     toggle_visibility(m_brdf_options_window);
 }
 
-void BSDFApplication::try_load_data_sample(const string& file_path, shared_ptr<DataSample_to_add> data_sample_to_add)
+void BSDFApplication::try_load_dataset(const string& file_path, shared_ptr<Dataset_to_add> dataset_to_add)
 {
     try {
         size_t pos = file_path.find_last_of(".");
         string extension = file_path.substr(pos+1, file_path.length());
 
-        shared_ptr<DataSample> ds;
+        shared_ptr<Dataset> ds;
         if (extension == "bsdf")
         {
-            ds = make_shared<BSDFDataSample>(file_path);
+            ds = make_shared<BSDFDataset>(file_path);
         }
         else
         {
-            ds = make_shared<StandardDataSample>(file_path);
+            ds = make_shared<StandardDataset>(file_path);
         }
-        data_sample_to_add->data_sample = ds;
+        dataset_to_add->dataset = ds;
     }
     catch (const std::exception &e) {
-        string error_msg = "Could not open data sample \"" + file_path + "\" : " + std::string(e.what());
+        string error_msg = "Could not open dataset \"" + file_path + "\" : " + std::string(e.what());
         cerr << error_msg << endl;
-        data_sample_to_add->error_msg = error_msg;
+        dataset_to_add->error_msg = error_msg;
     }
 }
 

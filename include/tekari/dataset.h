@@ -18,7 +18,7 @@ TEKARI_NAMESPACE_BEGIN
 #define USE_WIREFRAME                       (1 << 4)
 #define USE_INTEGRATED_COLORS                (1 << 5)
 
-class DataSample
+class Dataset
 {
 public:
     // Usefull types
@@ -32,12 +32,12 @@ public:
     };
 
     // constructors/destructors, assignement operators
-    DataSample();
-    DataSample(const DataSample&) = delete;
-    DataSample(DataSample&&) = default;
-    virtual ~DataSample();
-    DataSample& operator=(const DataSample&) = delete;
-    DataSample& operator=(DataSample&&) = default;
+    Dataset();
+    Dataset(const Dataset&) = delete;
+    Dataset(Dataset&&) = default;
+    virtual ~Dataset();
+    Dataset& operator=(const Dataset&) = delete;
+    Dataset& operator=(Dataset&&) = default;
 
     void draw_gl(const Matrix4f& model,
                 const Matrix4f& mvp,

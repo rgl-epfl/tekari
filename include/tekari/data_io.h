@@ -8,7 +8,7 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-extern void load_data_sample(
+extern void load_dataset(
     const string& file_name,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
@@ -16,7 +16,7 @@ extern void load_data_sample(
     Metadata& metadata
 );
 
-extern void save_data_sample(
+extern void save_dataset(
     const string& path,
     const RawMeasurement& raw_measurement,
     const Metadata& metadata

@@ -4,7 +4,7 @@
 #include <nanogui/layout.h>
 #include <nanogui/screen.h>
 #include <string>
-#include <tekari/data_sample.h>
+#include <tekari/dataset.h>
 #include <tekari/arrow.h>
 
 #define MAX_ZOOM 10.0f
@@ -102,7 +102,7 @@ bool BSDFCanvas::mouse_button_event(const Vector2i& p, int button, bool down, in
     }
     else if (button == selection_mouse_button(false))
     {
-        if (!down && m_selected_data_sample)
+        if (!down && m_selected_dataset)
         {
             Matrix4f model = model_matrix();
             Matrix4f proj = projection_matrix();
@@ -197,36 +197,36 @@ void BSDFCanvas::draw_gl() {
     Matrix4f mvp = proj * VIEW * model;
 
     float point_size_factor = screen()->pixel_ratio() * (m_zoom - MIN_ZOOM) / (MAX_ZOOM - MIN_ZOOM);
-    for (const auto& data_sample: m_data_samples_to_draw)
-        data_sample->draw_gl(model, mvp, m_draw_flags, point_size_factor * point_size_factor * m_point_size_scale, m_color_map);
+    for (const auto& dataset: m_datasets_to_draw)
+        dataset->draw_gl(model, mvp, m_draw_flags, point_size_factor * point_size_factor * m_point_size_scale, m_color_map);
 
     m_grid.draw_gl(mvp);
 }
 
-void BSDFCanvas::select_data_sample(shared_ptr<DataSample> data_sample) {
-    m_selected_data_sample = data_sample;
+void BSDFCanvas::select_dataset(shared_ptr<Dataset> dataset) {
+    m_selected_dataset = dataset;
 }
 
-void BSDFCanvas::add_data_sample(shared_ptr<DataSample> data_sample)
+void BSDFCanvas::add_dataset(shared_ptr<Dataset> dataset)
 {
-    if (find(m_data_samples_to_draw.begin(), m_data_samples_to_draw.end(), data_sample) == m_data_samples_to_draw.end())
+    if (find(m_datasets_to_draw.begin(), m_datasets_to_draw.end(), dataset) == m_datasets_to_draw.end())
     {
-        m_data_samples_to_draw.push_back(data_sample);
+        m_datasets_to_draw.push_back(dataset);
     }
 }
-void BSDFCanvas::remove_data_sample(shared_ptr<DataSample> data_sample)
+void BSDFCanvas::remove_dataset(shared_ptr<Dataset> dataset)
 {
-    auto data_sample_to_erase = find(m_data_samples_to_draw.begin(), m_data_samples_to_draw.end(), data_sample);
-    if (data_sample_to_erase != m_data_samples_to_draw.end())
+    auto dataset_to_erase = find(m_datasets_to_draw.begin(), m_datasets_to_draw.end(), dataset);
+    if (dataset_to_erase != m_datasets_to_draw.end())
     {
-        m_data_samples_to_draw.erase(data_sample_to_erase);
+        m_datasets_to_draw.erase(dataset_to_erase);
     }
 }
 
 void BSDFCanvas::snap_to_selection_center()
 {
-    m_translation = m_selected_data_sample ?
-                        Matrix3f(inverse(MODEL)) * m_selected_data_sample->selection_center() * Vector3f{-1.0f, 1.0f, 1.0f} :
+    m_translation = m_selected_dataset ?
+                        Matrix3f(inverse(MODEL)) * m_selected_dataset->selection_center() * Vector3f{-1.0f, 1.0f, 1.0f} :
                         Vector3f{ 0.0f };
 }
 

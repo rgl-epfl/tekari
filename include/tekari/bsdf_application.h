@@ -8,7 +8,7 @@
 #include <thread>
 
 #include <tekari/bsdf_canvas.h>
-#include <tekari/data_sample_button.h>
+#include <tekari/dataset_button.h>
 #include <tekari/metadata_window.h>
 #include <tekari/color_map_selection_window.h>
 #include <tekari/help_window.h>
@@ -34,15 +34,15 @@ using nanogui::FloatBox;
 using nanogui::IntBox;
 using nanogui::GLFramebuffer;
 
-struct DataSample_to_add
+struct Dataset_to_add
 {
     string error_msg;
-    std::shared_ptr<DataSample> data_sample;
+    std::shared_ptr<Dataset> dataset;
 };
 
 class BSDFApplication : public Screen {
 public:
-    BSDFApplication(const vector<string>& data_sample_paths);
+    BSDFApplication(const vector<string>& dataset_paths, bool log_mode);
     ~BSDFApplication();
 
     virtual bool keyboard_event(int key, int scancode, int action, int modifiers) override;
@@ -50,9 +50,9 @@ public:
     void draw_contents() override;
     void request_layout_update() { m_requires_layout_update = true; }
 
-    void open_data_sample_dialog();
+    void open_dataset_dialog();
     void save_screen_shot();
-    void save_selected_data_sample();
+    void save_selected_dataset();
 
     void toggle_window(Window*& window, function<Window*(void)> create_window);
     void toggle_metadata_window();
@@ -60,39 +60,40 @@ public:
     void toggle_help_window();
     void toggle_selection_info_window();
     void update_selection_info_window();
-    void toggle_unsaved_data_window(const vector<string>& data_sample_names, function<void(void)> continue_callback);
+    void toggle_unsaved_data_window(const vector<string>& dataset_names, function<void(void)> continue_callback);
     void toggle_color_map_selection_window();
     
     void select_color_map(std::shared_ptr<ColorMap> color_map);
     
-    void delete_data_sample(std::shared_ptr<DataSample> data_sample);
-    void select_data_sample(std::shared_ptr<DataSample> data_sample);
-    void select_data_sample(int index, bool clamped = true);
+    void delete_dataset(std::shared_ptr<Dataset> dataset);
+    void select_dataset(std::shared_ptr<Dataset> dataset);
+    void select_dataset(int index, bool clamped = true);
 
-    int data_sample_index(const std::shared_ptr<const DataSample> data_sample) const;
-    int selected_data_sample_index() const { return data_sample_index(m_selected_ds); }
+    int dataset_index(const std::shared_ptr<const Dataset> dataset) const;
+    int selected_dataset_index() const { return dataset_index(m_selected_ds); }
 
-    DataSampleButton* corresponding_button(const std::shared_ptr<const DataSample> data_sample);
-    const DataSampleButton* corresponding_button(const std::shared_ptr<const DataSample> data_sample) const;
+    DatasetButton* corresponding_button(const std::shared_ptr<const Dataset> dataset);
+    const DatasetButton* corresponding_button(const std::shared_ptr<const Dataset> dataset) const;
 
     void hide_windows();
 
-    void open_files(const vector<string>& data_sample_paths);
+    void open_files(const vector<string>& dataset_paths);
 private:
-    void toggle_view(DataSample::Views view);
+    void toggle_view(Dataset::Views view);
 
     void update_layout();
-    void add_data_sample(std::shared_ptr<DataSample> data_sample);
+    void add_dataset(std::shared_ptr<Dataset> dataset);
 
     void toggle_tool_checkbox(CheckBox* checkbox);
 
-    void try_load_data_sample(const string& file_path, std::shared_ptr<DataSample_to_add> data_sample_to_add);
+    void try_load_dataset(const string& file_path, std::shared_ptr<Dataset_to_add> dataset_to_add);
 
     void reprint_footer();
 
 private:
     bool m_requires_layout_update = false;
     bool m_distraction_free_mode = false;
+    bool m_log_mode = false;
 
     Window* m_tool_window;
     Widget* m_3d_view;
@@ -110,21 +111,21 @@ private:
 
     // footer
     Widget* m_footer;
-    Label* m_data_sample_name;
-    Label* m_data_sample_points_count;
-    Label* m_data_sample_average_height;
+    Label* m_dataset_name;
+    Label* m_dataset_points_count;
+    Label* m_dataset_average_height;
 
-    // data sample scroll panel
-    VScrollPanel* m_data_samples_scroll_panel;
+    // dataset scroll panel
+    VScrollPanel* m_datasets_scroll_panel;
     Widget* m_scroll_content;
-    Widget* m_data_sample_button_container;
+    Widget* m_dataset_button_container;
 
     // tool buttons
     Button* m_help_button;
 
     // bsdf settings
     Button* m_display_as_log;
-    Button* m_view_toggles[DataSample::Views::VIEW_COUNT];
+    Button* m_view_toggles[Dataset::Views::VIEW_COUNT];
     FloatBox<float>* m_phi_float_box;
     FloatBox<float>* m_theta_float_box;
     Slider2D* m_incident_angle_slider;
@@ -144,14 +145,14 @@ private:
     Button* m_mouse_mode_buttons[BSDFCanvas::MOUSE_MODE_COUNT];
     GLFWcursor* m_cursors[BSDFCanvas::MOUSE_MODE_COUNT];
 
-    vector<std::shared_ptr<DataSample>> m_data_samples;
-    std::shared_ptr<DataSample> m_selected_ds;
+    vector<std::shared_ptr<Dataset>> m_datasets;
+    std::shared_ptr<Dataset> m_selected_ds;
     vector<std::shared_ptr<ColorMap>> m_color_maps;
 
     // offscreen buffer
     GLFramebuffer m_framebuffer;
 
-    SharedQueue<std::shared_ptr<DataSample_to_add>> m_data_samples_to_add;
+    SharedQueue<std::shared_ptr<Dataset_to_add>> m_datasets_to_add;
 
     // threadpool
     ThreadPool<8> m_thread_pool;

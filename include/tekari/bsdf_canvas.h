@@ -9,7 +9,7 @@
 #include <tekari/axis.h>
 #include <tekari/radial_grid.h>
 #include <tekari/selections.h>
-#include <tekari/data_sample.h>
+#include <tekari/dataset.h>
 
 TEKARI_NAMESPACE_BEGIN
 
@@ -55,10 +55,10 @@ public:
     virtual void draw(NVGcontext* ctx) override;
     virtual void draw_gl() override;
 
-    // data sample addition/removale/selection
-    void select_data_sample(std::shared_ptr<DataSample> data_sample);
-    void add_data_sample(std::shared_ptr<DataSample> data_sample);
-    void remove_data_sample(std::shared_ptr<DataSample> data_sample);
+    // dataset addition/removale/selection
+    void select_dataset(std::shared_ptr<Dataset> dataset);
+    void add_dataset(std::shared_ptr<Dataset> dataset);
+    void remove_dataset(std::shared_ptr<Dataset> dataset);
 
     void snap_to_selection_center();
 
@@ -100,9 +100,9 @@ private:
     Vector2f get_ortho_dims() const;
     Vector2f get_incident_angle(const Vector2i &p); 
 
-    // data samples
-    vector<std::shared_ptr<DataSample>>    m_data_samples_to_draw;
-    std::shared_ptr<DataSample>            m_selected_data_sample;
+    // datasets
+    vector<std::shared_ptr<Dataset>>    m_datasets_to_draw;
+    std::shared_ptr<Dataset>            m_selected_dataset;
 
     RadialGrid          m_grid;
     nanogui::Arcball    m_arcball;

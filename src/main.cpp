@@ -10,15 +10,19 @@
 #include <nanogui/messagedialog.h>
 
 int main(int argc, char** argv) {
-
     using namespace tekari;
     using namespace nanogui;
 
-    vector<string> data_sample_paths;
+    vector<string> dataset_paths;
+    bool log_mode = false;
+
 #if !defined(EMSCRIPTEN)
-    for (int i = 1; i < argc; ++i)
-    {
-        data_sample_paths.push_back(argv[i]);
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "-l") == 0) {
+            log_mode = true;
+            continue;
+        }
+        dataset_paths.push_back(argv[i]);
     }
 #endif
 
@@ -26,7 +30,8 @@ int main(int argc, char** argv) {
         init();
         // scoped variables
         {
-            ref<BSDFApplication> screen = new BSDFApplication(data_sample_paths);
+            ref<BSDFApplication> screen = new BSDFApplication(dataset_paths,
+                                                              log_mode);
 
 #if defined(EMSCRIPTEN)
             Window *window = new Window(screen, "Please wait");
@@ -36,7 +41,7 @@ int main(int argc, char** argv) {
             progress->set_fixed_width(250);
             window->center();
 
-            if (argc != 2)
+            if (dataset_paths.size() != 1)
                 throw std::runtime_error("Invalid number of program arguments!");
 
             struct Temp {
@@ -79,7 +84,7 @@ int main(int argc, char** argv) {
                 }
             );
 #endif
-            
+
             screen->set_visible(true);
             screen->perform_layout();
             mainloop(-1);
@@ -95,6 +100,6 @@ int main(int argc, char** argv) {
         #endif
         return -1;
     }
-    
+
     return 0;
 }

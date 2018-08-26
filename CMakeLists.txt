@@ -184,9 +184,9 @@ add_executable(tekari
   src/main.cpp
   include/tekari/bsdf_application.h             src/bsdf_application.cpp
   include/tekari/bsdf_canvas.h                  src/bsdf_canvas.cpp
-  include/tekari/data_sample.h                  src/data_sample.cpp
+  include/tekari/dataset.h                      src/dataset.cpp
   include/tekari/radial_grid.h                  src/radial_grid.cpp
-  include/tekari/data_sample_button.h           src/data_sample_button.cpp
+  include/tekari/dataset_button.h               src/dataset_button.cpp
   include/tekari/metadata.h                     src/metadata.cpp
   include/tekari/color_map.h                    src/color_map.cpp 
   include/tekari/color_map_selection_window.h   src/color_map_selection_window.cpp 
@@ -201,10 +201,10 @@ add_executable(tekari
   include/tekari/arrow.h                        src/arrow.cpp
   include/tekari/slider_2d.h                    src/slider_2d.cpp
   include/tekari/powitacq.h                     include/tekari/powitacq.inl
-  include/tekari/bsdf_data_sample.h             src/bsdf_data_sample.cpp
+  include/tekari/bsdf_dataset.h                 src/bsdf_dataset.cpp
   include/tekari/wavelength_slider.h            src/wavelength_slider.cpp
   include/tekari/graph_spectrum.h
-  include/tekari/standard_data_sample.h
+  include/tekari/standard_dataset.h
   include/tekari/matrix_xx.h
   include/tekari/raw_measurement.h
   include/tekari/light_theme.h

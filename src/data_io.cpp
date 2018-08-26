@@ -15,20 +15,20 @@ struct Vector2f_hash : std::unary_function<Vector2f, size_t>
     }
 };
 
-void load_standard_data_sample(
+void load_standard_dataset(
     std::ifstream& file,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     Metadata& metadata
 );
-void load_spectral_data_sample(
+void load_spectral_dataset(
     std::ifstream& file,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
     Metadata& metadata
 );
 
-void load_data_sample(
+void load_dataset(
     const string& file_name,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
@@ -36,7 +36,7 @@ void load_data_sample(
     Metadata& metadata
 )
 {
-    cout << std::setw(50) << std::left << "Loading data sample .. ";
+    cout << std::setw(50) << std::left << "Loading dataset .. ";
     Timer<> timer;
 
     // try open file
@@ -63,16 +63,16 @@ void load_data_sample(
 
             metadata.init_infos(wavelengths);
             if (metadata.is_spectral())
-                load_spectral_data_sample(file, raw_measurement, V2D, metadata);
+                load_spectral_dataset(file, raw_measurement, V2D, metadata);
             else
-                load_standard_data_sample(file, raw_measurement, V2D, metadata);
+                load_standard_dataset(file, raw_measurement, V2D, metadata);
             break;
         }
     }
     cout << "done. (took " <<  time_string(timer.value()) << ")" << endl;
 }
 
-void load_standard_data_sample(
+void load_standard_dataset(
     std::ifstream& file,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
@@ -119,7 +119,7 @@ void load_standard_data_sample(
         }
     }
 }
-void load_spectral_data_sample(
+void load_spectral_dataset(
     std::ifstream& file,
     RawMeasurement& raw_measurement,
     Matrix2Xf& V2D,
@@ -178,13 +178,13 @@ void load_spectral_data_sample(
     }
 }
 
-void save_data_sample(
+void save_dataset(
     const string& path,
     const RawMeasurement& raw_measurement,
     const Metadata& metadata
 )
 {
-    cout << std::setw(50) << std::left << "Saving data sample .. ";
+    cout << std::setw(50) << std::left << "Saving dataset .. ";
     Timer<> timer;
     
     // try open file

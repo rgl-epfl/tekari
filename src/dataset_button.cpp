@@ -1,4 +1,4 @@
-#include <tekari/data_sample_button.h>
+#include <tekari/dataset_button.h>
 
 #include <iostream>
 
@@ -25,7 +25,7 @@ using nanogui::Label;
 
 TEKARI_NAMESPACE_BEGIN
 
-DataSampleButton::DataSampleButton(Widget* parent, const string & label)
+DatasetButton::DatasetButton(Widget* parent, const string & label)
 :   Widget{ parent }
 ,   m_label{ label }
 ,   m_display_label{ label.size() > 20 ? label.substr(0, 17) + ". .. " : label }
@@ -40,7 +40,7 @@ DataSampleButton::DataSampleButton(Widget* parent, const string & label)
     set_tooltip(m_label);
 }
 
-bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool down, int modifiers)
+bool DatasetButton::mouse_button_event(const Vector2i & p, int button, bool down, int modifiers)
 {
     if (Widget::mouse_button_event(p, button, down, modifiers)) {
         return true;
@@ -67,7 +67,7 @@ bool DataSampleButton::mouse_button_event(const Vector2i & p, int button, bool d
     return false;
 }
 
-bool DataSampleButton::mouse_enter_event(const Vector2i & p, bool enter)
+bool DatasetButton::mouse_enter_event(const Vector2i & p, bool enter)
 {
     Widget::mouse_enter_event(p, enter);
     m_delete_button_hovered = false;
@@ -75,7 +75,7 @@ bool DataSampleButton::mouse_enter_event(const Vector2i & p, bool enter)
     return false;
 }
 
-bool DataSampleButton::mouse_motion_event(const Vector2i& p, const Vector2i& rel, int button, int modifiers)
+bool DatasetButton::mouse_motion_event(const Vector2i& p, const Vector2i& rel, int button, int modifiers)
 {
     if (Widget::mouse_motion_event(p, rel, button, modifiers)) {
         return true;
@@ -86,7 +86,7 @@ bool DataSampleButton::mouse_motion_event(const Vector2i& p, const Vector2i& rel
     return false;
 }
 
-void DataSampleButton::draw(NVGcontext* ctx)
+void DatasetButton::draw(NVGcontext* ctx)
 {
     Color fill_color =  m_selected ? Color(0.0f, 0.8f, 0.2f, 0.5f) :
                         m_mouse_focus ? m_theme->m_button_gradient_top_focused :
@@ -143,7 +143,7 @@ void DataSampleButton::draw(NVGcontext* ctx)
     nvgRestore(ctx);
 }
 
-void DataSampleButton::toggle_view()
+void DatasetButton::toggle_view()
 {
     m_visible = !m_visible;
     m_toggle_view_callback(m_visible);

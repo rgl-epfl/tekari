@@ -46,7 +46,7 @@
 #if defined(EMSCRIPTEN)
     #define VERTEX_SHADER_STR(name) std::string((char*)webgl_##name##_vert, webgl_##name##_vert_size)
     #define FRAGMENT_SHADER_STR(name) std::string((char*)webgl_##name##_frag, webgl_##name##_frag_size)
-    #define DATA_SAMPLES_PATH "data_samples/"
+    #define DATA_SAMPLES_PATH "datasets/"
 #else
     #define DATA_SAMPLES_PATH "../resources/"
     #define VERTEX_SHADER_STR(name) std::string((char*)opengl_##name##_vert, opengl_##name##_vert_size)

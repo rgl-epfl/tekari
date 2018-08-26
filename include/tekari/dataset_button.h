@@ -1,15 +1,15 @@
 #pragma once
 
-#include <tekari/data_sample.h>
+#include <tekari/dataset.h>
 #include <nanogui/widget.h>
 #include <nanogui/popup.h>
 
 TEKARI_NAMESPACE_BEGIN
 
-class DataSampleButton : public nanogui::Widget
+class DatasetButton : public nanogui::Widget
 {
 public:
-    DataSampleButton(nanogui::Widget* parent, const string& label);
+    DatasetButton(nanogui::Widget* parent, const string& label);
 
     virtual bool mouse_button_event(const Vector2i& p, int button, bool down, int modifiers) override;
     virtual bool mouse_enter_event(const Vector2i& p, bool enter) override;
