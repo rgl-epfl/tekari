@@ -142,9 +142,10 @@ void Dataset::link_data_to_shaders()
 
     m_shaders[MESH].bind();
     m_shaders[MESH].set_uniform("color_map", 0);
-    m_shaders[MESH].upload_attrib("in_pos2d", (float*)m_v2d.data(), 2, m_v2d.size());
-    m_shaders[MESH].upload_attrib("in_color", (float*)m_colors.data(), 3, m_colors.n_rows());
-    m_shaders[MESH].upload_indices((int*)m_f.data(), 3, m_f.n_rows());
+    m_shaders[MESH].upload_attrib("in_pos2d", (float*) m_v2d.data(), 2, m_v2d.size());
+    if (m_colors.n_rows() != 0)
+        m_shaders[MESH].upload_attrib("in_color", (float*) m_colors.data(), 3, m_colors.n_rows());
+    m_shaders[MESH].upload_indices((int*) m_f.data(), 3, m_f.n_rows());
 
     m_shaders[PATH].bind();
     m_shaders[PATH].share_attrib(m_shaders[MESH], "in_pos2d");
