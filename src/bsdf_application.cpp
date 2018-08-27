@@ -853,7 +853,7 @@ void BSDFApplication::toggle_brdf_options_window()
             auto resolution_combobox = new ComboBox{ window };
 
             pair<size_t, size_t> sampling_resolution = bsdf_dataset->sampling_resolution();
-            int current_resolution_index = log2(sampling_resolution.first / 16) * 2 + (sampling_resolution.first != sampling_resolution.second);
+            int current_resolution_index = log2(sampling_resolution.first / 16);
 
             resolution_combobox->set_items({ "16x16", "32x32", "64x64", "128x128", "256x256" });
             resolution_combobox->set_selected_index(current_resolution_index);
@@ -885,7 +885,7 @@ void BSDFApplication::toggle_brdf_options_window()
             m_incident_angle_slider->set_range(make_pair(Vector2f(0.0f, -180.0f), Vector2f(85.0f, 180.0f)));
             m_incident_angle_slider->set_fixed_size({ 200, 200 });
             m_incident_angle_slider->set_enabled(bsdf_dataset != nullptr);
-            m_incident_angle_slider->set_tooltip("Incident angle of material (editable if bsdf file)");
+            m_incident_angle_slider->set_tooltip("Incident angle (can only be changed if a full BRDF was acquired)");
 
             auto add_float_box = [window, bsdf_dataset](const string& label, float value, function<void(float)> callback) {
                 auto float_box_container = new Widget{window};

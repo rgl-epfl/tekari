@@ -16,7 +16,6 @@ int main(int argc, char** argv) {
     vector<string> dataset_paths;
     bool log_mode = false;
 
-#if !defined(EMSCRIPTEN)
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-l") == 0) {
             log_mode = true;
@@ -24,13 +23,17 @@ int main(int argc, char** argv) {
         }
         dataset_paths.push_back(argv[i]);
     }
-#endif
 
     try {
         init();
         // scoped variables
         {
-            ref<BSDFApplication> screen = new BSDFApplication(dataset_paths,
+            #if defined(EMSCRIPTEN)
+                vector<string> dataset_paths_launch;
+            #else
+                const auto& dataset_paths_launch = dataset_paths;
+            #endif
+            ref<BSDFApplication> screen = new BSDFApplication(dataset_paths_launch,
                                                               log_mode);
 
 #if defined(EMSCRIPTEN)
@@ -49,23 +52,26 @@ int main(int argc, char** argv) {
                 Window *window;
                 ProgressBar *progress;
                 const char *fname;
+                std::string fname_short;
             } temp;
 
             temp.screen = screen;
             temp.progress = progress;
             temp.window = window;
-            temp.fname = argv[1];
+            temp.fname = dataset_paths[0].c_str();
+            auto tokens = tokenize(temp.fname, "/");
+            temp.fname_short = tokens[tokens.size()-1];
 
             emscripten_async_wget2(
                 temp.fname,
-                "data.bsdf",
+                temp.fname_short.c_str(),
                 "GET",
                 nullptr,
                 &temp,
                 (em_async_wget2_onload_func) [](unsigned, void* ptr, const char*) {
                     Temp *temp = (Temp *) ptr;
                     temp->screen->remove_child(temp->window);
-                    temp->screen->open_files({"data.bsdf"});
+                    temp->screen->open_files({temp->fname_short});
                     temp->screen->redraw();
                 },
                 (em_async_wget2_onstatus_func) [](unsigned, void* ptr, int err) {

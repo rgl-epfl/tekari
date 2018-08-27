@@ -290,6 +290,28 @@ inline string trim_copy(string s, function<int(int)> pred = [](int c) { return s
     return s;
 }
 
+inline
+std::vector<std::string> tokenize(const std::string &string,
+                                  const std::string &delim,
+                                  bool include_empty = false) {
+    std::string::size_type last_pos = 0, pos = string.find_first_of(delim, last_pos);
+    std::vector<std::string> tokens;
+
+    while (last_pos != std::string::npos) {
+        std::string substr = string.substr(last_pos, pos - last_pos);
+        if (!substr.empty() || include_empty)
+            tokens.push_back(std::move(substr));
+        last_pos = pos;
+        if (last_pos != std::string::npos) {
+            last_pos += 1;
+            pos = string.find_first_of(delim, last_pos);
+        }
+    }
+
+    return tokens;
+}
+
+
 // ================= Math Utils ================
 
 // (from instant-meshes)
