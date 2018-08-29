@@ -78,4 +78,4 @@ On Windows, install [CMake](https://cmake.org/), open the included GUI applicati
 
 ## Credits
 
-**Tekari** has been developped at [RGL](https://rgl.epfl.ch/) by Ruiz B. under the supervision of [Zeltner T.](https://github.com/tizian) and [Jakob W.](https://github.com/wjakob).
+**Tekari** has been developped at [RGL](https://rgl.epfl.ch/) by Benoît Ruiz under the supervision of [Tizian Zeltner](http://tizianzeltner.com/) and [Wenzel Jakob](http://rgl.epfl.ch/people/wjakob/).

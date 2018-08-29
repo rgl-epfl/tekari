@@ -174,7 +174,7 @@ HelpWindow::HelpWindow(Widget* parent, function<void()> close_callback)
         add_spacer(about, 60);
 
         add_text(about, "This helper tool was developed by Benoit Ruiz under the");
-        add_text(about, "supervision of Zeltner T. and Dr. Jakob W.");
+        add_text(about, "supervision of Tizian Zeltner and Wenzel Jakob.");
         add_text(about, "It is released under the BSD 3 - Clause License.");
         add_text(about, "It was built directly or indirectly upon the following amazing third-party libraries.");
 
