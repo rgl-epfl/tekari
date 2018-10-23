@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.1)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(tekari)
@@ -41,9 +41,9 @@ if (MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
 
-# Enable C++14 mode on GCC / Clang
+# Enable C++17 mode on GCC / Clang
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|Emscripten")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 endif()
 
 include(CheckCXXCompilerFlag)
@@ -104,6 +104,9 @@ else()
   set_property(TARGET tbb_static tbb_def_files PROPERTY FOLDER "dependencies")
 endif()
 
+if (APPLE)
+  add_definitions(-DGL_SILENCE_DEPRECATION)
+endif()
 
 # Build Triangle
 # Preprocessor constant to make triangle use floats instead of doubles

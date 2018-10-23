@@ -28,6 +28,7 @@
 #include <cstdarg>
 #include <nanogui/glutil.h>
 #include <array>
+#include <sstream>
 #include <tekari/matrix_xx.h>
 
 // (re)define M_PI locally since it's not necessarily defined on some platforms

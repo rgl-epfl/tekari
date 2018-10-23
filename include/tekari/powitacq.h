@@ -105,7 +105,6 @@ class BRDF {
     Vector3f m_wi;
     float m_params[2];
 
-    std::vector<Vector2f> m_uvs;
     std::vector<Vector2f> m_samples;
     std::vector<float> m_scales;
 

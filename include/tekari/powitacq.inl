@@ -1088,6 +1088,11 @@ BRDF::BRDF(const std::string &path_to_file)
 
 BRDF::~BRDF() { }
 
+/// Numerically more robust way of evaluating 'std::acos(d.z())'
+inline float elevation(const Vector3f &d) {
+    return 2.f * asin(.5f * std::sqrt(sqr(d.x()) + sqr(d.y()) + sqr(d.z() - 1.f)));
+}
+
 // *****************************************************************************
 // PDF interface
 // *****************************************************************************
@@ -1099,9 +1104,9 @@ float BRDF::pdf(const Vector3f &wi, const Vector3f &wo) const {
     Vector3f wm = normalize(wi + wo);
 
     /* Cartesian -> spherical coordinates */
-    float theta_i = std::acos(wi.z()),
+    float theta_i = elevation(wi),
           phi_i   = std::atan2(wi.y(), wi.x()),
-          theta_m = std::acos(wm.z()),
+          theta_m = elevation(wm),
           phi_m   = std::atan2(wm.y(), wm.x());
 
     /* Spherical coordinates -> unit coordinate system */
@@ -1120,7 +1125,7 @@ float BRDF::pdf(const Vector3f &wi, const Vector3f &wo) const {
         pdf = m_data->luminance.eval(sample, params);
     #endif
 
-    float sin_theta_m = std::sqrt(1 - sqr(wm.z()));
+    float sin_theta_m = std::sqrt(sqr(wm.x()) + sqr(wm.y()));
     float jacobian = std::max(2.f * sqr(Pi) * u_wm.x() *
                               sin_theta_m, 1e-6f) * 4.f * dot(wi, wm);
 
@@ -1138,9 +1143,9 @@ Spectrum BRDF::eval(const Vector3f &wi, const Vector3f &wo) const {
     Vector3f wm = normalize(wi + wo);
 
     /* Cartesian -> spherical coordinates */
-    float theta_i = std::acos(wi.z()),
+    float theta_i = elevation(wi),
           phi_i   = std::atan2(wi.y(), wi.x()),
-          theta_m = std::acos(wm.z()),
+          theta_m = elevation(wm),
           phi_m   = std::atan2(wm.y(), wm.x());
 
     /* Spherical coordinates -> unit coordinate system */
@@ -1182,7 +1187,7 @@ Spectrum BRDF::sample(const Vector2f &u, const Vector3f &wi,
         return zero();
     }
 
-    float theta_i = std::acos(wi.z()),
+    float theta_i = elevation(wi),
           phi_i   = std::atan2(wi.y(), wi.x());
 
     float params[2] = { phi_i, theta_i };
@@ -1265,24 +1270,19 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
     size_t max_points = theta_n * phi_n + phi_n;
     m_samples.clear();
     m_scales.clear();
-    m_uvs.clear();
     wos_out.clear();
     luminance_out.clear();
     colors_out.clear();
     m_samples.reserve(max_points);
     m_scales.reserve(max_points);
-    m_uvs.reserve(max_points);
     wos_out.reserve(max_points);
     luminance_out.reserve(max_points);
     colors_out.reserve(max_points);
 
-    float min_luminance = std::numeric_limits<float>::max();
-    Vector3f min_rgb_color = Vector3f(0.0f);
-
     if (wi.z() <= 0)
         return false;
 
-    float theta_i = std::acos(wi.z()),
+    float theta_i = elevation(wi),
           phi_i   = std::atan2(wi.y(), wi.x());
 
     m_params[0] = phi_i;
@@ -1290,7 +1290,6 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
     Vector2f u_wi = Vector2f(theta2u(theta_i), phi2u(phi_i));
 
     auto compute_state = [&](float u, float v) {
-
         Vector2f sample = Vector2f(v, u);
         float lum_pdf = 1.f;
 
@@ -1329,7 +1328,6 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
                             (4 * m_data->sigma.eval(u_wi, m_params));
 
         m_samples.push_back(sample);
-        m_uvs.push_back({u, v});
         wos_out.push_back(wo);
         m_scales.push_back(scale);
 
@@ -1341,12 +1339,6 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
         ));
         luminance_out.push_back(luminance);
         colors_out.push_back(rgb_color);
-
-        if (min_luminance > luminance)
-        {
-            min_luminance = luminance;
-            min_rgb_color = rgb_color;
-        }
     };
 
     for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points at (0, 0)
@@ -1363,10 +1355,54 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
     // add an artificial ring of points
     for (size_t j = 0; j < phi_n; ++j)
     {
-        float phi = 2 * Pi * j / phi_n;
-        wos_out.push_back({cos(phi), sin(phi), 0.0f});
-        luminance_out.push_back(min_luminance);
-        colors_out.push_back(min_rgb_color);
+        float phi_o = 2 * Pi * j / phi_n;
+        float theta_o = 89.5f * Pi / 180.f;
+
+        float sin_phi_o = std::sin(phi_o),
+              cos_phi_o = std::cos(phi_o),
+              sin_theta_o = std::sin(theta_o),
+              cos_theta_o = std::cos(theta_o);
+
+        Vector3f wo = Vector3f(
+            cos_phi_o * sin_theta_o,
+            sin_phi_o * sin_theta_o,
+            cos_theta_o
+        );
+
+        Vector3f wm = normalize(wi + wo);
+
+        float theta_m = elevation(wm),
+              phi_m   = std::atan2(wm.y(), wm.x());
+
+        /* Spherical coordinates -> unit coordinate system */
+        Vector2f u_wm = Vector2f(
+            theta2u(theta_m),
+            phi2u(m_data->isotropic ? (phi_m - phi_i) : phi_m)
+        );
+        u_wm.y() = u_wm.y() - std::floor(u_wm.y());
+
+
+        Vector2f sample;
+        float vndf_pdf;
+        std::tie(sample, vndf_pdf) = m_data->vndf.invert(u_wm, m_params);
+
+        float scale = m_data->ndf.eval(u_wm, m_params) /
+                            (4 * m_data->sigma.eval(u_wi, m_params));
+
+        float luminance = m_data->luminance.eval(sample, m_params) * scale;
+        if (luminance == 0)
+            continue;
+        Vector3f rgb_color = normalize(Vector3f(
+            to_srgb(m_data->rgb[0].eval(sample, m_params)),
+            to_srgb(m_data->rgb[1].eval(sample, m_params)),
+            to_srgb(m_data->rgb[2].eval(sample, m_params))
+        ));
+        m_samples.push_back(sample);
+        wos_out.push_back(wo);
+        m_scales.push_back(scale);
+
+        luminance_out.push_back(luminance);
+        colors_out.push_back(rgb_color);
     }
 
     m_n_points = wos_out.size();
@@ -1375,25 +1411,16 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
 
 void BRDF::sample_state(size_t wavelength_index, float* frs_out) const
 {
-    float min_fr = std::numeric_limits<float>::max();
-
     for (size_t i = 0; i < m_samples.size(); ++i)
     {
         float params_fr[3] = { m_params[0], m_params[1], m_data->wavelengths[wavelength_index] };
         frs_out[i] = m_data->spectra.eval(m_samples[i], params_fr) * m_scales[i];
-        min_fr = std::min(min_fr, frs_out[i]);
-    }
-    
-    // all the points on the ring have the minimum intensity
-    for (size_t i = m_samples.size(); i < m_n_points; ++i)
-    {
-        frs_out[i] = min_fr;
     }
 }
 
 Spectrum BRDF::sample_state(size_t point_index) const
 {
-    if (point_index >= m_uvs.size())
+    if (point_index >= m_samples.size())
         return zero();
 
     Spectrum s = zero();
