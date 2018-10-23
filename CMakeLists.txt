@@ -1,6 +1,4 @@
 cmake_minimum_required (VERSION 3.1)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(tekari)
 
@@ -42,8 +40,20 @@ if (MSVC)
 endif()
 
 # Enable C++17 mode on GCC / Clang
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|Emscripten")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+include(CheckCXXCompilerFlag)
+if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Emscripten|Intel)$")
+  CHECK_CXX_COMPILER_FLAG("-std=c++17" HAS_CPP17_FLAG)
+
+  if (HAS_CPP17_FLAG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+  else()
+    CHECK_CXX_COMPILER_FLAG("-std=c++1z" HAS_CPP1Z_FLAG)
+    if (HAS_CPP1Z_FLAG)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z")
+    else()
+      message(FATAL_ERROR "Unsupported compiler -- nanogui requires C++17 support!")
+    endif()
+  endif()
 endif()
 
 include(CheckCXXCompilerFlag)
