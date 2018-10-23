@@ -50,8 +50,11 @@ void BSDFDataset::set_intensity_index(size_t intensity_index)
     update_shaders_data();
 }
 
-void BSDFDataset::set_incident_angle(const Vector2f& incident_angle)
+void BSDFDataset::set_incident_angle(const Vector2f& incident_angle_)
 {
+
+    Vector2f incident_angle(incident_angle_);
+    incident_angle.x() = std::max(incident_angle.x(), 1e-6f);
     cout << std::setw(50) << std::left << "Setting incident angle ..";
     Timer<> timer;
 

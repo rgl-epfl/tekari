@@ -41,7 +41,7 @@ endif()
 
 # Enable C++17 mode on GCC / Clang
 include(CheckCXXCompilerFlag)
-if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Emscripten|Intel)$")
+if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang|Emscripten|Intel)$")
   CHECK_CXX_COMPILER_FLAG("-std=c++17" HAS_CPP17_FLAG)
 
   if (HAS_CPP17_FLAG)
