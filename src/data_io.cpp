@@ -6,7 +6,7 @@
 
 TEKARI_NAMESPACE_BEGIN
 
-struct Vector2f_hash : std::unary_function<Vector2f, size_t>
+struct Vector2f_hash
 {
     size_t operator()(const Vector2f& v) const {
         size_t hash1 = std::hash<Vector2f::Value>()(v[0]);

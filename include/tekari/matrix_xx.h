@@ -6,14 +6,13 @@
 
 #define IMPLEMENT_ITERABLE(T, Type, obj, ptr, ref, elem_count, first, last)                                             \
     template<bool IsConst = true>                                                                                       \
-    class iterator: public std::iterator< std::random_access_iterator_tag, T>                                           \
+    class iterator                                                                                                      \
     {                                                                                                                   \
-        using base_type = std::iterator< std::random_access_iterator_tag, T>;                                           \
     public:                                                                                                             \
         using reference = std::conditional_t<IsConst, const T&, T&>;                                                    \
         using pointer = std::conditional_t<IsConst, const T*, T*>;                                                      \
-        using typename base_type::difference_type;                                                                      \
-        using typename base_type::value_type;                                                                           \
+        using difference_type = std::ptrdiff_t;                                                                         \
+        using value_type = T;                                                                                           \
         explicit iterator(Type obj) : obj(obj) {}                                                                       \
         iterator(const iterator&)  = default;                                                                           \
         iterator(iterator&&) = default;                                                                                 \

@@ -54,6 +54,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang|Emscripten|Intel)$")
       message(FATAL_ERROR "Unsupported compiler -- nanogui requires C++17 support!")
     endif()
   endif()
+elseif(MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17 /D _ENABLE_EXTENDED_ALIGNED_STORAGE")
 endif()
 
 include(CheckCXXCompilerFlag)
