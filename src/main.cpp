@@ -14,14 +14,28 @@ int main(int argc, char** argv) {
     using namespace nanogui;
 
     vector<string> dataset_paths;
-    bool log_mode = false;
+    bool log_mode = false,
+         help = false;
 
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-l") == 0) {
             log_mode = true;
             continue;
         }
+        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+            help = true;
+            continue;
+        }
+        if (strncmp(argv[i], "-psn_", 5) == 0) // OSX app launch ID
+            continue;
         dataset_paths.push_back(argv[i]);
+    }
+
+    if (help) {
+        std::cout << "Usage: tekari [-l] <file1.bsdf> <file2.bsdf> ..." << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "   -l      Directly open in logarithmic view." << std::endl;
+        return 0;
     }
 
     try {

@@ -195,7 +195,8 @@ include_directories(
 #   )
 # endif()
 
-add_executable(tekari
+add_executable(Tekari
+  MACOSX_BUNDLE
   src/main.cpp
   include/tekari/bsdf_application.h             src/bsdf_application.cpp
   include/tekari/bsdf_canvas.h                  src/bsdf_canvas.cpp
@@ -229,18 +230,26 @@ add_executable(tekari
   ${CMAKE_CURRENT_BINARY_DIR}/tekari_resources.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/tekari_resources.h
   tekari.rc
+  resources/icons/tekari.icns
 )
+
+set_target_properties(Tekari PROPERTIES OUTPUT_NAME "Tekari")
 
 add_executable(tests
   include/tekari/powitacq.h                     include/tekari/powitacq.inl
   src/tests.cpp
 )
 
+set_target_properties(Tekari PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "Tekari")
+set_target_properties(Tekari PROPERTIES MACOSX_BUNDLE_BUNDLE_GUI_IDENTIFIER "org.epfl.Tekari")
+set_target_properties(Tekari PROPERTIES MACOSX_BUNDLE_ICON_FILE tekari.icns)
+set_target_properties(Tekari PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/MacOSXBundleInfo.plist.in)
+set_source_files_properties(resources/icons/tekari.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
 if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Emscripten")
   set(NANOGUI_EXTRA_LIBS ${NANOGUI_EXTRA_LIBS} tbb_static)
 endif()
 
-target_link_libraries(tekari nanogui triangle ${NANOGUI_EXTRA_LIBS})
+target_link_libraries(Tekari nanogui triangle ${NANOGUI_EXTRA_LIBS})
 
-set_target_properties(tekari PROPERTIES OUTPUT_NAME "tekari")
 set_target_properties(tests PROPERTIES OUTPUT_NAME "tests")

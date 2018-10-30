@@ -88,6 +88,8 @@ private:
 
     void try_load_dataset(const string& file_path, std::shared_ptr<Dataset_to_add> dataset_to_add);
 
+    bool drop_event(const std::vector<std::string> & filenames) override;
+
     void reprint_footer();
 
 private:

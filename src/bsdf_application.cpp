@@ -1283,4 +1283,9 @@ void BSDFApplication::try_load_dataset(const string& file_path, shared_ptr<Datas
     }
 }
 
+bool BSDFApplication::drop_event(const std::vector<std::string> & filenames) {
+    open_files(filenames);
+    return true;
+}
+
 TEKARI_NAMESPACE_END
