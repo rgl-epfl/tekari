@@ -11,7 +11,7 @@ varying vec3 position;
 varying vec3 normal;
 varying vec3 integrated_color;
 
-const vec3 light_color = vec3(0.8, 0.8, 0.7);
+const vec3 light_color = vec3(0.8, 0.8, 0.8);
 
 void main() {
     vec3 color = use_integrated_colors ? integrated_color : texture2D(color_map, vec2(height, 0)).rgb;

@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include "cie1931.h"
 
-#define POWITACQ_SAMPLE_LUMINANCE 1
+#define POWITACQ_SAMPLE_LUMINANCE 0
 
 POWITACQ_NAMESPACE_BEGIN
 
@@ -1023,8 +1023,8 @@ BRDF::BRDF(const std::string &path_to_file)
 
         Vector3f XYZ =
             Vector3f(cie_interp(cie_x, lambda), cie_interp(cie_y, lambda),
-                     cie_interp(cie_z, lambda))
-        * cie_interp(cie_d65, lambda) *
+                     cie_interp(cie_z, lambda)) *
+            cie_interp(cie_d65, lambda) *
             (1.f / (CIE_LAMBDA_MAX - CIE_LAMBDA_MIN));
 
         Vector3f rgb(0.f);
@@ -1033,7 +1033,6 @@ BRDF::BRDF(const std::string &path_to_file)
                 rgb[i] += xyz_to_srgb[i][j] * XYZ[j];
         rgb_weights[k] = rgb;
     }
-
 
     size_t n_slices = spectra.shape[0] * spectra.shape[1];
     size_t slice_size = spectra.shape[3] * spectra.shape[4];
@@ -1291,7 +1290,6 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
 
     auto compute_state = [&](float u, float v) {
         Vector2f sample = Vector2f(v, u);
-        float lum_pdf = 1.f;
 
         #if POWITACQ_SAMPLE_LUMINANCE
             std::tie(sample, lum_pdf) =
@@ -1327,18 +1325,22 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
         float scale = m_data->ndf.eval(u_wm, m_params) /
                             (4 * m_data->sigma.eval(u_wi, m_params));
 
-        m_samples.push_back(sample);
-        wos_out.push_back(wo);
-        m_scales.push_back(scale);
 
         float luminance = m_data->luminance.eval(sample, m_params) * scale;
-        Vector3f rgb_color = normalize(Vector3f(
-            to_srgb(m_data->rgb[0].eval(sample, m_params)),
-            to_srgb(m_data->rgb[1].eval(sample, m_params)),
-            to_srgb(m_data->rgb[2].eval(sample, m_params))
-        ));
-        luminance_out.push_back(luminance);
-        colors_out.push_back(rgb_color);
+        if (luminance > 0) {
+            m_samples.push_back(sample);
+            wos_out.push_back(wo);
+            m_scales.push_back(scale);
+            Vector3f rgb_color = normalize(Vector3f(
+                m_data->rgb[0].eval(sample, m_params),
+                m_data->rgb[1].eval(sample, m_params),
+                m_data->rgb[2].eval(sample, m_params)
+            ));
+            for (int l = 0; l < 3; ++l)
+                rgb_color[l] = to_srgb(rgb_color[l]);
+            luminance_out.push_back(luminance);
+            colors_out.push_back(rgb_color);
+        }
     };
 
     for (float theta = 1; theta < theta_n; ++theta) // don't start at 0 to avoid duplicate points at (0, 0)
@@ -1355,48 +1357,72 @@ bool BRDF::set_state(const Vector3f &wi, size_t theta_n, size_t phi_n,
     // add an artificial ring of points
     for (size_t j = 0; j < phi_n; ++j)
     {
-        float phi_o = 2 * Pi * j / phi_n;
-        float theta_o = 89.5f * Pi / 180.f;
+        float phi_o = 2 * Pi * j / phi_n + phi_i;
+        float theta_o_orig = 89.5f * Pi / 180.f,
+              theta_o = theta_o_orig;
+        Vector2f sample;
+        Vector3f wo;
+        float scale, luminance;
+        int it = 0;
+        do {
+            float sin_phi_o = std::sin(phi_o),
+                  cos_phi_o = std::cos(phi_o),
+                  sin_theta_o = std::sin(theta_o),
+                  cos_theta_o = std::cos(theta_o);
+
+            wo = Vector3f(
+                cos_phi_o * sin_theta_o,
+                sin_phi_o * sin_theta_o,
+                cos_theta_o
+            );
+
+            Vector3f wm = normalize(wi + wo);
+
+            float theta_m = elevation(wm),
+                  phi_m   = std::atan2(wm.y(), wm.x());
+
+            /* Spherical coordinates -> unit coordinate system */
+            Vector2f u_wm = Vector2f(
+                theta2u(theta_m),
+                phi2u(m_data->isotropic ? (phi_m - phi_i) : phi_m)
+            );
+            u_wm.y() = u_wm.y() - std::floor(u_wm.y());
+
+
+            float vndf_pdf;
+            std::tie(sample, vndf_pdf) = m_data->vndf.invert(u_wm, m_params);
+
+            scale = m_data->ndf.eval(u_wm, m_params) /
+                                (4 * m_data->sigma.eval(u_wi, m_params));
+
+            luminance = m_data->luminance.eval(sample, m_params) * scale;
+
+            if (luminance > 0)
+                break;
+            else
+                theta_o *= 0.995f;
+            it++;
+        } while (true);
 
         float sin_phi_o = std::sin(phi_o),
               cos_phi_o = std::cos(phi_o),
-              sin_theta_o = std::sin(theta_o),
-              cos_theta_o = std::cos(theta_o);
+              sin_theta_o = std::sin(theta_o_orig),
+              cos_theta_o = std::cos(theta_o_orig);
 
-        Vector3f wo = Vector3f(
+        wo = Vector3f(
             cos_phi_o * sin_theta_o,
             sin_phi_o * sin_theta_o,
             cos_theta_o
         );
 
-        Vector3f wm = normalize(wi + wo);
-
-        float theta_m = elevation(wm),
-              phi_m   = std::atan2(wm.y(), wm.x());
-
-        /* Spherical coordinates -> unit coordinate system */
-        Vector2f u_wm = Vector2f(
-            theta2u(theta_m),
-            phi2u(m_data->isotropic ? (phi_m - phi_i) : phi_m)
-        );
-        u_wm.y() = u_wm.y() - std::floor(u_wm.y());
-
-
-        Vector2f sample;
-        float vndf_pdf;
-        std::tie(sample, vndf_pdf) = m_data->vndf.invert(u_wm, m_params);
-
-        float scale = m_data->ndf.eval(u_wm, m_params) /
-                            (4 * m_data->sigma.eval(u_wi, m_params));
-
-        float luminance = m_data->luminance.eval(sample, m_params) * scale;
-        if (luminance == 0)
-            continue;
         Vector3f rgb_color = normalize(Vector3f(
-            to_srgb(m_data->rgb[0].eval(sample, m_params)),
-            to_srgb(m_data->rgb[1].eval(sample, m_params)),
-            to_srgb(m_data->rgb[2].eval(sample, m_params))
+            m_data->rgb[0].eval(sample, m_params),
+            m_data->rgb[1].eval(sample, m_params),
+            m_data->rgb[2].eval(sample, m_params)
         ));
+        for (int l = 0; l < 3; ++l)
+            rgb_color[l] = to_srgb(rgb_color[l]);
+
         m_samples.push_back(sample);
         wos_out.push_back(wo);
         m_scales.push_back(scale);

@@ -13,7 +13,7 @@ in vec3 integrated_color;
 
 out vec4 out_color;
 
-const vec3 light_color = vec3(0.8f, 0.8f, 0.7f);
+const vec3 light_color = vec3(0.8f, 0.8f, 0.8f);
 
 void main() {
 	vec3 color = use_integrated_colors ? integrated_color : texture(color_map, vec2(height, 0)).rgb;

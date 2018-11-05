@@ -233,7 +233,11 @@ add_executable(Tekari
   resources/icons/tekari.icns
 )
 
-set_target_properties(Tekari PROPERTIES OUTPUT_NAME "Tekari")
+if (APPLE)
+  set_target_properties(Tekari PROPERTIES OUTPUT_NAME "Tekari")
+else()
+  set_target_properties(Tekari PROPERTIES OUTPUT_NAME "tekari")
+endif()
 
 add_executable(tests
   include/tekari/powitacq.h                     include/tekari/powitacq.inl
