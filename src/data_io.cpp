@@ -102,6 +102,8 @@ void load_standard_dataset(
             {
                 throw std::runtime_error("Error reading file");
             }
+            if (theta > 90)
+                theta = 180.f - theta;
 
             Vector2f p2d = Vector2f{ theta, phi };
             if (read_vertices.count(p2d) != 0)
@@ -153,6 +155,8 @@ void load_spectral_dataset(
                 Log(Warning, "%s\n", "found two points with exact same coordinates");
                 continue;                                   // skip similar points
             }
+            if (angles[0] > 90)
+                angles[0] = 180.f - angles[0];
             read_vertices.insert(angles);
 
             V2D.push_back(hemisphere_to_disk(angles));
